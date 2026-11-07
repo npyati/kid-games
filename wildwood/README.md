@@ -105,11 +105,19 @@ Bows go in your hand like a weapon: RT shoots an arrow where your crosshair poin
 - The ocean is where a fourth, very slow noise is high. The land around it comes down to a sandy beach about 100 m wide, then the sea floor drops to about 14 m deep. Mountains and marshes fade out before the coast. It covers about 1/6 of the world; walking in a straight line you reach it about every 6 to 7 minutes (sometimes 3, sometimes 12).
 - The terrain code sits between `TERRAIN-BEGIN` and `TERRAIN-END` so a checker script can run it in Node. On four seeds: water about once per km (around 1 minute of walking), a marsh about every 1.4 km (around 5 minutes), a cave about every 550 m, and the nearest dragon lair is usually about 550 to 620 m away.
 - Creatures, your hand and items use rounder shapes (each ball has 80 faces instead of 20) than trees and rocks, which there are thousands of.
-- **New world** in the menu picks a new seed.
+- Every saved game has its own seed. **💾 Saved games → New game** picks a new one.
 
 ## Saved data
 
-One `localStorage` key, `wildwood.v1`: music, sound, look direction and enemy settings, the world seed, where you were standing, your materials, the things you've crafted and what you're holding and wearing. Older saves are upgraded: gems carry over and any weapons you'd found are kept. If the place you saved is now out in the ocean, you wake up on the nearest beach.
+You can have as many saved games as you like. **💾 Saved games** in the menu lists them (name, gems, things made, when it was last played) with Play, Rename and Delete. Rename asks for the name in a typing box, so it needs a keyboard. Delete asks twice, and you can't delete the game you're playing. **➕ New game** starts from scratch: a new world, fists only, an empty backpack. Opening another game saves this one and reloads the page into it.
+
+`localStorage` keys:
+
+- `wildwood.v1`: settings shared by every game (music, sound, look direction, enemies) and the id of the open game.
+- `wildwood.slots`: the list of saved games: `{ id, name, seed, last, gems, things }`. Broken entries are dropped on load.
+- `wildwood.slot.<id>`: one game's world seed, where you were standing, your materials, the things you've crafted and what you're holding and wearing.
+
+The first time this version loads, an older single save (everything was in `wildwood.v1`) becomes "Game 1", so nothing is lost. Older saves are upgraded too: gems carry over and any weapons you'd found are kept. If the place you saved is now out in the ocean, you wake up on the nearest beach.
 
 ## Testing shortcuts
 

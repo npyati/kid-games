@@ -96,6 +96,18 @@ nav button:focus-visible,nav a:focus-visible{outline:none;border-color:var(--sun
 .chip{display:inline-block;background:var(--night);border:2px solid var(--edge);border-radius:999px;padding:2px 9px;font-size:13px;margin:2px 4px 0 0}
 .chip.big{font-size:15px;padding:4px 12px}
 .chip.short{border-color:#e2365a;color:#ffb3c0}
+.slots{display:flex;flex-direction:column;gap:8px}
+.slot{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;align-items:center;background:var(--night);border:3px solid var(--edge);border-radius:14px;padding:8px 10px}
+.slot.cur{border-color:var(--leaf);background:#1f3b2f}
+.slot b{font-size:17px;display:block}
+.slot small{color:var(--muted);font-size:13px}
+.slot button,.newg{font:inherit;font-size:15px;color:var(--cream);background:#2a2570;border:3px solid var(--edge);border-radius:12px;padding:8px 12px;cursor:pointer}
+.slot button.play{background:var(--leaf);color:var(--ink);border-color:var(--leaf)}
+.slot button.warn{background:#7a2335;border-color:#ff6b81}
+.slot button.sel,.newg.sel{box-shadow:0 0 0 3px var(--sun);border-color:var(--sun)}
+.newg{font-family:var(--display);font-weight:400;font-size:22px;padding:10px}
+#slotName{margin:-6px 0 0;text-align:center;color:var(--sun);font-size:15px}
+@media (max-width:520px){.slot{grid-template-columns:1fr 1fr 1fr}.slot>div{grid-column:1/-1}}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
 .ibtn{font:inherit;color:var(--cream);background:var(--night);border:3px solid var(--edge);border-radius:14px;padding:8px 10px;text-align:left;cursor:pointer;display:grid;grid-template-columns:auto 1fr;column-gap:8px;align-items:center}
 .ibtn .ic{grid-row:span 3;font-size:28px}
@@ -123,12 +135,13 @@ nav button:focus-visible,nav a:focus-visible{outline:none;border-color:var(--sun
   <div class="panel">
     <h1>Wildwood</h1>
     <p class="tagline">A forest that goes on forever. Walk anywhere, and look for the rivers and lakes.</p>
+    <p id="slotName"></p>
     <nav id="menuBtns">
       <button class="primary" data-act="play">Start exploring</button>
       <button data-act="music">Music: on</button>
       <button data-act="sfx">Sounds: on</button>
       <button data-act="invert">Look: normal</button>
-      <button data-act="newworld">New world</button>
+      <button data-act="saves">💾 Saved games</button>
       <button data-act="animals">Enemies: on</button>
       <button data-act="fullscreen">Full screen</button>
       <a data-act="home" href="../">All games</a>
@@ -138,6 +151,7 @@ nav button:focus-visible,nav a:focus-visible{outline:none;border-color:var(--sun
       <div><b>Keyboard and mouse</b>WASD: walk · Mouse: look · Click or F: swing or shoot · Right-click or Q: block (you can still swing) · 1: sword · 2: bow · 3: shield on/off · Space: jump · Shift: run · I or Tab: backpack · Esc: menu</div>
       <div><b>Animals</b>Foxes, deer and rabbits are friendly. Wolves, and bears from caves, chase you once they spot you. Beat them for gems, iron and apples. They can't swim!</div>
       <div><b>Crafting</b>Swing at trees for wood and at big rocks for stone. Catch fish in rivers for their scales (golden fish are rare!). Open your backpack to make axes, swords, bows, shields and chest plates.</div>
+      <div><b>Saved games</b>Make as many games as you like with 💾 Saved games. Each one has its own world and its own things. New game starts from scratch.</div>
       <div><b>Bosses</b>Dragonlings live in forest camps: leave them alone and they'll leave you alone. Crocodiles lurk in rivers. Sharks swim in the ocean, but only bother you in the water. Goats (leave them alone!) and ice ogres live in the icy mountains. Goblins camp in open fields. Ogres roam the forests. Giant snakes hide in marshes. The Leviathan lives in big lakes. Dragons sleep in volcanoes on mountaintops, ringed by tall black spikes. They can fly!</div>
     </div>
     <p id="padStatus">Plug in an Xbox controller and press any button.</p>
@@ -163,6 +177,15 @@ nav button:focus-visible,nav a:focus-visible{outline:none;border-color:var(--sun
     <button class="closeb" data-close>Close (B)</button>
   </div>
 </div>
+<div id="saves" class="overlay">
+  <div class="panel invp">
+    <h2>💾 Saved games</h2>
+    <p class="invmsg" id="savesMsg">Every saved game has its own world, its own things and its own spot.</p>
+    <button class="newg" data-new>➕ New game (start from scratch)</button>
+    <div id="slotList" class="slots"></div>
+    <button class="closeb" data-close>Back (B)</button>
+  </div>
+</div>
 <div id="boss"><b id="bossName"></b><div class="btrack"><div id="bossFill"></div></div></div>
 <div id="hurt"></div>
 <div id="frost"></div>
@@ -177,41 +200,87 @@ nav button:focus-visible,nav a:focus-visible{outline:none;border-color:var(--sun
 /* =====================================================================
    Saved data (key prefix: wildwood)
    ===================================================================== */
-const SAVE_KEY = 'wildwood.v1';
-function loadSave() {
+// wildwood.v1 holds the settings and which saved game is open.
+// wildwood.slots lists the saved games; each game's world and things are in wildwood.slot.<id>.
+const SAVE_KEY = 'wildwood.v1', SLOTS_KEY = 'wildwood.slots', SLOT_PREFIX = 'wildwood.slot.';
+function readJSON(key, wantArray) {
   try {
-    const raw = localStorage.getItem(SAVE_KEY);
-    if (!raw) return {};
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
     const o = JSON.parse(raw);
-    if (!o || typeof o !== 'object' || Array.isArray(o)) throw new Error('bad save');
+    if (!o || typeof o !== 'object' || Array.isArray(o) !== !!wantArray) throw new Error('bad save');
     return o;
   } catch (e) {
-    try { localStorage.removeItem(SAVE_KEY); } catch (_) {}
-    return {};
+    try { localStorage.removeItem(key); } catch (_) {}
+    return null;
   }
 }
-const saved = loadSave();
+const validSeed = s => Number.isInteger(s) && s > 0 && s < 2147483647;
+const validSlotId = id => typeof id === 'string' && /^g[a-z0-9]{1,24}$/.test(id);
+const okCount = v => Number.isInteger(v) && v >= 0 && v < 1e6;
+const randomSeed = () => 1 + Math.floor(Math.random() * 2147483000);
+const S0 = readJSON(SAVE_KEY) || {};
+// the list of saved games, with anything broken thrown out
+let slots = (readJSON(SLOTS_KEY, true) || []).filter(m => m && typeof m === 'object' && validSlotId(m.id) && validSeed(m.seed))
+  .map(m => ({ id: m.id, seed: m.seed,
+    name: typeof m.name === 'string' && m.name.trim() ? m.name.trim().slice(0, 24) : 'Game',
+    last: Number.isFinite(m.last) && m.last > 0 ? m.last : 0,
+    gems: okCount(m.gems) ? m.gems : 0, things: okCount(m.things) ? m.things : 0 }))
+  .filter((m, i, all) => all.findIndex(o => o.id === m.id) === i);
+function writeSlots() { try { localStorage.setItem(SLOTS_KEY, JSON.stringify(slots)); } catch (e) {} }
+if (slots.length) writeSlots();     // store the cleaned-up list
+const newSlotId = () => 'g' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36);
+function nextGameName() {
+  let n = 0;
+  for (const m of slots) { const k = /^Game (\d+)$/.exec(m.name); if (k) n = Math.max(n, +k[1]); }
+  return 'Game ' + Math.max(n + 1, slots.length + 1);
+}
+if (!slots.length) {
+  // first time with saved games: whatever you had before becomes Game 1
+  const id = newSlotId(), seed = validSeed(S0.seed) ? S0.seed : 20261106;
+  const g = { seed, mats: S0.mats, owned: S0.owned, equip: S0.equip, pos: S0.pos, gems: S0.gems, weapon: S0.weapon };
+  try { localStorage.setItem(SLOT_PREFIX + id, JSON.stringify(g)); } catch (e) {}
+  const okArr = Array.isArray(S0.owned) ? S0.owned.filter(x => typeof x === 'string' && x !== 'fists').length : 0;
+  slots.push({ id, seed, name: 'Game 1', last: Date.now(), gems: S0.mats && okCount(S0.mats.gems) ? S0.mats.gems : okCount(S0.gems) ? S0.gems : 0, things: Math.min(okArr, 999) });
+  writeSlots();
+  S0.slot = id;
+}
+let currentSlot = slots.some(m => m.id === S0.slot) ? S0.slot : slots.slice().sort((a, b) => b.last - a.last)[0].id;
+const curMeta = () => slots.find(m => m.id === currentSlot);
+const G0 = readJSON(SLOT_PREFIX + currentSlot) || {};
+// settings are shared by every saved game; everything else belongs to this one
+const saved = { music: S0.music, sfx: S0.sfx, invert: S0.invert, animals: S0.animals,
+  seed: validSeed(G0.seed) ? G0.seed : curMeta().seed, mats: G0.mats, owned: G0.owned, equip: G0.equip, pos: G0.pos, gems: G0.gems, weapon: G0.weapon };
 const settings = {
   music: saved.music !== false,
   sfx: saved.sfx !== false,
   invert: saved.invert === true,
   animals: saved.animals !== false,
 };
-const validSeed = s => Number.isInteger(s) && s > 0 && s < 2147483647;
-let worldSeed = validSeed(saved.seed) ? saved.seed : 20261106;
+let worldSeed = saved.seed;
 let savedPos = null;
 if (saved.pos && typeof saved.pos === 'object' && saved.pos.seed === worldSeed &&
     [saved.pos.x, saved.pos.z, saved.pos.yaw].every(v => typeof v === 'number' && isFinite(v) && Math.abs(v) < 1e6)) {
   savedPos = { x: saved.pos.x, z: saved.pos.z, yaw: saved.pos.yaw };
 }
-function writeSave() {
+let switchingSlot = false;     // set while the page reloads into another saved game, so nothing gets written over it
+function writeSettings() {
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify({
-      music: settings.music, sfx: settings.sfx, invert: settings.invert, animals: settings.animals, seed: worldSeed,
-      mats, owned: [...owned], equip,
+      music: settings.music, sfx: settings.sfx, invert: settings.invert, animals: settings.animals, slot: currentSlot }));
+  } catch (e) {}
+}
+function writeSave() {
+  if (switchingSlot) return;
+  writeSettings();
+  try {
+    localStorage.setItem(SLOT_PREFIX + currentSlot, JSON.stringify({
+      seed: worldSeed, mats, owned: [...owned], equip,
       pos: { x: +player.x.toFixed(2), z: +player.z.toFixed(2), yaw: +player.yaw.toFixed(3), seed: worldSeed },
     }));
   } catch (e) {}
+  const m = curMeta();
+  if (m) { m.seed = worldSeed; m.gems = mats.gems; m.things = Math.max(0, owned.size - 1); if (started) m.last = Date.now(); writeSlots(); }
 }
 
 /* =====================================================================
@@ -1682,6 +1751,7 @@ function refreshLabels() {
   btns.find(b => b.dataset.act === 'sfx').textContent = 'Sounds: ' + (settings.sfx ? 'on' : 'off');
   btns.find(b => b.dataset.act === 'invert').textContent = 'Look: ' + (settings.invert ? 'flipped' : 'normal');
   btns.find(b => b.dataset.act === 'animals').textContent = 'Enemies: ' + (settings.animals ? 'on' : 'off');
+  document.getElementById('slotName').textContent = '💾 ' + curMeta().name;
 }
 let toastTimer = 0;
 function toast(msg) {
@@ -1750,17 +1820,8 @@ function doAction(act, fromMouse) {
     if (!settings.animals) clearEnemies();
     refreshLabels(); writeSave();
   }
-  else if (act === 'newworld') {
-    worldSeed = 1 + Math.floor(Math.random() * 2147483000);
-    setWorldSeed(worldSeed);
-    clearWorld();
-    clearAnimals();
-    placePlayer(findSpawn());
-    started = false;
-    refreshLabels();
-    writeSave();
-    toast('🌲 A brand new forest');
-  } else if (act === 'fullscreen') {
+  else if (act === 'saves') { openSaves(); }
+  else if (act === 'fullscreen') {
     try {
       if (document.fullscreenElement) document.exitFullscreen();
       else { const r = document.documentElement.requestFullscreen(); if (r && r.catch) r.catch(() => {}); }
@@ -1795,6 +1856,17 @@ function menuPad(dt) {
 
 addEventListener('keydown', e => {
   initAudio();
+  if (state === 'saves') {
+    if (e.code === 'Escape' || e.code === 'Backspace') closeSaves();
+    else if (e.code === 'ArrowDown') savesMove(0, 1);
+    else if (e.code === 'ArrowUp') savesMove(0, -1);
+    else if (e.code === 'ArrowLeft') savesMove(-1, 0);
+    else if (e.code === 'ArrowRight') savesMove(1, 0);
+    else if (e.code === 'Enter' || e.code === 'Space') savesAction(savesButtons()[savesSel]);
+    else return;
+    e.preventDefault();
+    return;
+  }
   if (state === 'inv') {
     if (['Escape', 'KeyI', 'Tab', 'KeyB'].includes(e.code)) closeInv(false);
     else if (e.code === 'ArrowDown') invMove(0, 1);
@@ -4319,6 +4391,11 @@ invEl.addEventListener('mousemove', e => {
 // move the highlight to the nearest button in a direction
 function invMove(dx, dy) {
   const list = invButtons(); if (!list.length) return;
+  const best = nearestButton(list, invSel, dx, dy);
+  if (best >= 0) { invSel = best; list.forEach((b, i) => b.classList.toggle('sel', i === invSel)); list[invSel].scrollIntoView({ block: 'nearest' }); }
+}
+function nearestButton(list, cur, dx, dy) {
+  const invSel = cur;
   const r0 = list[invSel].getBoundingClientRect(), cx = r0.left + r0.width / 2, cy = r0.top + r0.height / 2;
   let best = -1, bs = Infinity;
   list.forEach((b, i) => {
@@ -4329,7 +4406,7 @@ function invMove(dx, dy) {
     const s = dx ? Math.abs(vx) + Math.abs(vy) * 3 : Math.abs(vy) + Math.abs(vx) * 3;
     if (s < bs) { bs = s; best = i; }
   });
-  if (best >= 0) { invSel = best; list.forEach((b, i) => b.classList.toggle('sel', i === invSel)); list[invSel].scrollIntoView({ block: 'nearest' }); }
+  return best;
 }
 function invPad(dt) {
   if (!pad.connected) return;
@@ -4341,6 +4418,131 @@ function invPad(dt) {
   } else invRepeat = -20;
   if (pressed(0)) invAction(invButtons()[invSel]);
   else if (pressed(1) || pressed(3) || pressed(9)) closeInv(false);
+}
+
+/* =====================================================================
+   Saved games: pick one, start a new one from scratch, rename, delete
+   ===================================================================== */
+const savesEl = document.getElementById('saves'), slotListEl = document.getElementById('slotList'), savesMsg = document.getElementById('savesMsg');
+let savesSel = 0, savesRepeat = 0, delPending = null, delTimer = 0;
+const savesButtons = () => [...savesEl.querySelectorAll('button')];
+const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function ago(t) {
+  if (!t) return 'not played yet';
+  const m = Math.floor((Date.now() - t) / 60000);
+  if (m < 1) return 'played just now';
+  if (m < 60) return `played ${m} minute${m === 1 ? '' : 's'} ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `played ${h} hour${h === 1 ? '' : 's'} ago`;
+  const d = Math.floor(h / 24);
+  return `played ${d} day${d === 1 ? '' : 's'} ago`;
+}
+function renderSaves() {
+  const list = slots.slice().sort((a, b) => (b.id === currentSlot) - (a.id === currentSlot) || b.last - a.last);
+  slotListEl.innerHTML = list.map(m => {
+    const cur = m.id === currentSlot;
+    return `<div class="slot${cur ? ' cur' : ''}"><div><b>${esc(m.name)}${cur ? ' ✓' : ''}</b>` +
+      `<small>💎 ${m.gems} · ${m.things} thing${m.things === 1 ? '' : 's'} made · ${cur ? 'playing now' : ago(m.last)}</small></div>` +
+      `<button class="play" data-play="${m.id}">${cur ? 'Keep playing' : 'Play'}</button>` +
+      `<button data-rename="${m.id}">Rename</button>` +
+      (cur ? '' : `<button class="${delPending === m.id ? 'warn' : ''}" data-del="${m.id}">${delPending === m.id ? 'Really delete?' : 'Delete'}</button>`) +
+      `</div>`;
+  }).join('');
+  const all = savesButtons();
+  savesSel = Math.max(0, Math.min(savesSel, all.length - 1));
+  all.forEach((b, i) => b.classList.toggle('sel', i === savesSel && pad.connected));
+}
+function openSaves() {
+  if (state !== 'menu') return;
+  writeSave();
+  state = 'saves'; delPending = null; savesSel = 0;
+  savesMsg.textContent = 'Every saved game has its own world, its own things and its own spot.';
+  renderSaves();
+  menuEl.classList.remove('show');
+  savesEl.classList.add('show');
+  tone('triangle', 500, 700, 0.12, 0.06);
+}
+function closeSaves() {
+  if (state !== 'saves') return;
+  savesEl.classList.remove('show');
+  menuEl.classList.add('show');
+  state = 'menu';
+  refreshLabels();
+}
+// open another saved game: save this one, then reload the page into it (no shortcuts)
+function switchToSlot(id) {
+  writeSave();
+  currentSlot = id;
+  writeSettings();
+  switchingSlot = true;
+  savesMsg.textContent = 'Loading…';
+  location.replace(location.pathname);
+}
+function newGame() {
+  const id = newSlotId(), seed = randomSeed();
+  try {
+    localStorage.setItem(SLOT_PREFIX + id, JSON.stringify({ seed, mats: {}, owned: [], equip: {} }));
+  } catch (e) {
+    savesMsg.textContent = 'There’s no room for another game. Delete an old one first.';
+    tone('square', 220, 160, 0.15, 0.05);
+    return;
+  }
+  slots.push({ id, seed, name: nextGameName(), last: Date.now(), gems: 0, things: 0 });
+  writeSlots();
+  switchToSlot(id);
+}
+function savesAction(b) {
+  if (!b) return;
+  const d = b.dataset;
+  if ('close' in d) { closeSaves(); return; }
+  if ('new' in d) { newGame(); return; }
+  if (d.play) { if (d.play === currentSlot) { closeSaves(); startPlay(false); } else switchToSlot(d.play); return; }
+  if (d.rename) {
+    const m = slots.find(o => o.id === d.rename);
+    let name = null;
+    try { name = prompt('A name for this game:', m.name); } catch (e) {}
+    if (name && name.trim()) { m.name = name.trim().slice(0, 24); writeSlots(); refreshLabels(); }
+    renderSaves();
+    return;
+  }
+  if (d.del) {
+    if (delPending !== d.del) {
+      delPending = d.del; clearTimeout(delTimer);
+      delTimer = setTimeout(() => { delPending = null; if (state === 'saves') renderSaves(); }, 4000);
+      savesMsg.textContent = 'Press “Really delete?” to delete that game for good.';
+    } else {
+      const m = slots.find(o => o.id === d.del);
+      slots = slots.filter(o => o.id !== d.del);
+      try { localStorage.removeItem(SLOT_PREFIX + d.del); } catch (e) {}
+      writeSlots(); delPending = null;
+      savesMsg.textContent = `Deleted “${m ? m.name : 'that game'}”.`;
+      tone('triangle', 400, 200, 0.2, 0.05);
+    }
+    renderSaves();
+  }
+}
+savesEl.addEventListener('click', e => { const b = e.target.closest('button'); if (b) { e.preventDefault(); savesSel = savesButtons().indexOf(b); savesAction(b); } });
+// up/down goes row by row (new game, each saved game, back); left/right moves along a saved game's buttons
+function savesMove(dx, dy) {
+  const list = savesButtons(); if (!list.length) return;
+  const rows = [];
+  list.forEach((b, i) => { const key = b.closest('.slot') || b; const r = rows.find(o => o.key === key); if (r) r.idx.push(i); else rows.push({ key, idx: [i] }); });
+  const ri = rows.findIndex(r => r.idx.includes(savesSel)), col = rows[ri].idx.indexOf(savesSel);
+  if (dy) { const r = rows[Math.max(0, Math.min(rows.length - 1, ri + dy))]; savesSel = r.idx[Math.min(col, r.idx.length - 1)]; }
+  else { const r = rows[ri]; savesSel = r.idx[Math.max(0, Math.min(r.idx.length - 1, col + dx))]; }
+  list.forEach((b, i) => b.classList.toggle('sel', i === savesSel));
+  list[savesSel].scrollIntoView({ block: 'nearest' });
+}
+function savesPad(dt) {
+  if (!pad.connected) return;
+  const dirY = pad.btn[12] ? -1 : pad.btn[13] ? 1 : pad.ly < -0.5 ? -1 : pad.ly > 0.5 ? 1 : 0;
+  const dirX = pad.btn[14] ? -1 : pad.btn[15] ? 1 : pad.lx < -0.5 ? -1 : pad.lx > 0.5 ? 1 : 0;
+  if (dirX || dirY) {
+    savesRepeat -= dt;
+    if (savesRepeat <= 0) { if (dirY) savesMove(0, dirY); else savesMove(dirX, 0); savesRepeat = savesRepeat < -10 ? 0.35 : 0.2; }
+  } else savesRepeat = -20;
+  if (pressed(0)) savesAction(savesButtons()[savesSel]);
+  else if (pressed(1)) closeSaves();
 }
 
 /* =====================================================================
@@ -4821,6 +5023,8 @@ function frame(now) {
     }
   } else if (state === 'inv') {
     invPad(dt);
+  } else if (state === 'saves') {
+    savesPad(dt);
   } else {
     menuPad(dt);
     if (!started && !dragonView) player.yaw += dt * 0.05;     // slow look-around behind the title
