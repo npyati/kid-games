@@ -138,7 +138,7 @@ nav button:focus-visible,nav a:focus-visible{outline:none;border-color:var(--sun
       <div><b>Keyboard and mouse</b>WASD: walk · Mouse: look · Click or F: swing or shoot · Right-click or Q: block · Space: jump · Shift: run · I or Tab: backpack · Esc: menu</div>
       <div><b>Animals</b>Foxes, deer and rabbits are friendly. Wolves, and bears from caves, chase you once they spot you. Beat them for gems, iron and apples. They can't swim!</div>
       <div><b>Crafting</b>Swing at trees for wood and at big rocks for stone. Open your backpack to make axes, swords, bows, shields and chest plates.</div>
-      <div><b>Bosses</b>Goats (leave them alone!) and ice ogres live in the icy mountains. Goblins camp in open fields. Ogres roam the forests. Giant snakes hide in marshes. The Leviathan lives in big lakes. Dragons sleep in volcanoes on mountaintops, ringed by tall black spikes. They can fly!</div>
+      <div><b>Bosses</b>Crocodiles lurk in rivers. Goats (leave them alone!) and ice ogres live in the icy mountains. Goblins camp in open fields. Ogres roam the forests. Giant snakes hide in marshes. The Leviathan lives in big lakes. Dragons sleep in volcanoes on mountaintops, ringed by tall black spikes. They can fly!</div>
     </div>
     <p id="padStatus">Plug in an Xbox controller and press any button.</p>
   </div>
@@ -1473,6 +1473,7 @@ function fireSound() {
   noiseHit('bandpass', 2500, 0.6, 2.0, 0.12);
 }
 function spotSound(kind) {
+  if (kind === 'croc') { noiseHit('bandpass', 2500, 0.7, 0.6, 0.18); tone('sawtooth', 160, 110, 0.5, 0.08, 0.1, 500); return; }
   if (kind === 'iceogre') { tone('sawtooth', 160, 80, 1.0, 0.2, 0, 700); noiseHit('highpass', 3500, 0.6, 0.8, 0.12); return; }
   if (kind === 'goat') { tone('square', 520, 380, 0.35, 0.05, 0, 1400); return; }
   if (kind === 'leviathan') { tone('sawtooth', 70, 40, 2.0, 0.3, 0, 500); tone('sine', 160, 90, 1.6, 0.15, 0.2); noiseHit('lowpass', 600, 0.6, 1.5, 0.35, 200); return; }
@@ -1485,6 +1486,7 @@ function spotSound(kind) {
   else { tone('sawtooth', 95, 60, 1.0, 0.22, 0, 500); noiseHit('lowpass', 380, 0.7, 0.9, 0.2); }
 }
 function growlSound(kind) {
+  if (kind === 'croc') { tone('sawtooth', 180, 110, 0.35, 0.1, 0, 500); return; }
   if (kind === 'iceogre') { tone('sawtooth', 170, 100, 0.7, 0.2, 0, 600); return; }
   if (kind === 'goat') { tone('square', 480, 330, 0.3, 0.05, 0, 1300); return; }
   if (kind === 'leviathan') { tone('sawtooth', 90, 55, 0.7, 0.25, 0, 450); return; }
@@ -2218,6 +2220,34 @@ function goblinModel() {
   };
   return { body: makeMesh(g), leg: makeMesh(lg), armR: arm(true), armL: arm(false) };
 }
+function crocModel() {
+  const g = new Geo(4096), r = mulberry32(43);
+  const SK = [0.27, 0.38, 0.17], DSK = [0.19, 0.27, 0.12], BELLY = [0.66, 0.62, 0.42], DK = [0.06, 0.05, 0.04], TOOTH = [0.96, 0.94, 0.85];
+  blob(g, 0, 0.36, 0.1, 0.5, 0.26, 1.0, SK, r, 0.12, -1, 0);                 // body
+  blob(g, 0, 0.27, 0.1, 0.44, 0.13, 0.9, BELLY, r, 0.05, -1, 0);             // belly
+  for (let z = -0.7; z <= 0.95; z += 0.3) for (const sd of [-1, 1]) blob(g, sd * 0.16, 0.58, z, 0.07, 0.06, 0.09, DSK, r, 0.2, -1, 0);   // bumps
+  blob(g, 0, 0.42, 1.15, 0.32, 0.18, 0.35, SK, r, 0.1, -1, 0);               // back of the head
+  blob(g, 0, 0.42, 1.75, 0.2, 0.1, 0.52, SK, r, 0.08, -1, 0, 0.34);          // long flat upper snout
+  for (const sd of [-1, 1]) {
+    blob(g, sd * 0.14, 0.58, 1.2, 0.06, 0.07, 0.06, [0.9, 0.78, 0.2], r, 0, -1, 0);   // eyes on top
+    blob(g, sd * 0.155, 0.6, 1.25, 0.02, 0.05, 0.02, DK, r, 0, -1, 0);
+    blob(g, sd * 0.05, 0.5, 2.22, 0.025, 0.02, 0.02, DK, r, 0, -1, 0);               // nostrils
+    for (let i = 0; i < 6; i++) tube(g, [sd * 0.16, 0.36, 1.4 + i * 0.14], [sd * 0.16, 0.27, 1.42 + i * 0.14], 0.025, 0.004, 4, TOOTH, r, false);
+  }
+  const jg = new Geo(1024);                                                    // lower jaw, hinged at (0, 0.33, 1.0)
+  blob(jg, 0, -0.05, 0.72, 0.19, 0.07, 0.52, SK, r, 0.06, -1, 0);
+  blob(jg, 0, -0.09, 0.68, 0.16, 0.04, 0.45, BELLY, r, 0.04, -1, 0);
+  blob(jg, 0, 0.015, 0.7, 0.13, 0.01, 0.42, [0.75, 0.3, 0.3], r, 0, -1, 0);
+  for (const sd of [-1, 1]) for (let i = 0; i < 6; i++) tube(jg, [sd * 0.14, 0.0, 0.42 + i * 0.14], [sd * 0.14, 0.09, 0.44 + i * 0.14], 0.025, 0.004, 4, TOOTH, r, false);
+  const tg = new Geo(1024);                                                    // tail, pivot at (0, 0.35, -0.85)
+  const T = [[0, 0, 0], [0, -0.05, -0.9], [0, -0.12, -1.8], [0, -0.18, -2.6]], TR = [0.32, 0.24, 0.14, 0.03];
+  for (let i = 0; i < 3; i++) tube(tg, T[i], T[i + 1], TR[i], TR[i + 1], 7, SK, r, false);
+  for (let z = -0.3; z > -2.3; z -= 0.3) tube(tg, [0, 0.12 - (-z) * 0.06 + (-z < 1 ? 0.1 : 0), z], [0, 0.26 - (-z) * 0.08, z - 0.1], 0.06, 0.005, 4, DSK, r, false);   // ridge
+  const lg = new Geo(256);
+  tube(lg, [0, 0.03, 0], [0, -0.24, 0.05], 0.09, 0.07, 5, SK, r, false);
+  blob(lg, 0, -0.26, 0.12, 0.1, 0.04, 0.13, DSK, r, 0.1, -1, 0);
+  return { body: makeMesh(g), jaw: makeMesh(jg), tail: makeMesh(tg), leg: makeMesh(lg) };
+}
 function goatModel() {
   const g = new Geo(2048), r = mulberry32(41);
   const FUR = [0.92, 0.9, 0.84], DFUR = [0.76, 0.73, 0.68], HORN = [0.55, 0.5, 0.42], DK = [0.1, 0.08, 0.07];
@@ -2356,6 +2386,9 @@ const SPECIES = {
   goblin: { name: 'Goblin', hitH: 1.7, hp: 18, dmg: 8, reach: 2.2, windup: 0.45, cd: 1.2, walk: 1.8, run: 6.2, sight: 24, turn: 6, radius: 0.45,
     barH: 2.0, drops: { gems: 3, iron: 0.5, wood: 0.5, item: 'goblinaxe', itemChance: 0.25 }, knock: 0.7, sinkH: 1.8,
     legLen: 0.72, hipY: 0.75, hips: [[0.14, 0], [-0.14, 0]], shoulders: [[0.27, 1.27, 0], [-0.27, 1.27, 0]] },
+  croc: { name: 'Crocodile', swims: true, long: true, tailWhip: true, hp: 30, dmg: 12, reach: 2.6, windup: 0.45, cd: 1.4, walk: 1.2, run: 5.0, sight: 14, turn: 3.5,
+    radius: 0.6, barH: 1.1, hitH: 0.8, drops: { skin: 1, gems: 1 }, knock: 0.4, sinkH: 0.9, legLen: 0.25, hipY: 0.28,
+    hips: [[0.42, 0.55], [-0.42, 0.55], [0.42, -0.45], [-0.42, -0.45]] },
   goat: { name: 'Goat', neutral: true, hp: 12, dmg: 6, reach: 1.6, windup: 0.5, cd: 1.6, walk: 1.2, run: 6.5, sight: 0, turn: 5, radius: 0.5,
     barH: 1.6, drops: { fur: 1, gems: 0.5 }, knock: 0.8, hitKnock: 11, sinkH: 1.4, giveUp: 30, hitH: 1.4,
     legLen: 0.55, hipY: 0.6, hips: [[0.12, 0.3], [-0.12, 0.3], [0.12, -0.3], [-0.12, -0.3]] },
@@ -2380,6 +2413,7 @@ SPECIES.dragon.model = dragonModel();
 SPECIES.ogre.model = ogreModel(false);
 SPECIES.iceogre.model = ogreModel(true);
 SPECIES.goat.model = goatModel();
+SPECIES.croc.model = crocModel();
 SPECIES.goblin.model = goblinModel();
 });
 const waterMeshes = [[0.55, 0.82, 1.0], [0.88, 0.96, 1.0]].map((c, i) => { const g = new Geo(64); blob(g, 0, 0, 0, 1, 1, 1, c, mulberry32(50 + i), 0.3, -1, 0); return makeMesh(g); });
@@ -2411,6 +2445,7 @@ const MATS = {
   fang: { name: 'Giant fang', icon: '🦷' },
   fur: { name: 'Fur', icon: '🐾' },
   frost: { name: 'Frost crystal', icon: '❄️' },
+  skin: { name: 'Croc skin', icon: '🐊' },
 };
 const ITEMS = {
   fists:       { name: 'Fists', icon: '✊', type: 'weapon', dmg: 2, reach: 2.3, time: 0.28 },
@@ -2423,6 +2458,8 @@ const ITEMS = {
   fangdagger:  { name: 'Fang dagger', icon: '🦷', type: 'weapon', dmg: 5, reach: 2.4, time: 0.2, poison: 2, cost: { fang: 1, iron: 1 }, note: 'super fast and poisons' },
   hammer:      { name: 'Iron hammer', icon: '🔨', type: 'weapon', dmg: 6, reach: 2.8, time: 0.55, knock: 2.5, mine: 3, cost: { wood: 1, iron: 5 }, note: 'slow, knocks enemies far, breaks 3 stone' },
   goblinaxe:   { name: 'Crude goblin axe', icon: '🪓', type: 'weapon', dmg: 5, reach: 2.6, time: 0.3, chop: 2, note: 'fast, chops 2 wood; only goblins drop it' },
+  crocwhip:    { name: 'Croc-tail whip', icon: '🐊', type: 'weapon', dmg: 6, reach: 4.6, time: 0.34, cost: { skin: 2, wood: 1 }, note: 'reaches very far' },
+  crocmace:    { name: 'Croc-jaw mace', icon: '🐊', type: 'weapon', dmg: 7, reach: 2.9, time: 0.45, knock: 2.5, cost: { skin: 2, iron: 2 }, note: 'big toothy knockback' },
   crystal:     { name: 'Crystal sword', icon: '🗡️', type: 'weapon', dmg: 6, reach: 3.2, time: 0.38, cost: { iron: 2, gems: 12 } },
   crystalspear:{ name: 'Crystal spear', icon: '🔹', type: 'weapon', dmg: 6, reach: 4.2, time: 0.4, cost: { wood: 2, iron: 1, gems: 8 }, note: 'reaches far' },
   crystalaxe:  { name: 'Crystal axe', icon: '💠', type: 'weapon', dmg: 7, reach: 3.0, time: 0.42, chop: 3, cost: { wood: 1, iron: 2, gems: 10 }, note: 'chops 3 wood at a time' },
@@ -2432,6 +2469,7 @@ const ITEMS = {
   ironbow:     { name: 'Iron bow', icon: '🏹', type: 'bow', dmg: 6, speed: 48, time: 0.55, cost: { wood: 2, iron: 3, fur: 1 }, note: 'shoots arrows' },
   venombow:    { name: 'Venom bow', icon: '🏹', type: 'bow', dmg: 7, speed: 50, time: 0.5, poison: 2, cost: { fang: 1, wood: 2, fur: 1 }, note: 'poison arrows' },
   frostbow:    { name: 'Frost bow', icon: '🏹', type: 'bow', dmg: 7, speed: 50, time: 0.5, slow: 3, cost: { frost: 1, wood: 2, fur: 1 }, note: 'arrows slow enemies down' },
+  crocbow:     { name: 'Croc-tooth bow', icon: '🏹', type: 'bow', dmg: 8, speed: 52, time: 0.5, cost: { skin: 2, wood: 2, fur: 1 }, note: 'shoots arrows' },
   crystalbow:  { name: 'Crystal bow', icon: '🏹', type: 'bow', dmg: 8, speed: 56, time: 0.5, cost: { wood: 2, iron: 1, gems: 12 }, note: 'shoots arrows' },
   dragonbow:   { name: 'Dragon bow', icon: '🏹', type: 'bow', dmg: 12, speed: 62, time: 0.45, cost: { scale: 1, wood: 2, iron: 2 }, note: 'shoots arrows' },
   arrows:      { name: '10 arrows', icon: '➶', type: 'ammo', give: { arrows: 10 }, cost: { wood: 1, stone: 1 }, note: 'for bows' },
@@ -2475,12 +2513,20 @@ function weaponModel(id) {
     tube(g, [-0.13, 0.11, 0], [0.13, 0.11, 0], 0.03, 0.03, 6, [0.95, 0.75, 0.2], r, true);
     tube(g, [0, 0.12, 0], [0, 0.82, 0], 0.055, 0.012, 4, [0.55, 0.88, 1.0], r, false);
   } else if (ITEMS[id] && ITEMS[id].type === 'bow') {
-    const C = { woodbow: WOOD, ironbow: [0.6, 0.62, 0.68], venombow: [0.45, 0.25, 0.55], frostbow: [0.7, 0.88, 1.0], crystalbow: [0.55, 0.88, 1.0], dragonbow: [0.8, 0.18, 0.1] }[id];
+    const C = { woodbow: WOOD, ironbow: [0.6, 0.62, 0.68], venombow: [0.45, 0.25, 0.55], frostbow: [0.7, 0.88, 1.0], crystalbow: [0.55, 0.88, 1.0], dragonbow: [0.8, 0.18, 0.1], crocbow: [0.3, 0.42, 0.2] }[id];
     const pts = [[0, -0.5, 0.05], [0, -0.3, -0.04], [0, -0.06, -0.06], [0, 0.06, -0.06], [0, 0.3, -0.04], [0, 0.5, 0.05]];
     for (let i = 0; i < pts.length - 1; i++) tube(g, pts[i], pts[i + 1], 0.025, 0.025, 5, C, r, false);
     tube(g, [0, -0.07, -0.06], [0, 0.07, -0.06], 0.035, 0.035, 6, [0.3, 0.2, 0.12], r, true);    // grip
     tube(g, [0, -0.5, 0.05], [0, 0.5, 0.05], 0.006, 0.006, 3, [0.95, 0.95, 0.9], r, false);      // string
     if (id === 'dragonbow') { blob(g, 0, 0.5, 0.05, 0.04, 0.04, 0.04, [1, 0.8, 0.1], r, 0, -1, 0); blob(g, 0, -0.5, 0.05, 0.04, 0.04, 0.04, [1, 0.8, 0.1], r, 0, -1, 0); }
+  } else if (id === 'crocwhip') {
+    tube(g, [0, -0.12, 0], [0, 0.15, 0], 0.032, 0.03, 6, WOOD, r, true);
+    const P = [[0, 0.15, 0], [0.05, 0.45, 0.05], [0.12, 0.75, 0], [0.15, 1.05, -0.1], [0.12, 1.32, -0.26]], R = [0.032, 0.026, 0.02, 0.013, 0.004];
+    for (let i = 0; i < 4; i++) tube(g, P[i], P[i + 1], R[i], R[i + 1], 5, i % 2 ? [0.19, 0.27, 0.12] : [0.27, 0.38, 0.17], r, false);
+  } else if (id === 'crocmace') {
+    tube(g, [0, -0.12, 0], [0, 0.5, 0], 0.035, 0.035, 6, WOOD, r, true);
+    blob(g, 0, 0.64, 0, 0.12, 0.15, 0.12, [0.27, 0.38, 0.17], r, 0.2, -1, 0);
+    for (let i = 0; i < 10; i++) { const a = i / 10 * 6.283, y = 0.58 + (i % 2) * 0.12; tube(g, [Math.cos(a) * 0.1, y, Math.sin(a) * 0.1], [Math.cos(a) * 0.2, y + 0.03, Math.sin(a) * 0.2], 0.025, 0.004, 4, [0.96, 0.94, 0.85], r, false); }
   } else if (id === 'goblinaxe') {
     tube(g, [0, -0.12, 0], [0.02, 0.6, 0], 0.032, 0.026, 5, [0.38, 0.27, 0.16], r, true);
     blob(g, 0.1, 0.5, 0, 0.13, 0.14, 0.022, [0.52, 0.45, 0.38], r, 0.45, -1, 0);
@@ -2562,6 +2608,10 @@ const matMeshes = hiDetail(() => {
   blob(g, 0.08, 0.05, 0.03, 0.12, 0.08, 0.1, [0.65, 0.6, 0.55], r, 0.5, 1, 0);
   out.fur = makeMesh(g);
   g = new Geo(64); octa(g, 0.13, 0.26, [0.7, 0.92, 1.0]); out.frost = makeMesh(g);
+  g = new Geo(512);                                        // a scaly piece of croc skin
+  blob(g, 0, 0, 0, 0.24, 0.04, 0.18, [0.27, 0.38, 0.17], r, 0.3, -1, 0);
+  for (let i = 0; i < 4; i++) blob(g, -0.12 + i * 0.08, 0.04, 0, 0.035, 0.03, 0.05, [0.19, 0.27, 0.12], r, 0.2, -1, 0);
+  out.skin = makeMesh(g);
   return out;
 });
 const handMesh = hiDetail(() => {
@@ -2582,7 +2632,7 @@ const arrowMesh = (() => {      // points along +z
 })();
 
 // what you have (loaded from the save, with old saves upgraded)
-const mats = { wood: 0, stone: 0, iron: 0, gems: 0, scale: 0, fang: 0, fur: 0, frost: 0, arrows: 0 };
+const mats = { wood: 0, stone: 0, iron: 0, gems: 0, scale: 0, fang: 0, fur: 0, frost: 0, skin: 0, arrows: 0 };
 const owned = new Set(['fists']);
 const equip = { weapon: 'fists', armor: null, shield: null };
 (function loadInventory() {
@@ -2737,6 +2787,10 @@ function serpentHead(a) {
 }
 // circles you can bump into or hit: [x, z, radius, y]
 function bodyCircles(a) {
+  if (a.sp.long) {
+    const sy = Math.sin(a.yaw), cy = Math.cos(a.yaw);
+    return [[a.x, a.z, 0.55, a.y], [a.x + sy * 1.4, a.z + cy * 1.4, 0.4, a.y], [a.x - sy * 1.5, a.z - cy * 1.5, 0.4, a.y]];
+  }
   if (a.sp.serpent) return [[a.x, a.z, (a.sp.bodyR || 0.8) * 1.1, a.y]].concat(a.segs.map((s, i) => { const o = tailOffset(a, i); return [s.x + (o ? o[0] : 0), s.z + (o ? o[1] : 0), snakeR(a.sp, i), s.y]; }));
   return [[a.x, a.z, a.sp.radius, a.y]];
 }
@@ -2822,6 +2876,19 @@ function updateLairs(dt) {
       if (!st.hinted) { st.hinted = true; toast('🐉 You hear a dragon roar. Its lair must be close!'); }
     }
   }
+  // crocodiles lurk in the rivers (up to 3 at a time)
+  if (envWater > 0.45 && Math.random() < 0.04 && animals.filter(a => a.kind === 'croc' && !a.dead).length < 3) {
+    for (let t = 0; t < 10; t++) {
+      const ang = Math.random() * Math.PI * 2, d = 25 + Math.random() * 25;
+      const x = player.x + Math.sin(ang) * d, z = player.z - Math.cos(ang) * d;
+      const s = sample(x, z);
+      if (s.h < -0.6 && s.h > -3.6 && s.rd < s.rw + 1 && s.lake < LAKE_T - 0.05) {
+        const n = Math.random() < 0.35 ? 2 : 1;
+        for (let k = 0; k < n; k++) spawnAnimal('croc', x + (Math.random() - 0.5) * 4, z + (Math.random() - 0.5) * 4, { home: { x, z, r: 18 } });
+        break;
+      }
+    }
+  }
   // goblin camps
   const gcx = Math.floor(player.x / CAMP_CELL), gcz = Math.floor(player.z / CAMP_CELL);
   for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) {
@@ -2904,9 +2971,10 @@ function alertAnimal(a) {
   if (a.kind === 'snake') { toast('🐍 A giant snake!'); a.roarT = 1.2; }
   if (a.kind === 'leviathan') { toast('🌊 The Leviathan rises!'); a.roarT = 1.6; rumble(0.8, 0.8, 600); shake = 0.5; }
   if (a.kind === 'ogre') { toast('👹 An ogre!'); rumble(0.5, 0.5, 300); }
+  if (a.kind === 'croc') a.roarT = 1.0;
   if (a.kind === 'iceogre') { toast('🧊 An ice ogre!'); rumble(0.5, 0.5, 300); }
   if (a.kind === 'goblin' && !animals.some(b => b !== a && b.kind === 'goblin' && b.alerted)) toast('👺 Goblins!');
-  if (a.kind === 'wolf' || a.kind === 'goblin' || a.kind === 'goat') for (const b of animals) if (b !== a && !b.alerted && !b.dead && b.kind === a.kind && Math.hypot(b.x - a.x, b.z - a.z) < (a.kind === 'goblin' ? 25 : 15)) { b.alerted = true; b.waterT = 0; b.calm = false; makeBar(b); }
+  if (a.kind === 'wolf' || a.kind === 'goblin' || a.kind === 'goat' || a.kind === 'croc') for (const b of animals) if (b !== a && !b.alerted && !b.dead && b.kind === a.kind && Math.hypot(b.x - a.x, b.z - a.z) < (a.kind === 'goblin' ? 25 : 15)) { b.alerted = true; b.waterT = 0; b.calm = false; makeBar(b); }
 }
 function calmAnimal(a) {
   a.alerted = false; a.windup = 0; a.fireT = 0;
@@ -2937,6 +3005,7 @@ function killAnimal(a) {
   for (let i = count(D.fur); i > 0; i--) addPickup('fur', a.x, py, a.z, 0, spread);
   for (let i = count(D.wood); i > 0; i--) addPickup('wood', a.x, py, a.z, 0, spread);
   for (let i = count(D.frost); i > 0; i--) addPickup('frost', a.x, py, a.z, 0, 1.2);
+  for (let i = count(D.skin); i > 0; i--) addPickup('skin', a.x, py, a.z, 0, 1);
   if (D.item && !owned.has(D.item) && !pickups.some(p => p.item === D.item) && Math.random() < D.itemChance) addPickup('item', a.x, py, a.z, D.item, 1);
   const apples = D.apples || (Math.random() < 0.35 ? 1 : 0);
   for (let i = 0; i < apples; i++) addPickup('apple', a.x, py, a.z, 0, spread);
@@ -2986,6 +3055,31 @@ function fight(a, dt, dist, dx, dz, playerWet) {
     }
     if (a.windup <= 0 && dist >= sp.reach && dist < 22 && a.fireCd <= 0) {
       a.fireT = 2.2; a.fireCd = 5 + Math.random() * 3; fireSound();
+      return 0;
+    }
+  }
+  if (sp.tailWhip) {               // crocodile: swings its tail at you if you're behind it
+    a.whipCd -= dt;
+    if (a.whipT > 0) {
+      a.whipT += dt;
+      if (!a.whipHit && a.whipT >= 0.5) {
+        a.whipHit = true;
+        const th = whipCurve(0.5) * 1.1 * a.whipSide, c = Math.cos(a.yaw), s2 = Math.sin(a.yaw);
+        for (const L of [1.0, 1.8, 2.6]) {
+          const lx = -L * Math.sin(th), lz = -0.85 - L * Math.cos(th);
+          const wx = a.x + lx * c + lz * s2, wz = a.z - lx * s2 + lz * c;
+          const ex = player.x - wx, ez = player.z - wz, d = Math.hypot(ex, ez) || 0.01;
+          if (d < 1.3) { hurtPlayer(10, ex / d, ez / d, 9, a); noiseHit('lowpass', 1200, 0.7, 0.12, 0.4); break; }
+        }
+      }
+      if (a.whipT >= WHIP_T) a.whipT = 0;
+      return 0;
+    }
+    const behind = (dx * Math.sin(a.yaw) + dz * Math.cos(a.yaw)) / dist < -0.2;
+    if (a.windup <= 0 && a.whipCd <= 0 && behind && dist < 4.2) {
+      const lx = dx * Math.cos(a.yaw) - dz * Math.sin(a.yaw);
+      a.whipSide = lx > 0 ? -1 : 1; a.whipT = 0.0001; a.whipHit = false; a.whipCd = 3;
+      setTimeout(() => noiseHit('bandpass', 1500, 1.2, 0.2, 0.25, 500), 300);
       return 0;
     }
   }
@@ -3421,6 +3515,12 @@ function drawAnimals(time) {
         drawMesh(sp.model.leg, mChain(base, mT(h[0], sp.hipY, h[1]), mRx(swing)), flash);
       }
     }
+    if (sp.model.tail) {          // crocodile tail and jaw
+      const tailA = a.whipT > 0 ? whipCurve(a.whipT) * 1.1 * a.whipSide : Math.sin(a.legPhase) * 0.25 * Math.min(1, Math.abs(a.speed) / 2);
+      drawMesh(sp.model.tail, mChain(base, mT(0, 0.35, -0.85), mRy(tailA)), flash);
+      const open = a.dead ? 0.4 : a.windup > 0 ? 0.1 + 0.6 * (1 - a.windup / sp.windup) : a.lunge > 0.6 ? 0 : a.roarT > 0 ? 0.5 : 0.03;
+      drawMesh(sp.model.jaw, mChain(base, mT(0, 0.33, 1.0), mRx(open)), flash);
+    }
     if (sp.model.armR) {
       const walk = a.dead ? 0 : Math.min(1, Math.abs(a.speed) / sp.run * 1.6) * 0.5;
       const sw = Math.sin(a.legPhase) * walk;
@@ -3554,6 +3654,7 @@ function collect(p) {
     const k = p.kind === 'gem' ? 'gems' : p.kind;
     mats[k]++;
     if (k === 'gems') { tone('sine', 1300, 1700, 0.09, 0.07); tone('sine', 1950, 2500, 0.14, 0.07, 0.07); }
+    else if (k === 'skin' && mats.skin === 1) { toast('🐊 Croc skin! Make croc weapons in your backpack.'); writeSave(); }
     else if (k === 'frost') { [659, 880, 1175].forEach((f, i) => tone('sine', f, f, 0.3, 0.08, i * 0.1)); toast('❄️ A frost crystal! Make frost gear in your backpack.'); writeSave(); }
     else if (k === 'fang') { [392, 523, 659].forEach((f, i) => tone('triangle', f, f, 0.25, 0.09, i * 0.1)); toast('🦷 A giant fang! Make venom gear in your backpack.'); writeSave(); }
     else if (k === 'scale') { [523, 659, 784, 1047, 1319].forEach((f, i) => tone('triangle', f, f, 0.3, 0.09, i * 0.1)); toast('🐉 You got a dragon scale! Open your backpack to use it.'); writeSave(); }
@@ -3609,7 +3710,7 @@ function renderInv(msg) {
     const stat = itemStat(it);
     return `<button class="ibtn${ok ? '' : ' cant'}${invPending === id ? ' pending' : ''}" data-craft="${id}"><span class="ic">${it.icon}</span><b>${it.name}</b><small>${stat}</small><span class="cost">${costText(it.cost)}</span></button>`;
   }).join('') : '<p class="done">You have made everything!</p>';
-  document.getElementById('invMsg').textContent = msg || 'Chop trees for wood. Hit big rocks for stone and iron. Beat enemies for iron, gems and fur. Giant snakes drop fangs.';
+  document.getElementById('invMsg').textContent = msg || 'Chop trees for wood. Hit big rocks for stone and iron. Beat enemies for iron, gems and fur. Giant snakes drop fangs, crocodiles drop croc skin.';
   const list = invButtons();
   invSel = Math.min(invSel, list.length - 1);
   list.forEach((b, i) => b.classList.toggle('sel', i === invSel));
@@ -3962,6 +4063,33 @@ if (new URLSearchParams(location.search).has('snake')) {
         o.yaw = Math.atan2(player.x - x, player.z - z) + 0.5; o.wanderYaw = o.yaw; o.wanderT = 8; o.wanderSpeed = 0;
         player.pitch = 0.05;
       }
+    }
+  }
+}
+// Shortcut: index.html?croc puts you on a river bank with a calm crocodile in the water in front of you.
+if (new URLSearchParams(location.search).has('croc')) {
+  let river = null;
+  for (let r = 0; r < 5000 && !river; r += 20) {
+    const steps = Math.max(1, Math.floor(2 * Math.PI * r / 20));
+    for (let k = 0; k < steps; k++) {
+      const a = k / steps * Math.PI * 2, x = player.x + Math.cos(a) * r, z = player.z + Math.sin(a) * r;
+      const sm = sample(x, z);
+      if (sm.h < -1.5 && sm.rd < sm.rw && sm.lake < LAKE_T - 0.1 && sm.mtn < 0.1) { river = { x, z }; break; }
+    }
+  }
+  if (river) {
+    let bank = null;
+    for (let i = 0; i < 16 && !bank; i++) {
+      const a = i / 16 * Math.PI * 2;
+      for (let d = 3; d < 40; d += 1) { const x = river.x + Math.sin(a) * d, z = river.z + Math.cos(a) * d; if (sample(x, z).h > 0.8) { bank = { x: x + Math.sin(a) * 3, z: z + Math.cos(a) * 3 }; break; } }
+    }
+    if (bank) {
+      placePlayer({ x: bank.x, z: bank.z, yaw: Math.atan2(river.x - bank.x, -(river.z - bank.z)) });
+      player.pitch = -0.15;
+      settings.animals = true;
+      const c = spawnAnimal('croc', river.x, river.z, { calm: true, home: { x: river.x, z: river.z, r: 18 } });
+      c.yaw = Math.atan2(player.x - river.x, player.z - river.z) + 1.2; c.wanderYaw = c.yaw; c.wanderT = 10; c.wanderSpeed = 0;
+      dragonView = true;
     }
   }
 }

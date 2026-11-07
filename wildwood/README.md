@@ -19,6 +19,7 @@ A 3D exploring game. You walk through a forest that goes on forever: pines, birc
 |---|---|---|---|---|
 | Wolf | 15 | 9 | packs of 2 or 3, mostly in forests | 1 gem, usually 1 fur, sometimes 1 iron |
 | Bear | 20 | 16 | lives by a cave and comes back 2 minutes after it's beaten | 3 gems, 2 iron, 2 fur |
+| Crocodile | 30 | 12 bite, 10 tail whip | in rivers (up to 3 at a time, they spawn in the water near you); they float with just their back showing and come out onto land; the tail whip hits you if you're behind it | 1 croc skin, 1 gem |
 | Goblin | 18 | 8 axe chop | in camps out in open fields (3 to 5 per camp, they come as a gang); camps come back 4 minutes after they're cleared | 3 gems, sometimes iron or wood; 1 in 4 drop their crude goblin axe; clearing a camp leaves 6 gems, 2 iron and an apple by the fire |
 | Leviathan (boss) | 650 | 30 bite, 20 tail whip, water spray | big lakes only; a huge purple sea serpent (about 40 m long) with a blue belly, horns and two pairs of small wings on its back; rears up out of the water to fight, lunges its head out to bite from up to 11 m, and sprays water from its open mouth from up to 24 m away; comes back 5 minutes after it's beaten | 30 gems, 4 iron, 3 apples |
 | Ice ogre (mini-boss) | 200 | 22 club smash; frost slam | snowy mountains; same as an ogre but with bluish-white skin and an ice club. Its frost slam sends a line of ice spikes racing along the ground at you: 15 damage and you're frozen (slow) for 3 seconds | 10 gems, 2 iron, 2 frost crystals, 1 apple |
@@ -37,7 +38,7 @@ A 3D exploring game. You walk through a forest that goes on forever: pines, birc
 
 Open the backpack with **Y** (controller) or **I** / **Tab** (keyboard). It shows your materials, lets you choose what to hold and wear, and lists what you can craft. Crafted things are yours to keep.
 
-- **Wood:** swing at a tree (5 per tree). **Stone:** swing at a big rock (4 per rock, and sometimes iron). **Iron, gems and fur:** beat enemies (wolves usually drop 1 fur, bears 2). **Dragon scale:** one from each dragon you beat. **Giant fangs:** two from each giant snake you beat. **Frost crystals:** two from each ice ogre.
+- **Wood:** swing at a tree (5 per tree). **Stone:** swing at a big rock (4 per rock, and sometimes iron). **Iron, gems and fur:** beat enemies (wolves usually drop 1 fur, bears 2). **Dragon scale:** one from each dragon you beat. **Giant fangs:** two from each giant snake you beat. **Frost crystals:** two from each ice ogre. **Croc skin:** one from each crocodile.
 
 | Item | Damage or armor | Recipe |
 |---|---|---|
@@ -51,6 +52,8 @@ Open the backpack with **Y** (controller) or **I** / **Tab** (keyboard). It show
 | Crude goblin axe | 5, fast, chops 2 wood per hit | only from goblins |
 | Fang dagger | 5, very fast, poisons | 1 giant fang, 1 iron |
 | Iron hammer | 6, slow, knocks enemies far, breaks 3 stone | 1 wood, 5 iron |
+| Croc-tail whip | 6, reaches very far (4.6 m) | 2 croc skin, 1 wood |
+| Croc-jaw mace | 7, big knockback | 2 croc skin, 2 iron |
 | Crystal sword | 6 | 2 iron, 12 gems |
 | Crystal spear | 6, reaches far | 2 wood, 1 iron, 8 gems |
 | Crystal axe | 7, chops 3 wood per hit | 1 wood, 2 iron, 10 gems |
@@ -60,6 +63,7 @@ Open the backpack with **Y** (controller) or **I** / **Tab** (keyboard). It show
 | Iron bow | 6-damage arrows, faster | 2 wood, 3 iron, 1 fur |
 | Venom bow | 7-damage poison arrows | 1 giant fang, 2 wood, 1 fur |
 | Frost bow | 7-damage arrows that slow enemies | 1 frost crystal, 2 wood, 1 fur |
+| Croc-tooth bow | 8-damage arrows | 2 croc skin, 2 wood, 1 fur |
 | Crystal bow | 8-damage arrows | 2 wood, 1 iron, 12 gems |
 | Dragon bow | 12-damage arrows | 1 dragon scale, 2 wood, 2 iron |
 | 10 arrows | for bows (your first bow comes with 10) | 1 wood, 1 stone |
@@ -103,3 +107,4 @@ One `localStorage` key, `wildwood.v1`: music, sound, look direction and enemy se
 - `wildwood/?leviathan` puts you on the shore of the nearest big lake with the Leviathan in the water in front of you. It stays calm until you get within about 16 m or hit it.
 - `wildwood/?mountains` takes you up into the nearest snowy mountains.
 - `wildwood/?iceogre` does the same, with a calm ice ogre 25 m in front of you.
+- `wildwood/?croc` puts you on a river bank with a calm crocodile in the water in front of you.
