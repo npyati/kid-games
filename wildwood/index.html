@@ -134,8 +134,8 @@ nav button:focus-visible,nav a:focus-visible{outline:none;border-color:var(--sun
       <a data-act="home" href="../">All games</a>
     </nav>
     <div class="howto">
-      <div><b>Xbox controller</b>Left stick: walk · Right stick: look · A: jump · RT: swing or shoot · LB: block with a shield · D-pad right: sword ↔ bow · D-pad left: shield on/off · LT or click left stick: run · Y: backpack · Start: menu</div>
-      <div><b>Keyboard and mouse</b>WASD: walk · Mouse: look · Click or F: swing or shoot · Right-click or Q: block · 1: sword · 2: bow · 3: shield on/off · Space: jump · Shift: run · I or Tab: backpack · Esc: menu</div>
+      <div><b>Xbox controller</b>Left stick: walk · Right stick: look · A: jump · RT: swing or shoot · LB: block with a shield (you can still swing) · D-pad right: sword ↔ bow · D-pad left: shield on/off · LT or click left stick: run · Y: backpack · Start: menu</div>
+      <div><b>Keyboard and mouse</b>WASD: walk · Mouse: look · Click or F: swing or shoot · Right-click or Q: block (you can still swing) · 1: sword · 2: bow · 3: shield on/off · Space: jump · Shift: run · I or Tab: backpack · Esc: menu</div>
       <div><b>Animals</b>Foxes, deer and rabbits are friendly. Wolves, and bears from caves, chase you once they spot you. Beat them for gems, iron and apples. They can't swim!</div>
       <div><b>Crafting</b>Swing at trees for wood and at big rocks for stone. Open your backpack to make axes, swords, bows, shields and chest plates.</div>
       <div><b>Bosses</b>Dragonlings live in forest camps: leave them alone and they'll leave you alone. Crocodiles lurk in rivers. Goats (leave them alone!) and ice ogres live in the icy mountains. Goblins camp in open fields. Ogres roam the forests. Giant snakes hide in marshes. The Leviathan lives in big lakes. Dragons sleep in volcanoes on mountaintops, ringed by tall black spikes. They can fly!</div>
@@ -4182,7 +4182,7 @@ function updateHud() {
   document.getElementById('gemCount').textContent = '💎 ' + mats.gems;
 }
 function startSwing() {
-  if (swingT >= 0 || player.ko || player.blocking) return;
+  if (swingT >= 0 || player.ko) return;            // you can swing or shoot with your shield up
   const w = curWeapon();
   if (w.type === 'bow') { if (!shootArrow(w)) return; swingT = 0; swingHit = true; return; }
   swingT = 0; swingHit = false;
