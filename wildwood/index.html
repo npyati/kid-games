@@ -2197,25 +2197,25 @@ function leviathanModel() {
   const bg = new Geo(768); blob(bg, 0, 0.08, 0, 1, 0.8, 1.15, RIDGE, r, 0.06, -1, 0); blob(bg, 0, -0.28, 0, 0.92, 0.56, 1.08, BELLY, r, 0.03, 1, 0);
   tube(bg, [0, 0.75, 0.2], [0, 1.45, -0.35], 0.28, 0.02, 5, RIDGE, r, false);            // spike down the back
   const hg = new Geo(1024);
-  blob(hg, 0, 0.1, 0.25, 0.62, 0.38, 0.85, shade(PURPLE, 0.9), r, 0.06, -1, 0, -0.1);
-  blob(hg, 0, -0.105, 0.52, 0.42, 0.01, 0.56, [0.35, 0.05, 0.25], r, 0, -1, 0);
+  blob(hg, 0, 0.08, 0.25, 0.44, 0.32, 0.88, shade(PURPLE, 0.9), r, 0.05, -1, 0, -0.1);   // slim head
+  blob(hg, 0, -0.105, 0.52, 0.3, 0.01, 0.56, [0.35, 0.05, 0.25], r, 0, -1, 0);
   for (const sd of [-1, 1]) {
-    blob(hg, sd * 0.33, 0.28, 0.6, 0.13, 0.11, 0.13, EYE, r, 0, -1, 0);                 // glowing eyes
-    blob(hg, sd * 0.38, 0.29, 0.66, 0.04, 0.09, 0.04, DK, r, 0, -1, 0);
-    tube(hg, [sd * 0.18, -0.1, 0.86], [sd * 0.17, -0.26, 0.9], 0.05, 0.01, 4, HORN, r, false);   // fangs
+    blob(hg, sd * 0.25, 0.22, 0.58, 0.11, 0.1, 0.11, EYE, r, 0, -1, 0);                 // glowing eyes
+    blob(hg, sd * 0.3, 0.24, 0.63, 0.04, 0.08, 0.04, DK, r, 0, -1, 0);
+    tube(hg, [sd * 0.13, -0.1, 0.86], [sd * 0.12, -0.26, 0.9], 0.045, 0.01, 4, HORN, r, false);   // fangs
     // big curved horns that sweep up and back, with a smaller pair behind them
-    const h0 = [sd * 0.24, 0.36, 0.2], h1 = [sd * 0.4, 0.82, -0.05], h2 = [sd * 0.5, 1.15, -0.5], h3 = [sd * 0.46, 1.3, -1.0];
+    const h0 = [sd * 0.2, 0.34, 0.2], h1 = [sd * 0.4, 0.82, -0.05], h2 = [sd * 0.5, 1.15, -0.5], h3 = [sd * 0.46, 1.3, -1.0];
     tube(hg, h0, h1, 0.15, 0.11, 7, HORN, r, false);
     tube(hg, h1, h2, 0.11, 0.065, 7, HORN, r, false);
     tube(hg, h2, h3, 0.065, 0.008, 6, HORN, r, false);
-    tube(hg, [sd * 0.42, 0.3, -0.1], [sd * 0.7, 0.62, -0.45], 0.09, 0.05, 6, HORN, r, false);
-    tube(hg, [sd * 0.7, 0.62, -0.45], [sd * 0.78, 0.7, -0.85], 0.05, 0.008, 5, HORN, r, false);
-    blob(hg, sd * 0.2, 0.15, 1.02, 0.04, 0.03, 0.03, DK, r, 0, -1, 0);                  // nostrils
+    tube(hg, [sd * 0.33, 0.28, -0.1], [sd * 0.62, 0.62, -0.45], 0.09, 0.05, 6, HORN, r, false);
+    tube(hg, [sd * 0.62, 0.62, -0.45], [sd * 0.7, 0.7, -0.85], 0.05, 0.008, 5, HORN, r, false);
+    blob(hg, sd * 0.09, 0.22, 1.0, 0.035, 0.022, 0.03, DK, r, 0, -1, 0);                  // nostrils
   }
   const jg = new Geo(512);
-  blob(jg, 0, -0.08, 0.58, 0.46, 0.15, 0.55, BELLY, r, 0.03, -1, 0, undefined, 0);
-  blob(jg, 0, -0.004, 0.62, 0.34, 0.008, 0.42, [0.45, 0.08, 0.3], r, 0, -1, 0);
-  for (const sd of [-1, 1]) tube(jg, [sd * 0.18, 0, 0.92], [sd * 0.17, 0.14, 0.95], 0.035, 0.008, 4, HORN, r, false);
+  blob(jg, 0, -0.07, 0.58, 0.33, 0.13, 0.56, BELLY, r, 0.03, -1, 0, undefined, 0);
+  blob(jg, 0, -0.004, 0.62, 0.24, 0.008, 0.42, [0.45, 0.08, 0.3], r, 0, -1, 0);
+  for (const sd of [-1, 1]) tube(jg, [sd * 0.13, 0, 0.92], [sd * 0.12, 0.14, 0.95], 0.032, 0.008, 4, HORN, r, false);
   const tg = new Geo(512), N = 14;
   for (let i = 0; i < N; i++) {
     const a0 = i / N * Math.PI * 2, a1 = (i + 1) / N * Math.PI * 2;
