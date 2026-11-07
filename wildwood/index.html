@@ -1293,10 +1293,10 @@ function initAudio() {
     }
     // wind
     const wsrc = actx.createBufferSource(); wsrc.buffer = brownBuf; wsrc.loop = true;
-    const wf = actx.createBiquadFilter(); wf.type = 'lowpass'; wf.frequency.value = 600;
-    windGain = actx.createGain(); windGain.gain.value = 0.22;
+    const wf = actx.createBiquadFilter(); wf.type = 'lowpass'; wf.frequency.value = 420;
+    windGain = actx.createGain(); windGain.gain.value = 0.07;
     const lfo = actx.createOscillator(); lfo.frequency.value = 0.07;
-    const lfoG = actx.createGain(); lfoG.gain.value = 0.12;
+    const lfoG = actx.createGain(); lfoG.gain.value = 0.035;
     lfo.connect(lfoG); lfoG.connect(windGain.gain);
     wsrc.connect(wf); wf.connect(windGain); windGain.connect(sfxBus);
     wsrc.start(); lfo.start();
@@ -1755,7 +1755,7 @@ function updateWorldSounds(dt) {
   }
   if (audioOn()) {
     waterGain.gain.setTargetAtTime(envWater * 0.9, actx.currentTime, 0.4);
-    windGain.gain.setTargetAtTime(0.16 + (1 - envForest) * 0.12, actx.currentTime, 1.0);
+    windGain.gain.setTargetAtTime(0.05 + (1 - envForest) * 0.04, actx.currentTime, 1.0);
     birdTimer -= dt;
     if (birdTimer <= 0) {
       if (envMarsh > 0.4 && Math.random() < 0.7) croak(); else chirp(envForest);
@@ -2772,7 +2772,7 @@ function updateAnimals(dt) {
       if (a.asleep) { if (canSpot && dist < dragonWakeDist) alertAnimal(a); }
       else {
         wander(a, dx, dz, dt); targetYaw = a.wanderYaw; speed = a.wanderSpeed;
-        if (canSpot && dist < sp.sight && (!playerWet || sp.swims)) {
+        if (canSpot && dist < sp.sight && (!playerWet || sp.swims) && !(a.calm && dist > 7)) {
           const facing = (Math.sin(a.yaw) * dx + Math.cos(a.yaw) * dz) / dist;
           if (dist < sp.sight * 0.5 || facing > -0.2) alertAnimal(a);
         }
@@ -3293,6 +3293,33 @@ if (['dragon', 'wyvern'].some(k => new URLSearchParams(location.search).has(k)))
       onGone: why => { st.alive = false; if (why === 'killed') st.until = nowS() + 600; else if (why === 'ko') st.until = nowS() + 40; } });
     st.dragon.yaw = Math.atan2(player.x - lair.x, player.z - lair.z) + 1.2;   // side-on, so you see the wings
   }
+}
+// Shortcut: index.html?snake takes you to the nearest marsh with a giant snake 15 m in front of you.
+// It stays calm until you get close (or hit it), so you can have a look first.
+if (new URLSearchParams(location.search).has('snake')) {
+  let spot = null;
+  for (let r = 0; r < 4000 && !spot; r += 25) {
+    const steps = Math.max(1, Math.floor(2 * Math.PI * r / 25));
+    for (let k = 0; k < steps; k++) {
+      const a = k / steps * Math.PI * 2, x = player.x + Math.cos(a) * r, z = player.z + Math.sin(a) * r;
+      const sm = sample(x, z);
+      if (sm.marsh > 0.8 && sm.h > 0.2 && sm.h < 1.2) { spot = { x, z }; break; }
+    }
+  }
+  if (spot) placePlayer({ x: spot.x, z: spot.z, yaw: player.yaw });
+  settings.animals = true;
+  const x = player.x + Math.sin(player.yaw) * 15, z = player.z - Math.cos(player.yaw) * 15;
+  snakeState.alive = true;
+  const sn = spawnAnimal('snake', x, z, { calm: true, home: { x, z, r: 10 },
+    onGone: why => { snakeState.alive = false; if (why === 'killed') snakeState.until = nowS() + 240; } });
+  sn.yaw = Math.atan2(player.x - x, player.z - z) + Math.PI / 2;   // lying side-on
+  for (let i = 1; i <= sn.segs.length; i++) {
+    sn.segs[i - 1].x = x - Math.sin(sn.yaw) * i * sn.sp.spacing;
+    sn.segs[i - 1].z = z - Math.cos(sn.yaw) * i * sn.sp.spacing;
+  }
+  sn.wanderYaw = sn.yaw; sn.wanderT = 10; sn.wanderSpeed = 0;   // holds still for a bit so you can look
+  player.pitch = Math.atan2(sn.y + 1 - (player.feet + EYE), 15);
+  dragonView = true;
 }
 // Shortcut: index.html?ogre puts an ogre in the forest 32 m in front of you.
 if (new URLSearchParams(location.search).has('ogre')) {

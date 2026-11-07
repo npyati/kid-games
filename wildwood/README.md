@@ -78,3 +78,4 @@ One `localStorage` key, `wildwood.v1`: music, sound, look direction and enemy se
 
 - `wildwood/?dragon` starts you on the rim of the nearest volcano, looking down at the sleeping dragon (it's already there behind the menu). In this mode it only wakes up if you walk right up to it or hit it. Your saved spot moves there too.
 - `wildwood/?ogre` puts an ogre in the forest 32 m in front of you.
+- `wildwood/?snake` takes you to the nearest marsh with a giant snake lying 15 m in front of you. It stays calm until you get within about 7 m or hit it.
