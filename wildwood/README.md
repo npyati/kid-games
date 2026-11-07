@@ -68,14 +68,14 @@ Open the backpack with **Y** (controller) or **I** / **Tab** (keyboard). It show
 | Crystal axe | 7, chops 3 wood per hit | 1 wood, 2 iron, 10 gems |
 | Venom glaive | 8, reaches far, poisons (2 damage a second for 4 seconds) | 1 giant fang, 2 wood, 3 iron |
 | Dragon sword | 10 | 1 dragon scale, 3 iron |
-| Wooden bow | 4-damage arrows | 4 wood, 1 fur |
-| Iron bow | 6-damage arrows, faster | 2 wood, 3 iron, 1 fur |
-| Venom bow | 7-damage poison arrows | 1 giant fang, 2 wood, 1 fur |
-| Frost bow | 7-damage arrows that slow enemies | 1 frost crystal, 2 wood, 1 fur |
-| Croc-tooth bow | 8-damage arrows | 2 croc skin, 2 wood, 1 fur |
-| Scale bow | 7-damage arrows, shoots quickly | 6 fish scales, 2 wood |
-| Crystal bow | 8-damage arrows | 2 wood, 1 iron, 12 gems |
-| Dragon bow | 12-damage arrows | 1 dragon scale, 2 wood, 2 iron |
+| Wooden bow | 2-damage arrows | 4 wood, 1 fur |
+| Iron bow | 3-damage arrows, faster | 2 wood, 3 iron, 1 fur |
+| Venom bow | 3.5-damage poison arrows | 1 giant fang, 2 wood, 1 fur |
+| Frost bow | 3.5-damage arrows that slow enemies | 1 frost crystal, 2 wood, 1 fur |
+| Croc-tooth bow | 4-damage arrows | 2 croc skin, 2 wood, 1 fur |
+| Scale bow | 3.5-damage arrows, shoots quickly | 6 fish scales, 2 wood |
+| Crystal bow | 4-damage arrows | 2 wood, 1 iron, 12 gems |
+| Dragon bow | 6-damage arrows | 1 dragon scale, 2 wood, 2 iron |
 | 10 arrows | for bows (your first bow comes with 10) | 1 wood, 1 stone |
 | Wooden chest plate | blocks 15% | 8 wood |
 | Fur chest plate | blocks 20% | 6 fur |
