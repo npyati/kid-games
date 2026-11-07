@@ -1,17 +1,19 @@
 # Wildwood
 
-A 3D exploring game. You walk through a forest that goes on forever: pines, birches, leafy trees, ferns, tall grass, flowers, mushrooms and rocks. Every few minutes of walking you reach a river or a lake, and you can wade in and swim. There are also muddy marshes, rocky caves, and very rarely, a dragon's lair.
+A 3D exploring game. You walk through a forest that goes on forever: pines, birches, leafy trees, ferns, tall grass, flowers, mushrooms and rocks. Every few minutes of walking you reach a river or a lake, and you can wade in and swim. There are also icy mountains, muddy marshes, rocky caves, and very rarely, a dragon's lair.
 
 **Play it:** https://npyati.github.io/kid-games/wildwood/
 
 ## Controls
 
-- **Xbox controller:** left stick to walk, right stick to look, RT (or RB) to swing, A to jump, LT (or click the left stick) to run, Start to open the menu. Hold RT to keep swinging. In the menu, use the stick or d-pad and press A to choose, or B to go back.
-- **Keyboard and mouse:** WASD to walk, mouse to look (click the game to grab the mouse), click or F to swing, Space to jump, Shift to run, Esc for the menu. Arrow keys work too.
+- **Xbox controller:** left stick to walk, right stick to look, RT (or RB) to swing or shoot, LB to block with a shield, A to jump, LT (or click the left stick) to run, Start to open the menu. Hold RT to keep swinging. In the menu, use the stick or d-pad and press A to choose, or B to go back.
+- **Keyboard and mouse:** WASD to walk, mouse to look (click the game to grab the mouse), click or F to swing or shoot, right-click or Q to block, Space to jump, Shift to run, Esc for the menu. Arrow keys work too.
 
 ## Animals and fighting
 
 **Friendly animals:** foxes, deer (some with antlers) and rabbits. They run away if you get close, and your swings pass right through them.
+
+**Goats** live in the mountains and are neutral: they leave you alone unless you hit one, then that one and its herd headbutt you (12 health, 6 damage, a big knockback; they drop fur).
 
 | Enemy | Health | Bite | Where | Drops |
 |---|---|---|---|---|
@@ -19,6 +21,7 @@ A 3D exploring game. You walk through a forest that goes on forever: pines, birc
 | Bear | 20 | 16 | lives by a cave and comes back 2 minutes after it's beaten | 3 gems, 2 iron, 2 fur |
 | Goblin | 18 | 8 axe chop | in camps out in open fields (3 to 5 per camp, they come as a gang); camps come back 4 minutes after they're cleared | 3 gems, sometimes iron or wood; 1 in 4 drop their crude goblin axe; clearing a camp leaves 6 gems, 2 iron and an apple by the fire |
 | Leviathan (boss) | 750 | 30 bite, 20 tail whip, water spray | big lakes only; a huge purple sea serpent (about 40 m long) with a blue belly, horns and small wings; rears up out of the water to fight and sprays water from up to 24 m away; comes back 5 minutes after it's beaten | 30 gems, 4 iron, 3 apples |
+| Ice ogre (mini-boss) | 200 | 22 club smash; frost slam | snowy mountains; same as an ogre but with bluish-white skin and an ice club. Its frost slam sends a line of ice spikes racing along the ground at you: 15 damage and you're frozen (slow) for 3 seconds | 10 gems, 2 iron, 2 frost crystals, 1 apple |
 | Ogre (mini-boss) | 150 | 20, a big club smash | wanders forests now and then (about a 1 in 3 chance per minute in a forest), comes back 2½ minutes after it's beaten; slower than you when you run | 8 gems, 2 iron, 2 fur, 1 apple |
 | Giant snake (boss) | 200 | 18 bite, 12 tail whip | marshes; it can swim (about 16 m long); opens its jaw wide and snaps, and whips its tail at you if you're near the tail | 15 gems, 3 iron, 2 apples, 2 giant fangs |
 | Dragon (boss) | 650 | 25 bite, plus fire | two legs and big wings, about 25 m long with its tail; sleeps in a volcano on a mountaintop; comes back 10 minutes after it's beaten | 25 gems, 4 iron, 3 apples, 1 dragon scale |
@@ -34,7 +37,7 @@ A 3D exploring game. You walk through a forest that goes on forever: pines, birc
 
 Open the backpack with **Y** (controller) or **I** / **Tab** (keyboard). It shows your materials, lets you choose what to hold and wear, and lists what you can craft. Crafted things are yours to keep.
 
-- **Wood:** swing at a tree (5 per tree). **Stone:** swing at a big rock (4 per rock, and sometimes iron). **Iron, gems and fur:** beat enemies (wolves usually drop 1 fur, bears 2). **Dragon scale:** one from each dragon you beat. **Giant fangs:** two from each giant snake you beat.
+- **Wood:** swing at a tree (5 per tree). **Stone:** swing at a big rock (4 per rock, and sometimes iron). **Iron, gems and fur:** beat enemies (wolves usually drop 1 fur, bears 2). **Dragon scale:** one from each dragon you beat. **Giant fangs:** two from each giant snake you beat. **Frost crystals:** two from each ice ogre.
 
 | Item | Damage or armor | Recipe |
 |---|---|---|
@@ -53,6 +56,13 @@ Open the backpack with **Y** (controller) or **I** / **Tab** (keyboard). It show
 | Crystal axe | 7, chops 3 wood per hit | 1 wood, 2 iron, 10 gems |
 | Venom glaive | 8, reaches far, poisons (2 damage a second for 4 seconds) | 1 giant fang, 2 wood, 3 iron |
 | Dragon sword | 10 | 1 dragon scale, 3 iron |
+| Wooden bow | 4-damage arrows | 4 wood, 1 fur |
+| Iron bow | 6-damage arrows, faster | 2 wood, 3 iron, 1 fur |
+| Venom bow | 7-damage poison arrows | 1 giant fang, 2 wood, 1 fur |
+| Frost bow | 7-damage arrows that slow enemies | 1 frost crystal, 2 wood, 1 fur |
+| Crystal bow | 8-damage arrows | 2 wood, 1 iron, 12 gems |
+| Dragon bow | 12-damage arrows | 1 dragon scale, 2 wood, 2 iron |
+| 10 arrows | for bows (your first bow comes with 10) | 1 wood, 1 stone |
 | Wooden chest plate | blocks 15% | 8 wood |
 | Fur chest plate | blocks 20% | 6 fur |
 | Stone chest plate | blocks 25% | 10 stone, 2 wood |
@@ -61,14 +71,21 @@ Open the backpack with **Y** (controller) or **I** / **Tab** (keyboard). It show
 | Venom chest plate | blocks 45%, poisons anything that bites you | 1 giant fang, 6 iron |
 | Crystal chest plate | blocks 50% | 4 iron, 20 gems |
 | Dragon chest plate | blocks 60% | 1 dragon scale, 4 iron |
+| Wooden shield | blocks 40% when raised | 6 wood |
+| Iron shield | blocks 60% | 5 iron, 1 wood |
+| Spiked shield | blocks 55%; attackers take 4 damage | 4 iron, 4 stone |
+| Venom shield | blocks 65%; poisons attackers | 1 giant fang, 3 iron |
+| Frost shield | blocks 70%; slows attackers | 1 frost crystal, 3 iron |
+| Crystal shield | blocks 75% | 2 iron, 15 gems |
+| Dragon shield | blocks 90%, even dragon fire | 1 dragon scale, 3 iron |
 
-The two dragon recipes both need the scale, so you have to choose. One snake's two fangs make two of the three fang items (venom glaive, venom chest plate, fang dagger). A poisoned enemy's health bar turns green. The backpack asks you to press a second time before it uses the scale.
+Bows go in your hand like a weapon: RT shoots an arrow where your crosshair points (they drop a little over distance and stick in the ground and trees). A shield goes on your other arm: hold LB to raise it, which blocks hits from in front but slows you down and stops you swinging. The four dragon recipes (sword, chest plate, bow, shield) all need the scale, so you have to choose. One snake's two fangs make two of the three fang items (venom glaive, venom chest plate, fang dagger). A poisoned enemy's health bar turns green. The backpack asks you to press a second time before it uses the scale.
 
 ## How the world is made
 
 - Everything is in `index.html`, drawn with plain WebGL 2 (no libraries).
 - The world is built from a seed in 64 m squares ("chunks") as you walk, and dropped again once they're far behind. Grass, ferns and flowers are only built for the squares close to you.
-- Rivers follow the zero lines of a slow, wiggly noise, and lakes are where a second noise is high. Marshes are where a third noise is high, but only on low ground (so they never leave cliffs next to hills). Goblin camps (at most one per 640 m square, in open fields; the nearest is usually about 500 m away), caves (at most one per 384 m square) and dragon lairs (at most one per 1 km square, on the highest ground there, with a volcano built into the ground: a 14 m cone with a lava-cracked crater, lava streaks and smoke) are placed from the seed too.
+- Rivers follow the zero lines of a slow, wiggly noise, and lakes are where a second noise is high. Marshes are where a third noise is high, but only on low ground (so they never leave cliffs next to hills). Icy mountains (sharp peaks up to about 150 m, snow above about 30 m, icy blue on steep high faces, frosty pines, light snowfall; you reach a range about every 6 minutes of walking; rivers and lakes stay out of them), goblin camps (at most one per 640 m square, in open fields; the nearest is usually about 500 m away), caves (at most one per 384 m square) and dragon lairs (at most one per 1 km square, on the highest ground there, with a volcano built into the ground: a 14 m cone with a lava-cracked crater, lava streaks and smoke) are placed from the seed too.
 - The terrain code sits between `TERRAIN-BEGIN` and `TERRAIN-END` so a checker script can run it in Node. On four seeds: water about once per km (around 1 minute of walking), a marsh about every 1.4 km (around 5 minutes), a cave about every 550 m, and the nearest dragon lair is usually about 550 to 620 m away.
 - Creatures, your hand and items use rounder shapes (each ball has 80 faces instead of 20) than trees and rocks, which there are thousands of.
 - **New world** in the menu picks a new seed.
@@ -84,3 +101,5 @@ One `localStorage` key, `wildwood.v1`: music, sound, look direction and enemy se
 - `wildwood/?snake` takes you to the nearest marsh with a giant snake lying 15 m in front of you. It stays calm until you get within about 7 m or hit it.
 - `wildwood/?goblin` takes you to the nearest goblin camp, 22 m from the fire. The goblins stay calm until you get within about 7 m or hit one.
 - `wildwood/?leviathan` puts you on the shore of the nearest big lake with the Leviathan in the water in front of you. It stays calm until you get within about 16 m or hit it.
+- `wildwood/?mountains` takes you up into the nearest snowy mountains.
+- `wildwood/?iceogre` does the same, with a calm ice ogre 25 m in front of you.
