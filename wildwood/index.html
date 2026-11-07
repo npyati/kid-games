@@ -137,7 +137,7 @@ nav button:focus-visible,nav a:focus-visible{outline:none;border-color:var(--sun
       <div><b>Keyboard and mouse</b>WASD: walk · Mouse: look · Click or F: swing · Space: jump · Shift: run · I or Tab: backpack · Esc: menu</div>
       <div><b>Animals</b>Foxes, deer and rabbits are friendly. Wolves, and bears from caves, chase you once they spot you. Beat them for gems, iron and apples. They can't swim!</div>
       <div><b>Crafting</b>Swing at trees for wood and at big rocks for stone. Open your backpack to make axes, swords and chest plates.</div>
-      <div><b>Bosses</b>Giant snakes hide in marshes. Wyverns (a kind of dragon) sleep in rare lairs on mountaintops, ringed by tall black spikes.</div>
+      <div><b>Bosses</b>Giant snakes hide in marshes. Dragons sleep in volcanoes on mountaintops, ringed by tall black spikes. They can fly!</div>
     </div>
     <p id="padStatus">Plug in an Xbox controller and press any button.</p>
   </div>
@@ -285,7 +285,7 @@ function riverN(x, z) {
 }
 // Fills S with everything the world needs to know about one spot.
 const S = { h: 0, rd: 0, rw: 0, lake: 0, forest: 0, pine: 0, water: 0, marsh: 0 };
-function sample(x, z) {
+function sampleBase(x, z) {
   const n0 = riverN(x, z), nx = riverN(x + 3, z), nz = riverN(x, z + 3);
   const g = Math.hypot(nx - n0, nz - n0) / 3 + 1e-9;
   const rd = Math.abs(n0) / g;                  // rough distance (m) to the river's middle
@@ -317,6 +317,29 @@ function sample(x, z) {
   return S;
 }
 
+// The ground everywhere, including the volcano at each dragon lair.
+const VOLC_R = 24, VOLC_RIM = 10, VOLC_H = 14, VOLC_DEPTH = 4.5;
+function volcanoH(d) {      // height of the volcano above its base, d metres from the middle
+  if (d >= VOLC_RIM) {      // a cone that gets steeper near the top, with a soft foot
+    const t = Math.max(0, Math.min(1, (VOLC_R - d) / (VOLC_R - VOLC_RIM)));
+    return VOLC_H * Math.pow(t, 1.6) * smooth(0, 0.15, t);
+  }
+  return VOLC_H - VOLC_DEPTH * smooth(VOLC_RIM, VOLC_RIM - 3, d);
+}
+function sample(x, z) {
+  sampleBase(x, z);
+  const l = lairInCell(Math.floor(x / LAIR_CELL), Math.floor(z / LAIR_CELL));
+  if (l) {
+    const d = Math.hypot(x - l.x, z - l.z);
+    if (d < VOLC_R + 8) {
+      const w = smooth(VOLC_R + 8, VOLC_R - 2, d);
+      S.h += (l.h + volcanoH(d) - S.h) * w;
+      S.forest *= 1 - w; S.marsh *= 1 - w;
+    }
+  }
+  return S;
+}
+
 // Caves (where bears live): at most one per 384 m square, on dry hills, facing downhill.
 const CAVE_CELL = 384, LAIR_CELL = 1024;
 const caveCache = new Map(), lairCache = new Map();
@@ -328,9 +351,9 @@ function caveInCell(ix, iz) {
   if (r() < 0.5) {
     for (let t = 0; t < 6 && !c; t++) {
       const x = (ix + 0.15 + r() * 0.7) * CAVE_CELL, z = (iz + 0.15 + r() * 0.7) * CAVE_CELL;
-      const s = sample(x, z);
+      const s = sampleBase(x, z);
       if (s.h > 3 && s.water < 0.2 && s.marsh < 0.1) {
-        const hx = sample(x + 6, z).h - sample(x - 6, z).h, hz = sample(x, z + 6).h - sample(x, z - 6).h;
+        const hx = sampleBase(x + 6, z).h - sampleBase(x - 6, z).h, hz = sampleBase(x, z + 6).h - sampleBase(x, z - 6).h;
         c = { x, z, yaw: (hx || hz) ? Math.atan2(-hx, -hz) : r() * 6.28, key: 'c' + k };
       }
     }
@@ -348,10 +371,10 @@ function lairInCell(ix, iz) {
     let best = -1e9, bx = 0, bz = 0;
     for (let j = 0; j < 6; j++) for (let i = 0; i < 6; i++) {
       const x = (ix + 0.15 + 0.7 * (i + r()) / 6) * LAIR_CELL, z = (iz + 0.15 + 0.7 * (j + r()) / 6) * LAIR_CELL;
-      const h = sample(x, z).h;
+      const h = sampleBase(x, z).h;
       if (h > best) { best = h; bx = x; bz = z; }
     }
-    if (best > 11) l = { x: bx, z: bz, key: 'l' + k };
+    if (best > 11) l = { x: bx, z: bz, h: best, key: 'l' + k };
   }
   lairCache.set(k, l);
   return l;
@@ -360,7 +383,7 @@ function featureNear(x, z) {
   const c = caveInCell(Math.floor(x / CAVE_CELL), Math.floor(z / CAVE_CELL));
   if (c && (x - c.x) ** 2 + (z - c.z) ** 2 < 15 * 15) return true;
   const l = lairInCell(Math.floor(x / LAIR_CELL), Math.floor(z / LAIR_CELL));
-  return !!(l && (x - l.x) ** 2 + (z - l.z) ** 2 < 28 * 28);
+  return !!(l && (x - l.x) ** 2 + (z - l.z) ** 2 < 36 * 36);
 }
 /* TERRAIN-END */
 
@@ -791,7 +814,7 @@ function buildCave(g, ch, c) {
 function buildLair(g, ch, l) {
   const rng = mulberry32(hashInt(Math.round(l.x), Math.round(l.z), 6));
   for (let i = 0; i < 7; i++) {               // tall black spikes you can see from far away
-    const a = i / 7 * Math.PI * 2 + rng() * 0.3, d = 18 + rng() * 4;
+    const a = i / 7 * Math.PI * 2 + rng() * 0.3, d = 27 + rng() * 4;
     const x = l.x + Math.sin(a) * d, z = l.z + Math.cos(a) * d, y = sample(x, z).h;
     const h = 14 + rng() * 12;
     tube(g, [x, y - 1, z], [x + (rng() - 0.5) * 3, y + h, z + (rng() - 0.5) * 3], 1.5 + rng() * 0.7, 0.12, 6, [0.14, 0.12, 0.15], rng, false);
@@ -799,7 +822,7 @@ function buildLair(g, ch, l) {
     ch.maxY = Math.max(ch.maxY, y + h + 2);
   }
   for (let i = 0; i < 30; i++) {              // gold and old bones in the middle
-    const a = rng() * 6.28, d = 1 + rng() * 7, x = l.x + Math.sin(a) * d, z = l.z + Math.cos(a) * d;
+    const a = rng() * 6.28, d = 0.5 + rng() * 5.5, x = l.x + Math.sin(a) * d, z = l.z + Math.cos(a) * d;
     const y = sample(x, z).h;
     if (i < 22) blob(g, x, y + 0.05, z, 0.25 + rng() * 0.35, 0.12 + rng() * 0.15, 0.25 + rng() * 0.35, [0.98, 0.78, 0.2], rng, 0.2, -1, 0);
     else { const b = rng() * 6.28; tube(g, [x - Math.cos(b) * 0.6, y + 0.1, z - Math.sin(b) * 0.6], [x + Math.cos(b) * 0.6, y + 0.1, z + Math.sin(b) * 0.6], 0.09, 0.09, 5, [0.92, 0.9, 0.82], rng, true); }
@@ -947,6 +970,18 @@ function groundColor(h, ny, forest, v, marsh) {
   return [r, g, b];
 }
 
+function volcanoColor(c, x, z, l) {
+  const d = Math.hypot(x - l.x, z - l.z);
+  if (d > VOLC_R + 6) return c;
+  const k = smooth(VOLC_R + 6, VOLC_R - 4, d), v = perlin(x * 0.3, z * 0.3);
+  let r = [0.24 + v * 0.05, 0.21 + v * 0.04, 0.21];
+  if (d < VOLC_RIM - 2.5) r = perlin(x * 0.45 + 3, z * 0.45) > 0.2 ? [1.0, 0.42 + v * 0.2, 0.06] : [0.17, 0.13, 0.12];   // glowing lava cracks
+  else if (d > VOLC_RIM && d < VOLC_R - 3) {              // a few lava streaks running down the sides
+    const ang = Math.atan2(x - l.x, z - l.z);
+    if (Math.sin(ang * 5 + perlin(x * 0.08, z * 0.08) * 3 + l.x) > 0.93 - (d - VOLC_RIM) * 0.006) r = [1.0, 0.38, 0.05];
+  }
+  return mixc(c, r, k);
+}
 function chunkHeight(ch, x, z) {
   const fx = (x - ch.x0) / STEP, fz = (z - ch.z0) / STEP;
   let i = Math.floor(fx), j = Math.floor(fz);
@@ -983,11 +1018,13 @@ function buildChunk(cx, cz) {
   }
   const tg = new Geo(NV * NV);
   let minY = Infinity, maxY = -Infinity;
+  const lairHere = lairInCell(Math.floor((x0 + 32) / LAIR_CELL), Math.floor((z0 + 32) / LAIR_CELL));
   for (let j = 0; j <= SEG; j++) {
     for (let i = 0; i <= SEG; i++) {
       const h = H[(i + 1) + (j + 1) * GW];
       const n = norm3(H[i + (j + 1) * GW] - H[(i + 2) + (j + 1) * GW], 2 * STEP, H[(i + 1) + j * GW] - H[(i + 1) + (j + 2) * GW]);
-      const c = groundColor(h, n[1], forestA[i + j * NV], varA[i + j * NV], marshA[i + j * NV]);
+      let c = groundColor(h, n[1], forestA[i + j * NV], varA[i + j * NV], marshA[i + j * NV]);
+      if (lairHere) c = volcanoColor(c, x0 + i * STEP, z0 + j * STEP, lairHere);
       tg.v(x0 + i * STEP, h, z0 + j * STEP, n[0], n[1], n[2], -1, c[0], c[1], c[2], 0);
       if (h < minY) minY = h; if (h > maxY) maxY = h;
     }
@@ -1056,7 +1093,7 @@ function buildChunk(cx, cz) {
   const cave = caveInCell(Math.floor((x0 + 32) / CAVE_CELL), Math.floor((z0 + 32) / CAVE_CELL));
   if (inChunk(cave)) { buildCave(vg, ch, cave); ch.pad = 12; }
   const lair = lairInCell(Math.floor((x0 + 32) / LAIR_CELL), Math.floor((z0 + 32) / LAIR_CELL));
-  if (inChunk(lair)) { buildLair(vg, ch, lair); ch.pad = 26; }
+  if (inChunk(lair)) { buildLair(vg, ch, lair); ch.pad = 36; }
   ch.veg = makeMesh(vg);
   chunks.set(ckey(cx, cz), ch);
   return ch;
@@ -1067,11 +1104,14 @@ function buildDetail(ch) {
   const g = new Geo(32768);
   const { cx, cz, x0, z0 } = ch, NV = SEG + 1;
   const GC = 48, gs = CH / GC;
+  const lairHere = lairInCell(Math.floor((x0 + 32) / LAIR_CELL), Math.floor((z0 + 32) / LAIR_CELL));
+  const onVolcano = (x, z) => lairHere && Math.hypot(x - lairHere.x, z - lairHere.z) < VOLC_R + 3;
   const meadowB = [0.24, 0.38, 0.13], meadowT = [0.50, 0.66, 0.28];
   const forestB = [0.16, 0.28, 0.10], forestT = [0.36, 0.52, 0.20];
   for (let j = 0; j < GC; j++) for (let i = 0; i < GC; i++) {
     const rng = mulberry32(hashInt(cx * GC + i, cz * GC + j, 3));
     const px = x0 + (i + rng()) * gs, pz = z0 + (j + rng()) * gs;
+    if (onVolcano(px, pz)) continue;
     const y = chunkHeight(ch, px, pz);
     const fi = Math.min(SEG, Math.round((px - x0) / STEP)), fj = Math.min(SEG, Math.round((pz - z0) / STEP));
     const forest = ch.forestA[fi + fj * NV], marsh = ch.marshA[fi + fj * NV];
@@ -1101,6 +1141,7 @@ function buildDetail(ch) {
   for (let j = 0; j < FC; j++) for (let i = 0; i < FC; i++) {
     const rng = mulberry32(hashInt(cx * FC + i, cz * FC + j, 4));
     const px = x0 + (i + rng()) * fs, pz = z0 + (j + rng()) * fs;
+    if (onVolcano(px, pz)) continue;
     const y = chunkHeight(ch, px, pz);
     if (y < 1.3) continue;
     const fi = Math.min(SEG, Math.round((px - x0) / STEP)), fj = Math.min(SEG, Math.round((pz - z0) / STEP));
@@ -1990,7 +2031,7 @@ function dragonModel() {
   tube(g, [0, 3.2, 2.2], [0, 4.6, 4.0], 0.85, 0.6, 8, RED, r, false);
   B(0, 4.9, 4.6, 0.75, 0.6, 0.95, RED);
   B(0, 4.7, 5.4, 0.5, 0.42, 0.65, RED);
-  B(0, 4.35, 5.15, 0.45, 0.2, 0.6, DARK);
+  B(0, 4.55, 5.2, 0.4, 0.14, 0.55, [0.55, 0.05, 0.08], 0.05);          // inside of the mouth
   for (const sd of [-1, 1]) {
     B(sd * 0.42, 5.12, 4.95, 0.14, 0.12, 0.12, EYE, 0);
     B(sd * 0.47, 5.13, 5.0, 0.05, 0.1, 0.06, [0.05, 0.02, 0.02], 0);
@@ -2002,9 +2043,17 @@ function dragonModel() {
     const top = 2.6 + 1.35 * Math.sqrt(Math.max(0, 1 - (z / 2.8) ** 2));
     tube(g, [0, top - 0.2, z], [0, top + 0.75, z - 0.25], 0.22, 0.02, 4, DARK, r, false);
   }
-  const tail = [[0, 2.5, -2.4], [0, 2.0, -4.4], [0, 1.4, -6.3], [0, 1.0, -7.9]], tr = [0.85, 0.6, 0.4, 0.2];
-  for (let i = 0; i < 3; i++) tube(g, tail[i], tail[i + 1], tr[i], tr[i + 1], 7, RED, r, false);
-  B(0, 1.0, -8.3, 0.5, 0.1, 0.6, DARK, 0.1);
+  const tail = [[0, 2.55, -2.4], [0, 2.25, -4.6], [0, 2.0, -6.8], [0, 1.9, -9.0], [0, 1.9, -11.0]], tr = [0.85, 0.65, 0.45, 0.28, 0.12];
+  for (let i = 0; i < tail.length - 1; i++) tube(g, tail[i], tail[i + 1], tr[i], tr[i + 1], 7, RED, r, false);
+  for (let z = -3.4; z >= -9.5; z -= 1.2) {         // little spikes down the tail
+    const t = (-2.4 - z) / 8.6, y = 2.55 + (1.9 - 2.55) * t;
+    tube(g, [0, y + 0.4 - t * 0.2, z], [0, y + 0.85 - t * 0.4, z - 0.3], 0.16 - t * 0.08, 0.02, 4, DARK, r, false);
+  }
+  B(0, 1.9, -11.4, 0.55, 0.1, 0.65, DARK, 0.1);
+  const jg = new Geo(512);                            // lower jaw, hinged at (0, 4.45, 4.6)
+  blob(jg, 0, -0.12, 0.6, 0.45, 0.18, 0.66, DARK, r, 0.1, -1, 0);
+  blob(jg, 0, 0.0, 0.55, 0.3, 0.05, 0.45, [0.85, 0.25, 0.3], r, 0.05, -1, 0);
+  for (const sd of [-1, 1]) for (const zz of [0.75, 1.05]) tube(jg, [sd * 0.27, -0.02, zz], [sd * 0.27, 0.22, zz + 0.03], 0.05, 0.01, 4, HORN, r, false);
   const lg = new Geo(256);
   blob(lg, 0, -0.1, -0.1, 0.62, 0.75, 0.75, RED, r, 0.1, -1, 0);                       // big thigh
   tube(lg, [0, -0.3, -0.1], [0, -1.05, -0.5], 0.52, 0.36, 7, RED, r, false);
@@ -2017,7 +2066,7 @@ function dragonModel() {
   tube(wg, E, F1, 0.1, 0.04, 4, DARK, r, false); tube(wg, E, F2, 0.1, 0.04, 4, DARK, r, false);
   const M = [0.58, 0.16, 0.13];
   for (const [p, q] of [[E, T], [T, F1], [F1, F2], [F2, BK]]) tri(wg, SH, p, q, faceN(SH, p, q), 0, M, shade(M, 1.1), shade(M, 0.9), 0, 0, 0);
-  return { body: makeMesh(g), leg: makeMesh(lg), wing: makeMesh(wg) };
+  return { body: makeMesh(g), leg: makeMesh(lg), wing: makeMesh(wg), jaw: makeMesh(jg) };
 }
 const SPECIES = {
   // friendly: they run away if you get close, and you can't hurt them
@@ -2034,8 +2083,8 @@ const SPECIES = {
   // bosses
   snake: { name: 'Giant snake', boss: true, swims: true, hp: 200, dmg: 18, reach: 3.3, windup: 0.45, cd: 1.5, walk: 1.8, run: 5.0, sight: 28, turn: 2.5,
     radius: 1.0, drops: { gems: 15, iron: 3, apples: 2 }, knock: 0, sinkH: 2.0, legLen: 1, giveUp: 55, segs: 16, spacing: 1.15 },
-  dragon: { name: 'Wyvern', boss: true, scale: 1.3, tilt: -0.2, hp: 500, dmg: 25, reach: 7.0, windup: 0.8, cd: 2.2, walk: 2.0, run: 4.6, sight: 40, turn: 1.4,
-    radius: 3.9, drops: { gems: 25, iron: 4, scale: 1, apples: 3 }, knock: 0, sinkH: 8, giveUp: 75, legLen: 1.8, hipY: 1.95, hips: [[1.2, -0.4], [-1.2, -0.4]] },
+  dragon: { name: 'Dragon', boss: true, scale: 1.5, tilt: -0.2, hp: 500, dmg: 25, reach: 8.0, windup: 0.8, cd: 2.2, walk: 2.0, run: 4.6, sight: 40, turn: 1.4,
+    radius: 4.5, drops: { gems: 25, iron: 4, scale: 1, apples: 3 }, knock: 0, sinkH: 9, giveUp: 75, legLen: 1.8, hipY: 1.95, hips: [[1.2, -0.4], [-1.2, -0.4]] },
 };
 hiDetail(() => {
 SPECIES.fox.model = canineModel(1, [0.88, 0.42, 0.12], [0.96, 0.92, 0.86], [0.18, 0.12, 0.1], [0.96, 0.94, 0.9], 1.3);
@@ -2234,7 +2283,7 @@ function spawnAnimal(kind, x, z, opts) {
     atkCd: 0, windup: 0, lunge: 0, flash: 0, dead: false, deadT: 0, rollDir: Math.random() < 0.5 ? 1 : -1,
     kx: 0, kz: 0, bar: null, barFill: null, waterT: 0, fleeT: 0, remove: false, goneWhy: 'gone',
     fireT: 0, fireCd: 2, fireTick: 0, fireAcc: 0, asleep: false, home: null, onGone: null, ambient: false,
-    buck: kind === 'deer' && Math.random() < 0.5 };
+    buck: kind === 'deer' && Math.random() < 0.5, flying: false, flyAlt: 0, flyCd: 10, flyT: 0, roarT: 0 };
   if (opts) Object.assign(a, opts);
   if (a.home) a.yaw = Math.random() * 6.28;
   if (kind === 'snake') {
@@ -2305,7 +2354,7 @@ function updateLairs(dt) {
     if (now > st.until && d > 45 && d < 320 && now > (st.roarAt || 0) && !(st.dragon && st.dragon.alerted)) {
       st.roarAt = now + 25 + Math.random() * 15;
       distantRoar(l, d);
-      if (!st.hinted) { st.hinted = true; toast('🐉 You hear a wyvern roar. Its lair must be close!'); }
+      if (!st.hinted) { st.hinted = true; toast('🐉 You hear a dragon roar. Its lair must be close!'); }
     }
   }
   if (envMarsh > 0.5 && !snakeState.alive && now > snakeState.until && Math.random() < 0.012) {
@@ -2343,12 +2392,13 @@ function alertAnimal(a) {
   a.alerted = true; a.asleep = false; a.waterT = 0;
   makeBar(a);
   spotSound(a.kind);
-  if (a.kind === 'dragon') { rumble(0.9, 0.9, 700); shake = 0.6; toast('🐉 The wyvern woke up!'); }
+  if (a.kind === 'dragon') { rumble(0.9, 0.9, 700); shake = 0.6; a.roarT = 1.5; a.flyCd = 9 + Math.random() * 4; toast('🐉 The dragon woke up!'); }
   if (a.kind === 'snake') toast('🐍 A giant snake!');
   if (a.kind === 'wolf') for (const b of animals) if (b !== a && !b.alerted && !b.dead && b.kind === 'wolf' && Math.hypot(b.x - a.x, b.z - a.z) < 15) { b.alerted = true; b.waterT = 0; makeBar(b); }
 }
 function calmAnimal(a) {
   a.alerted = false; a.windup = 0; a.fireT = 0;
+  if (a.flying) a.flyT = 0;
   a.wanderYaw = Math.atan2(a.x - player.x, a.z - player.z);  // wander away from you
   a.wanderSpeed = a.sp.walk; a.wanderT = 5;
   if (a.hp >= a.sp.hp) dropBar(a);
@@ -2395,12 +2445,26 @@ function fight(a, dt, dist, dx, dz, playerWet) {
   const sp = a.sp;
   const canBite = !playerWet || sp.swims;
   if (a.kind === 'dragon') {
-    a.fireCd -= dt;
-    if (a.fireT > 0) {
+    a.fireCd -= dt; a.flyCd -= dt;
+    if (a.flying) a.flyT -= dt;
+    if (a.fireT > 0) {                       // breathing fire, on the ground or hovering
       a.fireT -= dt;
       emitFire(a, dt);
       a.fireTick -= dt;
-      if (a.fireTick <= 0) { a.fireTick = 0.2; if (inFire(a)) hurtPlayer(4, dx / dist, dz / dist, 1.5); }
+      if (a.fireTick <= 0) { a.fireTick = 0.25; if (inFire(a)) hurtPlayer(a.flying ? 3 : 4, dx / dist, dz / dist, 1.5); }
+      return 0;
+    }
+    if (a.flying) {
+      if (a.flyT > 1 && a.flyAlt > 7 && a.fireCd <= 0 && dist < 24) { a.fireT = 1.6; a.fireCd = 4.5 + Math.random() * 2; fireSound(); return 0; }
+      if (a.flyT <= 0 && groundAt(a.x, a.z) < 0.3) a.flyT = 0.5;   // don't land in water
+      a.circleAng += dt * 0.5;                // circle around you
+      const tx = player.x + Math.sin(a.circleAng) * 15, tz = player.z + Math.cos(a.circleAng) * 15;
+      a.flyYaw = Math.atan2(tx - a.x, tz - a.z);
+      return a.flyT > 0 ? 9 : 4;
+    }
+    if (a.windup <= 0 && (a.flyCd <= 0 || (playerWet && a.flyCd < 6)) && dist > 6) {   // take off
+      a.flying = true; a.flyT = 11 + Math.random() * 4; a.circleAng = Math.atan2(a.x - player.x, a.z - player.z); a.flyYaw = a.yaw;
+      spotSound('dragon'); rumble(0.5, 0.6, 400); a.roarT = 1.2;
       return 0;
     }
     if (a.windup <= 0 && dist >= sp.reach && dist < 22 && a.fireCd <= 0) {
@@ -2412,6 +2476,7 @@ function fight(a, dt, dist, dx, dz, playerWet) {
     a.windup -= dt;
     if (a.windup <= 0) {
       a.lunge = 1; a.atkCd = sp.cd;
+      if (a.kind === 'dragon') { thump(0.5); noiseHit('lowpass', 700, 0.8, 0.15, 0.4); }   // CHOMP
       if (dist < sp.reach + 0.7 && canBite) hurtPlayer(sp.dmg, dx / dist, dz / dist, sp.boss ? 9 : 6);
     }
     return 0;
@@ -2426,28 +2491,61 @@ function fight(a, dt, dist, dx, dz, playerWet) {
   a.waterT = 0;
   return sp.run;
 }
-function inFire(a) {
+// where the dragon's body is (shared by drawing and by the fire)
+function xform(M, p) {
+  return [M[0] * p[0] + M[4] * p[1] + M[8] * p[2] + M[12], M[1] * p[0] + M[5] * p[1] + M[9] * p[2] + M[13], M[2] * p[0] + M[6] * p[1] + M[10] * p[2] + M[14]];
+}
+function creatureMats(a, sink, lift, roll) {
+  const sp = a.sp;
+  const pitch = (a.windup > 0 ? -0.18 : a.lunge * 0.2) * (sp.boss ? 0.5 : 1);
+  const base = mChain(mT(a.x, a.y - sink + lift, a.z), mRy(a.yaw), mRz(roll), mT(0, 0, a.lunge * 0.7 * sp.legLen), mRx(pitch), mS(sp.scale || 1));
+  const tilt = !sp.tilt || a.asleep ? 0 : (a.flyAlt || 0) > 1 ? -0.05 : sp.tilt;
+  const body = tilt ? mChain(base, mT(0, sp.hipY, sp.hips[0][1]), mRx(tilt), mT(0, -sp.hipY, -sp.hips[0][1])) : base;
+  return { base, body };
+}
+// fire goes the way the dragon faces, tipped up or down to reach your height
+function fireAim(a) {
+  const { body } = creatureMats(a, 0, 0, 0);
+  const m = xform(body, [0, 4.5, 6.1]);
   const sy = Math.sin(a.yaw), cy = Math.cos(a.yaw);
-  const mx = a.x + sy * 7.6, mz = a.z + cy * 7.6;
-  const vx = player.x - mx, vz = player.z - mz, d = Math.hypot(vx, vz) || 0.001;
-  if (d > 18) return false;
-  return d < 2 || (vx * sy + vz * cy) / d > 0.8;
+  const hd = Math.max(4, Math.hypot(player.x - m[0], player.z - m[2]));
+  const slope = Math.max(-2, Math.min(0.3, (player.feet + 1.0 - m[1]) / hd));
+  const L = Math.hypot(1, slope);
+  return { m, d: [sy / L, slope / L, cy / L] };
+}
+function inFire(a) {
+  const { m, d } = fireAim(a);
+  const px = player.x - m[0], py = player.feet + 1 - m[1], pz = player.z - m[2];
+  const t = Math.max(0, Math.min(22, px * d[0] + py * d[1] + pz * d[2]));
+  const ex = px - d[0] * t, ey = py - d[1] * t, ez = pz - d[2] * t;
+  return Math.hypot(ex, ey, ez) < 1.3 + t * 0.07;     // the flame cone gets a little wider further out
 }
 function emitFire(a, dt) {
-  a.fireAcc += dt * 40;
-  const sy = Math.sin(a.yaw), cy = Math.cos(a.yaw);
+  a.fireAcc += dt * 45;
+  const { m, d } = fireAim(a);
   while (a.fireAcc >= 1) {
     a.fireAcc -= 1;
-    const spd = 13 + Math.random() * 4;
-    flames.push({ x: a.x + sy * 7.6, y: a.y + 7.0, z: a.z + cy * 7.6,
-      vx: (sy + (Math.random() - 0.5) * 0.3) * spd, vy: (-0.42 + (Math.random() - 0.5) * 0.2) * spd, vz: (cy + (Math.random() - 0.5) * 0.3) * spd,
-      t: 0, life: 0.8 + Math.random() * 0.3, m: Math.random() * 3 | 0 });
+    const spd = 22 + Math.random() * 5, j = () => (Math.random() - 0.5) * 0.22;
+    flames.push({ x: m[0], y: m[1], z: m[2], vx: (d[0] + j()) * spd, vy: (d[1] + j()) * spd, vz: (d[2] + j()) * spd,
+      t: 0, life: 0.95 + Math.random() * 0.3, m: Math.random() * 3 | 0 });
   }
+}
+let smoke = [], smokeTimer = 0;
+const smokeMesh = (() => { const g = new Geo(64); blob(g, 0, 0, 0, 1, 1, 1, [0.72, 0.7, 0.68], mulberry32(40), 0.25, 1, 0); return makeMesh(g); })();
+function updateSmoke(dt) {
+  smokeTimer -= dt;
+  if (smokeTimer <= 0) {
+    smokeTimer = 0.4;
+    const l = nearestLair(player.x, player.z, 280);
+    if (l) smoke.push({ x: l.x + (Math.random() - 0.5) * 6, y: l.h + VOLC_H - VOLC_DEPTH + 5, z: l.z + (Math.random() - 0.5) * 6, t: 0, life: 7 + Math.random() * 3 });
+  }
+  for (const p of smoke) { p.t += dt; p.y += dt * 2.4; p.x += dt * 0.7; }
+  smoke = smoke.filter(p => p.t < p.life);
 }
 function updateFlames(dt) {
   for (const f of flames) {
     f.t += dt;
-    const k = Math.exp(-dt * 1.8);
+    const k = Math.exp(-dt * 0.9);
     f.vx *= k; f.vz *= k; f.vy = f.vy * k + dt * 2;
     f.x += f.vx * dt; f.y += f.vy * dt; f.z += f.vz * dt;
     const g = groundAt(f.x, f.z) + 0.3;
@@ -2460,7 +2558,13 @@ function updateAnimals(dt) {
   const playerWet = groundAt(player.x, player.z) < 0.25;
   for (const a of animals) {
     const sp = a.sp;
-    if (a.dead) { a.deadT += dt; if (a.deadT > (sp.boss ? 3.6 : 2.6)) { a.remove = true; a.goneWhy = 'killed'; } continue; }
+    if (a.dead) {
+      a.deadT += dt;
+      if (a.flyAlt > 0) { a.flyAlt = Math.max(0, a.flyAlt - dt * 14); a.y = groundAt(a.x, a.z) + a.flyAlt; }   // falls out of the sky
+      if (a.deadT > (sp.boss ? 3.6 : 2.6)) { a.remove = true; a.goneWhy = 'killed'; }
+      continue;
+    }
+    a.roarT = Math.max(0, (a.roarT || 0) - dt);
     a.flash = Math.max(0, a.flash - dt * 5);
     a.atkCd -= dt;
     const dx = player.x - a.x, dz = player.z - a.z, dist = Math.hypot(dx, dz) || 0.001;
@@ -2485,20 +2589,27 @@ function updateAnimals(dt) {
     } else {
       targetYaw = Math.atan2(dx, dz);
       speed = fight(a, dt, dist, dx, dz, playerWet);
+      if (a.flying && a.fireT <= 0 && isFinite(a.flyYaw)) targetYaw = a.flyYaw;
     }
     a.lunge = Math.max(0, a.lunge - dt * 3);
     let dy = targetYaw - a.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
-    a.yaw += Math.max(-sp.turn * dt, Math.min(sp.turn * dt, dy));
+    const turn = a.flying ? 2.6 : sp.turn;
+    a.yaw += Math.max(-turn * dt, Math.min(turn * dt, dy));
     const want = speed * Math.max(0.15, Math.cos(dy));
     a.speed += (want - a.speed) * Math.min(1, dt * 6);
     const moveYaw = a.kind === 'snake' ? a.yaw + Math.sin(a.legPhase) * 0.45 : a.yaw;
     const nx = a.x + (Math.sin(moveYaw) * a.speed + a.kx) * dt, nz = a.z + (Math.cos(moveYaw) * a.speed + a.kz) * dt;
     const k = Math.exp(-dt * 6); a.kx *= k; a.kz *= k;
-    if (sp.swims || groundAt(nx, nz) > 0.3) { a.x = nx; a.z = nz; }
+    if (sp.swims || a.flyAlt > 1 || groundAt(nx, nz) > 0.3) { a.x = nx; a.z = nz; }
     else if (a.fleeT > 0) a.yaw += 1.2;           // running into water: turn aside
     else if (!a.alerted) a.wanderT = 0;
     if (!sp.boss) pushOutTrees(a, sp.radius * 0.6);
-    a.y = sp.swims ? Math.max(groundAt(a.x, a.z), -0.25) : groundAt(a.x, a.z);
+    if (a.kind === 'dragon') {
+      const want = a.flying && a.flyT > 0 ? 12 : 0;
+      a.flyAlt = (a.flyAlt || 0) + (want - (a.flyAlt || 0)) * Math.min(1, dt * (want > a.flyAlt ? 0.9 : 1.4));
+      if (a.flying && a.flyT <= 0 && a.flyAlt < 0.3) { a.flying = false; a.flyAlt = 0; a.flyCd = 14 + Math.random() * 8; thump(0.5); shake = 0.4; }
+    }
+    a.y = sp.swims ? Math.max(groundAt(a.x, a.z), -0.25) : groundAt(a.x, a.z) + (a.flyAlt || 0);
     a.legPhase += Math.abs(a.speed) * dt * (sp.hop ? 7 : a.kind === 'snake' ? 1.4 : 1.6 / sp.legLen);
     if (a.kind === 'snake') {
       let px = a.x, pz = a.z;
@@ -2540,7 +2651,7 @@ function clearEnemies() {
 }
 function pushOutCreatures() {
   for (const a of animals) {
-    if (a.dead || a.sp.peaceful) continue;
+    if (a.dead || a.sp.peaceful || a.flyAlt > 2) continue;
     for (const [x, z, r] of bodyCircles(a)) {
       const dx = player.x - x, dz = player.z - z, rr = r * 0.85 + 0.35, d2 = dx * dx + dz * dz;
       if (d2 < rr * rr && d2 > 1e-6) { const d = Math.sqrt(d2); player.x = x + dx / d * rr; player.z = z + dz / d * rr; }
@@ -2563,26 +2674,31 @@ function drawAnimals(time) {
     let lift = 0;
     if (sp.hop && !a.dead) lift = Math.abs(Math.sin(a.legPhase)) * 0.22 * Math.min(1, Math.abs(a.speed) / 2);
     if (a.asleep) lift -= 1.0 + Math.sin(time * 1.2) * 0.05;
-    const pitch = (a.windup > 0 ? -0.18 : a.lunge * 0.2) * (sp.boss ? 0.5 : 1);
-    const base = mChain(mT(a.x, a.y - sink + lift, a.z), mRy(a.yaw), mRz(roll), mT(0, 0, a.lunge * 0.7 * sp.legLen), mRx(pitch), mS(sp.scale || 1));
-    const body = sp.tilt && !a.asleep ? mChain(base, mT(0, sp.hipY, sp.hips[0][1]), mRx(sp.tilt), mT(0, -sp.hipY, -sp.hips[0][1])) : base;
+    const { base, body } = creatureMats(a, sink, lift, roll);
     drawMesh(sp.model.body, body, flash);
+    if (sp.model.jaw) {       // open wide to bite, snap shut, open to roar and breathe fire
+      const open = a.dead ? 0.5 : a.windup > 0 ? 0.15 + 0.65 * (1 - a.windup / sp.windup) : a.lunge > 0.6 ? 0
+        : a.fireT > 0 ? 0.55 : a.roarT > 0 ? 0.6 * Math.min(1, a.roarT * 2) : a.asleep ? 0 : 0.06;
+      drawMesh(sp.model.jaw, mChain(body, mT(0, 4.45, 4.6), mRx(open)), flash);
+    }
     if (a.buck) drawMesh(sp.model.antlers, base, flash);
     if (sp.model.leg) {
       const amp = a.dead ? 0 : Math.min(1, Math.abs(a.speed) / sp.run * 1.6) * 0.7;
       for (let i = 0; i < sp.hips.length; i++) {
         const h = sp.hips[i];
-        const swing = a.asleep ? -1.2 : Math.sin(a.legPhase + (i === 0 || i === 3 ? 0 : Math.PI)) * amp;
+        const swing = a.asleep ? -1.2 : a.flyAlt > 1 ? 0.9 : Math.sin(a.legPhase + (i === 0 || i === 3 ? 0 : Math.PI)) * amp;
         drawMesh(sp.model.leg, mChain(base, mT(h[0], sp.hipY, h[1]), mRx(swing)), flash);
       }
     }
     if (sp.model.wing) {
-      const flap = a.asleep ? -0.35 : a.dead ? -0.2 : (a.fireT > 0 || a.windup > 0) ? 0.45 + Math.sin(time * 9) * 0.45
+      const flap = a.asleep ? -0.35 : a.dead ? -0.2 : a.flyAlt > 0.5 ? 0.25 + Math.sin(time * 5.5) * 0.85
+        : (a.fireT > 0 || a.windup > 0) ? 0.45 + Math.sin(time * 9) * 0.45
         : a.alerted ? 0.15 + Math.sin(time * 4) * 0.35 : 0.05 + Math.sin(time * 1.3) * 0.08;
       drawMesh(sp.model.wing, mChain(body, mT(1.1, 3.4, 1.0), mRz(flap)), flash);
       drawMesh(sp.model.wing, mChain(body, mT(-1.1, 3.4, 1.0), mS3(-1, 1, 1), mRz(flap)), flash);
     }
   }
+  for (const p of smoke) drawMesh(smokeMesh, mChain(mT(p.x, p.y, p.z), mS((0.5 + p.t * 0.32) * Math.min(1, (p.life - p.t) * 0.8))), 0.35);
   const eyeY = player.feet + EYE;
   gl.uniform1f(progWorld.u.uEmit, 1);
   for (const f of flames) {
@@ -2745,7 +2861,7 @@ function invAction(btn) {
     if (!canAfford(it.cost)) {
       const need = Object.keys(it.cost).filter(k => mats[k] < it.cost[k]).map(k => `${it.cost[k] - mats[k]} more ${MATS[k].name.toLowerCase()}`).join(' and ');
       thump(0.15);
-      renderInv(`You need ${need}` + (it.cost.scale && mats.scale < 1 ? '. Dragon scales come from beating a wyvern.' : '.'));
+      renderInv(`You need ${need}` + (it.cost.scale && mats.scale < 1 ? '. Dragon scales come from beating a dragon.' : '.'));
       return;
     }
     if (it.cost.scale && invPending !== cr) {     // dragon scale: make them choose on purpose
@@ -2931,8 +3047,8 @@ function drawHand() {
 
 setWorldSeed(worldSeed);
 placePlayer(savedPos || findSpawn());
-// Shortcut: index.html?dragon starts you 14 m (inside the ring of spikes) from the nearest sleeping dragon, looking at it.
-// It stays asleep until you're right next to it (or hit it), so you can walk around and look.
+// Shortcut: index.html?dragon starts you on the rim of the nearest volcano, looking down at the
+// sleeping dragon. It stays asleep until you're right next to it (or hit it), so you can look around.
 if (['dragon', 'wyvern'].some(k => new URLSearchParams(location.search).has(k))) {
   let lair = null, best = Infinity;
   const lcx = Math.floor(player.x / LAIR_CELL), lcz = Math.floor(player.z / LAIR_CELL);
@@ -2943,14 +3059,14 @@ if (['dragon', 'wyvern'].some(k => new URLSearchParams(location.search).has(k)))
   if (lair) {
     let spot = null;
     for (let i = 0; i < 24 && !spot; i++) {
-      const a = (i + 0.5) / 24 * Math.PI * 2, x = lair.x + Math.sin(a) * 16, z = lair.z + Math.cos(a) * 16;
+      const a = (i + 0.5) / 24 * Math.PI * 2, x = lair.x + Math.sin(a) * 11, z = lair.z + Math.cos(a) * 11;
       if (sample(x, z).h > 1) spot = { x, z };
     }
-    spot = spot || { x: lair.x + 16, z: lair.z };
-    dragonWakeDist = 11;
+    spot = spot || { x: lair.x + 11, z: lair.z };
+    dragonWakeDist = 6;
     dragonView = true;
     placePlayer({ x: spot.x, z: spot.z, yaw: Math.atan2(lair.x - spot.x, -(lair.z - spot.z)) });
-    player.pitch = Math.atan2(sample(lair.x, lair.z).h + 3 - (player.feet + EYE), 16);
+    player.pitch = Math.atan2(sample(lair.x, lair.z).h + 1 - (player.feet + EYE), 12);
     settings.animals = true;     // the dragon only shows up with enemies on
     // put the dragon there right away, so it's already visible behind the menu
     const st = { alive: true, until: 0, lair };
@@ -2978,6 +3094,7 @@ function frame(now) {
       updateSwing(dt);
       updateAnimals(dt);
       updateFlames(dt);
+      updateSmoke(dt);
       updatePickups(dt);
       updateSpawning(dt);
       updateLairs(dt);
