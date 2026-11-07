@@ -2505,7 +2505,7 @@ const SPECIES = {
     radius: 1.8, drops: { gems: 30, iron: 4, apples: 3 }, knock: 0, sinkH: 4, legLen: 1, giveUp: 70, segs: 20, spacing: 2.2 },
   snake: { name: 'Giant snake', boss: true, serpent: true, swims: true, hp: 200, dmg: 18, reach: 3.3, windup: 0.45, cd: 1.5, walk: 1.8, run: 5.0, sight: 28, turn: 2.5,
     radius: 1.0, drops: { gems: 15, iron: 3, apples: 2, fang: 2 }, knock: 0, sinkH: 2.0, legLen: 1, giveUp: 55, segs: 16, spacing: 1.15 },
-  dragonling: { name: 'Dragonling', neutral: true, puff: true, hitH: 1.8, hp: 20, dmg: 7, reach: 2.3, windup: 0.4, cd: 1.2, walk: 1.6, run: 6.0, sight: 0, turn: 6, radius: 0.45,
+  dragonling: { name: 'Dragonling', neutral: true, retreats: true, puff: true, hitH: 1.8, hp: 20, dmg: 7, reach: 2.3, windup: 0.4, cd: 1.2, walk: 1.6, run: 6.0, sight: 0, turn: 6, radius: 0.45,
     barH: 2.1, drops: { gems: 2, iron: 0.4 }, knock: 0.7, sinkH: 1.8, giveUp: 40, wingAt: [0.13, 1.25, -0.14], wingScale: 0.18,
     legLen: 0.72, hipY: 0.75, hips: [[0.14, 0], [-0.14, 0]], shoulders: [[0.27, 1.27, 0], [-0.27, 1.27, 0]] },
   goblin: { name: 'Goblin', hitH: 1.7, hp: 18, dmg: 8, reach: 2.2, windup: 0.45, cd: 1.2, walk: 1.8, run: 6.2, sight: 24, turn: 6, radius: 0.45,
@@ -3142,7 +3142,7 @@ function makeBar(a) {
 }
 function dropBar(a) { if (a.bar) { a.bar.remove(); a.bar = null; a.barFill = null; } }
 function alertAnimal(a) {
-  if (a.alerted || a.dead || a.sp.peaceful) return;
+  if (a.alerted || a.dead || a.sp.peaceful || a.retreating) return;
   a.alerted = true; a.asleep = false; a.waterT = 0;
   makeBar(a);
   spotSound(a.kind);
@@ -3154,7 +3154,7 @@ function alertAnimal(a) {
   if (a.kind === 'iceogre') { toast('🧊 An ice ogre!'); rumble(0.5, 0.5, 300); }
   if (a.kind === 'goblin' && !animals.some(b => b !== a && b.kind === 'goblin' && b.alerted)) toast('👺 Goblins!');
   if (a.kind === 'dragonling' && !animals.some(b => b !== a && b.kind === 'dragonling' && b.alerted)) toast('🐲 You made the dragonlings angry!');
-  if (a.kind === 'wolf' || a.kind === 'goblin' || a.kind === 'goat' || a.kind === 'croc' || a.kind === 'dragonling') for (const b of animals) if (b !== a && !b.alerted && !b.dead && b.kind === a.kind && Math.hypot(b.x - a.x, b.z - a.z) < (a.kind === 'goblin' || a.kind === 'dragonling' ? 25 : 15)) { b.alerted = true; b.waterT = 0; b.calm = false; makeBar(b); }
+  if (a.kind === 'wolf' || a.kind === 'goblin' || a.kind === 'goat' || a.kind === 'croc' || a.kind === 'dragonling') for (const b of animals) if (b !== a && !b.alerted && !b.dead && !b.retreating && b.kind === a.kind && Math.hypot(b.x - a.x, b.z - a.z) < (a.kind === 'goblin' || a.kind === 'dragonling' ? 25 : 15)) { b.alerted = true; b.waterT = 0; b.calm = false; makeBar(b); }
 }
 function calmAnimal(a) {
   a.alerted = false; a.windup = 0; a.fireT = 0;
@@ -3165,9 +3165,18 @@ function calmAnimal(a) {
 }
 function killAnimal(a) {
   const sp = a.sp;
+  if (a.dead || a.retreating) return;
+  if (sp.retreats) {                 // dragonlings don't fall over: they drop their loot and run off
+    a.retreating = true; a.retreatT = 0; a.alerted = false; a.windup = 0; a.puffT = 0; a.poisonT = 0;
+    a.hp = 0; dropBar(a);
+    tone('square', 1100, 600, 0.25, 0.05); tone('square', 900, 500, 0.25, 0.04, 0.12);
+    feed(`🐲 The ${sp.name.toLowerCase()} ran away!`);
+  } else {
   a.dead = true; a.deadT = 0; a.alerted = false; a.fireT = 0;
   dropBar(a);
-  if (sp.boss) {
+  }
+  if (a.retreating) {
+  } else if (sp.boss) {
     [523, 659, 784, 1047, 1319].forEach((f, i) => tone('triangle', f, f, 0.3, 0.1, i * 0.12));
     toast(`🏆 You beat the ${sp.name}!`);
     rumble(0.6, 0.6, 500);
@@ -3502,7 +3511,7 @@ function shootArrow(w) {
 }
 function arrowHits(ar) {
   for (const a of animals) {
-    if (a.dead || a.sp.peaceful) continue;
+    if (a.dead || a.sp.peaceful || a.retreating) continue;
     const serp = a.sp.serpent;
     for (const [x, z, r, y] of bodyCircles(a)) {
       if (Math.hypot(ar.x - x, ar.z - z) > r + 0.2) continue;
@@ -3703,7 +3712,11 @@ function updateAnimals(dt) {
     a.atkCd -= dt;
     const dx = player.x - a.x, dz = player.z - a.z, dist = Math.hypot(dx, dz) || 0.001;
     let targetYaw = a.yaw, speed = 0;
-    if (sp.peaceful) {
+    if (a.retreating) {
+      a.retreatT += dt;
+      targetYaw = Math.atan2(-dx, -dz); speed = sp.run * 1.15; a.fleeT = 1;
+      if (a.retreatT > 6 || dist > 45) { a.remove = true; a.goneWhy = 'killed'; }
+    } else if (sp.peaceful) {
       if (dist < sp.flee) a.fleeT = 2.5;
       if (a.fleeT > 0) { a.fleeT -= dt; targetYaw = Math.atan2(-dx, -dz); speed = sp.run; }
       else { wander(a, dx, dz, dt); targetYaw = a.wanderYaw; speed = a.wanderSpeed; }
@@ -3792,7 +3805,7 @@ function clearEnemies() {
 }
 function pushOutCreatures() {
   for (const a of animals) {
-    if (a.dead || a.sp.peaceful || a.flyAlt > 2) continue;
+    if (a.dead || a.sp.peaceful || a.retreating || a.flyAlt > 2) continue;
     for (const [x, z, r] of bodyCircles(a)) {
       const dx = player.x - x, dz = player.z - z, rr = r * 0.85 + 0.35, d2 = dx * dx + dz * dz;
       if (d2 < rr * rr && d2 > 1e-6) { const d = Math.sqrt(d2); player.x = x + dx / d * rr; player.z = z + dz / d * rr; }
@@ -4173,7 +4186,7 @@ function landHit() {
   const fx = Math.sin(player.yaw), fz = -Math.cos(player.yaw);
   let best = null, bestD = Infinity;
   for (const a of animals) {
-    if (a.dead || a.sp.peaceful) continue;            // friendly animals can't be hurt
+    if (a.dead || a.sp.peaceful || a.retreating) continue;   // friendly (or fleeing) animals can't be hurt
     for (const [x, z, r, y] of bodyCircles(a)) {
       const dx = x - player.x, dz = z - player.z, d = Math.hypot(dx, dz) || 0.001;
       if (d - r > w.reach) continue;
