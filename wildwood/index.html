@@ -166,7 +166,7 @@ body.two #hurt2,body.two #frost2,body.two #ko2{left:50%}
       <div><b>Crafting</b>Swing at trees for wood and at big rocks for stone. Catch fish in rivers for their scales (golden fish are rare!). Open your backpack to make axes, swords, bows, shields and chest plates.</div>
       <div><b>Two players</b>Plug in a second Xbox controller and press Start on it (or choose 👥 Add player 2). The screen splits in two. You share one backpack, and each of you has your own health and gear in hand.</div>
       <div><b>Saved games</b>Make as many games as you like with 💾 Saved games. Each one has its own world and its own things. New game starts from scratch.</div>
-      <div><b>Bosses</b>Dragonlings live in forest camps: leave them alone and they'll leave you alone. Crocodiles lurk in rivers. Sharks swim in the ocean, but only bother you in the water. Goats (leave them alone!) and ice ogres live in the icy mountains. Goblins camp in open fields. Ogres roam the forests. Giant snakes hide in marshes. The Leviathan lives in big lakes. Dragons sleep in volcanoes on mountaintops, ringed by tall black spikes. They walk on their folded wings, and they can fly!</div>
+      <div><b>Bosses</b>Dragonlings live in forest camps: leave them alone and they'll leave you alone. Crocodiles lurk in rivers. Sharks swim in the ocean, but only bother you in the water. Goats (leave them alone!) and ice ogres live in the icy mountains. Goblins camp in open fields, and giant spiders wander them (watch out for poison breath, and jump when it stomps!). Ogres roam the forests. Giant snakes hide in marshes. The Leviathan lives in big lakes. Dragons sleep in volcanoes on mountaintops, ringed by tall black spikes. They walk on their folded wings, and they can fly!</div>
     </div>
     <p id="padStatus">Plug in an Xbox controller and press any button.</p>
   </div>
@@ -1706,6 +1706,7 @@ function spotSound(kind) {
   if (kind === 'goblin') { [700, 900, 760, 980].forEach((f, i) => tone('square', f, f * 0.8, 0.08, 0.04, i * 0.09, 2200)); return; }
   if (kind === 'ogre') { tone('sawtooth', 130, 70, 1.0, 0.22, 0, 600); tone('sawtooth', 95, 60, 0.9, 0.12, 0.15, 400); return; }
   if (kind === 'snake') { noiseHit('bandpass', 5500, 0.8, 1.1, 0.2); return; }
+  if (kind === 'spider') { noiseHit('highpass', 3000, 0.7, 0.9, 0.25); [900, 1200, 1000, 1300].forEach((f, i) => tone('square', f, f * 0.9, 0.05, 0.03, 0.2 + i * 0.07, 2600)); return; }
   if (kind === 'dragon') { tone('sawtooth', 75, 45, 1.8, 0.3, 0, 600); tone('sawtooth', 110, 60, 1.6, 0.15, 0.1, 900); noiseHit('lowpass', 300, 0.7, 1.6, 0.35); return; }
   if (kind === 'fox') { tone('square', 800, 1300, 0.1, 0.05, 0, 2500); tone('square', 850, 1350, 0.1, 0.05, 0.17, 2500); }
   else if (kind === 'wolf') { tone('sawtooth', 300, 620, 0.5, 0.05, 0, 1200); tone('sawtooth', 620, 430, 0.9, 0.05, 0.5, 1200); }
@@ -1721,6 +1722,7 @@ function growlSound(kind) {
   if (kind === 'goblin') { tone('square', 500, 300, 0.15, 0.05, 0, 1600); return; }
   if (kind === 'ogre') { tone('sawtooth', 150, 90, 0.7, 0.2, 0, 500); return; }
   if (kind === 'snake') { noiseHit('bandpass', 5000, 0.8, 0.5, 0.15); return; }
+  if (kind === 'spider') { noiseHit('highpass', 2800, 0.7, 0.6, 0.2); tone('sawtooth', 220, 140, 0.4, 0.08, 0, 800); return; }
   if (kind === 'dragon') { tone('sawtooth', 90, 55, 0.8, 0.25, 0, 500); return; }
   if (kind === 'fox') tone('square', 600, 350, 0.15, 0.05, 0, 1500);
   else if (kind === 'wolf') tone('sawtooth', 150, 100, 0.35, 0.12, 0, 500);
@@ -2787,6 +2789,34 @@ function dragonModel() {
   return { body: makeMesh(g), head: makeMesh(hg), leg: makeMesh(lg), wing: makeMesh(wg), wingLeg: makeMesh(wlg), jaw: makeMesh(jg),
     tailSeg: makeMesh(tsg), tailBand: makeMesh(tbg), tailTube: makeMesh(ttg), tailSpade: makeMesh(tspg) };
 }
+// giant spider (open fields): a round purple body with yellow spots, big friendly-ish eyes, fangs, and 8 long legs
+function spiderModel() {
+  const g = new Geo(2048), r = mulberry32(83);
+  const BODY = [0.36, 0.2, 0.48], DARK = [0.22, 0.12, 0.3], SPOT = [1.0, 0.82, 0.2], HORN = [0.95, 0.9, 0.78];
+  const B = (x, y, z, rx, ry, rz, c, j) => blob(g, x, y, z, rx, ry, rz, c, r, j === undefined ? 0.08 : j, -1, 0);
+  B(0, 1.75, 0.55, 0.78, 0.62, 0.85, BODY);                 // head-and-chest
+  B(0, 1.8, -0.45, 0.32, 0.3, 0.35, DARK);                  // waist
+  B(0, 2.2, -1.55, 1.3, 1.12, 1.55, BODY);                  // big round abdomen
+  for (const [x, y, z, rr] of [[0, 3.2, -1.4, 0.3], [0.55, 3.0, -1.0, 0.22], [-0.55, 3.0, -1.0, 0.22], [0.5, 2.9, -2.1, 0.24], [-0.5, 2.9, -2.1, 0.24], [0, 2.75, -2.75, 0.22]])
+    B(x, y, z, rr, rr * 0.55, rr, SPOT, 0.03);
+  for (const sd of [-1, 1]) {
+    B(sd * 0.27, 2.05, 1.22, 0.2, 0.22, 0.12, [0.98, 0.98, 0.95], 0.02);          // two big eyes
+    B(sd * 0.29, 2.05, 1.32, 0.09, 0.12, 0.05, [0.08, 0.04, 0.1], 0.0);
+    B(sd * 0.29, 2.11, 1.36, 0.03, 0.03, 0.02, [1, 1, 1], 0.0);                    // a little shine
+    for (const [x, y] of [[0.52, 2.12], [0.62, 1.9], [0.12, 2.32]]) B(sd * x, y, 1.08, 0.07, 0.07, 0.05, [0.08, 0.04, 0.1], 0.0);   // six little eyes
+    B(sd * 0.2, 1.45, 1.22, 0.17, 0.24, 0.17, DARK);                                // jaws
+    tube(g, [sd * 0.2, 1.3, 1.3], [sd * 0.13, 0.95, 1.45], 0.07, 0.015, 5, HORN, r, false);   // fangs
+  }
+  // one leg, built pointing out along +x from the hip: up to a high knee, then down to the ground
+  const lg = new Geo(512), K = [1.25, 1.35, 0], F = [2.7, -1.75, 0];
+  tube(lg, [0, 0, 0], K, 0.19, 0.14, 6, BODY, r, false);
+  blob(lg, K[0], K[1], K[2], 0.17, 0.17, 0.17, SPOT, r, 0.02, -1, 0);
+  tube(lg, K, [(K[0] + F[0]) / 2, (K[1] + F[1]) / 2, 0], 0.14, 0.1, 6, BODY, r, false);
+  blob(lg, (K[0] + F[0]) / 2, (K[1] + F[1]) / 2, 0, 0.12, 0.12, 0.12, SPOT, r, 0.02, -1, 0);
+  tube(lg, [(K[0] + F[0]) / 2, (K[1] + F[1]) / 2, 0], F, 0.1, 0.04, 6, DARK, r, false);
+  return { body: makeMesh(g), spiderLeg: makeMesh(lg) };
+}
+const SPIDER_LEGS = [[0.55, 0.95, -0.8], [0.62, 0.62, -0.28], [0.62, 0.3, 0.25], [0.55, 0.0, 0.8]];   // x, z, angle (front to back)
 const SPECIES = {
   // friendly: they run away if you get close, and you can't hurt them
   fox: { name: 'Fox', peaceful: true, flee: 5, walk: 1.6, run: 6.0, turn: 6, radius: 0.45, sinkH: 0.9,
@@ -2820,6 +2850,8 @@ const SPECIES = {
   iceogre: { name: 'Ice ogre', boss: true, frostSlam: true, hp: 400, dmg: 22, reach: 3.6, windup: 0.9, cd: 2.0, walk: 1.4, run: 4.8, sight: 30, turn: 2.5,
     radius: 0.8, drops: { gems: 10, iron: 2, frost: 2, apples: 1 }, knock: 0.15, sinkH: 3.5, giveUp: 60, legLen: 1.2, hipY: 1.25, hitH: 3.3,
     hips: [[0.38, 0], [-0.38, 0]], shoulders: [[0.84, 2.45, 0], [-0.84, 2.45, 0]] },
+  spider: { name: 'Giant spider', boss: true, spider: true, hp: 350, dmg: 14, reach: 3.6, windup: 0.6, cd: 1.8, walk: 1.8, run: 5.0, sight: 24, turn: 3,
+    radius: 1.6, hitH: 2.6, drops: { gems: 10, iron: 2, apples: 1 }, knock: 0.1, sinkH: 2.6, giveUp: 45, legLen: 1.6, hipY: 1.75, hips: [] },
   ogre: { name: 'Ogre', boss: true, hitH: 3.3, hp: 300, dmg: 20, reach: 3.6, windup: 0.9, cd: 2.0, walk: 1.4, run: 4.8, sight: 28, turn: 2.5,
     radius: 0.8, drops: { gems: 8, iron: 2, fur: 2, apples: 1 }, knock: 0.15, sinkH: 3.5, giveUp: 60, legLen: 1.2, hipY: 1.25,
     hips: [[0.38, 0], [-0.38, 0]], shoulders: [[0.84, 2.45, 0], [-0.84, 2.45, 0]] },
@@ -2859,8 +2891,10 @@ SPECIES.bluegill.model = fishModel({ seed: 73, L: 0.24, H: 0.15, W: 0.06, body: 
   mark: (g, r) => { for (let i = 0; i < 4; i++) for (const sd of [-1, 1]) blob(g, sd * 0.05, 0.03, -0.12 + i * 0.08, 0.016, 0.11, 0.02, [0.16, 0.3, 0.6], r, 0, -1, 0); } });
 SPECIES.goldfish.model = fishModel({ seed: 74, L: 0.3, H: 0.12, W: 0.08, tail: 1.5, body: [1.0, 0.78, 0.15], belly: [1.0, 0.93, 0.55], fin: [1.0, 0.62, 0.12] });
 SPECIES.shark.model = sharkModel();
+SPECIES.spider.model = spiderModel();
 });
 const waterMeshes = [[0.55, 0.82, 1.0], [0.88, 0.96, 1.0]].map((c, i) => { const g = new Geo(64); blob(g, 0, 0, 0, 1, 1, 1, c, mulberry32(50 + i), 0.3, -1, 0); return makeMesh(g); });
+const poisonMeshes = [[0.45, 0.9, 0.2], [0.65, 1.0, 0.35]].map((c, i) => { const g = new Geo(64); blob(g, 0, 0, 0, 1, 1, 1, c, mulberry32(55 + i), 0.35, -1, 0); return makeMesh(g); });
 const flameMeshes = [[1.0, 0.45, 0.05], [1.0, 0.75, 0.1], [1.0, 0.25, 0.02]].map((c, i) => { const g = new Geo(64); blob(g, 0, 0, 0, 1, 1, 1, c, mulberry32(30 + i), 0.4, -1, 0); return makeMesh(g); });
 
 /* ---------- drops and weapons ---------- */
@@ -3207,6 +3241,7 @@ const MAX_ANIMALS = 7;
 const caveState = new Map(), lairState = new Map();
 const snakeState = { alive: false, until: 0 };
 const ogreState = { alive: false, until: 0 };
+const spiderState = { alive: false, until: 0 };
 const iceState = { alive: false, until: 0, misses: 0 };
 // true if nothing in the ground blocks the view from your eyes to a point
 function canSee(x, z, y) {
@@ -3527,6 +3562,19 @@ function updateLairs(dt) {
       break;
     }
   }
+  // giant spiders wander the open fields
+  if (envForest < 0.22 && envSnow < 0.1 && envMarsh < 0.3 && envMtn < 0.3 && envOcean < 0.2 && !spiderState.alive && now > spiderState.until && Math.random() < 0.008) {
+    const heading = Math.hypot(player.vx, player.vz) > 1 ? Math.atan2(player.vx, -player.vz) : player.yaw;
+    for (let t = 0; t < 8; t++) {
+      const ang = heading + (Math.random() - 0.5) * 2, d = 35 + Math.random() * 15;
+      const x = player.x + Math.sin(ang) * d, z = player.z - Math.cos(ang) * d;
+      const sm = sample(x, z);
+      if (sm.forest > 0.3 || sm.h < 1.3 || sm.water > 0.3 || sm.snow > 0.1) continue;
+      spiderState.alive = true;
+      spawnAnimal('spider', x, z, { onGone: why => { spiderState.alive = false; if (why === 'killed') spiderState.until = nowS() + 120; else if (why === 'ko') spiderState.until = nowS() + 60; } });
+      break;
+    }
+  }
   if (envMarsh > 0.5 && !snakeState.alive && now > snakeState.until && Math.random() < 0.012) {
     const heading = Math.hypot(player.vx, player.vz) > 1 ? Math.atan2(player.vx, -player.vz) : player.yaw;
     for (let t = 0; t < 8; t++) {
@@ -3570,6 +3618,7 @@ function alertAnimal(a) {
   if (a.kind === 'croc') a.roarT = 1.0;
   if (a.kind === 'shark' && !animals.some(b => b !== a && b.kind === 'shark' && b.alerted)) toast('🦈 Shark!');
   if (a.kind === 'iceogre') { toast('🧊 An ice ogre!'); rumble(0.5, 0.5, 300); }
+  if (a.kind === 'spider') { toast('🕷️ A giant spider!'); rumble(0.5, 0.5, 300); }
   if (a.kind === 'goblin' && !animals.some(b => b !== a && b.kind === 'goblin' && b.alerted)) toast('👺 Goblins!');
   if (a.kind === 'dragonling' && !animals.some(b => b !== a && b.kind === 'dragonling' && b.alerted)) toast('🐲 You made the dragonlings angry!');
   if (a.kind === 'wolf' || a.kind === 'goblin' || a.kind === 'goat' || a.kind === 'croc' || a.kind === 'dragonling') for (const b of animals) if (b !== a && !b.alerted && !b.dead && !b.retreating && b.kind === a.kind && Math.hypot(b.x - a.x, b.z - a.z) < (a.kind === 'goblin' || a.kind === 'dragonling' ? 25 : 15)) { b.alerted = true; b.waterT = 0; b.calm = false; makeBar(b); }
@@ -3752,6 +3801,51 @@ function fight(a, dt, dist, dx, dz, playerWet) {
       a.whipSide = lx > 0 ? -1 : 1; a.whipT = 0.0001; a.whipHit = false; a.whipCd = 3;
       setTimeout(() => noiseHit('bandpass', 1500, 1.2, 0.2, 0.25, 500), 300);
       return 0;
+    }
+  }
+  if (sp.spider) {
+    a.breathCd = (a.breathCd === undefined ? 2.5 : a.breathCd) - dt;
+    a.stompCd = (a.stompCd === undefined ? 3 : a.stompCd) - dt;
+    if (a.breathT > 0) {                     // poison breath: a green cloud from its fangs
+      a.breathT -= dt;
+      const sy = Math.sin(a.yaw), cy = Math.cos(a.yaw), m = [a.x + sy * 1.5, a.y + 1.3, a.z + cy * 1.5];
+      a.breathAcc = (a.breathAcc || 0) + dt * 26;
+      while (a.breathAcc >= 1) {
+        a.breathAcc -= 1;
+        const j = () => (Math.random() - 0.5) * 0.45, spd = 7 + Math.random() * 2;
+        flames.push({ x: m[0], y: m[1], z: m[2], vx: (sy + j()) * spd, vy: j() * 2.5 - 0.6, vz: (cy + j()) * spd, t: 0, life: 1.1, m: Math.random() * 2 | 0, poison: true });
+      }
+      a.breathTick = (a.breathTick || 0) - dt;
+      if (a.breathTick <= 0) {
+        a.breathTick = 0.3;
+        const ex = player.x - m[0], ez = player.z - m[2], d = Math.hypot(ex, ez) || 0.01;
+        if (d < 10 && (ex * sy + ez * cy) / d > 0.8 && Math.abs(player.feet + 1 - m[1]) < 3) { hurtPlayer(2, ex / d, ez / d, 1, a); poisonPlayer(4); }
+      }
+      return 0;
+    }
+    if (a.stompT > 0) {                      // rears up on its back legs, then SLAMS its front legs down
+      a.stompT += dt;
+      if (!a.stompHit && a.stompT >= 0.65) {
+        a.stompHit = true;
+        rings.push({ x: a.x + Math.sin(a.yaw) * 2, z: a.z + Math.cos(a.yaw) * 2, y: groundAt(a.x, a.z), t: 0 });
+        thump(0.7); noiseHit('lowpass', 260, 0.7, 0.6, 0.45); shake = Math.max(shake, 0.45); rumble(0.9, 0.9, 350);
+        const d = Math.hypot(player.x - a.x, player.z - a.z) || 0.01;
+        if (d < 6.5 && player.onGround && !player.swimming) hurtPlayer(16, (player.x - a.x) / d, (player.z - a.z) / d, 12, a);   // jump to dodge it!
+      }
+      if (a.stompT >= 1.0) a.stompT = 0;
+      return 0;
+    }
+    if (a.windup <= 0) {
+      const front = (dx * Math.sin(a.yaw) + dz * Math.cos(a.yaw)) / dist;
+      if (dist < 6 && a.stompCd <= 0 && a.atkCd > 0) {
+        a.stompT = 0.0001; a.stompHit = false; a.stompCd = 5 + Math.random() * 2; growlSound('spider');
+        return 0;
+      }
+      if (dist > 4 && dist < 12 && front > 0.85 && a.breathCd <= 0) {
+        a.breathT = 1.5; a.breathTick = 0.15; a.breathCd = 5 + Math.random() * 2.5;
+        noiseHit('highpass', 2500, 0.5, 1.5, 0.22, 200); noiseHit('bandpass', 900, 0.8, 1.4, 0.15);
+        return 0;
+      }
     }
   }
   if (sp.frostSlam) {
@@ -4012,6 +4106,11 @@ function updateIceSpikes(dt) {
   }
   iceSpikes = iceSpikes.filter(s => s.t < s.delay + 1.3);
 }
+function poisonPlayer(sec) {
+  if (player.ko) return;
+  if (!(player.poisonT > 0)) feed('🤢 Poisoned! Get out of the green cloud');
+  player.poisonT = Math.max(player.poisonT || 0, sec); player.poisonTick = player.poisonTick || 1;
+}
 function freezePlayer(sec) {
   if (player.ko) return;
   player.frozenT = Math.max(player.frozenT || 0, sec);
@@ -4111,7 +4210,7 @@ function updateFlames(dt) {
   for (const f of flames) {
     f.t += dt;
     const k = Math.exp(-dt * 0.9);
-    f.vx *= k; f.vz *= k; f.vy = f.water ? f.vy * k - dt * 9 : f.vy * k + dt * 2;
+    f.vx *= k; f.vz *= k; f.vy = f.water ? f.vy * k - dt * 9 : f.poison ? f.vy * k + dt * 0.6 : f.vy * k + dt * 2;
     f.x += f.vx * dt; f.y += f.vy * dt; f.z += f.vz * dt;
     const g = groundAt(f.x, f.z) + 0.3;
     if (f.y < g || (f.water && f.y < WATER_Y)) { if (f.water) f.t = f.life; else { f.y = g; f.vy = Math.abs(f.vy) * 0.2; } }
@@ -4186,7 +4285,7 @@ function updateAnimals(dt) {
     else if (sp.waterOnly && !a.alerted) a.wanderT = 0;
     else if (a.fleeT > 0) a.yaw += 1.2;           // running into water: turn aside
     else if (!a.alerted) a.wanderT = 0;
-    if (!sp.boss || a.kind === 'ogre' || a.kind === 'iceogre') pushOutTrees(a, sp.radius * 0.6);
+    if (!sp.boss || a.kind === 'ogre' || a.kind === 'iceogre' || a.kind === 'spider') pushOutTrees(a, sp.radius * 0.6);
     if (a.kind === 'dragon') {
       updateDragonHead(a, dt);
       const want = a.flying && a.flyT > 0 ? 12 : 0;
@@ -4231,7 +4330,7 @@ function updateAnimals(dt) {
 function clearAnimals() {
   for (const a of animals) dropBar(a);
   animals = []; pickups = []; flames = [];
-  caveState.clear(); lairState.clear(); campState.clear(); dcampState.clear(); iceSpikes = []; arrows = []; rings = []; snakeState.alive = false; snakeState.until = 0;
+  caveState.clear(); lairState.clear(); campState.clear(); dcampState.clear(); iceSpikes = []; arrows = []; rings = []; snakeState.alive = false; snakeState.until = 0; spiderState.alive = false; spiderState.until = 0;
 }
 function clearEnemies() {
   animals = animals.filter(a => {
@@ -4290,6 +4389,19 @@ function drawAnimals(time) {
       drawMesh(sp.model.jaw, mChain(headM, mT(0, -0.3, 0.3), mRx(open)), flash);
     }
     if (a.buck) drawMesh(sp.model.antlers, base, flash);
+    if (sp.model.spiderLeg) {
+      const amp = a.dead ? 0 : Math.min(1, Math.abs(a.speed) / sp.run * 1.6 + 0.15);
+      const rear = a.stompT > 0 ? (a.stompT < 0.65 ? a.stompT / 0.65 : Math.max(0, 1 - (a.stompT - 0.65) / 0.2)) : 0;   // front legs go up, then SLAM
+      SPIDER_LEGS.forEach(([hx, hz, ang], i) => {
+        for (const sd of [1, -1]) {
+          const ph = a.legPhase * 1.4 + ((i + (sd > 0 ? 0 : 1)) % 2 ? Math.PI : 0);
+          const sw = Math.sin(ph) * 0.32 * amp, up = Math.max(0, Math.cos(ph)) * 0.22 * amp;
+          const lift = (a.dead ? 0.9 : up) + (i < 2 ? rear * (i === 0 ? 1.1 : 0.6) : 0) + (a.asleep ? 0.3 : 0);
+          const yaw = sd > 0 ? ang + sw : Math.PI - ang - sw;
+          drawMesh(sp.model.spiderLeg, mChain(base, mT(sd * hx, sp.hipY, hz), mRy(yaw), mRz(lift)), flash);
+        }
+      });
+    }
     if (sp.model.leg) {
       const amp = a.dead ? 0 : Math.min(1, Math.abs(a.speed) / sp.run * 1.6) * 0.7;
       for (let i = 0; i < sp.hips.length; i++) {
@@ -4351,7 +4463,8 @@ function drawAnimals(time) {
   for (const f of flames) {
     if (Math.hypot(f.x - player.x, f.y - eyeY, f.z - player.z) < 2.2) continue;   // don't fill the screen
     const s = f.small ? 0.12 + Math.sin(Math.min(1, f.t / f.life) * Math.PI) * 0.22 : 0.25 + Math.sin(Math.min(1, f.t / f.life) * Math.PI) * 0.9 + f.t * 0.3;
-    drawMesh(f.water ? waterMeshes[f.m] : flameMeshes[f.m], mChain(mT(f.x, f.y, f.z), mS(f.water ? 0.1 + f.t * 0.22 : s)), f.t < 0.12 ? 0.5 : 0);
+    const pz = f.poison ? 0.25 + f.t * 0.9 : 0;
+    drawMesh(f.water ? waterMeshes[f.m] : f.poison ? poisonMeshes[f.m] : flameMeshes[f.m], mChain(mT(f.x, f.y, f.z), mS(f.water ? 0.1 + f.t * 0.22 : f.poison ? pz : s)), f.t < 0.12 ? 0.5 : 0);
   }
   gl.uniform1f(progWorld.u.uEmit, 0);
   gl.uniform1f(progWorld.u.uFlash, 0);
@@ -4410,7 +4523,7 @@ function updateBars(vx0, vw) {
   for (const a of animals) if (a.sp.boss && a.alerted && !a.dead) for (const p of players) { const d = Math.hypot(a.x - p.x, a.z - p.z); if (d < bd) { bd = d; boss = a; } }
   if (boss && state === 'play') {
     bossEl.classList.add('show');
-    bossName.textContent = ({ dragon: '🐉 ', snake: '🐍 ', ogre: '👹 ', leviathan: '🌊 ', iceogre: '🧊 ' }[boss.kind] || '') + boss.sp.name;
+    bossName.textContent = ({ dragon: '🐉 ', snake: '🐍 ', ogre: '👹 ', leviathan: '🌊 ', iceogre: '🧊 ', spider: '🕷️ ' }[boss.kind] || '') + boss.sp.name;
     bossFill.style.width = Math.max(0, boss.hp / boss.sp.hp * 100).toFixed(1) + '%';
     bossFill.style.background = boss.poisonT > 0 ? 'linear-gradient(#a6f07f,#3f9f2a)' : '';
   } else bossEl.classList.remove('show');
@@ -4840,7 +4953,7 @@ function hurtPlayer(dmg, dirx, dirz, knock, src) {
   updateHud();
 }
 function knockOut() {
-  player.hp = 0; player.ko = 3.2; swingT = -1;
+  player.hp = 0; player.ko = 3.2; swingT = -1; player.poisonT = 0;
   koEl.classList.add('show');
   [440, 370, 294].forEach((f, i) => tone('triangle', f, f * 0.98, 0.35, 0.08, i * 0.3));
   for (const a of animals) {
@@ -4871,6 +4984,14 @@ function updateHealth(dt) {
   } else if (player.hurtT > 4 && player.hp < 100) player.hp = Math.min(100, player.hp + 5 * dt);
   hurtFlash = Math.max(0, hurtFlash - dt * 2.5);
   player.frozenT = Math.max(0, (player.frozenT || 0) - dt);
+  if (player.poisonT > 0 && !player.ko) {            // poison: 2 damage a second for a few seconds
+    player.poisonT -= dt; player.poisonTick -= dt;
+    if (player.poisonTick <= 0) {
+      player.poisonTick = 0.5; player.hp -= 1; player.hurtT = 0; hurtFlash = Math.max(hurtFlash, 0.25);
+      if (player.hp <= 0) knockOut();
+    }
+  } else player.poisonT = 0;
+  hpFill.style.background = player.poisonT > 0 ? 'linear-gradient(#a6f07f,#3f9f2a)' : '';
   frostEl.style.opacity = Math.min(1, player.frozenT * 0.6).toFixed(2);
   shake = Math.max(0, shake - dt);
   hurtEl.style.opacity = Math.max(hurtFlash, player.hp < 30 && !player.ko ? 0.25 + 0.1 * Math.sin(performance.now() / 200) : 0).toFixed(2);
@@ -5050,6 +5171,25 @@ if (['dragon', 'wyvern'].some(k => new URLSearchParams(location.search).has(k)))
     st.dragon = spawnAnimal('dragon', lair.x, lair.z, { asleep: true, home: { x: lair.x, z: lair.z, r: 6 },
       onGone: why => { st.alive = false; if (why === 'killed') st.until = nowS() + 600; else if (why === 'ko') st.until = nowS() + 40; } });
     st.dragon.yaw = Math.atan2(player.x - lair.x, player.z - lair.z) + 1.2;   // side-on, so you see the wings
+  }
+}
+// Shortcut: index.html?spider takes you to the nearest open field with a calm giant spider 20 m in front of you.
+if (new URLSearchParams(location.search).has('spider')) {
+  let spot = null;
+  for (let r = 0; r < 4000 && !spot; r += 30) {
+    const steps = Math.max(1, Math.floor(2 * Math.PI * r / 30));
+    for (let k = 0; k < steps; k++) {
+      const an = k / steps * Math.PI * 2, x = player.x + Math.cos(an) * r, z = player.z + Math.sin(an) * r, sm = sample(x, z);
+      if (sm.forest < 0.1 && sm.h > 1.5 && sm.h < 25 && sm.snow < 0.05 && sm.marsh < 0.2 && sm.mtn < 0.2 && sm.coast < 0.1 && sm.water < 0.1) { spot = { x, z }; break; }
+    }
+  }
+  if (spot) {
+    placePlayer({ x: spot.x, z: spot.z, yaw: player.yaw });
+    settings.animals = true;
+    const x = player.x + Math.sin(player.yaw) * 20, z = player.z - Math.cos(player.yaw) * 20;
+    spiderState.alive = true;
+    const sp = spawnAnimal('spider', x, z, { calm: true, onGone: why => { spiderState.alive = false; if (why === 'killed') spiderState.until = nowS() + 120; } });
+    sp.yaw = Math.atan2(player.x - x, player.z - z) + 0.9; sp.wanderYaw = sp.yaw; sp.wanderT = 8; sp.wanderSpeed = 0;
   }
 }
 // Shortcut: index.html?snake takes you to the nearest marsh with a giant snake 15 m in front of you.
