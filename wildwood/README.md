@@ -17,6 +17,7 @@ A 3D exploring game. You walk through a forest that goes on forever: pines, birc
 |---|---|---|---|---|
 | Wolf | 15 | 9 | packs of 2 or 3, mostly in forests | 1 gem, usually 1 fur, sometimes 1 iron |
 | Bear | 20 | 16 | lives by a cave and comes back 2 minutes after it's beaten | 3 gems, 2 iron, 2 fur |
+| Goblin | 18 | 8 axe chop | in camps out in open fields (3 to 5 per camp, they come as a gang); camps come back 4 minutes after they're cleared | 3 gems, sometimes iron or wood; 1 in 4 drop their crude goblin axe; clearing a camp leaves 6 gems, 2 iron and an apple by the fire |
 | Ogre (mini-boss) | 150 | 20, a big club smash | wanders forests now and then (about a 1 in 3 chance per minute in a forest), comes back 2½ minutes after it's beaten; slower than you when you run | 8 gems, 2 iron, 2 fur, 1 apple |
 | Giant snake (boss) | 200 | 18 bite, 12 tail whip | marshes; it can swim (about 16 m long); opens its jaw wide and snaps, and whips its tail at you if you're near the tail | 15 gems, 3 iron, 2 apples, 2 giant fangs |
 | Dragon (boss) | 650 | 25 bite, plus fire | two legs and big wings, about 25 m long with its tail; sleeps in a volcano on a mountaintop; comes back 10 minutes after it's beaten | 25 gems, 4 iron, 3 apples, 1 dragon scale |
@@ -43,6 +44,7 @@ Open the backpack with **Y** (controller) or **I** / **Tab** (keyboard). It show
 | Stone spear | 4, reaches far | 3 wood, 2 stone |
 | Iron axe | 5, chops 3 wood per hit | 2 wood, 3 iron |
 | Iron sword | 5 | 1 wood, 4 iron |
+| Crude goblin axe | 5, fast, chops 2 wood per hit | only from goblins |
 | Fang dagger | 5, very fast, poisons | 1 giant fang, 1 iron |
 | Iron hammer | 6, slow, knocks enemies far, breaks 3 stone | 1 wood, 5 iron |
 | Crystal sword | 6 | 2 iron, 12 gems |
@@ -65,7 +67,7 @@ The two dragon recipes both need the scale, so you have to choose. One snake's t
 
 - Everything is in `index.html`, drawn with plain WebGL 2 (no libraries).
 - The world is built from a seed in 64 m squares ("chunks") as you walk, and dropped again once they're far behind. Grass, ferns and flowers are only built for the squares close to you.
-- Rivers follow the zero lines of a slow, wiggly noise, and lakes are where a second noise is high. Marshes are where a third noise is high, but only on low ground (so they never leave cliffs next to hills). Caves (at most one per 384 m square) and dragon lairs (at most one per 1 km square, on the highest ground there, with a volcano built into the ground: a 14 m cone with a lava-cracked crater, lava streaks and smoke) are placed from the seed too.
+- Rivers follow the zero lines of a slow, wiggly noise, and lakes are where a second noise is high. Marshes are where a third noise is high, but only on low ground (so they never leave cliffs next to hills). Goblin camps (at most one per 640 m square, in open fields; the nearest is usually about 500 m away), caves (at most one per 384 m square) and dragon lairs (at most one per 1 km square, on the highest ground there, with a volcano built into the ground: a 14 m cone with a lava-cracked crater, lava streaks and smoke) are placed from the seed too.
 - The terrain code sits between `TERRAIN-BEGIN` and `TERRAIN-END` so a checker script can run it in Node. On four seeds: water about once per km (around 1 minute of walking), a marsh about every 1.4 km (around 5 minutes), a cave about every 550 m, and the nearest dragon lair is usually about 550 to 620 m away.
 - Creatures, your hand and items use rounder shapes (each ball has 80 faces instead of 20) than trees and rocks, which there are thousands of.
 - **New world** in the menu picks a new seed.
@@ -79,3 +81,4 @@ One `localStorage` key, `wildwood.v1`: music, sound, look direction and enemy se
 - `wildwood/?dragon` starts you on the rim of the nearest volcano, looking down at the sleeping dragon (it's already there behind the menu). In this mode it only wakes up if you walk right up to it or hit it. Your saved spot moves there too.
 - `wildwood/?ogre` puts an ogre in the forest 32 m in front of you.
 - `wildwood/?snake` takes you to the nearest marsh with a giant snake lying 15 m in front of you. It stays calm until you get within about 7 m or hit it.
+- `wildwood/?goblin` takes you to the nearest goblin camp, 22 m from the fire. The goblins stay calm until you get within about 7 m or hit one.
