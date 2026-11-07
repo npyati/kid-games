@@ -380,14 +380,18 @@ function lairInCell(ix, iz) {
   if (lairCache.has(k)) return lairCache.get(k);
   let l = null;
   const r = mulberry32(hashInt(ix, iz, 99));
-  if (r() < 0.6) {
+  if (r() < 0.7) {
     let best = -1e9, bx = 0, bz = 0;
     for (let j = 0; j < 6; j++) for (let i = 0; i < 6; i++) {
       const x = (ix + 0.15 + 0.7 * (i + r()) / 6) * LAIR_CELL, z = (iz + 0.15 + 0.7 * (j + r()) / 6) * LAIR_CELL;
-      const h = sampleBase(x, z).h;
+      const sb = sampleBase(x, z);
+      if (sb.mtn > 0.05 || sb.snow > 0.05) continue;   // keep volcanoes out of the icy mountains and snow
+      const h = sb.h;
       if (h > best) { best = h; bx = x; bz = z; }
     }
-    if (best > 11) l = { x: bx, z: bz, h: best, key: 'l' + k };
+    let snowy = false;                       // no snow right next to the volcano either
+    for (let i = 0; i < 8 && !snowy; i++) { const s2 = sampleBase(bx + Math.cos(i * 0.785) * 40, bz + Math.sin(i * 0.785) * 40); if (s2.snow > 0.1 || s2.mtn > 0.1) snowy = true; }
+    if (best > 11 && !snowy) l = { x: bx, z: bz, h: best, key: 'l' + k };
   }
   lairCache.set(k, l);
   return l;
@@ -2345,7 +2349,7 @@ const SPECIES = {
     barH: 1.75, drops: { gems: 3, iron: 2, fur: 2 }, knock: 0.35, sinkH: 1.7, legLen: 0.55, hipY: 0.62, hips: [[0.25, 0.44], [-0.25, 0.44], [0.25, -0.44], [-0.25, -0.44]] },
   // bosses
   leviathan: { name: 'Leviathan', boss: true, serpent: true, swims: true, waterOnly: true, bodyR: 1.6, headScale: 3.2, rearH: 7,
-    calmWake: 16, hp: 750, dmg: 30, whipDmg: 20, reach: 6.5, windup: 0.6, cd: 1.8, walk: 2.2, run: 6.0, sight: 40, turn: 1.8,
+    calmWake: 16, hp: 650, dmg: 30, whipDmg: 20, reach: 11, windup: 0.6, cd: 1.8, walk: 2.2, run: 6.0, sight: 40, turn: 1.8,
     radius: 1.8, drops: { gems: 30, iron: 4, apples: 3 }, knock: 0, sinkH: 4, legLen: 1, giveUp: 70, segs: 20, spacing: 2.2 },
   snake: { name: 'Giant snake', boss: true, serpent: true, swims: true, hp: 200, dmg: 18, reach: 3.3, windup: 0.45, cd: 1.5, walk: 1.8, run: 5.0, sight: 28, turn: 2.5,
     radius: 1.0, drops: { gems: 15, iron: 3, apples: 2, fang: 2 }, knock: 0, sinkH: 2.0, legLen: 1, giveUp: 55, segs: 16, spacing: 1.15 },
@@ -2361,7 +2365,7 @@ const SPECIES = {
   ogre: { name: 'Ogre', boss: true, hitH: 3.3, hp: 150, dmg: 20, reach: 3.6, windup: 0.9, cd: 2.0, walk: 1.4, run: 4.8, sight: 28, turn: 2.5,
     radius: 0.8, drops: { gems: 8, iron: 2, fur: 2, apples: 1 }, knock: 0.15, sinkH: 3.5, giveUp: 60, legLen: 1.2, hipY: 1.25,
     hips: [[0.38, 0], [-0.38, 0]], shoulders: [[0.84, 2.45, 0], [-0.84, 2.45, 0]] },
-  dragon: { name: 'Dragon', boss: true, hitH: 8, scale: 1.5, tilt: -0.2, hp: 650, dmg: 25, reach: 8.0, windup: 0.8, cd: 2.2, walk: 2.0, run: 4.6, sight: 40, turn: 1.4,
+  dragon: { name: 'Dragon', boss: true, hitH: 8, scale: 1.5, tilt: -0.2, hp: 750, dmg: 25, reach: 8.0, windup: 0.8, cd: 2.2, walk: 2.0, run: 4.6, sight: 40, turn: 1.4,
     radius: 4.5, drops: { gems: 25, iron: 4, scale: 1, apples: 3 }, knock: 0, sinkH: 9, giveUp: 75, legLen: 1.8, hipY: 1.95, hips: [[1.2, -0.4], [-1.2, -0.4]] },
 };
 hiDetail(() => {
@@ -2718,6 +2722,13 @@ function tailOffset(a, i) {
   return [dz / L * k, -dx / L * k];
 }
 function snakeR(sp, i) { const R = sp.bodyR || 0.8; return i < 3 ? R : R * (1 - (i - 3) / (sp.segs - 3) * 0.75); }
+// the head's full position and turn, used for drawing and for where the spray comes out
+function serpentHeadM(a, sink) {
+  const sp = a.sp, h = serpentHead(a);
+  const pitch = (a.windup > 0 ? -0.3 : a.lunge * 0.3) + (sp.rearH ? 0.3 * (a.rearV || 0) : 0);
+  const fwd = sp.rearH ? a.lunge * 4.5 : 0;    // the leviathan's head shoots forward when it bites
+  return mChain(mT(h[0] + Math.sin(a.yaw) * fwd, h[1] - (sink || 0), h[2] + Math.cos(a.yaw) * fwd), mRy(a.yaw), mRx(pitch), mS(sp.headScale || 1.6));
+}
 // where a serpent's head is, including how high it has reared up
 function serpentHead(a) {
   const sp = a.sp, R = sp.bodyR || 0.8;
@@ -3162,9 +3173,8 @@ function freezePlayer(sec) {
 }
 // the leviathan's water spray: arcs from its mouth toward you
 function sprayAim(a) {
-  const h = serpentHead(a), sc = a.sp.headScale || 1.6;
   const sy = Math.sin(a.yaw), cy = Math.cos(a.yaw);
-  const m = [h[0] + sy * 1.1 * sc, h[1] - 0.1 * sc, h[2] + cy * 1.1 * sc];
+  const m = xform(serpentHeadM(a, 0), [0, -0.32, 0.75]);   // between the open jaws
   const hd = Math.max(3, Math.hypot(player.x - m[0], player.z - m[2]));
   const slope = Math.max(-1.5, Math.min(0.6, (player.feet + 1.0 - m[1]) / hd)) + 0.12;
   const L = Math.hypot(1, slope);
@@ -3316,7 +3326,7 @@ function updateAnimals(dt) {
     const moveYaw = sp.serpent ? a.yaw + Math.sin(a.legPhase) * 0.45 : a.yaw;
     const nx = a.x + (Math.sin(moveYaw) * a.speed + a.kx) * dt, nz = a.z + (Math.cos(moveYaw) * a.speed + a.kz) * dt;
     const k = Math.exp(-dt * 6); a.kx *= k; a.kz *= k;
-    if (sp.waterOnly ? groundAt(nx, nz) < -1.2 : (sp.swims || a.flyAlt > 1 || groundAt(nx, nz) > 0.3)) { a.x = nx; a.z = nz; }
+    if (sp.waterOnly ? groundAt(nx, nz) < -0.6 : (sp.swims || a.flyAlt > 1 || groundAt(nx, nz) > 0.3)) { a.x = nx; a.z = nz; }
     else if (sp.waterOnly && !a.alerted) a.wanderT = 0;
     else if (a.fleeT > 0) a.yaw += 1.2;           // running into water: turn aside
     else if (!a.alerted) a.wanderT = 0;
@@ -3450,7 +3460,8 @@ function drawAnimals(time) {
 function drawSnake(a, sink, flash) {
   const m = a.sp.model;
   const hp = serpentHead(a), lift = hp[3];
-  const head = [hp[0], hp[1] - sink, hp[2]];
+  const headM = serpentHeadM(a, sink);
+  const head = [headM[12], headM[13], headM[14]];
   const sp = a.sp, arch = sp.rearH ? lift : 0;
   // join the head and every body part with a smooth tube so it reads as one long body
   let prev = head, prevR = snakeR(a.sp, 0) * 0.85;
@@ -3464,20 +3475,20 @@ function drawSnake(a, sink, flash) {
       drawMesh(m.tube, mChain(mT(cur[0], cur[1], cur[2]), mRy(Math.atan2(dx, dz)), mRx(-Math.atan2(dy, Math.hypot(dx, dz))), mS3(tr, tr * 0.9, L)), flash);
     }
     drawMesh(i % 3 === 1 ? m.band : m.seg, mChain(mT(cur[0], cur[1], cur[2]), mRy(Math.atan2(dx, dz)), mS(r)), flash);
+    if (m.wing && (i === 2 || i === 4)) {      // two pairs of wings on its back
+      const t = performance.now() / 1000 * (a.alerted ? 6 : 2) + (i === 4 ? 0.8 : 0);
+      const flap = 0.25 + Math.sin(t) * (a.alerted ? 0.5 : 0.2), ws = r * (i === 2 ? 2.1 : 1.6);
+      const base = mChain(mT(cur[0], cur[1], cur[2]), mRy(Math.atan2(dx, dz)));
+      drawMesh(m.wing, mChain(base, mT(r * 0.55, r * 0.62, 0), mRz(flap), mS(ws)), flash);
+      drawMesh(m.wing, mChain(base, mT(-r * 0.55, r * 0.62, 0), mS3(-1, 1, 1), mRz(flap), mS(ws)), flash);
+    }
     prev = cur; prevR = r;
   });
-  const pitch = (a.windup > 0 ? -0.3 : a.lunge * 0.3) + (sp.rearH ? 0.3 * (a.rearV || 0) : 0);
-  const headM = mChain(mT(head[0], head[1], head[2]), mRy(a.yaw), mRx(pitch), mS(sp.headScale || 1.6));
   drawMesh(m.head, headM, flash);
   // the jaw opens wide to get ready, snaps shut on the bite, and opens to hiss (and to spray)
   const open = a.dead ? 0.6 : a.windup > 0 ? 0.15 + 0.85 * (1 - a.windup / a.sp.windup) : a.lunge > 0.6 ? 0
     : a.sprayT > 0 ? 0.75 : a.roarT > 0 ? 0.7 * Math.min(1, a.roarT * 2) : 0.04;
   drawMesh(m.jaw, mChain(headM, mT(0, -0.11, -0.15), mRx(open)), flash);
-  if (m.wing) {             // little wings behind the head
-    const flap = 0.3 + Math.sin(performance.now() / 1000 * (a.alerted ? 6 : 2)) * (a.alerted ? 0.5 : 0.2);
-    drawMesh(m.wing, mChain(headM, mT(0.42, 0.15, -0.35), mRz(flap)), flash);
-    drawMesh(m.wing, mChain(headM, mT(-0.42, 0.15, -0.35), mS3(-1, 1, 1), mRz(flap)), flash);
-  }
 }
 function updateBars() {
   for (const a of animals) {
