@@ -13,7 +13,7 @@ A 3D exploring game. You walk through a forest that goes on forever: pines, birc
 
 **Friendly animals:** foxes, deer (some with antlers) and rabbits. They run away if you get close, and your swings pass right through them.
 
-**Dragonlings** are neutral too: part goblin, part dragon (red scales, yellow belly, little horns and wings, a spear). They live in camps in forests (the nearest is usually about 450 m away when you're in a forest): nest huts, a campfire, a dragon-head totem and a little gold. Leave them alone and they leave you alone; hit one and the whole camp fights back with spears (7) and little puffs of fire (2 every ⅕ second). 20 health; when you beat one it doesn't fall over: it drops 2 gems (and sometimes iron) and runs away into the forest. New ones move in 4 minutes after a camp is beaten.
+**Dragonlings** are neutral too: part goblin, part dragon (red scales, little horns and wings, a spear, and a green tunic with a rope belt and a yellow scarf). They live in camps in forests (the nearest is usually about 450 m away when you're in a forest): nest huts, a campfire, a dragon-head totem and a little gold. Camp creatures (goblins and dragonlings) walk around their campfire, not through it. Leave them alone and they leave you alone; hit one and the whole camp fights back with spears (7) and little puffs of fire (2 every ⅕ second). 20 health; when you beat one it doesn't fall over: it drops 2 gems (and sometimes iron) and runs away into the forest. New ones move in 4 minutes after a camp is beaten.
 
 **Goats** live in the mountains and are neutral: they leave you alone unless you hit one, then that one and its herd headbutt you (12 health, 6 damage, a big knockback; they drop fur).
 

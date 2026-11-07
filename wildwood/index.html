@@ -885,6 +885,7 @@ function buildDragonlingCamp(g, ch, c) {
   const y0 = sample(c.x, c.z).h;
   for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; blob(g, c.x + Math.cos(a) * 0.9, y0 + 0.1, c.z + Math.sin(a) * 0.9, 0.22, 0.16, 0.22, [0.42, 0.4, 0.4], rng, 0.3, -1, 0); }
   blob(g, c.x, y0 + 0.12, c.z, 0.45, 0.1, 0.45, [1.0, 0.45, 0.08], rng, 0.3, 1, 0);
+  ch.trees.push(c.x, c.z, 1.25, 3);                       // walk around the fire, not through it
   // round nest huts woven from sticks, each with a dark doorway facing the fire
   const nt = 3 + (rng() < 0.5 ? 1 : 0);
   for (let i = 0; i < nt; i++) {
@@ -921,6 +922,7 @@ function buildCamp(g, ch, c) {
     tube(g, [c.x - Math.cos(a) * 0.7, y0 + 0.1, c.z - Math.sin(a) * 0.7], [c.x + Math.cos(a) * 0.7, y0 + 0.25, c.z + Math.sin(a) * 0.7], 0.09, 0.08, 6, [0.35, 0.22, 0.12], rng, true);
   }
   blob(g, c.x, y0 + 0.12, c.z, 0.45, 0.1, 0.45, [1.0, 0.45, 0.08], rng, 0.3, 1, 0);
+  ch.trees.push(c.x, c.z, 1.25, 3);                       // walk around the fire, not through it
   // tents made of patched cloth
   const cloth = [[0.55, 0.42, 0.25], [0.38, 0.45, 0.25], [0.5, 0.33, 0.28], [0.45, 0.4, 0.3]];
   const nt = 3 + (rng() < 0.5 ? 1 : 0);
@@ -2253,6 +2255,17 @@ function dragonlingModel() {
   B(0, 1.14, 0, 0.21, 0.22, 0.15, RED);                    // chest
   B(0, 1.14, 0.07, 0.15, 0.17, 0.1, BELLY);
   B(0, 1.32, 0, 0.075, 0.08, 0.075, RED);                  // neck
+  // clothes: a forest-green tunic with a little skirt, a rope belt and a yellow scarf
+  const CLOTH = [0.24, 0.44, 0.3], DCLOTH = [0.18, 0.34, 0.22];
+  B(0, 1.13, 0.025, 0.24, 0.215, 0.205, CLOTH, 0.02);
+  B(0, 0.86, 0.025, 0.25, 0.2, 0.22, CLOTH, 0.02);
+  for (let i = 0; i < 8; i++) {                            // jagged hem
+    const a = i / 8 * Math.PI * 2, x = Math.sin(a) * 0.235, z = Math.cos(a) * 0.185;
+    tri(g, [x, 0.74, z], [Math.sin(a + 0.4) * 0.235, 0.74, Math.cos(a + 0.4) * 0.185], [Math.sin(a + 0.2) * 0.24, 0.63, Math.cos(a + 0.2) * 0.19], [Math.sin(a + 0.2), 0, Math.cos(a + 0.2)], 0, DCLOTH, DCLOTH, DCLOTH, 0, 0, 0);
+  }
+  B(0, 0.99, 0.025, 0.262, 0.045, 0.232, [0.55, 0.4, 0.22], 0.01);                       // rope belt
+  B(0, 1.32, 0.03, 0.17, 0.065, 0.16, [0.95, 0.78, 0.25], 0.03);                          // scarf
+  tube(g, [0.07, 1.3, 0.17], [0.11, 1.08, 0.25], 0.04, 0.03, 5, [0.95, 0.78, 0.25], r, true);
   B(0, 1.5, 0.04, 0.19, 0.18, 0.2, RED);                   // head
   tube(g, [0, 1.47, 0.18], [0, 1.42, 0.42], 0.1, 0.07, 6, RED, r, false);   // short snout
   B(0, 1.39, 0.33, 0.07, 0.012, 0.08, [0.4, 0.06, 0.06], 0);              // mouth
