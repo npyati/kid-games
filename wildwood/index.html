@@ -152,7 +152,7 @@ nav button:focus-visible,nav a:focus-visible{outline:none;border-color:var(--sun
       <div><b>Animals</b>Foxes, deer and rabbits are friendly. Wolves, and bears from caves, chase you once they spot you. Beat them for gems, iron and apples. They can't swim!</div>
       <div><b>Crafting</b>Swing at trees for wood and at big rocks for stone. Catch fish in rivers for their scales (golden fish are rare!). Open your backpack to make axes, swords, bows, shields and chest plates.</div>
       <div><b>Saved games</b>Make as many games as you like with 💾 Saved games. Each one has its own world and its own things. New game starts from scratch.</div>
-      <div><b>Bosses</b>Dragonlings live in forest camps: leave them alone and they'll leave you alone. Crocodiles lurk in rivers. Sharks swim in the ocean, but only bother you in the water. Goats (leave them alone!) and ice ogres live in the icy mountains. Goblins camp in open fields. Ogres roam the forests. Giant snakes hide in marshes. The Leviathan lives in big lakes. Dragons sleep in volcanoes on mountaintops, ringed by tall black spikes. They can fly!</div>
+      <div><b>Bosses</b>Dragonlings live in forest camps: leave them alone and they'll leave you alone. Crocodiles lurk in rivers. Sharks swim in the ocean, but only bother you in the water. Goats (leave them alone!) and ice ogres live in the icy mountains. Goblins camp in open fields. Ogres roam the forests. Giant snakes hide in marshes. The Leviathan lives in big lakes. Dragons sleep in volcanoes on mountaintops, ringed by tall black spikes. They walk on their folded wings, and they can fly!</div>
     </div>
     <p id="padStatus">Plug in an Xbox controller and press any button.</p>
   </div>
@@ -2629,7 +2629,22 @@ function dragonModel() {
   tube(wg, E, F1, 0.1, 0.04, 4, DARK, r, false); tube(wg, E, F2, 0.1, 0.04, 4, DARK, r, false);
   const M = [0.58, 0.16, 0.13];
   for (const [p, q] of [[E, T], [T, F1], [F1, F2], [F2, BK]]) tri(wg, SH, p, q, faceN(SH, p, q), 0, M, shade(M, 1.1), shade(M, 0.9), 0, 0, 0);
-  return { body: makeMesh(g), head: makeMesh(hg), leg: makeMesh(lg), wing: makeMesh(wg), jaw: makeMesh(jg),
+  // the wing folded down into a front leg (wing-walking): pivot at the shoulder, knuckle on the ground,
+  // the wing's fingers folded up along the arm with the skin between them like a sail along its side
+  const wlg = new Geo(1024);
+  const WS = [0, 0, 0], WE = [1.0, 0.75, -1.0], WW = [0.8, -3.3, 0.9];
+  const WT = [[1.1, 1.55, -1.45], [1.2, 1.05, -2.3], [1.1, 0.2, -2.85]], WB = [0.4, -1.05, -2.7];
+  const SAIL = [0.5, 0.13, 0.11];
+  for (const [p, q] of [[WE, WT[0]], [WT[0], WT[1]], [WT[1], WT[2]], [WT[2], WB]]) tri(wlg, WS, p, q, faceN(WS, p, q), 0, SAIL, shade(SAIL, 1.12), shade(SAIL, 0.88), 0, 0, 0);
+  tri(wlg, WW, WT[0], WE, faceN(WW, WT[0], WE), 0, shade(SAIL, 0.8), SAIL, SAIL, 0, 0, 0);
+  tube(wlg, WS, WE, 0.32, 0.24, 6, RED, r, false);                    // upper arm
+  tube(wlg, WE, WW, 0.26, 0.2, 6, shade(RED, 0.92), r, false);        // forearm down to the knuckle
+  blob(wlg, WE[0], WE[1], WE[2], 0.3, 0.3, 0.3, RED, r, 0.08, -1, 0);   // elbow
+  for (const t of WT) tube(wlg, WW, t, 0.1, 0.04, 4, DARK, r, false);   // folded fingers
+  blob(wlg, WW[0], WW[1] + 0.05, WW[2] + 0.05, 0.36, 0.26, 0.42, DARK, r, 0.08, -1, 0);   // knuckle it walks on
+  tube(wlg, [WW[0], WW[1] + 0.1, WW[2] + 0.3], [WW[0] + 0.05, WW[1] + 0.05, WW[2] + 1.0], 0.1, 0.01, 4, HORN, r, false);   // thumb claw
+  for (const sd of [-1, 0, 1]) tube(wlg, [WW[0] + sd * 0.2, WW[1] - 0.1, WW[2] + 0.3], [WW[0] + sd * 0.25, WW[1] - 0.2, WW[2] + 0.62], 0.08, 0.01, 4, HORN, r, false);
+  return { body: makeMesh(g), head: makeMesh(hg), leg: makeMesh(lg), wing: makeMesh(wg), wingLeg: makeMesh(wlg), jaw: makeMesh(jg),
     tailSeg: makeMesh(tsg), tailBand: makeMesh(tbg), tailTube: makeMesh(ttg), tailSpade: makeMesh(tspg) };
 }
 const SPECIES = {
@@ -3740,7 +3755,8 @@ function creatureMats(a, sink, lift, roll) {
   if (a.jumpT > 0) pitch -= 0.9 * Math.cos(Math.PI * a.jumpT / 0.8);       // nose up out of the water, nose down back in
   if (a.stompT > 0) pitch += a.stompT < 0.7 ? -0.35 * (a.stompT / 0.7) : 0.12 * Math.max(0, 1 - (a.stompT - 0.7) / 0.4);   // rear up, then slam
   const base = mChain(mT(a.x, a.y - sink + lift, a.z), mRy(a.yaw), mRz(roll), mT(0, 0, a.lunge * 0.7 * sp.legLen), mRx(pitch), mS(sp.scale || 1));
-  const tilt = !sp.tilt || a.asleep ? 0 : (a.flyAlt || 0) > 1 ? -0.05 : sp.tilt;
+  let tilt = !sp.tilt || a.asleep ? 0 : (a.flyAlt || 0) > 1 ? -0.05 : sp.tilt;
+  if (a.wingW) tilt += (0.06 - tilt) * a.wingW;            // the dragon leans forward onto its wings to walk
   const body = tilt ? mChain(base, mT(0, sp.hipY, sp.hips[0][1]), mRx(tilt), mT(0, -sp.hipY, -sp.hips[0][1])) : base;
   return { base, body };
 }
@@ -4085,6 +4101,12 @@ function drawAnimals(time) {
     if (a.asleep) lift -= 1.0 + Math.sin(time * 1.2) * 0.05;
     if (a.jumpT > 0) lift += Math.sin(Math.PI * a.jumpT / 0.8) * 1.0;
     if (sp.fish && a.dead) roll = Math.min(1, a.deadT / 0.4) * Math.PI * a.rollDir;   // belly up
+    if (a.kind === 'dragon') {
+      // on the ground it walks on its folded wings; it rears up to roar or breathe fire, and spreads them to fly or sleep
+      const want = a.dead || a.asleep || a.flying || (a.flyAlt || 0) > 0.3 || a.fireT > 0 || a.roarT > 0 ? 0 : 1;
+      const wdt = Math.min(0.1, Math.max(0, time - (a.wingTime || time))); a.wingTime = time;
+      a.wingW = (a.wingW || 0) + (want - (a.wingW || 0)) * Math.min(1, wdt * 5);
+    }
     const { base, body } = creatureMats(a, sink, lift, roll);
     if (sp.waterOnly && !sp.serpent) {           // fish and sharks swish their tails as they swim
       drawMesh(sp.model.body, mChain(body, mRy(Math.sin(a.dead ? 0 : time * (sp.fish ? 9 : 3) + a.legPhase) * (sp.fish ? 0.18 : 0.08) * (0.4 + Math.min(1, Math.abs(a.speed) / 2)))), flash);
@@ -4127,9 +4149,19 @@ function drawAnimals(time) {
       const flap = a.asleep ? -0.35 : a.dead ? -0.2 : a.flyAlt > 0.5 ? 0.25 + Math.sin(time * 5.5) * 0.85
         : (a.fireT > 0 || a.windup > 0) ? 0.45 + Math.sin(time * 9) * 0.45
         : a.alerted ? 0.15 + Math.sin(time * 4) * 0.35 : 0.05 + Math.sin(time * 1.3) * 0.08;
-      const ws = sp.wingScale || 1, wa = sp.wingAt || [0.85, 3.4, 1.0];
-      drawMesh(sp.model.wing, mChain(body, mT(wa[0], wa[1], wa[2]), mRz(flap), mS(ws)), flash);
-      drawMesh(sp.model.wing, mChain(body, mT(-wa[0], wa[1], wa[2]), mS3(-1, 1, 1), mRz(flap), mS(ws)), flash);
+      const ws = sp.wingScale || 1, wa = sp.wingAt || [0.85, 3.4, 1.0], ww = a.kind === 'dragon' ? a.wingW || 0 : 0;
+      if (ww < 0.97) {        // spread wings (they fold away as it drops onto them)
+        const k = 1 - ww, f = flap * k - 0.9 * ww;
+        drawMesh(sp.model.wing, mChain(body, mT(wa[0], wa[1], wa[2]), mRz(f), mS(ws * k)), flash);
+        drawMesh(sp.model.wing, mChain(body, mT(-wa[0], wa[1], wa[2]), mS3(-1, 1, 1), mRz(f), mS(ws * k)), flash);
+      }
+      if (ww > 0.03) {        // wings as front legs: each one steps with the back leg on the other side
+        const amp = Math.min(1, Math.abs(a.speed) / sp.run * 1.6) * 0.55;
+        for (const sd of [1, -1]) {
+          const ph = a.legPhase + (sd > 0 ? Math.PI : 0), sw = Math.sin(ph) * amp, up = Math.max(0, -Math.cos(ph)) * amp * 0.5;
+          drawMesh(sp.model.wingLeg, mChain(body, mT(sd * wa[0], wa[1] + up, wa[2]), mS3(sd, 1, 1), mRx(sw), mS(ww)), flash);
+        }
+      }
     }
   }
   for (const rg of rings) {
