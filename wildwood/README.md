@@ -59,8 +59,8 @@ Open the backpack with **Y** (controller) or **I** / **Tab** (keyboard). It show
 | Iron hammer | 6, slow, knocks enemies far, breaks 3 stone | 1 wood, 5 iron |
 | Croc-tail whip | 6, reaches very far (4.6 m) | 2 croc skin, 1 wood |
 | Croc-jaw mace | 7, big knockback | 2 croc skin, 2 iron |
-| Scale sword | 6, quick | 6 fish scales, 1 iron |
-| Scale spear | 6, reaches far | 5 fish scales, 2 wood |
+| Scale sword | 5, quick | 6 fish scales, 1 iron |
+| Scale spear | 4, reaches far | 5 fish scales, 2 wood |
 | Golden trident | 8, double damage to anything that swims (fish, crocodiles, sharks, snakes, the Leviathan), reaches far | 1 golden scale, 4 fish scales, 2 iron |
 | Shark-tooth sword | 9 | 4 shark teeth, 2 iron, 1 wood |
 | Crystal sword | 6 | 2 iron, 12 gems |
