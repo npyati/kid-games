@@ -13,6 +13,8 @@ A 3D exploring game. You walk through a forest that goes on forever: pines, birc
 
 **Friendly animals:** foxes, deer (some with antlers) and rabbits. They run away if you get close, and your swings pass right through them.
 
+**Dragonlings** are neutral too: part goblin, part dragon (red scales, yellow belly, little horns and wings, a spear). They live in camps in forests (the nearest is usually about 450 m away when you're in a forest): nest huts, a campfire, a dragon-head totem and a little gold. Leave them alone and they leave you alone; hit one and the whole camp fights back with spears (7) and little puffs of fire (2 every ⅕ second). 20 health; they drop 2 gems and sometimes iron. New ones move in 4 minutes after a camp is beaten.
+
 **Goats** live in the mountains and are neutral: they leave you alone unless you hit one, then that one and its herd headbutt you (12 health, 6 damage, a big knockback; they drop fur).
 
 | Enemy | Health | Bite | Where | Drops |
@@ -108,3 +110,4 @@ One `localStorage` key, `wildwood.v1`: music, sound, look direction and enemy se
 - `wildwood/?mountains` takes you up into the nearest snowy mountains.
 - `wildwood/?iceogre` does the same, with a calm ice ogre 25 m in front of you.
 - `wildwood/?croc` puts you on a river bank with a calm crocodile in the water in front of you.
+- `wildwood/?dragonling` takes you to the nearest dragonling camp.

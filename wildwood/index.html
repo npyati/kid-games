@@ -138,7 +138,7 @@ nav button:focus-visible,nav a:focus-visible{outline:none;border-color:var(--sun
       <div><b>Keyboard and mouse</b>WASD: walk · Mouse: look · Click or F: swing or shoot · Right-click or Q: block · 1: sword · 2: bow · 3: shield on/off · Space: jump · Shift: run · I or Tab: backpack · Esc: menu</div>
       <div><b>Animals</b>Foxes, deer and rabbits are friendly. Wolves, and bears from caves, chase you once they spot you. Beat them for gems, iron and apples. They can't swim!</div>
       <div><b>Crafting</b>Swing at trees for wood and at big rocks for stone. Open your backpack to make axes, swords, bows, shields and chest plates.</div>
-      <div><b>Bosses</b>Crocodiles lurk in rivers. Goats (leave them alone!) and ice ogres live in the icy mountains. Goblins camp in open fields. Ogres roam the forests. Giant snakes hide in marshes. The Leviathan lives in big lakes. Dragons sleep in volcanoes on mountaintops, ringed by tall black spikes. They can fly!</div>
+      <div><b>Bosses</b>Dragonlings live in forest camps: leave them alone and they'll leave you alone. Crocodiles lurk in rivers. Goats (leave them alone!) and ice ogres live in the icy mountains. Goblins camp in open fields. Ogres roam the forests. Giant snakes hide in marshes. The Leviathan lives in big lakes. Dragons sleep in volcanoes on mountaintops, ringed by tall black spikes. They can fly!</div>
     </div>
     <p id="padStatus">Plug in an Xbox controller and press any button.</p>
   </div>
@@ -236,7 +236,7 @@ function setWorldSeed(s) {
   for (let i = 0; i < 512; i++) perm[i] = p[i & 255];
   for (let i = 0; i < 256; i++) { const a = r() * Math.PI * 2; gradX[i] = Math.cos(a); gradY[i] = Math.sin(a); }
   seedMix = Math.floor(r() * 0x7fffffff);
-  if (typeof caveCache !== 'undefined') { caveCache.clear(); lairCache.clear(); campCache.clear(); }
+  if (typeof caveCache !== 'undefined') { caveCache.clear(); lairCache.clear(); campCache.clear(); dcampCache.clear(); }
 }
 function hashInt(a, b, c) {
   let h = seedMix ^ Math.imul(a | 0, 0x27d4eb2d) ^ Math.imul(b | 0, 0x165667b1) ^ Math.imul(c | 0, 0x2f0b3a49);
@@ -419,7 +419,32 @@ function campInCell(ix, iz) {
   campCache.set(k, c);
   return c;
 }
+// Dragonling camps: in forests (at most one per 640 m square)
+const dcampCache = new Map();
+function dcampInCell(ix, iz) {
+  const k = ix + ',' + iz;
+  if (dcampCache.has(k)) return dcampCache.get(k);
+  let c = null;
+  const r = mulberry32(hashInt(ix, iz, 57));
+  if (r() < 0.55) {
+    for (let t = 0; t < 10 && !c; t++) {
+      const x = (ix + 0.15 + r() * 0.7) * CAMP_CELL, z = (iz + 0.15 + r() * 0.7) * CAMP_CELL;
+      const s = sampleBase(x, z);
+      if (s.h > 1.6 && s.h < 25 && s.forest > 0.6 && s.water < 0.15 && s.marsh < 0.1 && s.mtn < 0.05) c = { x, z, key: 'd' + k };
+    }
+    if (c) {
+      const l = lairInCell(Math.floor(c.x / LAIR_CELL), Math.floor(c.z / LAIR_CELL));
+      const cv = caveInCell(Math.floor(c.x / CAVE_CELL), Math.floor(c.z / CAVE_CELL));
+      const gc = campInCell(ix, iz);
+      if ((l && Math.hypot(l.x - c.x, l.z - c.z) < 80) || (cv && Math.hypot(cv.x - c.x, cv.z - c.z) < 40) || (gc && Math.hypot(gc.x - c.x, gc.z - c.z) < 60)) c = null;
+    }
+  }
+  dcampCache.set(k, c);
+  return c;
+}
 function featureNear(x, z) {
+  const dc = dcampInCell(Math.floor(x / CAMP_CELL), Math.floor(z / CAMP_CELL));
+  if (dc && (x - dc.x) ** 2 + (z - dc.z) ** 2 < 15 * 15) return true;
   const c = caveInCell(Math.floor(x / CAVE_CELL), Math.floor(z / CAVE_CELL));
   if (c && (x - c.x) ** 2 + (z - c.z) ** 2 < 15 * 15) return true;
   const gc = campInCell(Math.floor(x / CAMP_CELL), Math.floor(z / CAMP_CELL));
@@ -855,6 +880,34 @@ function buildCave(g, ch, c) {
   ch.trees.push(c.x - fx * 2, c.z - fz * 2, 7.3, 1, mx + rx * 2.9, mz + rz * 2.9, 1.3, 1, mx - rx * 2.9, mz - rz * 2.9, 1.3, 1);
   ch.maxY = Math.max(ch.maxY, y + 10);
 }
+function buildDragonlingCamp(g, ch, c) {
+  const rng = mulberry32(hashInt(Math.round(c.x), Math.round(c.z), 8));
+  const y0 = sample(c.x, c.z).h;
+  for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; blob(g, c.x + Math.cos(a) * 0.9, y0 + 0.1, c.z + Math.sin(a) * 0.9, 0.22, 0.16, 0.22, [0.42, 0.4, 0.4], rng, 0.3, -1, 0); }
+  blob(g, c.x, y0 + 0.12, c.z, 0.45, 0.1, 0.45, [1.0, 0.45, 0.08], rng, 0.3, 1, 0);
+  // round nest huts woven from sticks, each with a dark doorway facing the fire
+  const nt = 3 + (rng() < 0.5 ? 1 : 0);
+  for (let i = 0; i < nt; i++) {
+    const a = i / nt * Math.PI * 2 + rng() * 0.5, d = 6.5 + rng() * 1.5;
+    const hx = c.x + Math.cos(a) * d, hz = c.z + Math.sin(a) * d, hy = sample(hx, hz).h;
+    blob(g, hx, hy + 0.2, hz, 1.5, 1.3, 1.5, [0.55, 0.4, 0.22], rng, 0.25, -1, 0, hy - 0.05);
+    for (let k = 0; k < 10; k++) { const b = rng() * 6.28; tube(g, [hx + Math.cos(b) * 1.3, hy + 0.1, hz + Math.sin(b) * 1.3], [hx + Math.cos(b + 0.6) * 0.5, hy + 1.45, hz + Math.sin(b + 0.6) * 0.5], 0.04, 0.03, 4, [0.4, 0.28, 0.16], rng, false); }
+    const da = Math.atan2(c.z - hz, c.x - hx);
+    blob(g, hx + Math.cos(da) * 1.25, hy + 0.55, hz + Math.sin(da) * 1.25, 0.42, 0.55, 0.42, [0.05, 0.04, 0.03], rng, 0.05, -1, 0, hy);
+    ch.trees.push(hx, hz, 1.5, 3);
+  }
+  // a little pile of treasure, and a totem with a dragon head
+  for (let i = 0; i < 9; i++) { const a = rng() * 6.28, d = 2.5 + rng() * 0.8, x = c.x + Math.cos(a) * d, z = c.z + Math.sin(a) * d; blob(g, x, sample(x, z).h + 0.05, z, 0.18, 0.1, 0.18, [0.98, 0.78, 0.2], rng, 0.2, -1, 0); }
+  const ta = rng() * 6.28, tx = c.x + Math.cos(ta) * 3.8, tz = c.z + Math.sin(ta) * 3.8, ty = sample(tx, tz).h;
+  tube(g, [tx, ty - 0.2, tz], [tx, ty + 2.8, tz], 0.12, 0.1, 6, [0.4, 0.26, 0.14], rng, false);
+  blob(g, tx, ty + 3.0, tz, 0.28, 0.24, 0.32, [0.72, 0.2, 0.14], rng, 0.1, -1, 0);
+  blob(g, tx, ty + 2.95, tz + 0.32, 0.14, 0.11, 0.2, [0.72, 0.2, 0.14], rng, 0.1, -1, 0);
+  for (const sd of [-1, 1]) {
+    blob(g, tx + sd * 0.13, ty + 3.08, tz + 0.22, 0.05, 0.04, 0.03, [1, 0.85, 0.15], rng, 0, -1, 0);
+    tube(g, [tx + sd * 0.14, ty + 3.18, tz - 0.05], [tx + sd * 0.26, ty + 3.5, tz - 0.25], 0.05, 0.008, 5, [0.95, 0.9, 0.75], rng, false);
+  }
+  ch.trees.push(tx, tz, 0.3, 3);
+}
 function buildCamp(g, ch, c) {
   const rng = mulberry32(hashInt(Math.round(c.x), Math.round(c.z), 7));
   const y0 = sample(c.x, c.z).h;
@@ -1186,6 +1239,8 @@ function buildChunk(cx, cz) {
   if (inChunk(lair)) { buildLair(vg, ch, lair); ch.pad = 36; }
   const camp = campInCell(Math.floor((x0 + 32) / CAMP_CELL), Math.floor((z0 + 32) / CAMP_CELL));
   if (inChunk(camp)) { buildCamp(vg, ch, camp); ch.pad = Math.max(ch.pad, 12); ch.maxY = Math.max(ch.maxY, sample(camp.x, camp.z).h + 6); }
+  const dcamp = dcampInCell(Math.floor((x0 + 32) / CAMP_CELL), Math.floor((z0 + 32) / CAMP_CELL));
+  if (inChunk(dcamp)) { buildDragonlingCamp(vg, ch, dcamp); ch.pad = Math.max(ch.pad, 12); ch.maxY = Math.max(ch.maxY, sample(dcamp.x, dcamp.z).h + 6); }
   ch.veg = makeMesh(vg);
   chunks.set(ckey(cx, cz), ch);
   return ch;
@@ -1473,6 +1528,7 @@ function fireSound() {
   noiseHit('bandpass', 2500, 0.6, 2.0, 0.12);
 }
 function spotSound(kind) {
+  if (kind === 'dragonling') { tone('square', 600, 950, 0.18, 0.05, 0, 2000); tone('sawtooth', 300, 200, 0.4, 0.06, 0.15, 900); return; }
   if (kind === 'croc') { noiseHit('bandpass', 2500, 0.7, 0.6, 0.18); tone('sawtooth', 160, 110, 0.5, 0.08, 0.1, 500); return; }
   if (kind === 'iceogre') { tone('sawtooth', 160, 80, 1.0, 0.2, 0, 700); noiseHit('highpass', 3500, 0.6, 0.8, 0.12); return; }
   if (kind === 'goat') { tone('square', 520, 380, 0.35, 0.05, 0, 1400); return; }
@@ -1486,6 +1542,7 @@ function spotSound(kind) {
   else { tone('sawtooth', 95, 60, 1.0, 0.22, 0, 500); noiseHit('lowpass', 380, 0.7, 0.9, 0.2); }
 }
 function growlSound(kind) {
+  if (kind === 'dragonling') { tone('sawtooth', 380, 240, 0.25, 0.07, 0, 1200); return; }
   if (kind === 'croc') { tone('sawtooth', 180, 110, 0.35, 0.1, 0, 500); return; }
   if (kind === 'iceogre') { tone('sawtooth', 170, 100, 0.7, 0.2, 0, 600); return; }
   if (kind === 'goat') { tone('square', 480, 330, 0.3, 0.05, 0, 1300); return; }
@@ -2187,6 +2244,45 @@ function snakeModel() {
   }
   return { seg: makeMesh(sg), band: makeMesh(bg), head: makeMesh(hg), jaw: makeMesh(jg), tube: makeMesh(tg) };
 }
+function dragonlingModel() {
+  const g = new Geo(3072), r = mulberry32(47);
+  const RED = [0.72, 0.2, 0.14], DRED = [0.5, 0.12, 0.1], BELLY = [0.95, 0.72, 0.32], HORN = [0.95, 0.9, 0.75], DK = [0.08, 0.05, 0.05];
+  const B = (x, y, z, rx, ry, rz, c, j) => blob(g, x, y, z, rx, ry, rz, c, r, j === undefined ? 0.12 : j, -1, 0);
+  B(0, 0.86, 0, 0.22, 0.24, 0.18, RED);                    // hips
+  B(0, 0.86, 0.07, 0.16, 0.18, 0.12, BELLY);
+  B(0, 1.14, 0, 0.21, 0.22, 0.15, RED);                    // chest
+  B(0, 1.14, 0.07, 0.15, 0.17, 0.1, BELLY);
+  B(0, 1.32, 0, 0.075, 0.08, 0.075, RED);                  // neck
+  B(0, 1.5, 0.04, 0.19, 0.18, 0.2, RED);                   // head
+  tube(g, [0, 1.47, 0.18], [0, 1.42, 0.42], 0.1, 0.07, 6, RED, r, false);   // short snout
+  B(0, 1.39, 0.33, 0.07, 0.012, 0.08, [0.4, 0.06, 0.06], 0);              // mouth
+  for (const sd of [-1, 1]) {
+    B(sd * 0.035, 1.47, 0.45, 0.018, 0.015, 0.012, DK, 0);                // nostrils
+    B(sd * 0.09, 1.56, 0.17, 0.045, 0.04, 0.02, [1, 0.85, 0.15], 0);      // yellow eyes
+    B(sd * 0.09, 1.56, 0.185, 0.012, 0.035, 0.01, DK, 0);                // slit pupils
+    tube(g, [sd * 0.1, 1.65, 0.0], [sd * 0.17, 1.86, -0.13], 0.035, 0.006, 5, HORN, r, false);   // little horns
+  }
+  for (let i = 0; i < 4; i++) tube(g, [0, 0.95 + i * 0.13, -0.14], [0, 1.02 + i * 0.13, -0.24], 0.04, 0.005, 4, DRED, r, false);   // back spikes
+  tube(g, [0, 0.84, -0.14], [0, 0.55, -0.6], 0.09, 0.05, 6, RED, r, false);       // tail
+  tube(g, [0, 0.55, -0.6], [0, 0.3, -1.0], 0.05, 0.012, 6, RED, r, false);
+  blob(g, 0, 0.29, -1.04, 0.08, 0.015, 0.09, DRED, r, 0, -1, 0);                 // arrow tip
+  const lg = new Geo(512);
+  tube(lg, [0, 0.02, 0], [0, -0.38, 0.03], 0.085, 0.07, 6, RED, r, false);
+  tube(lg, [0, -0.38, 0.03], [0, -0.72, 0], 0.065, 0.055, 6, RED, r, false);
+  blob(lg, 0, -0.74, 0.08, 0.075, 0.04, 0.13, DRED, r, 0.1, -1, 0);
+  const arm = withSpear => {
+    const ag = new Geo(1024);
+    tube(ag, [0, 0, 0], [0, -0.3, 0.02], 0.06, 0.05, 6, RED, r, false);
+    tube(ag, [0, -0.3, 0.02], [0, -0.55, 0.06], 0.05, 0.05, 6, RED, r, false);
+    blob(ag, 0, -0.6, 0.06, 0.06, 0.06, 0.06, DRED, r, 0.1, -1, 0);
+    if (withSpear) {                                            // a spear with a stone tip
+      tube(ag, [0, -0.6, -0.45], [0, -0.62, 0.95], 0.022, 0.022, 5, [0.42, 0.3, 0.18], r, true);
+      blob(ag, 0, -0.62, 1.03, 0.035, 0.05, 0.11, [0.55, 0.55, 0.57], r, 0.2, -1, 0);
+    }
+    return makeMesh(ag);
+  };
+  return { body: makeMesh(g), leg: makeMesh(lg), armR: arm(true), armL: arm(false) };
+}
 function goblinModel() {
   const g = new Geo(2048), r = mulberry32(31);
   const SKIN = [0.5, 0.66, 0.26], DSKIN = [0.38, 0.52, 0.2], TUNIC = [0.42, 0.3, 0.18], DK = [0.08, 0.06, 0.05];
@@ -2409,6 +2505,9 @@ const SPECIES = {
     radius: 1.8, drops: { gems: 30, iron: 4, apples: 3 }, knock: 0, sinkH: 4, legLen: 1, giveUp: 70, segs: 20, spacing: 2.2 },
   snake: { name: 'Giant snake', boss: true, serpent: true, swims: true, hp: 200, dmg: 18, reach: 3.3, windup: 0.45, cd: 1.5, walk: 1.8, run: 5.0, sight: 28, turn: 2.5,
     radius: 1.0, drops: { gems: 15, iron: 3, apples: 2, fang: 2 }, knock: 0, sinkH: 2.0, legLen: 1, giveUp: 55, segs: 16, spacing: 1.15 },
+  dragonling: { name: 'Dragonling', neutral: true, puff: true, hitH: 1.8, hp: 20, dmg: 7, reach: 2.3, windup: 0.4, cd: 1.2, walk: 1.6, run: 6.0, sight: 0, turn: 6, radius: 0.45,
+    barH: 2.1, drops: { gems: 2, iron: 0.4 }, knock: 0.7, sinkH: 1.8, giveUp: 40, wingAt: [0.13, 1.25, -0.14], wingScale: 0.18,
+    legLen: 0.72, hipY: 0.75, hips: [[0.14, 0], [-0.14, 0]], shoulders: [[0.27, 1.27, 0], [-0.27, 1.27, 0]] },
   goblin: { name: 'Goblin', hitH: 1.7, hp: 18, dmg: 8, reach: 2.2, windup: 0.45, cd: 1.2, walk: 1.8, run: 6.2, sight: 24, turn: 6, radius: 0.45,
     barH: 2.0, drops: { gems: 3, iron: 0.5, wood: 0.5, item: 'goblinaxe', itemChance: 0.25 }, knock: 0.7, sinkH: 1.8,
     legLen: 0.72, hipY: 0.75, hips: [[0.14, 0], [-0.14, 0]], shoulders: [[0.27, 1.27, 0], [-0.27, 1.27, 0]] },
@@ -2441,6 +2540,8 @@ SPECIES.iceogre.model = ogreModel(true);
 SPECIES.goat.model = goatModel();
 SPECIES.croc.model = crocModel();
 SPECIES.goblin.model = goblinModel();
+SPECIES.dragonling.model = dragonlingModel();
+SPECIES.dragonling.model.wing = SPECIES.dragon.model.wing;
 });
 const waterMeshes = [[0.55, 0.82, 1.0], [0.88, 0.96, 1.0]].map((c, i) => { const g = new Geo(64); blob(g, 0, 0, 0, 1, 1, 1, c, mulberry32(50 + i), 0.3, -1, 0); return makeMesh(g); });
 const flameMeshes = [[1.0, 0.45, 0.05], [1.0, 0.75, 0.1], [1.0, 0.25, 0.02]].map((c, i) => { const g = new Geo(64); blob(g, 0, 0, 0, 1, 1, 1, c, mulberry32(30 + i), 0.4, -1, 0); return makeMesh(g); });
@@ -2767,6 +2868,20 @@ function spawnLeviathan(x, z, extra) {
   return lv;
 }
 const campState = new Map();
+const dcampState = new Map();
+function spawnDragonlings(c, st) {
+  const n = 3 + (Math.random() * 3 | 0);
+  st.left = n; st.alive = true;
+  for (let i = 0; i < n; i++) {
+    const a = i / n * Math.PI * 2 + Math.random(), d = 3 + Math.random() * 3;
+    const x = c.x + Math.cos(a) * d, z = c.z + Math.sin(a) * d;
+    const dl = spawnAnimal('dragonling', x, z, { home: { x: c.x, z: c.z, r: 12 }, onGone: why => {
+      st.left--;
+      if (st.left <= 0) { st.alive = false; st.until = nowS() + (why === 'killed' ? 240 : why === 'ko' ? 40 : 0); }
+    } });
+    dl.yaw = Math.atan2(c.x - x, c.z - z);
+  }
+}
 function spawnCampGoblins(c, st, calm) {
   const y = sample(c.x, c.z).h, n = 3 + (Math.random() * 3 | 0);
   st.left = n; st.alive = true;
@@ -2942,6 +3057,17 @@ function updateLairs(dt) {
       }
     }
   }
+  // dragonling camps (they're calm unless you start something)
+  {
+    const dcx = Math.floor(player.x / CAMP_CELL), dcz = Math.floor(player.z / CAMP_CELL);
+    for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) {
+      const c = dcampInCell(dcx + dx, dcz + dz);
+      if (!c) continue;
+      let st = dcampState.get(c.key);
+      if (!st) { st = { alive: false, until: 0, left: 0, camp: c }; dcampState.set(c.key, st); }
+      if (!st.alive && now > st.until && Math.hypot(c.x - player.x, c.z - player.z) < 100) spawnDragonlings(c, st);
+    }
+  }
   // goblin camps
   const gcx = Math.floor(player.x / CAMP_CELL), gcz = Math.floor(player.z / CAMP_CELL);
   for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) {
@@ -3027,7 +3153,8 @@ function alertAnimal(a) {
   if (a.kind === 'croc') a.roarT = 1.0;
   if (a.kind === 'iceogre') { toast('🧊 An ice ogre!'); rumble(0.5, 0.5, 300); }
   if (a.kind === 'goblin' && !animals.some(b => b !== a && b.kind === 'goblin' && b.alerted)) toast('👺 Goblins!');
-  if (a.kind === 'wolf' || a.kind === 'goblin' || a.kind === 'goat' || a.kind === 'croc') for (const b of animals) if (b !== a && !b.alerted && !b.dead && b.kind === a.kind && Math.hypot(b.x - a.x, b.z - a.z) < (a.kind === 'goblin' ? 25 : 15)) { b.alerted = true; b.waterT = 0; b.calm = false; makeBar(b); }
+  if (a.kind === 'dragonling' && !animals.some(b => b !== a && b.kind === 'dragonling' && b.alerted)) toast('🐲 You made the dragonlings angry!');
+  if (a.kind === 'wolf' || a.kind === 'goblin' || a.kind === 'goat' || a.kind === 'croc' || a.kind === 'dragonling') for (const b of animals) if (b !== a && !b.alerted && !b.dead && b.kind === a.kind && Math.hypot(b.x - a.x, b.z - a.z) < (a.kind === 'goblin' || a.kind === 'dragonling' ? 25 : 15)) { b.alerted = true; b.waterT = 0; b.calm = false; makeBar(b); }
 }
 function calmAnimal(a) {
   a.alerted = false; a.windup = 0; a.fireT = 0;
@@ -3150,6 +3277,24 @@ function fight(a, dt, dist, dx, dz, playerWet) {
       a.fireT = 2.2; a.fireCd = 5 + Math.random() * 3; fireSound();
       return 0;
     }
+  }
+  if (sp.puff) {                   // dragonling: a little puff of fire from a few metres away
+    a.puffCd = (a.puffCd === undefined ? 2 : a.puffCd) - dt;
+    if (a.puffT > 0) {
+      a.puffT -= dt;
+      const sy = Math.sin(a.yaw), cy = Math.cos(a.yaw), m = [a.x + sy * 0.45, a.y + 1.42, a.z + cy * 0.45];
+      const ex = player.x - m[0], ey = player.feet + 1.1 - m[1], ez = player.z - m[2], L = Math.hypot(ex, ey, ez) || 1;
+      a.puffAcc = (a.puffAcc || 0) + dt * 30;
+      while (a.puffAcc >= 1) {
+        a.puffAcc -= 1;
+        const j = () => (Math.random() - 0.5) * 0.25, spd = 11;
+        flames.push({ x: m[0], y: m[1], z: m[2], vx: (ex / L + j()) * spd, vy: (ey / L + j()) * spd, vz: (ez / L + j()) * spd, t: 0, life: 0.6, m: Math.random() * 3 | 0, small: true });
+      }
+      a.puffTick = (a.puffTick || 0) - dt;
+      if (a.puffTick <= 0) { a.puffTick = 0.2; if (dist < 9 && (dx * sy + dz * cy) / dist > 0.75) hurtPlayer(2, dx / dist, dz / dist, 1, a); }
+      return 0;
+    }
+    if (a.windup <= 0 && dist > 3.5 && dist < 9 && a.puffCd <= 0) { a.puffT = 0.9; a.puffCd = 4 + Math.random() * 3; noiseHit('lowpass', 900, 0.5, 0.9, 0.2, 400); return 0; }
   }
   if (sp.tailWhip) {               // crocodile: swings its tail at you if you're behind it
     a.whipCd -= dt;
@@ -3512,7 +3657,7 @@ function updateSmoke(dt) {
   fireTimer -= dt;
   if (fireTimer <= 0) {
     fireTimer = 0.09;
-    for (const st of campState.values()) {
+    for (const st of [...campState.values(), ...dcampState.values()]) {
       const c = st.camp;
       if (Math.hypot(c.x - player.x, c.z - player.z) > 120) continue;
       const y = groundAt(c.x, c.z);
@@ -3634,7 +3779,7 @@ function updateAnimals(dt) {
 function clearAnimals() {
   for (const a of animals) dropBar(a);
   animals = []; pickups = []; flames = [];
-  caveState.clear(); lairState.clear(); campState.clear(); iceSpikes = []; arrows = []; rings = []; snakeState.alive = false; snakeState.until = 0;
+  caveState.clear(); lairState.clear(); campState.clear(); dcampState.clear(); iceSpikes = []; arrows = []; rings = []; snakeState.alive = false; snakeState.until = 0;
 }
 function clearEnemies() {
   animals = animals.filter(a => {
@@ -3708,9 +3853,9 @@ function drawAnimals(time) {
       const flap = a.asleep ? -0.35 : a.dead ? -0.2 : a.flyAlt > 0.5 ? 0.25 + Math.sin(time * 5.5) * 0.85
         : (a.fireT > 0 || a.windup > 0) ? 0.45 + Math.sin(time * 9) * 0.45
         : a.alerted ? 0.15 + Math.sin(time * 4) * 0.35 : 0.05 + Math.sin(time * 1.3) * 0.08;
-      const ws = sp.wingScale || 1;
-      drawMesh(sp.model.wing, mChain(body, mT(0.85, 3.4, 1.0), mRz(flap), mS(ws)), flash);
-      drawMesh(sp.model.wing, mChain(body, mT(-0.85, 3.4, 1.0), mS3(-1, 1, 1), mRz(flap), mS(ws)), flash);
+      const ws = sp.wingScale || 1, wa = sp.wingAt || [0.85, 3.4, 1.0];
+      drawMesh(sp.model.wing, mChain(body, mT(wa[0], wa[1], wa[2]), mRz(flap), mS(ws)), flash);
+      drawMesh(sp.model.wing, mChain(body, mT(-wa[0], wa[1], wa[2]), mS3(-1, 1, 1), mRz(flap), mS(ws)), flash);
     }
   }
   for (const rg of rings) {
@@ -4244,6 +4389,27 @@ if (new URLSearchParams(location.search).has('snake')) {
         player.pitch = 0.05;
       }
     }
+  }
+}
+// Shortcut: index.html?dragonling takes you to the nearest dragonling camp, 20 m from the fire.
+if (new URLSearchParams(location.search).has('dragonling')) {
+  let camp = null, best = Infinity;
+  const cx = Math.floor(player.x / CAMP_CELL), cz = Math.floor(player.z / CAMP_CELL);
+  for (let dz = -6; dz <= 6; dz++) for (let dx = -6; dx <= 6; dx++) {
+    const c = dcampInCell(cx + dx, cz + dz);
+    if (c) { const d = Math.hypot(c.x - player.x, c.z - player.z); if (d < best) { best = d; camp = c; } }
+  }
+  if (camp) {
+    let spot = null;
+    for (let i = 0; i < 16 && !spot; i++) { const a = i / 16 * Math.PI * 2, x = camp.x + Math.sin(a) * 13, z = camp.z + Math.cos(a) * 13; if (sample(x, z).h > 1) spot = { x, z }; }
+    spot = spot || { x: camp.x + 13, z: camp.z };
+    placePlayer({ x: spot.x, z: spot.z, yaw: Math.atan2(camp.x - spot.x, -(camp.z - spot.z)) });
+    player.pitch = -0.05;
+    settings.animals = true;
+    const st = { alive: false, until: 0, left: 0, camp };
+    dcampState.set(camp.key, st);
+    spawnDragonlings(camp, st);
+    dragonView = true;
   }
 }
 // Shortcut: index.html?croc puts you on a river bank with a calm crocodile in the water in front of you.
