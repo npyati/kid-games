@@ -17,6 +17,7 @@ A 3D exploring game. You walk through a forest that goes on forever: pines, birc
 |---|---|---|---|---|
 | Wolf | 15 | 9 | packs of 2 or 3, mostly in forests | 1 gem, usually 1 fur, sometimes 1 iron |
 | Bear | 20 | 16 | lives by a cave and comes back 2 minutes after it's beaten | 3 gems, 2 iron, 2 fur |
+| Ogre (mini-boss) | 150 | 20, a big club smash | wanders forests now and then (about a 1 in 3 chance per minute in a forest), comes back 2½ minutes after it's beaten; slower than you when you run | 8 gems, 2 iron, 2 fur, 1 apple |
 | Giant snake (boss) | 200 | 18 | marshes; it can swim (about 16 m long); opens its jaw wide and snaps | 15 gems, 3 iron, 2 apples, 2 giant fangs |
 | Dragon (boss) | 500 | 25 bite, plus fire | two legs and big wings, about 25 m long with its tail; sleeps in a volcano on a mountaintop; comes back 10 minutes after it's beaten | 25 gems, 4 iron, 3 apples, 1 dragon scale |
 
@@ -76,3 +77,4 @@ One `localStorage` key, `wildwood.v1`: music, sound, look direction and enemy se
 ## Testing shortcuts
 
 - `wildwood/?dragon` starts you on the rim of the nearest volcano, looking down at the sleeping dragon (it's already there behind the menu). In this mode it only wakes up if you walk right up to it or hit it. Your saved spot moves there too.
+- `wildwood/?ogre` puts an ogre in the forest 32 m in front of you.
