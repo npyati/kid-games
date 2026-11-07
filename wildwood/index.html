@@ -2801,9 +2801,9 @@ const SPECIES = {
     barH: 1.75, drops: { gems: 3, iron: 2, fur: 2 }, knock: 0.35, sinkH: 1.7, legLen: 0.55, hipY: 0.62, hips: [[0.25, 0.44], [-0.25, 0.44], [0.25, -0.44], [-0.25, -0.44]] },
   // bosses
   leviathan: { name: 'Leviathan', boss: true, serpent: true, swims: true, waterOnly: true, bodyR: 1.6, headScale: 3.2, rearH: 7,
-    calmWake: 16, hp: 850, dmg: 30, whipDmg: 20, reach: 11, windup: 0.6, cd: 1.8, walk: 2.2, run: 6.0, sight: 40, turn: 1.8,
+    calmWake: 16, hp: 1700, dmg: 30, whipDmg: 20, reach: 11, windup: 0.6, cd: 1.8, walk: 2.2, run: 6.0, sight: 40, turn: 1.8,
     radius: 1.8, drops: { gems: 30, iron: 4, apples: 3 }, knock: 0, sinkH: 4, legLen: 1, giveUp: 70, segs: 20, spacing: 2.2 },
-  snake: { name: 'Giant snake', boss: true, serpent: true, swims: true, hp: 300, dmg: 18, reach: 3.3, windup: 0.45, cd: 1.5, walk: 1.8, run: 5.0, sight: 28, turn: 2.5,
+  snake: { name: 'Giant snake', boss: true, serpent: true, swims: true, hp: 600, dmg: 18, reach: 3.3, windup: 0.45, cd: 1.5, walk: 1.8, run: 5.0, sight: 28, turn: 2.5,
     radius: 1.0, drops: { gems: 15, iron: 3, apples: 2, fang: 2 }, knock: 0, sinkH: 2.0, legLen: 1, giveUp: 55, segs: 16, spacing: 1.15 },
   dragonling: { name: 'Dragonling', neutral: true, retreats: true, puff: true, hitH: 1.8, hp: 20, dmg: 7, reach: 2.3, windup: 0.4, cd: 1.2, walk: 1.6, run: 6.0, sight: 0, turn: 6, radius: 0.45,
     barH: 2.1, drops: { gems: 2, iron: 0.4 }, knock: 0.7, sinkH: 1.8, giveUp: 40, wingAt: [0.13, 1.25, -0.14], wingScale: 0.18,
@@ -2817,10 +2817,10 @@ const SPECIES = {
   goat: { name: 'Goat', neutral: true, hp: 12, dmg: 6, reach: 1.6, windup: 0.5, cd: 1.6, walk: 1.2, run: 6.5, sight: 0, turn: 5, radius: 0.5,
     barH: 1.6, drops: { fur: 1, gems: 0.5 }, knock: 0.8, hitKnock: 11, sinkH: 1.4, giveUp: 30, hitH: 1.4,
     legLen: 0.55, hipY: 0.6, hips: [[0.12, 0.3], [-0.12, 0.3], [0.12, -0.3], [-0.12, -0.3]] },
-  iceogre: { name: 'Ice ogre', boss: true, frostSlam: true, hp: 200, dmg: 22, reach: 3.6, windup: 0.9, cd: 2.0, walk: 1.4, run: 4.8, sight: 30, turn: 2.5,
+  iceogre: { name: 'Ice ogre', boss: true, frostSlam: true, hp: 400, dmg: 22, reach: 3.6, windup: 0.9, cd: 2.0, walk: 1.4, run: 4.8, sight: 30, turn: 2.5,
     radius: 0.8, drops: { gems: 10, iron: 2, frost: 2, apples: 1 }, knock: 0.15, sinkH: 3.5, giveUp: 60, legLen: 1.2, hipY: 1.25, hitH: 3.3,
     hips: [[0.38, 0], [-0.38, 0]], shoulders: [[0.84, 2.45, 0], [-0.84, 2.45, 0]] },
-  ogre: { name: 'Ogre', boss: true, hitH: 3.3, hp: 150, dmg: 20, reach: 3.6, windup: 0.9, cd: 2.0, walk: 1.4, run: 4.8, sight: 28, turn: 2.5,
+  ogre: { name: 'Ogre', boss: true, hitH: 3.3, hp: 300, dmg: 20, reach: 3.6, windup: 0.9, cd: 2.0, walk: 1.4, run: 4.8, sight: 28, turn: 2.5,
     radius: 0.8, drops: { gems: 8, iron: 2, fur: 2, apples: 1 }, knock: 0.15, sinkH: 3.5, giveUp: 60, legLen: 1.2, hipY: 1.25,
     hips: [[0.38, 0], [-0.38, 0]], shoulders: [[0.84, 2.45, 0], [-0.84, 2.45, 0]] },
   // fish swim in rivers and lakes: they dart away from you, and their scales make gear
@@ -2831,7 +2831,7 @@ const SPECIES = {
   // sharks live in the ocean, and only come after you when you're in the water
   shark: { name: 'Shark', swims: true, waterOnly: true, wetOnly: true, long: true, swimY: 0.45, minDepth: 1.2, hp: 45, dmg: 9, reach: 2.8, windup: 0.6, cd: 2.2,
     walk: 1.8, run: 3.8, sight: 24, turn: 2.8, radius: 0.7, barH: 1.4, hitH: 1.1, drops: { tooth: 2, gems: 2 }, knock: 0.35, sinkH: 1.2, legLen: 0.6, giveUp: 45 },
-  dragon: { name: 'Dragon', boss: true, hitH: 8, wingScale: 1.25, scale: 1.5, tilt: -0.2, hp: 900, dmg: 25, reach: 8.0, windup: 0.8, cd: 2.2, walk: 2.0, run: 4.6, sight: 40, turn: 1.4,
+  dragon: { name: 'Dragon', boss: true, hitH: 8, wingScale: 1.25, scale: 1.5, tilt: -0.2, hp: 1800, dmg: 25, reach: 8.0, windup: 0.8, cd: 2.2, walk: 2.0, run: 4.6, sight: 40, turn: 1.4,
     radius: 3.8, drops: { gems: 25, iron: 4, scale: 1, apples: 3 }, knock: 0, sinkH: 9, giveUp: 75, legLen: 1.8, hipY: 1.95, hips: [[0.95, -0.4], [-0.95, -0.4]] },
 };
 hiDetail(() => {
