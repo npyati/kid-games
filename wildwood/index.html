@@ -62,8 +62,20 @@ nav button:focus-visible,nav a:focus-visible{outline:none;border-color:var(--sun
 #toast.show{opacity:1}
 #nogl{display:none;position:fixed;inset:0;background:var(--night);color:var(--cream);place-items:center;text-align:center;padding:24px;font-size:18px}
 #nogl a{color:var(--sun)}
-#hud{position:fixed;left:max(16px,env(safe-area-inset-left,0px));top:16px;display:none;flex-direction:column;gap:6px;pointer-events:none}
+#hud,#hud2{position:fixed;left:max(16px,env(safe-area-inset-left,0px));top:16px;display:none;flex-direction:column;gap:6px;pointer-events:none}
 #hud.show{display:flex}
+.ptag{display:none;font-family:var(--display);font-weight:400;font-size:15px;color:var(--ink);background:var(--leaf);border-radius:8px;padding:0 6px}
+#hud2 .ptag{background:#ffb347}
+/* two players: the screen splits left (player 1) and right (player 2) */
+body.two .ptag{display:inline-block}
+body.two #hud2.show{display:flex;left:calc(50% + 16px)}
+body.two #cross{left:25%}
+#cross2{position:fixed;left:75%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:rgba(255,255,255,.85);box-shadow:0 0 0 2px rgba(21,18,63,.5);pointer-events:none;display:none}
+body.two #hud2.show ~ #cross2{display:block}
+#split{display:none;position:fixed;top:0;bottom:0;left:50%;width:4px;margin-left:-2px;background:#15123f;pointer-events:none}
+body.two.playing #split{display:block}
+body.two #hurt,body.two #frost,body.two #ko{right:50%}
+body.two #hurt2,body.two #frost2,body.two #ko2{left:50%}
 .hp{display:flex;align-items:center;gap:8px;background:rgba(21,18,63,.75);border-radius:999px;padding:6px 12px 6px 8px}
 .hp span{font-size:20px;line-height:1}
 .hpbar{width:min(180px,40vw);height:14px;background:#3a1530;border-radius:999px;overflow:hidden;border:2px solid #15123f}
@@ -121,11 +133,11 @@ nav button:focus-visible,nav a:focus-visible{outline:none;border-color:var(--sun
 .done{color:var(--muted);margin:0}
 .invmsg{margin:0;min-height:1.4em;text-align:center;color:var(--cream);font-size:15px}
 .closeb{font:inherit;font-size:17px;color:var(--cream);background:var(--night);border:3px solid var(--edge);border-radius:14px;padding:10px;cursor:pointer}
-#frost{position:fixed;inset:0;pointer-events:none;opacity:0;background:radial-gradient(ellipse at center,transparent 40%,rgba(170,220,255,.75))}
-#hurt{position:fixed;inset:0;pointer-events:none;opacity:0;background:radial-gradient(ellipse at center,transparent 45%,rgba(220,20,40,.65))}
-#ko{position:fixed;inset:0;display:grid;place-items:center;background:rgba(10,8,30,.85);opacity:0;pointer-events:none;transition:opacity .6s;text-align:center;font-family:var(--display);font-size:clamp(28px,6vw,48px);color:var(--cream);padding:16px}
-#ko.show{opacity:1}
-#ko small{display:block;font-family:var(--body);font-size:18px;color:var(--muted);margin-top:8px}
+#frost,#frost2{position:fixed;inset:0;pointer-events:none;opacity:0;background:radial-gradient(ellipse at center,transparent 40%,rgba(170,220,255,.75))}
+#hurt,#hurt2{position:fixed;inset:0;pointer-events:none;opacity:0;background:radial-gradient(ellipse at center,transparent 45%,rgba(220,20,40,.65))}
+#ko,#ko2{position:fixed;inset:0;display:grid;place-items:center;background:rgba(10,8,30,.85);opacity:0;pointer-events:none;transition:opacity .6s;text-align:center;font-family:var(--display);font-size:clamp(28px,6vw,48px);color:var(--cream);padding:16px}
+#ko.show,#ko2.show{opacity:1}
+#ko small,#ko2 small{display:block;font-family:var(--body);font-size:18px;color:var(--muted);margin-top:8px}
 </style>
 </head>
 <body>
@@ -144,6 +156,7 @@ nav button:focus-visible,nav a:focus-visible{outline:none;border-color:var(--sun
       <button data-act="saves">💾 Saved games</button>
       <button data-act="animals">Enemies: on</button>
       <button data-act="fullscreen">Full screen</button>
+      <button data-act="p2">👥 Add player 2</button>
       <a data-act="home" href="../">All games</a>
     </nav>
     <div class="howto">
@@ -151,6 +164,7 @@ nav button:focus-visible,nav a:focus-visible{outline:none;border-color:var(--sun
       <div><b>Keyboard and mouse</b>WASD: walk · Mouse: look · Click or F: swing or shoot · Right-click or Q: block (you can still swing) · 1: sword · 2: bow · 3: shield on/off · Space: jump · Shift: run · I or Tab: backpack · Esc: menu</div>
       <div><b>Animals</b>Foxes, deer and rabbits are friendly. Wolves, and bears from caves, chase you once they spot you. Beat them for gems, iron and apples. They can't swim!</div>
       <div><b>Crafting</b>Swing at trees for wood and at big rocks for stone. Catch fish in rivers for their scales (golden fish are rare!). Open your backpack to make axes, swords, bows, shields and chest plates.</div>
+      <div><b>Two players</b>Plug in a second Xbox controller and press Start on it (or choose 👥 Add player 2). The screen splits in two. You share one backpack, and each of you has your own health and gear in hand.</div>
       <div><b>Saved games</b>Make as many games as you like with 💾 Saved games. Each one has its own world and its own things. New game starts from scratch.</div>
       <div><b>Bosses</b>Dragonlings live in forest camps: leave them alone and they'll leave you alone. Crocodiles lurk in rivers. Sharks swim in the ocean, but only bother you in the water. Goats (leave them alone!) and ice ogres live in the icy mountains. Goblins camp in open fields. Ogres roam the forests. Giant snakes hide in marshes. The Leviathan lives in big lakes. Dragons sleep in volcanoes on mountaintops, ringed by tall black spikes. They walk on their folded wings, and they can fly!</div>
     </div>
@@ -158,12 +172,19 @@ nav button:focus-visible,nav a:focus-visible{outline:none;border-color:var(--sun
   </div>
 </div>
 <div id="bars"></div>
-<div id="hud">
-  <div class="hp"><span>❤️</span><div class="hpbar"><div class="hpfill" id="hpFill"></div></div></div>
-  <div class="inv"><div id="weaponName">✊ Fists</div><div id="armorName">👕 No armor</div><div id="shieldName">No shield</div><div id="gemCount">💎 0</div></div>
-  <div class="inv"><div class="bp">🎒 Backpack: <b id="bpKey">Y</b></div></div>
+<div id="hud" class="hudbox">
+  <div class="hp"><b class="ptag">P1</b><span>❤️</span><div class="hpbar"><div class="hpfill" id="hpFill" data-h="hp"></div></div></div>
+  <div class="inv"><div data-h="weapon">✊ Fists</div><div data-h="armor">👕 No armor</div><div data-h="shield">No shield</div><div data-h="gems">💎 0</div></div>
+  <div class="inv"><div class="bp">🎒 Backpack: <b data-h="bpkey">Y</b></div></div>
 </div>
 <div id="cross"></div>
+<div id="hud2" class="hudbox">
+  <div class="hp"><b class="ptag">P2</b><span>❤️</span><div class="hpbar"><div class="hpfill" data-h="hp"></div></div></div>
+  <div class="inv"><div data-h="weapon">✊ Fists</div><div data-h="armor">👕 No armor</div><div data-h="shield">No shield</div><div data-h="gems">💎 0</div></div>
+  <div class="inv"><div class="bp">🎒 Backpack: <b data-h="bpkey">Y</b></div></div>
+</div>
+<div id="cross2"></div>
+<div id="split"></div>
 <div id="feed"></div>
 <div id="inv" class="overlay">
   <div class="panel invp">
@@ -190,6 +211,9 @@ nav button:focus-visible,nav a:focus-visible{outline:none;border-color:var(--sun
 <div id="hurt"></div>
 <div id="frost"></div>
 <div id="ko"><div>You got knocked out!<small>Taking a little rest…</small></div></div>
+<div id="hurt2" class="p2half"></div>
+<div id="frost2" class="p2half"></div>
+<div id="ko2" class="p2half"><div>Player 2 got knocked out!<small>Taking a little rest…</small></div></div>
 <div id="hint"></div>
 <div id="toast"></div>
 <div id="nogl"><div>This game needs WebGL 2, which this browser doesn't have.<br><br><a href="../">Back to all games</a></div></div>
@@ -275,8 +299,8 @@ function writeSave() {
   writeSettings();
   try {
     localStorage.setItem(SLOT_PREFIX + currentSlot, JSON.stringify({
-      seed: worldSeed, mats, owned: [...owned], equip,
-      pos: { x: +player.x.toFixed(2), z: +player.z.toFixed(2), yaw: +player.yaw.toFixed(3), seed: worldSeed },
+      seed: worldSeed, mats, owned: [...owned], equip: pslots[0] ? pslots[0].equip : equip,
+      pos: { x: +players[0].x.toFixed(2), z: +players[0].z.toFixed(2), yaw: +players[0].yaw.toFixed(3), seed: worldSeed },
     }));
   } catch (e) {}
   const m = curMeta();
@@ -1448,37 +1472,32 @@ function clearWorld() {
 
 // Build what's missing near the player, nearest first, within a time budget.
 function updateChunks(px, pz, budgetMs) {
-  const pcx = Math.floor(px / CH), pcz = Math.floor(pz / CH);
+  // the world is built around every player (in split screen, around both of them)
+  const centers = players.map(p => [Math.floor(p.x / CH), Math.floor(p.z / CH)]);
+  const near2 = (cx, cz) => { let m = Infinity; for (const c of centers) { const dx = cx - c[0], dz = cz - c[1], d = dx * dx + dz * dz; if (d < m) m = d; } return m; };
   const t0 = performance.now();
   let best = null, bestD = Infinity, bestDetail = null, bestDD = Infinity;
-  for (let dz = -VIEW_R; dz <= VIEW_R; dz++) for (let dx = -VIEW_R; dx <= VIEW_R; dx++) {
-    const d2 = dx * dx + dz * dz;
-    if (d2 > VIEW_R * VIEW_R + 1) continue;
-    const ch = chunks.get(ckey(pcx + dx, pcz + dz));
-    if (!ch) { if (d2 < bestD) { bestD = d2; best = [pcx + dx, pcz + dz]; } }
-    else if (!ch.detailBuilt && d2 <= DETAIL_R * DETAIL_R + 1 && d2 < bestDD) { bestDD = d2; bestDetail = ch; }
-  }
+  const scan = () => {
+    for (const c of centers) for (let dz = -VIEW_R; dz <= VIEW_R; dz++) for (let dx = -VIEW_R; dx <= VIEW_R; dx++) {
+      const kx = c[0] + dx, kz = c[1] + dz, d2 = near2(kx, kz);
+      if (d2 > VIEW_R * VIEW_R + 1) continue;
+      const ch = chunks.get(ckey(kx, kz));
+      if (!ch) { if (d2 < bestD) { bestD = d2; best = [kx, kz]; } }
+      else if (!ch.detailBuilt && d2 <= DETAIL_R * DETAIL_R + 1 && d2 < bestDD) { bestDD = d2; bestDetail = ch; }
+    }
+  };
+  scan();
   let built = 0;
   while (performance.now() - t0 < budgetMs || built === 0) {
     if (bestDetail && bestDD <= bestD) { buildDetail(bestDetail); bestDetail = null; bestDD = Infinity; }
     else if (best) { buildChunk(best[0], best[1]); best = null; bestD = Infinity; }
     else break;
     built++;
-    if (!best && !bestDetail) {
-      // look again for the next one
-      for (let dz = -VIEW_R; dz <= VIEW_R; dz++) for (let dx = -VIEW_R; dx <= VIEW_R; dx++) {
-        const d2 = dx * dx + dz * dz;
-        if (d2 > VIEW_R * VIEW_R + 1) continue;
-        const ch = chunks.get(ckey(pcx + dx, pcz + dz));
-        if (!ch) { if (d2 < bestD) { bestD = d2; best = [pcx + dx, pcz + dz]; } }
-        else if (!ch.detailBuilt && d2 <= DETAIL_R * DETAIL_R + 1 && d2 < bestDD) { bestDD = d2; bestDetail = ch; }
-      }
-      if (!best && !bestDetail) break;
-    }
+    if (!best && !bestDetail) { scan(); if (!best && !bestDetail) break; }      // look again for the next one
   }
   // unload far chunks, drop far detail
   for (const [key, ch] of chunks) {
-    const dx = ch.cx - pcx, dz = ch.cz - pcz, d2 = dx * dx + dz * dz;
+    const d2 = near2(ch.cx, ch.cz);
     if (d2 > (VIEW_R + 2) * (VIEW_R + 2)) { freeChunk(ch); chunks.delete(key); }
     else if (ch.detailBuilt && d2 > (DETAIL_R + 2) * (DETAIL_R + 2)) { freeMesh(ch.detail); ch.detail = null; ch.detailBuilt = false; }
   }
@@ -1488,8 +1507,17 @@ function updateChunks(px, pz, budgetMs) {
    Player
    ===================================================================== */
 const EYE = 1.65, SWIM_FEET = -1.25;
-const player = { x: 0, z: 0, feet: 3, vy: 0, vx: 0, vz: 0, yaw: 0, pitch: 0, onGround: true, swimming: false, stepDist: 0, bob: 0, wasDeep: false, run: false, wet: false, hp: 100, hurtT: 99, ko: 0, kx: 0, kz: 0 };
+let player = { x: 0, z: 0, feet: 3, vy: 0, vx: 0, vz: 0, yaw: 0, pitch: 0, onGround: true, swimming: false, stepDist: 0, bob: 0, wasDeep: false, run: false, wet: false, hp: 100, hurtT: 99, ko: 0, kx: 0, kz: 0 };
 
+// split screen: player 1 always; player 2 joins with a second controller. Each player has a "slot" holding
+// everything that belongs to them (body, controller, held things, swing, camera); usePlayer(i) swaps it in.
+const players = [player], pslots = [];
+let curP = 0, invOwner = 0, spawnTurn = 0;
+function nearestPlayerIdx(x, z) {
+  let b = 0, bd = Infinity;
+  for (let i = 0; i < players.length; i++) { const p = players[i], d = Math.hypot(p.x - x, p.z - z) + (p.ko ? 1000 : 0); if (d < bd) { bd = d; b = i; } }
+  return b;
+}
 function findSpawn() {
   for (let r = 0; r < 6000; r += 16) {
     const steps = Math.max(1, Math.floor(2 * Math.PI * r / 16));
@@ -1519,27 +1547,37 @@ function placePlayer(p) {
 /* =====================================================================
    Input: Xbox controller (standard gamepad), keyboard, mouse
    ===================================================================== */
-const keys = new Set();
+let keys = new Set();
 let mouseDX = 0, mouseDY = 0;
-const pad = { connected: false, lx: 0, ly: 0, rx: 0, ry: 0, lt: 0, btn: [], prev: [], runToggle: false };
+let pad = { connected: false, lx: 0, ly: 0, rx: 0, ry: 0, lt: 0, btn: [], prev: [], runToggle: false };
+const pad2 = { connected: false, lx: 0, ly: 0, rx: 0, ry: 0, lt: 0, btn: [], prev: [], runToggle: false };
+const pad1 = pad;
 function deadzone(x, y, dz) {
   const m = Math.hypot(x, y);
   if (m < dz) return [0, 0];
   const k = Math.min(1, (m - dz) / (1 - dz)) / m;
   return [x * k, y * k];
 }
+function readPad(pd, gp) {
+  pd.prev = pd.btn;
+  if (!gp) { pd.btn = []; pd.lx = pd.ly = pd.rx = pd.ry = pd.lt = 0; pd.gp = null; return; }
+  pd.gp = gp;
+  [pd.lx, pd.ly] = deadzone(gp.axes[0] || 0, gp.axes[1] || 0, 0.16);
+  [pd.rx, pd.ry] = deadzone(gp.axes[2] || 0, gp.axes[3] || 0, 0.14);
+  pd.btn = gp.buttons.map(b => b.pressed);
+  pd.lt = gp.buttons[6] ? gp.buttons[6].value : 0;
+}
+// the first controller is player 1's, the second one is player 2's
 function pollPad() {
-  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
-  let gp = null;
-  for (const p of pads) if (p && p.connected) { gp = p; break; }
-  pad.prev = pad.btn;
-  if (!gp) { pad.btn = []; pad.lx = pad.ly = pad.rx = pad.ry = pad.lt = 0; if (pad.connected) { pad.connected = false; padChanged(null); } return; }
-  if (!pad.connected) { pad.connected = true; padChanged(gp); }
-  pad.gp = gp;
-  [pad.lx, pad.ly] = deadzone(gp.axes[0] || 0, gp.axes[1] || 0, 0.16);
-  [pad.rx, pad.ry] = deadzone(gp.axes[2] || 0, gp.axes[3] || 0, 0.14);
-  pad.btn = gp.buttons.map(b => b.pressed);
-  pad.lt = gp.buttons[6] ? gp.buttons[6].value : 0;
+  const list = navigator.getGamepads ? Array.from(navigator.getGamepads()).filter(p => p && p.connected) : [];
+  const g0 = list[0] || null, g1 = list[1] || null;
+  readPad(pad1, g0); readPad(pad2, g1);
+  if (!!g0 !== pad1.connected) { pad1.connected = !!g0; padChanged(g0); }
+  if (!!g1 !== pad2.connected) { pad2.connected = !!g1; pad2Changed(g1); }
+}
+function pad2Changed(gp) {
+  if (gp) toast(players.length > 1 ? '🎮 Player 2\'s controller is back' : '🎮 Second controller! Press Start on it to add Player 2');
+  else if (players.length > 1) { toast('Player 2\'s controller disconnected'); if (state === 'play') openMenu(); }
 }
 const pressed = i => !!pad.btn[i] && !pad.prev[i];
 function rumble(strong, weak, ms) {
@@ -1798,6 +1836,7 @@ function refreshLabels() {
   btns.find(b => b.dataset.act === 'sfx').textContent = 'Sounds: ' + (settings.sfx ? 'on' : 'off');
   btns.find(b => b.dataset.act === 'invert').textContent = 'Look: ' + (settings.invert ? 'flipped' : 'normal');
   btns.find(b => b.dataset.act === 'animals').textContent = 'Enemies: ' + (settings.animals ? 'on' : 'off');
+  btns.find(b => b.dataset.act === 'p2').textContent = players.length > 1 ? '👥 Player 2: leave' : '👥 Add player 2';
   document.getElementById('slotName').textContent = '💾 ' + curMeta().name;
 }
 let toastTimer = 0;
@@ -1831,7 +1870,8 @@ function openMenu() {
   state = 'menu';
   refreshLabels();
   menuEl.classList.add('show');
-  hudEl.classList.remove('show');
+  for (const h of hudBoxes()) h.classList.remove('show');
+  document.body.classList.remove('playing');
   hintEl.classList.remove('show');
   mouseHeld = false;
   if (document.pointerLockElement) document.exitPointerLock();
@@ -1843,7 +1883,9 @@ function startPlay(fromMouse) {
   state = 'play';
   started = true;
   menuEl.classList.remove('show');
-  hudEl.classList.add('show');
+  for (const h of hudBoxes()) h.classList.add('show');
+  document.body.classList.add('playing');
+  if (players.length > 1) { usePlayer(1); updateHud(); usePlayer(0); }
   updateHud();
   keys.clear();
   if (fromMouse) lockMouse();
@@ -1868,6 +1910,11 @@ function doAction(act, fromMouse) {
     refreshLabels(); writeSave();
   }
   else if (act === 'saves') { openSaves(); }
+  else if (act === 'p2') {
+    if (players.length > 1) removePlayer2();
+    else if (!pad2.connected) toast('Plug in a second Xbox controller first, then press any button on it');
+    else addPlayer2();
+  }
   else if (act === 'fullscreen') {
     try {
       if (document.fullscreenElement) document.exitFullscreen();
@@ -2104,15 +2151,16 @@ function boxVisible(x0, y0, z0, x1, y1, z1) {
 
 let width = 0, height = 0;
 function resize() {
-  const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+  const dpr = Math.min(window.devicePixelRatio || 1, players.length > 1 ? 1.1 : 1.5);   // split screen draws twice, so a bit fewer pixels
   const w = Math.floor(innerWidth * dpr), h = Math.floor(innerHeight * dpr);
   if (w !== width || h !== height) { width = canvas.width = w; height = canvas.height = h; }
 }
 
-function render(time, eye) {
-  resize();
-  gl.viewport(0, 0, width, height);
-  const aspect = width / height;
+function render(time, eye, rect) {
+  const [vx0, vy0, vw, vh] = rect || [0, 0, width, height];
+  gl.viewport(vx0, vy0, vw, vh);
+  gl.enable(gl.SCISSOR_TEST); gl.scissor(vx0, vy0, vw, vh);
+  const aspect = vw / vh;
   perspective(proj, FOVY, aspect, 0.12, 700);
   const cp = Math.cos(player.pitch), sp = Math.sin(player.pitch), sy = Math.sin(player.yaw), cy = Math.cos(player.yaw);
   const f = [sy * cp, sp, -cy * cp], r = [cy, 0, sy];
@@ -2164,6 +2212,7 @@ function render(time, eye) {
     if (ch.detail) { gl.bindVertexArray(ch.detail.vao); gl.drawArrays(gl.TRIANGLES, 0, ch.detail.count); }
   }
   drawAnimals(time);
+  if (players.length > 1) drawOtherPlayers();
   drawShadows();
   drawPickups(time);
 
@@ -2190,7 +2239,8 @@ function render(time, eye) {
   // your hand (drawn last, in front of everything)
   if (state === 'play' && !player.ko) drawHand(time);
   gl.bindVertexArray(null);
-  updateBars();
+  gl.disable(gl.SCISSOR_TEST);
+  updateBars(vx0, vw);
 }
 
 /* =====================================================================
@@ -2249,6 +2299,7 @@ function drawShadows() {
     const r = Math.max(0.3, sp.radius || 0.5) * (1 + alt * 0.03);
     one(a.x, a.z, r * 1.15, r * (sp.long ? 2.0 : 1.45), a.yaw, 0.48 * k, alt + (sp.hitH || 1.5) * 0.25);
   }
+  for (let j = 0; j < players.length; j++) if (j !== curP) { const p = players[j]; one(p.x, p.z, 0.4, 0.4, 0, 0.45, 0.6); }
   gl.uniform1f(progWorld.u.uShadow, 0);
   gl.disable(gl.POLYGON_OFFSET_FILL); gl.depthMask(true); gl.disable(gl.BLEND);
 }
@@ -3068,7 +3119,7 @@ const arrowMesh = (() => {      // points along +z
 // what you have (loaded from the save, with old saves upgraded)
 const mats = { wood: 0, stone: 0, iron: 0, gems: 0, scale: 0, fang: 0, fur: 0, frost: 0, skin: 0, fishscale: 0, goldscale: 0, tooth: 0, arrows: 0 };
 const owned = new Set(['fists']);
-const equip = { weapon: 'fists', armor: null, shield: null };
+let equip = { weapon: 'fists', armor: null, shield: null };
 (function loadInventory() {
   const okN = v => Number.isInteger(v) && v >= 0 && v < 1e6;
   if (saved.mats && typeof saved.mats === 'object') for (const k in mats) if (okN(saved.mats[k])) mats[k] = saved.mats[k];
@@ -3084,7 +3135,7 @@ const equip = { weapon: 'fists', armor: null, shield: null };
 })();
 const curWeapon = () => ITEMS[equip.weapon];
 // quick-switching: remember the last sword-type weapon, bow and shield you used
-const lastGear = { melee: null, bow: null, shield: null };
+let lastGear = { melee: null, bow: null, shield: null };
 const bestOwned = type => ITEM_ORDER.filter(id => owned.has(id) && ITEMS[id].type === type).sort((a, b) => (ITEMS[b].dmg || ITEMS[b].block || 0) - (ITEMS[a].dmg || ITEMS[a].block || 0))[0] || null;
 function pickWeapon(kind) {
   const cur = curWeapon();
@@ -3948,11 +3999,15 @@ function updateIceSpikes(dt) {
     s.t += dt;
     if (!s.up && s.t >= s.delay) {
       s.up = true;
-      if (!s.group.hit && !player.ko && Math.hypot(player.x - s.x, player.z - s.z) < 1.5 && Math.abs(player.feet - s.y) < 2) {
-        s.group.hit = true;
-        hurtPlayer(15, s.ux, s.uz, 7, s.owner);
-        freezePlayer(3);
+      for (let i = 0; i < players.length; i++) {      // the spikes can catch either player
+        usePlayer(i);
+        if (!s.group.hit && !player.ko && Math.hypot(player.x - s.x, player.z - s.z) < 1.5 && Math.abs(player.feet - s.y) < 2) {
+          s.group.hit = true;
+          hurtPlayer(15, s.ux, s.uz, 7, s.owner);
+          freezePlayer(3);
+        }
       }
+      usePlayer(0);
     }
   }
   iceSpikes = iceSpikes.filter(s => s.t < s.delay + 1.3);
@@ -4064,10 +4119,14 @@ function updateFlames(dt) {
   flames = flames.filter(f => f.t < f.life);
 }
 function updateAnimals(dt) {
-  const canSpot = settings.animals && !player.ko;
-  const playerWet = groundAt(player.x, player.z) < 0.25;
+  let canSpot = settings.animals && !player.ko;
+  let playerWet = groundAt(player.x, player.z) < 0.25;
   for (const a of animals) {
     const sp = a.sp;
+    if (players.length > 1 && !a.dead) {           // each animal deals with whichever player is closer
+      const i = nearestPlayerIdx(a.x, a.z);
+      if (i !== curP) { usePlayer(i); canSpot = settings.animals && !player.ko; playerWet = groundAt(player.x, player.z) < 0.25; }
+    }
     if (a.dead) {
       a.deadT += dt;
       if (a.flyAlt > 0) { a.flyAlt = Math.max(0, a.flyAlt - dt * 14); a.y = groundAt(a.x, a.z) + a.flyAlt; }   // falls out of the sky
@@ -4167,6 +4226,7 @@ function updateAnimals(dt) {
     if (a.onGone) a.onGone(a.goneWhy);
     return false;
   });
+  usePlayer(0);
 }
 function clearAnimals() {
   for (const a of animals) dropBar(a);
@@ -4329,22 +4389,25 @@ function drawSnake(a, sink, flash) {
     : a.sprayT > 0 ? 0.75 : a.roarT > 0 ? 0.7 * Math.min(1, a.roarT * 2) : 0.04;
   drawMesh(m.jaw, mChain(headM, mT(0, -0.11, -0.15), mRx(open)), flash);
 }
-function updateBars() {
+function updateBars(vx0, vw) {
+  const two = players.length > 1;
   for (const a of animals) {
     if (!a.bar) continue;
+    if (two && nearestPlayerIdx(a.x, a.z) !== curP) continue;      // shown in the other player's half
     const x = a.x, y = a.y + a.sp.barH, z = a.z;
     const cw = vp[3] * x + vp[7] * y + vp[11] * z + vp[15];
     if (state !== 'play' || cw < 0.5 || cw > 70) { a.bar.style.display = 'none'; continue; }
     const cx = vp[0] * x + vp[4] * y + vp[8] * z + vp[12], cy = vp[1] * x + vp[5] * y + vp[9] * z + vp[13];
-    const sx = (cx / cw * 0.5 + 0.5) * innerWidth, sy = (1 - (cy / cw * 0.5 + 0.5)) * innerHeight;
+    const sx = ((cx / cw * 0.5 + 0.5) * vw + vx0) / width * innerWidth, sy = (1 - (cy / cw * 0.5 + 0.5)) * innerHeight;
     a.bar.style.display = '';
     a.bar.style.transform = `translate(${sx.toFixed(1)}px,${sy.toFixed(1)}px) translate(-50%,-100%)`;
     a.barFill.style.width = Math.max(0, a.hp / a.sp.hp * 100).toFixed(1) + '%';
     a.barFill.style.background = a.poisonT > 0 ? '#6fd34a' : a.slowT > 0 ? '#9fd8ff' : '';
   }
-  // the big bar at the top for a snake or dragon that's after you
+  // the big bar at the top for a snake or dragon that's after you (either of you)
+  if (curP !== 0) return;
   let boss = null, bd = Infinity;
-  for (const a of animals) if (a.sp.boss && a.alerted && !a.dead) { const d = Math.hypot(a.x - player.x, a.z - player.z); if (d < bd) { bd = d; boss = a; } }
+  for (const a of animals) if (a.sp.boss && a.alerted && !a.dead) for (const p of players) { const d = Math.hypot(a.x - p.x, a.z - p.z); if (d < bd) { bd = d; boss = a; } }
   if (boss && state === 'play') {
     bossEl.classList.add('show');
     bossName.textContent = ({ dragon: '🐉 ', snake: '🐍 ', ogre: '👹 ', leviathan: '🌊 ', iceogre: '🧊 ' }[boss.kind] || '') + boss.sp.name;
@@ -4360,6 +4423,7 @@ function addPickup(kind, x, y, z, item, spread, tStart) {
 }
 function updatePickups(dt) {
   for (const p of pickups) {
+    if (players.length > 1) usePlayer(nearestPlayerIdx(p.x, p.z));
     p.t += dt;
     const floor = Math.max(groundAt(p.x, p.z), WATER_Y) + 0.35;
     const dx = player.x - p.x, dz = player.z - p.z, d = Math.hypot(dx, dz);
@@ -4374,6 +4438,7 @@ function updatePickups(dt) {
     if (p.t > 0.5 && d < 1.1 && !player.ko) { collect(p); p.gone = true; }
     if (p.t > 120) p.gone = true;
   }
+  usePlayer(0);
   pickups = pickups.filter(p => !p.gone);
 }
 function collect(p) {
@@ -4460,9 +4525,10 @@ function renderInv(msg) {
 const invButtons = () => [...invEl.querySelectorAll('button')];
 function openInv(fromMouse) {
   if (state !== 'play' || player.ko) return;
-  state = 'inv'; invPending = null; invFromMouse = fromMouse; invSel = 0;
+  state = 'inv'; invPending = null; invFromMouse = fromMouse; invSel = 0; invOwner = curP;
   keys.clear(); mouseHeld = false; swingT = -1;
   if (document.pointerLockElement) document.exitPointerLock();
+  invEl.querySelector('h2').textContent = players.length > 1 ? `🎒 Backpack (Player ${curP + 1})` : '🎒 Backpack';
   renderInv();
   invEl.classList.add('show');
   hintEl.classList.remove('show');
@@ -4522,7 +4588,7 @@ function invAction(btn) {
     updateHud(); writeSave();
   }
 }
-invEl.addEventListener('click', e => { const b = e.target.closest('button'); if (b) { invSel = invButtons().indexOf(b); invAction(b); } });
+invEl.addEventListener('click', e => { const b = e.target.closest('button'); if (b) { usePlayer(invOwner); invSel = invButtons().indexOf(b); invAction(b); usePlayer(0); } });
 invEl.addEventListener('mousemove', e => {
   const b = e.target.closest('button'); if (!b) return;
   const i = invButtons().indexOf(b);
@@ -4689,18 +4755,22 @@ function savesPad(dt) {
    Fighting: your swing, getting hurt, getting knocked out
    ===================================================================== */
 let swingT = -1, swingHit = false, hurtFlash = 0, shake = 0, mouseHeld = false;
-const hudEl = document.getElementById('hud'), hpFill = document.getElementById('hpFill');
-const hurtEl = document.getElementById('hurt'), koEl = document.getElementById('ko'), frostEl = document.getElementById('frost');
+let hudEl = document.getElementById('hud'), hpFill = document.getElementById('hpFill');
+let hurtEl = document.getElementById('hurt'), koEl = document.getElementById('ko'), frostEl = document.getElementById('frost');
 function updateHud() {
-  document.getElementById('bpKey').textContent = pad.connected ? 'Y' : 'I';
+  const q = k => hudEl.querySelector(`[data-h=${k}]`);
+  q('bpkey').textContent = pad.connected ? 'Y' : 'I';
   hpFill.style.width = Math.max(0, player.hp) + '%';
   const w = curWeapon(), ar = equip.armor && ITEMS[equip.armor];
-  document.getElementById('weaponName').textContent = w.icon + ' ' + w.name;
-  document.getElementById('armorName').textContent = ar ? ar.icon + ' ' + ar.name : '👕 No armor';
+  q('weapon').textContent = w.type === 'bow' ? `${w.icon} ${w.name} · ➶ ${mats.arrows}` : w.icon + ' ' + w.name;
+  q('armor').textContent = ar ? ar.icon + ' ' + ar.name : '👕 No armor';
   const sh = equip.shield && ITEMS[equip.shield];
-  document.getElementById('shieldName').textContent = sh ? sh.icon + ' ' + sh.name : 'No shield';
-  if (w.type === 'bow') document.getElementById('weaponName').textContent = `${w.icon} ${w.name} · ➶ ${mats.arrows}`;
-  document.getElementById('gemCount').textContent = '💎 ' + mats.gems;
+  q('shield').textContent = sh ? sh.icon + ' ' + sh.name : 'No shield';
+  q('gems').textContent = '💎 ' + mats.gems;
+  if (players.length > 1 && pslots[1 - curP]) {     // the other player's gem and arrow counts change too (shared backpack)
+    const o = pslots[1 - curP].hudEl;
+    o.querySelector('[data-h=gems]').textContent = '💎 ' + mats.gems;
+  }
 }
 function startSwing() {
   if (swingT >= 0 || player.ko) return;            // you can swing or shoot with your shield up
@@ -4795,7 +4865,7 @@ function updateHealth(dt) {
     if (player.ko <= 0) {
       player.ko = 0; player.hp = 100;
       koEl.classList.remove('show');
-      toast('💪 You feel better!');
+      toast(players.length > 1 ? `💪 Player ${curP + 1} feels better!` : '💪 You feel better!');
       spawnTimer = 10;
     }
   } else if (player.hurtT > 4 && player.hp < 100) player.hp = Math.min(100, player.hp + 5 * dt);
@@ -4809,6 +4879,94 @@ function updateHealth(dt) {
 
 /* ---------- your hand on screen ---------- */
 let camR = [1, 0, 0], camU = [0, 1, 0], camF = [0, 0, -1], blockV = 0;
+
+/* ---------- split screen: two players ---------- */
+function makeSlot(pl, pd, eq, els) {
+  return Object.assign({ player: pl, pad: pd, equip: eq, lastGear: { melee: null, bow: null, shield: null }, swingT: -1, swingHit: false,
+    hurtFlash: 0, shake: 0, blockV: 0, camR: [1, 0, 0], camU: [0, 1, 0], camF: [0, 0, -1], keys: new Set(), mouseDX: 0, mouseDY: 0,
+    mouseHeld: false, rightHeld: false }, els);
+}
+pslots[0] = makeSlot(player, pad, equip, { hudEl, hpFill, hurtEl, koEl, frostEl });
+pslots[0].lastGear = lastGear; pslots[0].keys = keys;
+function stashPlayer() {
+  const s = pslots[curP];
+  Object.assign(s, { player, pad, equip, lastGear, swingT, swingHit, hurtFlash, shake, blockV, camR, camU, camF, keys, mouseDX, mouseDY,
+    mouseHeld, rightHeld, hudEl, hpFill, hurtEl, koEl, frostEl });
+}
+// make player i the one the game is working with (only player 1 uses the keyboard and mouse)
+function usePlayer(i) {
+  if (i === curP || !pslots[i]) return;
+  stashPlayer();
+  curP = i;
+  const s = pslots[i];
+  ({ player, pad, equip, lastGear, swingT, swingHit, hurtFlash, shake, blockV, camR, camU, camF, keys, mouseDX, mouseDY,
+    mouseHeld, rightHeld, hudEl, hpFill, hurtEl, koEl, frostEl } = s);
+}
+function addPlayer2() {
+  if (players.length > 1) return;
+  usePlayer(0);
+  const p2 = Object.assign({}, player, { hp: 100, ko: 0, hurtT: 99, kx: 0, kz: 0, vx: 0, vz: 0, vy: 0, frozenT: 0, blocking: false });
+  p2.x = player.x + Math.cos(player.yaw) * 2; p2.z = player.z + Math.sin(player.yaw) * 2;    // 2 m to player 1's right
+  p2.feet = Math.max(groundAt(p2.x, p2.z), SWIM_FEET); p2.onGround = true;
+  const h2 = document.getElementById('hud2');
+  pslots[1] = makeSlot(p2, pad2, Object.assign({}, equip), { hudEl: h2, hpFill: h2.querySelector('[data-h=hp]'),
+    hurtEl: document.getElementById('hurt2'), koEl: document.getElementById('ko2'), frostEl: document.getElementById('frost2') });
+  players.push(p2);
+  document.body.classList.add('two');
+  if (state === 'play') h2.classList.add('show');
+  usePlayer(1); updateHud(); usePlayer(0);
+  refreshLabels();
+  toast('👥 Player 2 joined!');
+  tone('triangle', 523, 784, 0.25, 0.08);
+}
+function removePlayer2() {
+  if (players.length < 2) return;
+  usePlayer(0);
+  players.length = 1; pslots.length = 1;
+  document.body.classList.remove('two');
+  document.getElementById('hud2').classList.remove('show');
+  document.getElementById('ko2').classList.remove('show');
+  document.getElementById('hurt2').style.opacity = 0; document.getElementById('frost2').style.opacity = 0;
+  refreshLabels();
+  toast('Player 2 left');
+}
+// what each player looks like to the other one: a little explorer in a green (player 1) or orange (player 2) tunic
+function avatarModel(tunic) {
+  const r = mulberry32(61), SKIN = [0.93, 0.74, 0.58], HAIR = [0.36, 0.22, 0.12], PANTS = [0.3, 0.26, 0.22];
+  const body = new Geo(1024);
+  blob(body, 0, 1.12, 0, 0.27, 0.36, 0.2, tunic, r, 0.04, -1, 0);
+  blob(body, 0, 0.92, 0, 0.29, 0.06, 0.22, [0.45, 0.3, 0.16], r, 0.02, -1, 0);       // belt
+  blob(body, 0, 1.6, 0, 0.21, 0.23, 0.21, SKIN, r, 0.03, -1, 0);                       // head
+  blob(body, 0, 1.72, -0.03, 0.225, 0.14, 0.22, HAIR, r, 0.04, -1, 0);
+  for (const sd of [-1, 1]) {
+    blob(body, sd * 0.08, 1.63, 0.18, 0.035, 0.045, 0.03, [0.1, 0.07, 0.06], r, 0, -1, 0);
+    blob(body, sd * 0.19, 1.6, 0.0, 0.05, 0.07, 0.05, SKIN, r, 0, -1, 0);               // ears
+  }
+  const leg = new Geo(256);            // pivot at the hip
+  tube(leg, [0, 0, 0], [0, -0.78, 0], 0.1, 0.085, 6, PANTS, r, false);
+  blob(leg, 0, -0.84, 0.06, 0.1, 0.08, 0.15, [0.25, 0.16, 0.1], r, 0.02, -1, 0);
+  const arm = new Geo(256);            // pivot at the shoulder
+  tube(arm, [0, 0, 0], [0, -0.5, 0.04], 0.08, 0.07, 6, tunic, r, false);
+  blob(arm, 0, -0.56, 0.05, 0.075, 0.075, 0.075, SKIN, r, 0, -1, 0);
+  return { body: makeMesh(body), leg: makeMesh(leg), arm: makeMesh(arm) };
+}
+const avatarMeshes = [avatarModel([0.3, 0.62, 0.36]), avatarModel([0.95, 0.6, 0.2])];
+function drawOtherPlayers() {
+  for (let j = 0; j < players.length; j++) {
+    if (j === curP) continue;
+    const p = players[j], m = avatarMeshes[j], sl = pslots[j];
+    const moving = Math.min(1, Math.hypot(p.vx, p.vz) / 4), sw = Math.sin(p.bob) * 0.6 * moving;
+    const base = mChain(mT(p.x, p.feet - (p.swimming ? 0.9 : 0), p.z), mRy(Math.PI - p.yaw), p.ko ? mChain(mT(0, 0.25, 0), mRx(-Math.PI / 2)) : IDENT);
+    drawMesh(m.body, base, 0);
+    drawMesh(m.leg, mChain(base, mT(-0.12, 0.86, 0), mRx(sw)), 0);
+    drawMesh(m.leg, mChain(base, mT(0.12, 0.86, 0), mRx(-sw)), 0);
+    const st = sl ? sl.swingT : -1;
+    const swingArm = st >= 0 ? -2.2 * Math.sin(Math.PI * Math.min(1, st)) : -sw;
+    drawMesh(m.arm, mChain(base, mT(-0.33, 1.38, 0), mRx(sw)), 0);
+    drawMesh(m.arm, mChain(base, mT(0.33, 1.38, 0), mRx(swingArm)), 0);
+  }
+}
+function hudBoxes() { return players.length > 1 ? [document.getElementById('hud'), document.getElementById('hud2')] : [document.getElementById('hud')]; }
 function drawHand() {
   let ox = 0.3, oy = -0.31, oz = -0.58, rx = 0, rz = 0;
   const mv = Math.min(1, Math.hypot(player.vx, player.vz) / 4);
@@ -5141,43 +5299,61 @@ function frame(now) {
   last = now;
   const time = now / 1000;
   pollPad();
+  // a second controller joins the game by pressing Start (or A)
+  if (players.length === 1 && pad2.connected && state === 'play' && ((pad2.btn[9] && !pad2.prev[9]) || (pad2.btn[0] && !pad2.prev[0]))) { addPlayer2(); pad2.prev = pad2.btn; }   // that press only joins
   if (state === 'play') {
-    if (pressed(9) || pressed(8)) openMenu();
-    else if (pressed(3)) openInv(false);
-    else if (pressed(15)) swapWeaponBow();       // D-pad right: sword <-> bow
-    else if (pressed(14)) toggleShield();        // D-pad left: shield on / off
-    else {
-      if (!player.ko) updatePlayer(dt);
-      updateSwing(dt);
+    let paused = false;
+    for (let i = 0; i < players.length && !paused; i++) {
+      usePlayer(i);
+      if (pressed(9) || pressed(8)) { usePlayer(0); openMenu(); paused = true; }
+      else if (pressed(3)) { openInv(false); paused = state === 'inv'; }
+      else if (pressed(15)) swapWeaponBow();       // D-pad right: sword <-> bow
+      else if (pressed(14)) toggleShield();        // D-pad left: shield on / off
+    }
+    usePlayer(0);
+    if (!paused) {
+      for (let i = 0; i < players.length; i++) { usePlayer(i); if (!player.ko) updatePlayer(dt); updateSwing(dt); }
+      usePlayer(0);
       updateAnimals(dt);
+      usePlayer(0);
       updateFlames(dt);
       updateSmoke(dt);
       updateSnow(dt);
       updateIceSpikes(dt);
       updateArrows(dt);
       updatePickups(dt);
+      usePlayer(spawnTurn++ % players.length);      // new animals and bosses show up around each player in turn
       updateSpawning(dt);
       updateWaterLife(dt);
       updateLairs(dt);
-      updateHealth(dt);
+      usePlayer(0);
+      for (let i = 0; i < players.length; i++) { usePlayer(i); updateHealth(dt); }
+      usePlayer(0);
     }
   } else if (state === 'inv') {
-    invPad(dt);
+    usePlayer(invOwner); invPad(dt); usePlayer(0);
   } else if (state === 'saves') {
     savesPad(dt);
   } else {
     menuPad(dt);
+    if (players.length > 1 && started && state === 'menu' && ((pad2.btn[9] && !pad2.prev[9]) || (pad2.btn[1] && !pad2.prev[1]))) startPlay(false);
     if (!started && !dragonView) player.yaw += dt * 0.05;     // slow look-around behind the title
   }
   updateChunks(player.x, player.z, state === 'play' ? 6 : 12);
   updateWorldSounds(dt);
   saveTimer += dt;
   if (saveTimer > 5 && state === 'play') { saveTimer = 0; writeSave(); }
-  const bobY = player.onGround ? Math.sin(player.bob) * (player.swimming ? 0.05 : 0.045) : 0;
-  const swimBob = player.swimming ? Math.sin(time * 2.2) * 0.05 : 0;
-  const sk = shake > 0 ? shake * 0.25 : 0;
-  const koDrop = player.ko ? -1.1 : 0;
-  render(time, [player.x + (Math.random() - 0.5) * sk, player.feet + EYE + bobY + swimBob + koDrop + (Math.random() - 0.5) * sk, player.z]);
+  resize();
+  for (let i = 0; i < players.length; i++) {        // one view, or two side by side
+    usePlayer(i);
+    const bobY = player.onGround ? Math.sin(player.bob) * (player.swimming ? 0.05 : 0.045) : 0;
+    const swimBob = player.swimming ? Math.sin(time * 2.2) * 0.05 : 0;
+    const sk = shake > 0 ? shake * 0.25 : 0;
+    const koDrop = player.ko ? -1.1 : 0;
+    const rect = players.length > 1 ? [i * Math.floor(width / 2), 0, Math.floor(width / 2), height] : [0, 0, width, height];
+    render(time, [player.x + (Math.random() - 0.5) * sk, player.feet + EYE + bobY + swimBob + koDrop + (Math.random() - 0.5) * sk, player.z], rect);
+  }
+  usePlayer(0);
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);

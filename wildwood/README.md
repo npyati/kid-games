@@ -9,6 +9,16 @@ A 3D exploring game. You walk through a forest that goes on forever: pines, birc
 - **Xbox controller:** left stick to walk, right stick to look, RT (or RB) to swing or shoot, LB to block with a shield (you can keep swinging or shooting while you block), D-pad right to swap between your sword and your bow, D-pad left to take your shield out or put it away, A to jump, LT (or click the left stick) to run, Start to open the menu. Hold RT to keep swinging. In the menu, use the stick or d-pad and press A to choose, or B to go back.
 - **Keyboard and mouse:** WASD to walk, mouse to look (click the game to grab the mouse), click or F to swing or shoot, right-click or Q to block (you can still swing while blocking), 1 / 2 / 3 for sword / bow / shield on-off, Space to jump, Shift to run, Esc for the menu. Arrow keys work too.
 
+## Two players (split screen)
+
+Plug in a second Xbox controller and press Start (or A) on it while playing, or choose **👥 Add player 2** in the menu. The screen splits: player 1 on the left (green tunic), player 2 on the right (orange tunic). Each of you sees the other walking around.
+
+- **Your own:** health, knockouts (the other player keeps playing), what you're holding and wearing, your swing, your camera and controller. Player 1 also keeps the keyboard and mouse.
+- **Shared:** the world, the animals and one backpack: materials, gems, arrows and everything you've crafted. Either player can open the backpack (Y); it pauses for both and says whose it is. Things you drop fly to whoever is closest.
+- **Animals** go after whichever player is closer, and new animals and bosses show up around each of you in turn. The world is loaded around both players, so you can split up.
+- **Menu:** either player's Start opens it. **👥 Player 2: leave** goes back to one player. If player 2's controller unplugs, the game pauses until it's back.
+- Only player 1's spot and gear are saved. Split screen draws at a slightly lower resolution (it draws the world twice).
+
 ## Animals and fighting
 
 **Friendly animals:** foxes, deer (some with antlers) and rabbits. They run away if you get close, and your swings pass right through them.
