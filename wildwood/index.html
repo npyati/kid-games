@@ -3067,7 +3067,16 @@ const MAX_ANIMALS = 7;
 const caveState = new Map(), lairState = new Map();
 const snakeState = { alive: false, until: 0 };
 const ogreState = { alive: false, until: 0 };
-const iceState = { alive: false, until: 0 };
+const iceState = { alive: false, until: 0, misses: 0 };
+// true if nothing in the ground blocks the view from your eyes to a point
+function canSee(x, z, y) {
+  const ey = player.feet + EYE;
+  for (let k = 0.1; k < 0.95; k += 0.075) {
+    const px = player.x + (x - player.x) * k, pz = player.z + (z - player.z) * k;
+    if (sample(px, pz).h > ey + (y - ey) * k - 0.3) return false;
+  }
+  return true;
+}
 const levState = { alive: false, until: 0 };
 function spawnLeviathan(x, z, extra) {
   levState.alive = true;
@@ -3344,17 +3353,27 @@ function updateLairs(dt) {
     }
   }
   // ogres wander the forests now and then
-  // ice ogres roam the snowy mountains
-  if (envSnow > 0.4 && !iceState.alive && now > iceState.until && Math.random() < 0.006) {
-    const heading = Math.hypot(player.vx, player.vz) > 1 ? Math.atan2(player.vx, -player.vz) : player.yaw;
-    for (let t = 0; t < 8; t++) {
-      const ang = heading + (Math.random() - 0.5) * 2, d = 35 + Math.random() * 15;
+  // ice ogres roam the snowy mountains: one shows up a few seconds after you reach the snow,
+  // out in front of you where you'll see it, with a message so you know to look
+  if (envSnow > 0.2 && !iceState.alive && now > iceState.until && Math.random() < 0.3) {
+    const easy = iceState.misses >= 6;      // after ~3 s with no clear spot, anywhere nearby will do
+    for (let t = 0; t < 24; t++) {
+      const ang = player.yaw + (Math.random() - 0.5) * (t < 12 ? 1.4 : 3.2), d = 22 + Math.random() * 18;
       const x = player.x + Math.sin(ang) * d, z = player.z - Math.cos(ang) * d;
-      if (sample(x, z).snow < 0.3) continue;
-      iceState.alive = true;
-      spawnAnimal('iceogre', x, z, { onGone: why => { iceState.alive = false; if (why === 'killed') iceState.until = nowS() + 180; else if (why === 'ko') iceState.until = nowS() + 60; } });
+      const sm = sample(x, z);
+      if (sm.snow < 0.15 || sm.h < 1) continue;
+      const seen = canSee(x, z, sm.h + 4);
+      if (!seen && !easy) continue;
+      iceState.alive = true; iceState.misses = 0;
+      const o = spawnAnimal('iceogre', x, z, { onGone: why => { iceState.alive = false; if (why === 'killed') iceState.until = nowS() + 60; else if (why === 'ko') iceState.until = nowS() + 45; } });
+      // it heads your way, so even one behind a ridge comes into view
+      o.yaw = Math.atan2(player.x - x, player.z - z); o.wanderYaw = o.yaw; o.wanderSpeed = o.sp.walk; o.wanderT = 12;
+      const off = Math.abs(((ang - player.yaw) % 6.283 + 9.425) % 6.283 - 3.1416);
+      toast(seen && off < 0.8 ? '🧊 An ice ogre is nearby! Look ahead.' : '🧊 An ice ogre is nearby! Look around.');
+      growlSound('iceogre');
       break;
     }
+    if (!iceState.alive) iceState.misses++;
   }
   if (envForest > 0.6 && envSnow < 0.3 && !ogreState.alive && now > ogreState.until && Math.random() < 0.004) {
     const heading = Math.hypot(player.vx, player.vz) > 1 ? Math.atan2(player.vx, -player.vz) : player.yaw;
