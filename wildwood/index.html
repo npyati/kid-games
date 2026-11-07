@@ -4501,6 +4501,21 @@ function drawHand() {
 }
 
 setWorldSeed(worldSeed);
+// the nearest dry land (used when a saved spot ended up out at sea, and by the ocean shortcuts)
+function nearestDry(x, z, minH) {
+  for (let r = 0; r < 4000; r += 8) {
+    const steps = Math.max(1, Math.floor(2 * Math.PI * r / 8));
+    for (let k = 0; k < steps; k++) {
+      const a = k / steps * Math.PI * 2, px = x + Math.cos(a) * r, pz = z + Math.sin(a) * r;
+      if (sample(px, pz).h > minH) return { x: px, z: pz };
+    }
+  }
+  return null;
+}
+if (savedPos && sample(savedPos.x, savedPos.z).coast > 0.3 && S.h < -0.5) {   // the ocean came in over where you were: wake up on the beach
+  const d = nearestDry(savedPos.x, savedPos.z, 1.0);
+  if (d) { savedPos.x = d.x; savedPos.z = d.z; }
+}
 placePlayer(savedPos || findSpawn());
 // Shortcut: index.html?dragon starts you on the rim of the nearest volcano, looking down at the
 // sleeping dragon. It stays asleep until you're right next to it (or hit it), so you can look around.
@@ -4624,9 +4639,14 @@ if (new URLSearchParams(location.search).has('dragonling')) {
       }
     }
     if (sea) {
-      let beach = null;   // walk back toward where we started until we're on dry sand
-      const bx = player.x - sea.x, bz = player.z - sea.z, bl = Math.hypot(bx, bz) || 1;
-      for (let d = 0; d < 2000; d += 2) { const x = sea.x + bx / bl * d, z = sea.z + bz / bl * d; if (sample(x, z).h > 0.5) { beach = { x: x + bx / bl * 2, z: z + bz / bl * 2 }; break; } }
+      const dry = nearestDry(sea.x, sea.z, 0.5);
+      let beach = null, bx = 0, bz = 0, bl = 1;
+      if (dry) {             // face whichever way the water gets deepest, and stand 2 m back from the edge
+        let low = Infinity;
+        for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2, h = sample(dry.x + Math.sin(a) * 40, dry.z + Math.cos(a) * 40).h; if (h < low) { low = h; bx = -Math.sin(a); bz = -Math.cos(a); } }
+        beach = { x: dry.x + bx * 2, z: dry.z + bz * 2 };
+        sea = { x: dry.x - bx * 40, z: dry.z - bz * 40 };
+      }
       if (beach) {
         placePlayer({ x: beach.x, z: beach.z, yaw: Math.atan2(sea.x - beach.x, -(sea.z - beach.z)) });
         player.pitch = -0.08;

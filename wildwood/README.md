@@ -109,7 +109,7 @@ Bows go in your hand like a weapon: RT shoots an arrow where your crosshair poin
 
 ## Saved data
 
-One `localStorage` key, `wildwood.v1`: music, sound, look direction and enemy settings, the world seed, where you were standing, your materials, the things you've crafted and what you're holding and wearing. Older saves are upgraded: gems carry over and any weapons you'd found are kept.
+One `localStorage` key, `wildwood.v1`: music, sound, look direction and enemy settings, the world seed, where you were standing, your materials, the things you've crafted and what you're holding and wearing. Older saves are upgraded: gems carry over and any weapons you'd found are kept. If the place you saved is now out in the ocean, you wake up on the nearest beach.
 
 ## Testing shortcuts
 
