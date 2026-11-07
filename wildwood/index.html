@@ -82,6 +82,33 @@ nav button:focus-visible,nav a:focus-visible{outline:none;border-color:var(--sun
 #boss b{font-family:var(--display);font-weight:400;font-size:22px;color:var(--cream);text-shadow:0 2px 0 #15123f,0 0 6px #000}
 .btrack{width:100%;height:16px;background:rgba(21,18,63,.85);border:3px solid #15123f;border-radius:999px;overflow:hidden}
 #bossFill{height:100%;width:100%;background:linear-gradient(#ff9a4f,#d6362a);border-radius:999px;transition:width .15s}
+#cross{position:fixed;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:rgba(255,255,255,.85);box-shadow:0 0 0 2px rgba(21,18,63,.5);pointer-events:none;display:none}
+#hud.show ~ #cross{display:block}
+.bp{opacity:.85}
+#feed{position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:70px;display:flex;flex-direction:column;gap:4px;pointer-events:none}
+#feed div{background:rgba(21,18,63,.78);border-radius:999px;padding:4px 12px;font-size:15px;transition:opacity .6s;align-self:flex-start}
+#feed div.fade{opacity:0}
+.invp{width:min(760px,100%);max-height:calc(100vh - 32px);overflow:auto}
+.invp h2{font-family:var(--display);font-weight:400;font-size:34px;margin:0;color:var(--leaf);text-align:center}
+.invp h3{margin:4px 0 0;font-size:14px;letter-spacing:.12em;text-transform:uppercase;color:var(--sun)}
+.invp h3 small{letter-spacing:0;text-transform:none;color:var(--muted);font-size:13px;margin-left:6px}
+.mats{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.chip{display:inline-block;background:var(--night);border:2px solid var(--edge);border-radius:999px;padding:2px 9px;font-size:13px;margin:2px 4px 0 0}
+.chip.big{font-size:15px;padding:4px 12px}
+.chip.short{border-color:#e2365a;color:#ffb3c0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.ibtn{font:inherit;color:var(--cream);background:var(--night);border:3px solid var(--edge);border-radius:14px;padding:8px 10px;text-align:left;cursor:pointer;display:grid;grid-template-columns:auto 1fr;column-gap:8px;align-items:center}
+.ibtn .ic{grid-row:span 3;font-size:28px}
+.ibtn b{font-size:16px}
+.ibtn small{color:var(--muted);font-size:12px}
+.ibtn .cost{grid-column:2}
+.ibtn.on{border-color:var(--leaf);background:#1f3b2f}
+.ibtn.cant{opacity:.6}
+.ibtn.pending{border-color:#ff9a4f}
+.ibtn.sel,.closeb.sel{box-shadow:0 0 0 3px var(--sun);border-color:var(--sun)}
+.done{color:var(--muted);margin:0}
+.invmsg{margin:0;min-height:1.4em;text-align:center;color:var(--cream);font-size:15px}
+.closeb{font:inherit;font-size:17px;color:var(--cream);background:var(--night);border:3px solid var(--edge);border-radius:14px;padding:10px;cursor:pointer}
 #hurt{position:fixed;inset:0;pointer-events:none;opacity:0;background:radial-gradient(ellipse at center,transparent 45%,rgba(220,20,40,.65))}
 #ko{position:fixed;inset:0;display:grid;place-items:center;background:rgba(10,8,30,.85);opacity:0;pointer-events:none;transition:opacity .6s;text-align:center;font-family:var(--display);font-size:clamp(28px,6vw,48px);color:var(--cream);padding:16px}
 #ko.show{opacity:1}
@@ -106,10 +133,11 @@ nav button:focus-visible,nav a:focus-visible{outline:none;border-color:var(--sun
       <a data-act="home" href="../">All games</a>
     </nav>
     <div class="howto">
-      <div><b>Xbox controller</b>Left stick: walk · Right stick: look · A: jump · RT: swing · LT or click left stick: run · Start: menu</div>
-      <div><b>Keyboard and mouse</b>WASD: walk · Mouse: look · Click or F: swing · Space: jump · Shift: run · Esc: menu</div>
-      <div><b>Animals</b>Foxes, deer and rabbits are friendly. Wolves, and bears from caves, chase you once they spot you. Beat them for gems, apples and better weapons. They can't swim!</div>
-      <div><b>Bosses</b>Giant snakes hide in marshes. Dragons sleep in rare lairs on mountaintops, ringed by tall black spikes.</div>
+      <div><b>Xbox controller</b>Left stick: walk · Right stick: look · A: jump · RT: swing · LT or click left stick: run · Y: backpack · Start: menu</div>
+      <div><b>Keyboard and mouse</b>WASD: walk · Mouse: look · Click or F: swing · Space: jump · Shift: run · I or Tab: backpack · Esc: menu</div>
+      <div><b>Animals</b>Foxes, deer and rabbits are friendly. Wolves, and bears from caves, chase you once they spot you. Beat them for gems, iron and apples. They can't swim!</div>
+      <div><b>Crafting</b>Swing at trees for wood and at big rocks for stone. Open your backpack to make axes, swords and chest plates.</div>
+      <div><b>Bosses</b>Giant snakes hide in marshes. Wyverns (a kind of dragon) sleep in rare lairs on mountaintops, ringed by tall black spikes.</div>
     </div>
     <p id="padStatus">Plug in an Xbox controller and press any button.</p>
   </div>
@@ -117,7 +145,22 @@ nav button:focus-visible,nav a:focus-visible{outline:none;border-color:var(--sun
 <div id="bars"></div>
 <div id="hud">
   <div class="hp"><span>❤️</span><div class="hpbar"><div class="hpfill" id="hpFill"></div></div></div>
-  <div class="inv"><div id="weaponName">✊ Fists</div><div id="gemCount">💎 0</div></div>
+  <div class="inv"><div id="weaponName">✊ Fists</div><div id="armorName">👕 No armor</div><div id="gemCount">💎 0</div></div>
+  <div class="inv"><div class="bp">🎒 Backpack: <b id="bpKey">Y</b></div></div>
+</div>
+<div id="cross"></div>
+<div id="feed"></div>
+<div id="inv" class="overlay">
+  <div class="panel invp">
+    <h2>🎒 Backpack</h2>
+    <div id="mats" class="mats"></div>
+    <h3>Your things <small>choose what to hold and wear</small></h3>
+    <div id="owned" class="grid"></div>
+    <h3>Craft <small>things you can make</small></h3>
+    <div id="recipes" class="grid"></div>
+    <p id="invMsg" class="invmsg"></p>
+    <button class="closeb" data-close>Close (B)</button>
+  </div>
 </div>
 <div id="boss"><b id="bossName"></b><div class="btrack"><div id="bossFill"></div></div></div>
 <div id="hurt"></div>
@@ -152,8 +195,6 @@ const settings = {
   invert: saved.invert === true,
   animals: saved.animals !== false,
 };
-let gems = Number.isInteger(saved.gems) && saved.gems >= 0 && saved.gems < 1e7 ? saved.gems : 0;
-let weaponTier = Number.isInteger(saved.weapon) && saved.weapon >= 0 && saved.weapon <= 4 ? saved.weapon : 0;
 const validSeed = s => Number.isInteger(s) && s > 0 && s < 2147483647;
 let worldSeed = validSeed(saved.seed) ? saved.seed : 20261106;
 let savedPos = null;
@@ -165,7 +206,7 @@ function writeSave() {
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       music: settings.music, sfx: settings.sfx, invert: settings.invert, animals: settings.animals, seed: worldSeed,
-      gems, weapon: weaponTier,
+      mats, owned: [...owned], equip,
       pos: { x: +player.x.toFixed(2), z: +player.z.toFixed(2), yaw: +player.yaw.toFixed(3), seed: worldSeed },
     }));
   } catch (e) {}
@@ -277,7 +318,7 @@ function sample(x, z) {
 }
 
 // Caves (where bears live): at most one per 384 m square, on dry hills, facing downhill.
-const CAVE_CELL = 384, LAIR_CELL = 1536;
+const CAVE_CELL = 384, LAIR_CELL = 1024;
 const caveCache = new Map(), lairCache = new Map();
 function caveInCell(ix, iz) {
   const k = ix + ',' + iz;
@@ -303,14 +344,14 @@ function lairInCell(ix, iz) {
   if (lairCache.has(k)) return lairCache.get(k);
   let l = null;
   const r = mulberry32(hashInt(ix, iz, 99));
-  if (r() < 0.4) {
+  if (r() < 0.6) {
     let best = -1e9, bx = 0, bz = 0;
     for (let j = 0; j < 6; j++) for (let i = 0; i < 6; i++) {
       const x = (ix + 0.15 + 0.7 * (i + r()) / 6) * LAIR_CELL, z = (iz + 0.15 + 0.7 * (j + r()) / 6) * LAIR_CELL;
       const h = sample(x, z).h;
       if (h > best) { best = h; bx = x; bz = z; }
     }
-    if (best > 14) l = { x: bx, z: bz, key: 'l' + k };
+    if (best > 11) l = { x: bx, z: bz, key: 'l' + k };
   }
   lairCache.set(k, l);
   return l;
@@ -559,16 +600,31 @@ function freeMesh(m) {
 /* ---------- shapes ---------- */
 const PHI = (1 + Math.sqrt(5)) / 2;
 const ICO_V = [[-1, PHI, 0], [1, PHI, 0], [-1, -PHI, 0], [1, -PHI, 0], [0, -1, PHI], [0, 1, PHI], [0, -1, -PHI], [0, 1, -PHI], [PHI, 0, -1], [PHI, 0, 1], [-PHI, 0, -1], [-PHI, 0, 1]].map(v => norm3(v[0], v[1], v[2]));
-const ICO_F = [[0, 11, 5], [0, 5, 1], [0, 1, 7], [0, 7, 10], [0, 10, 11], [1, 5, 9], [5, 11, 4], [11, 10, 2], [10, 7, 6], [7, 1, 8], [3, 9, 4], [3, 4, 2], [3, 2, 6], [3, 6, 8], [3, 8, 9], [4, 9, 5], [2, 4, 11], [6, 2, 10], [8, 6, 7], [9, 8, 1]];
+const ICO_F_ = [[0, 11, 5], [0, 5, 1], [0, 1, 7], [0, 7, 10], [0, 10, 11], [1, 5, 9], [5, 11, 4], [11, 10, 2], [10, 7, 6], [7, 1, 8], [3, 9, 4], [3, 4, 2], [3, 2, 6], [3, 6, 8], [3, 8, 9], [4, 9, 5], [2, 4, 11], [6, 2, 10], [8, 6, 7], [9, 8, 1]];
+const ICO_F = ICO_F_;
+// a rounder ball for creatures and items: each face split into 4
+const [ICO1_V, ICO1_F] = (() => {
+  const V = ICO_V.map(v => v.slice()), F = [], mid = new Map();
+  const m = (a, b) => {
+    const k = a < b ? a + '_' + b : b + '_' + a;
+    if (!mid.has(k)) { const p = V[a], q = V[b]; V.push(norm3(p[0] + q[0], p[1] + q[1], p[2] + q[2])); mid.set(k, V.length - 1); }
+    return mid.get(k);
+  };
+  for (const [a, b, c] of ICO_F) { const ab = m(a, b), bc = m(b, c), ca = m(c, a); F.push([a, ab, ca], [b, bc, ab], [c, ca, bc], [ab, bc, ca]); }
+  return [V, F];
+})();
+let blobDetail = 0;
+function hiDetail(fn) { blobDetail = 1; try { return fn(); } finally { blobDetail = 0; } }
 
 // lumpy low-poly ball (tree tops, bushes, rocks)
 function blob(g, cx, cy, cz, rx, ry, rz, col, rng, jit, mode, sway, cutBelow) {
-  const pts = ICO_V.map(v => {
+  const VV = blobDetail ? ICO1_V : ICO_V, FF = blobDetail ? ICO1_F : ICO_F;
+  const pts = VV.map(v => {
     const k = 1 + (rng() - 0.5) * jit;
     return [cx + v[0] * rx * k, cy + v[1] * ry * k, cz + v[2] * rz * k];
   });
   if (cutBelow !== undefined) for (const p of pts) if (p[1] < cutBelow) p[1] = cutBelow;
-  for (const f of ICO_F) {
+  for (const f of FF) {
     const a = pts[f[0]], b = pts[f[1]], c = pts[f[2]];
     let n = faceN(a, b, c);
     const mx = (a[0] + b[0] + c[0]) / 3 - cx, my = (a[1] + b[1] + c[1]) / 3 - cy, mz = (a[2] + b[2] + c[2]) / 3 - cz;
@@ -580,6 +636,7 @@ function blob(g, cx, cy, cz, rx, ry, rz, col, rng, jit, mode, sway, cutBelow) {
 }
 // tube between two points (trunks, branches, logs, stems)
 function tube(g, p0, p1, r0, r1, sides, col, rng, caps, sway0, sway1) {
+  if (blobDetail) sides *= 2;
   const ax = norm3(p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]);
   let u = Math.abs(ax[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
   // u = normalize(u x ax), w = ax x u
@@ -728,7 +785,7 @@ function buildCave(g, ch, c) {
     const by = sample(bx, bz).h + 0.05, a = rng() * 6.28;
     tube(g, [bx - Math.cos(a) * 0.3, by, bz - Math.sin(a) * 0.3], [bx + Math.cos(a) * 0.3, by, bz + Math.sin(a) * 0.3], 0.05, 0.05, 5, [0.92, 0.9, 0.82], rng, true);
   }
-  ch.trees.push(c.x - fx * 2, c.z - fz * 2, 7.3, mx + rx * 2.9, mz + rz * 2.9, 1.3, mx - rx * 2.9, mz - rz * 2.9, 1.3);
+  ch.trees.push(c.x - fx * 2, c.z - fz * 2, 7.3, 1, mx + rx * 2.9, mz + rz * 2.9, 1.3, 1, mx - rx * 2.9, mz - rz * 2.9, 1.3, 1);
   ch.maxY = Math.max(ch.maxY, y + 10);
 }
 function buildLair(g, ch, l) {
@@ -738,7 +795,7 @@ function buildLair(g, ch, l) {
     const x = l.x + Math.sin(a) * d, z = l.z + Math.cos(a) * d, y = sample(x, z).h;
     const h = 14 + rng() * 12;
     tube(g, [x, y - 1, z], [x + (rng() - 0.5) * 3, y + h, z + (rng() - 0.5) * 3], 1.5 + rng() * 0.7, 0.12, 6, [0.14, 0.12, 0.15], rng, false);
-    ch.trees.push(x, z, 1.8);
+    ch.trees.push(x, z, 1.8, 3);
     ch.maxY = Math.max(ch.maxY, y + h + 2);
   }
   for (let i = 0; i < 30; i++) {              // gold and old bones in the middle
@@ -959,7 +1016,7 @@ function buildChunk(cx, cz) {
     const y = chunkHeight(ch, px, pz);
     if (y < (marsh > 0.45 ? 0.25 : 1.2)) continue;
     if (marsh > 0.45) {                         // marsh: bare dead trees and a few droopy ones
-      if (roll < 0.07) ch.trees.push(px, pz, rng() < 0.6 ? deadTree(vg, px, y, pz, rng) : leafTree(vg, px, y, pz, rng, 3));
+      if (roll < 0.07) ch.trees.push(px, pz, rng() < 0.6 ? deadTree(vg, px, y, pz, rng) : leafTree(vg, px, y, pz, rng, 3), 0);
       continue;
     }
     if (roll < forest * 0.30 + 0.012) {
@@ -968,7 +1025,7 @@ function buildChunk(cx, cz) {
       if (kind < pine * 0.85 + 0.05) r = pineTree(vg, px, y, pz, rng);
       else if (kind < pine * 0.85 + 0.2) r = birchTree(vg, px, y, pz, rng);
       else { const au = rng(); r = leafTree(vg, px, y, pz, rng, au < 0.06 ? 1 : au < 0.1 ? 2 : 0); }
-      ch.trees.push(px, pz, r);
+      ch.trees.push(px, pz, r, 0);
     } else if (roll > 0.985 - forest * 0.02) {
       bush(vg, px, y, pz, rng, rng() < 0.3);
     }
@@ -983,7 +1040,7 @@ function buildChunk(cx, cz) {
     if (roll < 0.22) {
       const size = 0.4 + rng() * rng() * 2.2;
       rock(vg, px, y, pz, rng, size);
-      if (size > 0.8) ch.trees.push(px, pz, size * 0.85);
+      if (size > 0.8) ch.trees.push(px, pz, size * 0.85, 1);
     } else if (roll < 0.27 && y > 1.5) {
       const s = sample(px, pz);
       if (s.forest > 0.5 && s.rd > s.rw + 6) {
@@ -991,7 +1048,7 @@ function buildChunk(cx, cz) {
         const ex = Math.cos(a) * L / 2, ez = Math.sin(a) * L / 2;
         const y0 = chunkHeight(ch, px - ex, pz - ez), y1 = chunkHeight(ch, px + ex, pz + ez);
         tube(vg, [px - ex, y0 + r * 0.7, pz - ez], [px + ex, y1 + r * 0.7, pz + ez], r, r * 0.9, 7, shade(BARK, 0.95), rng, true);
-        for (let t = -1; t <= 1; t++) ch.trees.push(px + ex * t * 0.7, pz + ez * t * 0.7, r + 0.1);
+        for (let t = -1; t <= 1; t++) ch.trees.push(px + ex * t * 0.7, pz + ez * t * 0.7, r + 0.1, 0);
       }
     }
   }
@@ -1258,6 +1315,20 @@ function tone(type, f0, f1, dur, vol, delay, lp) {
   n.connect(g); g.connect(sfxBus);
   o.start(t); o.stop(t + dur + 0.05);
 }
+function distantRoar(l, d) {
+  if (!audioOn() || !settings.sfx) return;
+  const t = actx.currentTime, vol = 0.22 * (1 - d / 360);
+  // left or right of where you're looking
+  const ang = Math.atan2(l.x - player.x, -(l.z - player.z)) - player.yaw;
+  const o = actx.createOscillator(); o.type = 'sawtooth';
+  o.frequency.setValueAtTime(70, t); o.frequency.exponentialRampToValueAtTime(42, t + 2.2);
+  const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 380 - d * 0.6;
+  const g = actx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.3); g.gain.exponentialRampToValueAtTime(0.0001, t + 2.3);
+  o.connect(f); f.connect(g);
+  if (actx.createStereoPanner) { const p = actx.createStereoPanner(); p.pan.value = Math.max(-1, Math.min(1, Math.sin(ang))); g.connect(p); p.connect(sfxBus); }
+  else g.connect(sfxBus);
+  o.start(t); o.stop(t + 2.4);
+}
 function croak() {
   if (!audioOn() || !settings.sfx) return;
   const n = 2 + (Math.random() * 3 | 0), f = 140 + Math.random() * 80;
@@ -1413,8 +1484,8 @@ function padChanged(gp) {
 let hintTimer = 0;
 function showHint() {
   hintEl.textContent = pad.connected
-    ? 'Left stick: walk · Right stick: look · RT: swing · A: jump · LT: run · Start: menu'
-    : 'WASD: walk · Mouse: look · Click or F: swing · Space: jump · Shift: run · Esc: menu';
+    ? 'Left stick: walk · Right stick: look · RT: swing · A: jump · LT: run · Y: backpack · Start: menu'
+    : 'WASD: walk · Mouse: look · Click or F: swing · Space: jump · Shift: run · I: backpack · Esc: menu';
   hintEl.classList.add('show');
   clearTimeout(hintTimer); hintTimer = setTimeout(() => hintEl.classList.remove('show'), 7000);
 }
@@ -1504,8 +1575,19 @@ function menuPad(dt) {
 
 addEventListener('keydown', e => {
   initAudio();
+  if (state === 'inv') {
+    if (['Escape', 'KeyI', 'Tab', 'KeyB'].includes(e.code)) closeInv(false);
+    else if (e.code === 'ArrowDown') invMove(0, 1);
+    else if (e.code === 'ArrowUp') invMove(0, -1);
+    else if (e.code === 'ArrowLeft') invMove(-1, 0);
+    else if (e.code === 'ArrowRight') invMove(1, 0);
+    else if (e.code === 'Enter' || e.code === 'Space') invAction(invButtons()[invSel]);
+    e.preventDefault();
+    return;
+  }
   if (state === 'play') {
     if (e.code === 'Escape' || e.code === 'KeyP') { openMenu(); e.preventDefault(); return; }
+    if (e.code === 'KeyI' || e.code === 'Tab') { openInv(false); e.preventDefault(); return; }
     keys.add(e.code);
     if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
   } else {
@@ -1881,11 +1963,12 @@ function rabbitModel() {
 function snakeModel() {
   const r = mulberry32(19);
   const GREEN = [0.30, 0.50, 0.16], BAND = [0.72, 0.68, 0.22], DK = [0.1, 0.1, 0.06];
-  const sg = new Geo(128); blob(sg, 0, 0, 0, 1, 0.85, 1.15, GREEN, r, 0.06, -1, 0);
-  const bg = new Geo(128); blob(bg, 0, 0, 0, 1, 0.85, 1.15, BAND, r, 0.06, -1, 0);
+  const BELLY = [1.0, 0.95, 0.72];
+  const sg = new Geo(512); blob(sg, 0, 0.08, 0, 1, 0.8, 1.15, GREEN, r, 0.06, -1, 0); blob(sg, 0, -0.28, 0, 0.92, 0.56, 1.08, BELLY, r, 0.03, 1, 0);
+  const bg = new Geo(512); blob(bg, 0, 0.08, 0, 1, 0.8, 1.15, BAND, r, 0.06, -1, 0); blob(bg, 0, -0.28, 0, 0.92, 0.56, 1.08, BELLY, r, 0.03, 1, 0);
   const hg = new Geo(512);
   blob(hg, 0, 0.05, 0.25, 0.62, 0.42, 0.85, shade(GREEN, 0.9), r, 0.08, -1, 0);
-  blob(hg, 0, -0.12, 0.45, 0.5, 0.18, 0.7, BAND, r, 0.05, -1, 0);
+  blob(hg, 0, -0.14, 0.45, 0.5, 0.2, 0.72, [0.93, 0.86, 0.6], r, 0.05, -1, 0);
   for (const sd of [-1, 1]) {
     blob(hg, sd * 0.33, 0.25, 0.6, 0.13, 0.13, 0.13, [1.0, 0.85, 0.1], r, 0, -1, 0);
     blob(hg, sd * 0.39, 0.27, 0.66, 0.05, 0.1, 0.05, DK, r, 0, -1, 0);
@@ -1923,9 +2006,11 @@ function dragonModel() {
   for (let i = 0; i < 3; i++) tube(g, tail[i], tail[i + 1], tr[i], tr[i + 1], 7, RED, r, false);
   B(0, 1.0, -8.3, 0.5, 0.1, 0.6, DARK, 0.1);
   const lg = new Geo(256);
-  tube(lg, [0, 0.2, 0], [0, -1.8, 0.1], 0.5, 0.36, 7, RED, r, false);
-  blob(lg, 0, -1.88, 0.35, 0.48, 0.2, 0.62, DARK, r, 0.1, -1, 0);
-  for (const sd of [-1, 0, 1]) tube(lg, [sd * 0.25, -1.9, 0.85], [sd * 0.28, -2.0, 1.15], 0.08, 0.01, 4, HORN, r, false);
+  blob(lg, 0, -0.1, -0.1, 0.62, 0.75, 0.75, RED, r, 0.1, -1, 0);                       // big thigh
+  tube(lg, [0, -0.3, -0.1], [0, -1.05, -0.5], 0.52, 0.36, 7, RED, r, false);
+  tube(lg, [0, -1.05, -0.5], [0, -1.85, 0.05], 0.36, 0.26, 7, shade(RED, 0.9), r, false);
+  blob(lg, 0, -1.9, 0.35, 0.5, 0.2, 0.68, DARK, r, 0.1, -1, 0);
+  for (const sd of [-1, 0, 1]) tube(lg, [sd * 0.25, -1.92, 0.9], [sd * 0.3, -2.02, 1.25], 0.09, 0.01, 4, HORN, r, false);
   const wg = new Geo(512);
   const SH = [0, 0, 0], E = [2.5, 1.3, 0.3], T = [5.6, 0.7, -0.6], F1 = [4.3, -0.4, -2.4], F2 = [2.6, -0.7, -3.1], BK = [0.4, -0.3, -2.3];
   tube(wg, SH, E, 0.22, 0.16, 5, DARK, r, false); tube(wg, E, T, 0.16, 0.05, 5, DARK, r, false);
@@ -1942,16 +2027,17 @@ const SPECIES = {
   deer: { name: 'Deer', peaceful: true, flee: 16, walk: 1.3, run: 9.5, turn: 4, radius: 0.6, sinkH: 1.9,
     legLen: 0.8, hipY: 0.85, hips: [[0.13, 0.4], [-0.13, 0.4], [0.13, -0.4], [-0.13, -0.4]] },
   // enemies
-  wolf: { name: 'Wolf', hp: 50, dmg: 9, reach: 1.9, windup: 0.4, cd: 1.3, walk: 1.8, run: 6.8, sight: 30, turn: 5, radius: 0.6,
-    barH: 1.25, gems: 2, wDrop: 0.3, knock: 0.8, sinkH: 1.2, legLen: 0.42, hipY: 0.46, hips: [[0.14, 0.34], [-0.14, 0.34], [0.14, -0.34], [-0.14, -0.34]] },
-  bear: { name: 'Bear', hp: 140, dmg: 16, reach: 2.6, windup: 0.6, cd: 1.8, walk: 1.3, run: 5.4, sight: 26, turn: 3, radius: 1.0,
-    barH: 1.75, gems: 5, wDrop: 1.0, knock: 0.35, sinkH: 1.7, legLen: 0.55, hipY: 0.62, hips: [[0.25, 0.44], [-0.25, 0.44], [0.25, -0.44], [-0.25, -0.44]] },
+  wolf: { name: 'Wolf', hp: 15, dmg: 9, reach: 1.9, windup: 0.4, cd: 1.3, walk: 1.8, run: 6.8, sight: 30, turn: 5, radius: 0.6,
+    barH: 1.25, drops: { gems: 1, iron: 0.3 }, knock: 0.8, sinkH: 1.2, legLen: 0.42, hipY: 0.46, hips: [[0.14, 0.34], [-0.14, 0.34], [0.14, -0.34], [-0.14, -0.34]] },
+  bear: { name: 'Bear', hp: 20, dmg: 16, reach: 2.6, windup: 0.6, cd: 1.8, walk: 1.3, run: 5.4, sight: 26, turn: 3, radius: 1.0,
+    barH: 1.75, drops: { gems: 3, iron: 2 }, knock: 0.35, sinkH: 1.7, legLen: 0.55, hipY: 0.62, hips: [[0.25, 0.44], [-0.25, 0.44], [0.25, -0.44], [-0.25, -0.44]] },
   // bosses
-  snake: { name: 'Giant snake', boss: true, swims: true, hp: 400, dmg: 18, reach: 2.4, windup: 0.45, cd: 1.5, walk: 1.8, run: 5.0, sight: 28, turn: 2.5,
-    radius: 0.6, gems: 15, apples: 2, knock: 0, sinkH: 1.2, legLen: 1, giveUp: 55, segs: 16, spacing: 0.7 },
-  dragon: { name: 'Dragon', boss: true, hp: 1000, dmg: 25, reach: 5.5, windup: 0.8, cd: 2.2, walk: 2.0, run: 4.6, sight: 40, turn: 1.4,
-    radius: 3.0, gems: 40, apples: 3, knock: 0, sinkH: 6, giveUp: 75, legLen: 1.8, hipY: 1.95, hips: [[1.1, 1.6], [-1.1, 1.6], [1.1, -1.6], [-1.1, -1.6]] },
+  snake: { name: 'Giant snake', boss: true, swims: true, hp: 200, dmg: 18, reach: 3.3, windup: 0.45, cd: 1.5, walk: 1.8, run: 5.0, sight: 28, turn: 2.5,
+    radius: 1.0, drops: { gems: 15, iron: 3, apples: 2 }, knock: 0, sinkH: 2.0, legLen: 1, giveUp: 55, segs: 16, spacing: 1.15 },
+  dragon: { name: 'Wyvern', boss: true, scale: 1.3, tilt: -0.2, hp: 500, dmg: 25, reach: 7.0, windup: 0.8, cd: 2.2, walk: 2.0, run: 4.6, sight: 40, turn: 1.4,
+    radius: 3.9, drops: { gems: 25, iron: 4, scale: 1, apples: 3 }, knock: 0, sinkH: 8, giveUp: 75, legLen: 1.8, hipY: 1.95, hips: [[1.2, -0.4], [-1.2, -0.4]] },
 };
+hiDetail(() => {
 SPECIES.fox.model = canineModel(1, [0.88, 0.42, 0.12], [0.96, 0.92, 0.86], [0.18, 0.12, 0.1], [0.96, 0.94, 0.9], 1.3);
 SPECIES.wolf.model = canineModel(1.4, [0.50, 0.50, 0.53], [0.80, 0.79, 0.76], [0.14, 0.13, 0.14], [0.25, 0.25, 0.27], 0.9);
 SPECIES.bear.model = bearModel();
@@ -1959,6 +2045,7 @@ SPECIES.deer.model = deerModel();
 SPECIES.rabbit.model = rabbitModel();
 SPECIES.snake.model = snakeModel();
 SPECIES.dragon.model = dragonModel();
+});
 const flameMeshes = [[1.0, 0.45, 0.05], [1.0, 0.75, 0.1], [1.0, 0.25, 0.02]].map((c, i) => { const g = new Geo(64); blob(g, 0, 0, 0, 1, 1, 1, c, mulberry32(30 + i), 0.4, -1, 0); return makeMesh(g); });
 
 /* ---------- drops and weapons ---------- */
@@ -1976,57 +2063,141 @@ function octa(g, r, h, col) {
   }
 }
 const WOOD = [0.45, 0.30, 0.17];
-function weaponModel(tier) {
-  const g = new Geo(512), r = mulberry32(20 + tier);
-  if (tier === 1) {
+/* ---------- things you can hold, wear and craft ---------- */
+const MATS = {
+  wood: { name: 'Wood', icon: '🪵' },
+  stone: { name: 'Stone', icon: '🪨' },
+  iron: { name: 'Iron', icon: '⚙️' },
+  gems: { name: 'Gems', icon: '💎' },
+  scale: { name: 'Dragon scale', icon: '🐉' },
+};
+const ITEMS = {
+  fists:       { name: 'Fists', icon: '✊', type: 'weapon', dmg: 2, reach: 2.3, time: 0.28 },
+  stick:       { name: 'Stick', icon: '🥢', type: 'weapon', dmg: 3, reach: 2.7, time: 0.34, cost: { wood: 1 } },
+  axe:         { name: 'Wooden axe', icon: '🪓', type: 'weapon', dmg: 4, reach: 2.7, time: 0.38, cost: { wood: 4 }, chop: 2, note: 'chops 2 wood at a time' },
+  club:        { name: 'Stone club', icon: '🔨', type: 'weapon', dmg: 4, reach: 2.9, time: 0.42, cost: { wood: 2, stone: 3 }, mine: 2, note: 'breaks 2 stone at a time' },
+  ironsword:   { name: 'Iron sword', icon: '⚔️', type: 'weapon', dmg: 5, reach: 3.0, time: 0.36, cost: { wood: 1, iron: 4 } },
+  crystal:     { name: 'Crystal sword', icon: '🗡️', type: 'weapon', dmg: 6, reach: 3.2, time: 0.38, cost: { iron: 2, gems: 12 } },
+  dragonsword: { name: 'Dragon sword', icon: '🔥', type: 'weapon', dmg: 10, reach: 3.5, time: 0.4, cost: { scale: 1, iron: 3 } },
+  woodplate:   { name: 'Wooden chest plate', icon: '🟫', type: 'armor', armor: 0.15, cost: { wood: 8 } },
+  ironplate:   { name: 'Iron chest plate', icon: '🛡️', type: 'armor', armor: 0.35, cost: { iron: 8 } },
+  dragonplate: { name: 'Dragon chest plate', icon: '🐲', type: 'armor', armor: 0.6, cost: { scale: 1, iron: 4 } },
+};
+const ITEM_ORDER = Object.keys(ITEMS);
+function weaponModel(id) {
+  const g = new Geo(1024), r = mulberry32(20 + ITEM_ORDER.indexOf(id));
+  if (id === 'stick') {
     tube(g, [0, -0.12, 0], [0.02, 0.75, 0], 0.035, 0.024, 6, WOOD, r, true);
     tube(g, [0.01, 0.38, 0], [0.12, 0.52, 0], 0.016, 0.01, 4, WOOD, r, false);
     blob(g, 0.13, 0.54, 0, 0.04, 0.025, 0.04, [0.35, 0.6, 0.22], r, 0.2, 1, 0);
-  } else if (tier === 2) {
+  } else if (id === 'axe') {
+    tube(g, [0, -0.12, 0], [0, 0.62, 0], 0.03, 0.028, 6, WOOD, r, true);
+    blob(g, 0.11, 0.52, 0, 0.13, 0.1, 0.025, [0.68, 0.5, 0.3], r, 0.1, -1, 0);
+    blob(g, 0.2, 0.52, 0, 0.03, 0.12, 0.02, [0.8, 0.65, 0.42], r, 0.05, -1, 0);
+  } else if (id === 'club') {
     tube(g, [0, -0.12, 0], [0, 0.5, 0], 0.036, 0.04, 6, WOOD, r, true);
     blob(g, 0, 0.62, 0, 0.13, 0.16, 0.12, [0.55, 0.55, 0.57], r, 0.45, -1, 0);
     tube(g, [-0.05, 0.47, 0], [0.05, 0.5, 0], 0.045, 0.045, 5, [0.6, 0.45, 0.25], r, false);
-  } else if (tier === 3) {
+  } else if (id === 'ironsword') {
+    tube(g, [0, -0.12, 0], [0, 0.1, 0], 0.03, 0.03, 6, WOOD, r, true);
+    tube(g, [-0.12, 0.11, 0], [0.12, 0.11, 0], 0.028, 0.028, 6, [0.4, 0.4, 0.45], r, true);
+    tube(g, [0, 0.12, 0], [0, 0.8, 0], 0.05, 0.01, 4, [0.8, 0.82, 0.88], r, false);
+  } else if (id === 'crystal') {
     tube(g, [0, -0.12, 0], [0, 0.1, 0], 0.03, 0.03, 6, [0.4, 0.22, 0.15], r, true);
     tube(g, [-0.13, 0.11, 0], [0.13, 0.11, 0], 0.03, 0.03, 6, [0.95, 0.75, 0.2], r, true);
     tube(g, [0, 0.12, 0], [0, 0.82, 0], 0.055, 0.012, 4, [0.55, 0.88, 1.0], r, false);
-  } else if (tier === 4) {
+  } else if (id === 'dragonsword') {
     tube(g, [0, -0.14, 0], [0, 0.1, 0], 0.032, 0.032, 6, [0.15, 0.1, 0.1], r, true);
     tube(g, [-0.16, 0.11, 0], [0.16, 0.13, 0], 0.035, 0.02, 6, [0.25, 0.1, 0.08], r, true);
     blob(g, 0, 0.115, 0.03, 0.035, 0.035, 0.02, [1.0, 0.85, 0.1], r, 0, -1, 0);
     tube(g, [0, 0.12, 0], [0, 0.95, 0], 0.065, 0.012, 4, [1.0, 0.38, 0.1], r, false);
-  }
+  } else return null;
   return makeMesh(g);
 }
-const WEAPONS = [
-  { name: 'Fists', icon: '✊', dmg: 10, reach: 2.3, time: 0.28 },
-  { name: 'Stick', icon: '🪵', dmg: 16, reach: 2.7, time: 0.36 },
-  { name: 'Stone club', icon: '🪨', dmg: 25, reach: 2.9, time: 0.42 },
-  { name: 'Crystal sword', icon: '🗡️', dmg: 38, reach: 3.2, time: 0.38 },
-  { name: 'Dragon sword', icon: '🔥', dmg: 60, reach: 3.5, time: 0.4 },
-];
-const weaponMeshes = [null, weaponModel(1), weaponModel(2), weaponModel(3), weaponModel(4)];
-const gemMesh = (() => { const g = new Geo(64); octa(g, 0.14, 0.24, [0.35, 0.85, 1.0]); return makeMesh(g); })();
-const appleMesh = (() => {
-  const g = new Geo(256), r = mulberry32(3);
+const weaponMeshes = {};
+const gemMesh = hiDetail(() => { const g = new Geo(64); octa(g, 0.14, 0.24, [0.35, 0.85, 1.0]); return makeMesh(g); });
+const appleMesh = hiDetail(() => {
+  const g = new Geo(512), r = mulberry32(3);
   blob(g, 0, 0, 0, 0.16, 0.15, 0.16, [0.85, 0.12, 0.12], r, 0.08, -1, 0);
   tube(g, [0, 0.12, 0], [0.02, 0.22, 0], 0.015, 0.012, 4, WOOD, r, false);
   const lc = [0.3, 0.65, 0.2];
   tri(g, [0.02, 0.2, 0], [0.14, 0.24, 0.03], [0.08, 0.18, -0.03], [0, 1, 0], 1, lc, lc, lc, 0, 0, 0);
   return makeMesh(g);
-})();
-const handMesh = (() => {
-  const g = new Geo(256), r = mulberry32(5);
+});
+const matMeshes = hiDetail(() => {
+  const r = mulberry32(4), out = {};
+  let g = new Geo(256); tube(g, [-0.2, 0, 0], [0.2, 0, 0], 0.09, 0.09, 7, WOOD, r, true); out.wood = makeMesh(g);
+  g = new Geo(256); blob(g, 0, 0, 0, 0.17, 0.13, 0.15, [0.55, 0.55, 0.57], r, 0.4, -1, 0); out.stone = makeMesh(g);
+  g = new Geo(256); tube(g, [-0.16, 0, 0], [0.16, 0, 0], 0.08, 0.07, 4, [0.72, 0.74, 0.8], r, true); out.iron = makeMesh(g);
+  g = new Geo(64); octa(g, 0.2, 0.1, [0.95, 0.25, 0.12]); out.scale = makeMesh(g);
+  return out;
+});
+const handMesh = hiDetail(() => {
+  const g = new Geo(512), r = mulberry32(5);
   tube(g, [0.0, -0.02, 0.07], [0.12, -0.32, 0.55], 0.06, 0.08, 7, [0.25, 0.5, 0.32], r, false);
   blob(g, 0, 0, 0, 0.068, 0.06, 0.085, [0.95, 0.74, 0.58], r, 0.15, -1, 0);
   return makeMesh(g);
+});
+hiDetail(() => { for (const id of ITEM_ORDER) weaponMeshes[id] = weaponModel(id); });
+
+// what you have (loaded from the save, with old saves upgraded)
+const mats = { wood: 0, stone: 0, iron: 0, gems: 0, scale: 0 };
+const owned = new Set(['fists']);
+const equip = { weapon: 'fists', armor: null };
+(function loadInventory() {
+  const okN = v => Number.isInteger(v) && v >= 0 && v < 1e6;
+  if (saved.mats && typeof saved.mats === 'object') for (const k in mats) if (okN(saved.mats[k])) mats[k] = saved.mats[k];
+  if (Array.isArray(saved.owned)) for (const id of saved.owned) if (ITEMS[id]) owned.add(id);
+  // older saves kept a gem count and a weapon number instead
+  if (!saved.mats && okN(saved.gems)) mats.gems = saved.gems;
+  if (!saved.owned && Number.isInteger(saved.weapon)) ['stick', 'club', 'crystal', 'dragonsword'].slice(0, Math.max(0, Math.min(4, saved.weapon))).forEach(id => owned.add(id));
+  const e = saved.equip && typeof saved.equip === 'object' ? saved.equip : {};
+  if (owned.has(e.weapon) && ITEMS[e.weapon].type === 'weapon') equip.weapon = e.weapon;
+  else equip.weapon = [...owned].filter(id => ITEMS[id].type === 'weapon').pop() || 'fists';
+  if (owned.has(e.armor) && ITEMS[e.armor].type === 'armor') equip.armor = e.armor;
 })();
+const curWeapon = () => ITEMS[equip.weapon];
+const armorValue = () => equip.armor ? ITEMS[equip.armor].armor : 0;
+
+// trees give wood and big rocks give stone (sometimes iron), a few times each
+const harvested = new Map();
+const HARVEST_MAX = { 0: 5, 1: 4 };
+function tryHarvest() {
+  const w = curWeapon();
+  const fx = Math.sin(player.yaw), fz = -Math.cos(player.yaw);
+  let best = null, bestD = Infinity;
+  nearbyTreesAt(player.x, player.z, (x, z, r, type) => {
+    if (type !== 0 && type !== 1) return;
+    const dx = x - player.x, dz = z - player.z, d = Math.hypot(dx, dz) || 0.001;
+    if (d - r > w.reach * 0.8) return;
+    if ((dx * fx + dz * fz) / d < 0.5) return;
+    if (d - r < bestD) { bestD = d - r; best = { x, z, r, type }; }
+  });
+  if (!best) return false;
+  const key = Math.round(best.x * 10) + '|' + Math.round(best.z * 10);
+  const used = harvested.get(key) || 0;
+  const hx = best.x - fx * best.r, hz = best.z - fz * best.r, hy = player.feet + 1.2;
+  if (used >= HARVEST_MAX[best.type]) {
+    feed(best.type === 0 ? 'This tree has no more wood' : 'This rock has no more stone');
+    thump(0.15);
+    return true;
+  }
+  harvested.set(key, used + 1);
+  const n = best.type === 0 ? (w.chop || 1) : (w.mine || 1);
+  for (let i = 0; i < n; i++) addPickup(best.type === 0 ? 'wood' : 'stone', hx, hy, hz, 0, 0.4, 0.45);
+  if (best.type === 1 && Math.random() < 0.25) addPickup('iron', hx, hy, hz, 0, 0.4, 0.45);
+  if (best.type === 0) { noiseHit('bandpass', 700, 2, 0.12, 0.35); thump(0.2); }
+  else { tone('triangle', 1800, 1500, 0.08, 0.08); noiseHit('highpass', 3000, 0.7, 0.08, 0.15); }
+  rumble(0.15, 0.3, 60);
+  return true;
+}
 
 /* =====================================================================
    Animals: friendly ones run away; enemies spot you, chase and bite;
    bears live in caves; giant snakes in marshes; dragons in rare lairs
    ===================================================================== */
 let animals = [], pickups = [], flames = [];
+let dragonWakeDist = 38, dragonView = false;
 let spawnTimer = 5, lairTimer = 0;
 const MAX_ANIMALS = 7;
 const caveState = new Map(), lairState = new Map();
@@ -2040,7 +2211,7 @@ function nearbyTreesAt(x, z, fn) {
     const ch = chunks.get(ckey(pcx + dx, pcz + dz));
     if (!ch) continue;
     const t = ch.trees;
-    for (let i = 0; i < t.length; i += 3) fn(t[i], t[i + 1], t[i + 2]);
+    for (let i = 0; i < t.length; i += 4) fn(t[i], t[i + 1], t[i + 2], t[i + 3]);
   }
 }
 function pushOutTrees(o, radius) {
@@ -2050,10 +2221,10 @@ function pushOutTrees(o, radius) {
     if (d2 < rr * rr && d2 > 1e-6) { const d = Math.sqrt(d2); o.x = tx + dx / d * rr; o.z = tz + dz / d * rr; }
   });
 }
-function snakeR(sp, i) { return i < 3 ? 0.5 : 0.5 * (1 - (i - 3) / (sp.segs - 3) * 0.75); }
+function snakeR(sp, i) { return i < 3 ? 0.8 : 0.8 * (1 - (i - 3) / (sp.segs - 3) * 0.75); }
 // circles you can bump into or hit: [x, z, radius, y]
 function bodyCircles(a) {
-  if (a.kind === 'snake') return [[a.x, a.z, 0.55, a.y]].concat(a.segs.map((s, i) => [s.x, s.z, snakeR(a.sp, i), s.y]));
+  if (a.kind === 'snake') return [[a.x, a.z, 0.9, a.y]].concat(a.segs.map((s, i) => [s.x, s.z, snakeR(a.sp, i), s.y]));
   return [[a.x, a.z, a.sp.radius, a.y]];
 }
 function spawnAnimal(kind, x, z, opts) {
@@ -2122,10 +2293,19 @@ function updateLairs(dt) {
     const l = lairInCell(lcx + dx, lcz + dz);
     if (!l) continue;
     let st = lairState.get(l.key);
-    if (!st) { st = { alive: false, until: 0 }; lairState.set(l.key, st); }
+    if (!st) { st = { alive: false, until: 0, lair: l }; lairState.set(l.key, st); }
     if (!st.alive && now > st.until && Math.hypot(l.x - player.x, l.z - player.z) < 170) {
       st.alive = true;
-      spawnAnimal('dragon', l.x, l.z, { asleep: true, home: { x: l.x, z: l.z, r: 6 }, onGone: why => { st.alive = false; if (why === 'killed') st.until = nowS() + 600; else if (why === 'ko') st.until = nowS() + 40; } });
+      st.dragon = spawnAnimal('dragon', l.x, l.z, { asleep: true, home: { x: l.x, z: l.z, r: 6 }, onGone: why => { st.alive = false; if (why === 'killed') st.until = nowS() + 600; else if (why === 'ko') st.until = nowS() + 40; } });
+    }
+  }
+  // a distant roar now and then helps you find a lair (it comes from the lair's side)
+  for (const st of lairState.values()) if (st.lair) {
+    const l = st.lair, d = Math.hypot(l.x - player.x, l.z - player.z);
+    if (now > st.until && d > 45 && d < 320 && now > (st.roarAt || 0) && !(st.dragon && st.dragon.alerted)) {
+      st.roarAt = now + 25 + Math.random() * 15;
+      distantRoar(l, d);
+      if (!st.hinted) { st.hinted = true; toast('🐉 You hear a wyvern roar. Its lair must be close!'); }
     }
   }
   if (envMarsh > 0.5 && !snakeState.alive && now > snakeState.until && Math.random() < 0.012) {
@@ -2163,7 +2343,7 @@ function alertAnimal(a) {
   a.alerted = true; a.asleep = false; a.waterT = 0;
   makeBar(a);
   spotSound(a.kind);
-  if (a.kind === 'dragon') { rumble(0.9, 0.9, 700); shake = 0.6; toast('🐉 The dragon woke up!'); }
+  if (a.kind === 'dragon') { rumble(0.9, 0.9, 700); shake = 0.6; toast('🐉 The wyvern woke up!'); }
   if (a.kind === 'snake') toast('🐍 A giant snake!');
   if (a.kind === 'wolf') for (const b of animals) if (b !== a && !b.alerted && !b.dead && b.kind === 'wolf' && Math.hypot(b.x - a.x, b.z - a.z) < 15) { b.alerted = true; b.waterT = 0; makeBar(b); }
 }
@@ -2186,11 +2366,13 @@ function killAnimal(a) {
     noiseHit('lowpass', 900, 0.7, 0.4, 0.2, 200);
   }
   const py = a.y + (sp.boss ? 2 : 0.8), spread = sp.boss ? 2.5 : 1;
-  for (let i = 0; i < sp.gems; i++) addPickup('gem', a.x, py, a.z, 0, spread);
-  const apples = sp.apples || (Math.random() < 0.35 ? 1 : 0);
+  const D = sp.drops || {};
+  const count = v => v >= 1 ? v : (Math.random() < (v || 0) ? 1 : 0);   // under 1 means "this likely"
+  for (let i = 0; i < D.gems; i++) addPickup('gem', a.x, py, a.z, 0, spread);
+  for (let i = count(D.iron); i > 0; i--) addPickup('iron', a.x, py, a.z, 0, spread);
+  for (let i = count(D.scale); i > 0; i--) addPickup('scale', a.x, py, a.z, 0, 1);
+  const apples = D.apples || (Math.random() < 0.35 ? 1 : 0);
   for (let i = 0; i < apples; i++) addPickup('apple', a.x, py, a.z, 0, spread);
-  if (a.kind === 'dragon') { if (weaponTier < 4) addPickup('weapon', a.x, py, a.z, 4, 1.5); }
-  else if (!sp.boss && weaponTier < 3 && !pickups.some(p => p.kind === 'weapon') && Math.random() < sp.wDrop) addPickup('weapon', a.x, py, a.z, weaponTier + 1);
 }
 function wander(a, dx, dz, dt) {
   if (a.home) {
@@ -2246,9 +2428,9 @@ function fight(a, dt, dist, dx, dz, playerWet) {
 }
 function inFire(a) {
   const sy = Math.sin(a.yaw), cy = Math.cos(a.yaw);
-  const mx = a.x + sy * 5.9, mz = a.z + cy * 5.9;
+  const mx = a.x + sy * 7.6, mz = a.z + cy * 7.6;
   const vx = player.x - mx, vz = player.z - mz, d = Math.hypot(vx, vz) || 0.001;
-  if (d > 16) return false;
+  if (d > 18) return false;
   return d < 2 || (vx * sy + vz * cy) / d > 0.8;
 }
 function emitFire(a, dt) {
@@ -2257,8 +2439,8 @@ function emitFire(a, dt) {
   while (a.fireAcc >= 1) {
     a.fireAcc -= 1;
     const spd = 13 + Math.random() * 4;
-    flames.push({ x: a.x + sy * 5.9, y: a.y + 4.4, z: a.z + cy * 5.9,
-      vx: (sy + (Math.random() - 0.5) * 0.3) * spd, vy: (-0.28 + (Math.random() - 0.5) * 0.2) * spd, vz: (cy + (Math.random() - 0.5) * 0.3) * spd,
+    flames.push({ x: a.x + sy * 7.6, y: a.y + 7.0, z: a.z + cy * 7.6,
+      vx: (sy + (Math.random() - 0.5) * 0.3) * spd, vy: (-0.42 + (Math.random() - 0.5) * 0.2) * spd, vz: (cy + (Math.random() - 0.5) * 0.3) * spd,
       t: 0, life: 0.8 + Math.random() * 0.3, m: Math.random() * 3 | 0 });
   }
 }
@@ -2289,7 +2471,7 @@ function updateAnimals(dt) {
       else { wander(a, dx, dz, dt); targetYaw = a.wanderYaw; speed = a.wanderSpeed; }
       if (dist > 110) a.remove = true;
     } else if (!a.alerted) {
-      if (a.asleep) { if (canSpot && dist < 38) alertAnimal(a); }
+      if (a.asleep) { if (canSpot && dist < dragonWakeDist) alertAnimal(a); }
       else {
         wander(a, dx, dz, dt); targetYaw = a.wanderYaw; speed = a.wanderSpeed;
         if (canSpot && dist < sp.sight && (!playerWet || sp.swims)) {
@@ -2323,7 +2505,7 @@ function updateAnimals(dt) {
       a.segs.forEach((s, i) => {
         const ex = s.x - px, ez = s.z - pz, d = Math.hypot(ex, ez) || 1e-4;
         if (d > sp.spacing) { s.x = px + ex / d * sp.spacing; s.z = pz + ez / d * sp.spacing; }
-        s.y = Math.max(groundAt(s.x, s.z), -0.25) + snakeR(sp, i) * 0.75;
+        s.y = Math.max(groundAt(s.x, s.z), -0.25) + snakeR(sp, i) * 0.95;
         px = s.x; pz = s.z;
       });
     }
@@ -2382,12 +2564,13 @@ function drawAnimals(time) {
     if (sp.hop && !a.dead) lift = Math.abs(Math.sin(a.legPhase)) * 0.22 * Math.min(1, Math.abs(a.speed) / 2);
     if (a.asleep) lift -= 1.0 + Math.sin(time * 1.2) * 0.05;
     const pitch = (a.windup > 0 ? -0.18 : a.lunge * 0.2) * (sp.boss ? 0.5 : 1);
-    const base = mChain(mT(a.x, a.y - sink + lift, a.z), mRy(a.yaw), mRz(roll), mT(0, 0, a.lunge * 0.7 * sp.legLen), mRx(pitch));
-    drawMesh(sp.model.body, base, flash);
+    const base = mChain(mT(a.x, a.y - sink + lift, a.z), mRy(a.yaw), mRz(roll), mT(0, 0, a.lunge * 0.7 * sp.legLen), mRx(pitch), mS(sp.scale || 1));
+    const body = sp.tilt && !a.asleep ? mChain(base, mT(0, sp.hipY, sp.hips[0][1]), mRx(sp.tilt), mT(0, -sp.hipY, -sp.hips[0][1])) : base;
+    drawMesh(sp.model.body, body, flash);
     if (a.buck) drawMesh(sp.model.antlers, base, flash);
     if (sp.model.leg) {
       const amp = a.dead ? 0 : Math.min(1, Math.abs(a.speed) / sp.run * 1.6) * 0.7;
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < sp.hips.length; i++) {
         const h = sp.hips[i];
         const swing = a.asleep ? -1.2 : Math.sin(a.legPhase + (i === 0 || i === 3 ? 0 : Math.PI)) * amp;
         drawMesh(sp.model.leg, mChain(base, mT(h[0], sp.hipY, h[1]), mRx(swing)), flash);
@@ -2396,8 +2579,8 @@ function drawAnimals(time) {
     if (sp.model.wing) {
       const flap = a.asleep ? -0.35 : a.dead ? -0.2 : (a.fireT > 0 || a.windup > 0) ? 0.45 + Math.sin(time * 9) * 0.45
         : a.alerted ? 0.15 + Math.sin(time * 4) * 0.35 : 0.05 + Math.sin(time * 1.3) * 0.08;
-      drawMesh(sp.model.wing, mChain(base, mT(1.1, 3.4, 1.0), mRz(flap)), flash);
-      drawMesh(sp.model.wing, mChain(base, mT(-1.1, 3.4, 1.0), mS3(-1, 1, 1), mRz(flap)), flash);
+      drawMesh(sp.model.wing, mChain(body, mT(1.1, 3.4, 1.0), mRz(flap)), flash);
+      drawMesh(sp.model.wing, mChain(body, mT(-1.1, 3.4, 1.0), mS3(-1, 1, 1), mRz(flap)), flash);
     }
   }
   const eyeY = player.feet + EYE;
@@ -2418,8 +2601,8 @@ function drawSnake(a, sink, flash) {
     drawMesh(i % 3 === 1 ? m.band : m.seg, mChain(mT(s.x, s.y - sink, s.z), mRy(yaw), mS(snakeR(a.sp, i))), flash);
     px = s.x; pz = s.z;
   });
-  const lift = a.dead ? 0 : a.windup > 0 ? 0.7 : a.lunge * 0.4 + (a.alerted ? 0.4 : 0);
-  drawMesh(m.head, mChain(mT(a.x, a.y + 0.45 + lift - sink, a.z), mRy(a.yaw), mRx(a.windup > 0 ? -0.3 : a.lunge * 0.3)), flash);
+  const lift = a.dead ? 0 : a.windup > 0 ? 1.1 : a.lunge * 0.65 + (a.alerted ? 0.65 : 0);
+  drawMesh(m.head, mChain(mT(a.x, a.y + 0.92 + lift - sink, a.z), mRy(a.yaw), mRx(a.windup > 0 ? -0.3 : a.lunge * 0.3), mS(1.6)), flash);
 }
 function updateBars() {
   for (const a of animals) {
@@ -2443,10 +2626,10 @@ function updateBars() {
   } else bossEl.classList.remove('show');
 }
 
-/* ---------- drops ---------- */
-function addPickup(kind, x, y, z, tier, spread) {
+/* ---------- drops and materials on the ground ---------- */
+function addPickup(kind, x, y, z, tier, spread, tStart) {
   const ang = Math.random() * Math.PI * 2, sp = (0.8 + Math.random() * 1.6) * (spread || 1);
-  pickups.push({ kind, tier: tier || 0, x, y, z, vx: Math.cos(ang) * sp, vz: Math.sin(ang) * sp, vy: 4 + Math.random() * 2, t: 0, landed: false, spin: Math.random() * 6 });
+  pickups.push({ kind, x, y, z, vx: Math.cos(ang) * sp, vz: Math.sin(ang) * sp, vy: 4 + Math.random() * 2, t: tStart || 0, landed: false, spin: Math.random() * 6 });
 }
 function updatePickups(dt) {
   for (const p of pickups) {
@@ -2467,30 +2650,149 @@ function updatePickups(dt) {
   pickups = pickups.filter(p => !p.gone);
 }
 function collect(p) {
-  if (p.kind === 'gem') {
-    gems++;
-    tone('sine', 1300, 1700, 0.09, 0.07); tone('sine', 1950, 2500, 0.14, 0.07, 0.07);
-  } else if (p.kind === 'apple') {
+  if (p.kind === 'apple') {
     player.hp = Math.min(100, player.hp + 30);
     noiseHit('bandpass', 2500, 1, 0.08, 0.2); tone('sine', 600, 900, 0.2, 0.08, 0.05);
-    toast('🍎 Yum! +30 health');
-  } else if (p.kind === 'weapon' && p.tier > weaponTier) {
-    weaponTier = p.tier;
-    [523, 659, 784, 1047].forEach((f, i) => tone('triangle', f, f, 0.25, 0.09, i * 0.09));
-    toast(`${WEAPONS[weaponTier].icon} You found a ${WEAPONS[weaponTier].name}!`);
-    writeSave();
+    feed('🍎 +30 health');
+  } else {
+    const k = p.kind === 'gem' ? 'gems' : p.kind;
+    mats[k]++;
+    if (k === 'gems') { tone('sine', 1300, 1700, 0.09, 0.07); tone('sine', 1950, 2500, 0.14, 0.07, 0.07); }
+    else if (k === 'scale') { [523, 659, 784, 1047, 1319].forEach((f, i) => tone('triangle', f, f, 0.3, 0.09, i * 0.1)); toast('🐉 You got a dragon scale! Open your backpack to use it.'); writeSave(); }
+    else tone('triangle', k === 'iron' ? 1100 : 700, k === 'iron' ? 1400 : 900, 0.08, 0.06);
+    feed(`${MATS[k].icon} +1 ${MATS[k].name}`);
   }
   updateHud();
 }
+const PICKUP_MESH = k => k === 'gem' ? gemMesh : k === 'apple' ? appleMesh : matMeshes[k];
 function drawPickups(time) {
   for (const p of pickups) {
     const bob = p.landed ? Math.sin(time * 3 + p.spin) * 0.08 : 0;
-    const rot = mRy(time * 2 + p.spin);
-    if (p.kind === 'gem') drawMesh(gemMesh, mChain(mT(p.x, p.y + bob, p.z), rot), 0.25 + 0.15 * Math.sin(time * 6 + p.spin));
-    else if (p.kind === 'apple') drawMesh(appleMesh, mChain(mT(p.x, p.y + bob, p.z), rot), 0);
-    else drawMesh(weaponMeshes[p.tier], mChain(mT(p.x, p.y + bob, p.z), rot, mRz(0.5), mS(1.3), mT(0, -0.3, 0)), 0.2 + 0.2 * Math.sin(time * 5));
+    const glow = p.kind === 'gem' || p.kind === 'scale' ? 0.25 + 0.15 * Math.sin(time * 6 + p.spin) : 0;
+    drawMesh(PICKUP_MESH(p.kind), mChain(mT(p.x, p.y + bob, p.z), mRy(time * 2 + p.spin)), glow);
   }
   gl.uniform1f(progWorld.u.uFlash, 0);
+}
+// little "+1 Wood" notes at the bottom left
+const feedEl = document.getElementById('feed');
+function feed(msg) {
+  const el = document.createElement('div');
+  el.textContent = msg;
+  feedEl.appendChild(el);
+  while (feedEl.children.length > 5) feedEl.firstChild.remove();
+  setTimeout(() => el.classList.add('fade'), 1800);
+  setTimeout(() => el.remove(), 2400);
+}
+
+/* =====================================================================
+   Backpack: materials, equipment and crafting
+   ===================================================================== */
+const invEl = document.getElementById('inv');
+let invSel = 0, invPending = null, invFromMouse = false, invRepeat = 0;
+const canAfford = cost => Object.keys(cost).every(k => mats[k] >= cost[k]);
+const costText = cost => Object.keys(cost).map(k => `<span class="chip${mats[k] >= cost[k] ? '' : ' short'}">${MATS[k].icon} ${cost[k]} ${MATS[k].name}</span>`).join('');
+function renderInv(msg) {
+  document.getElementById('mats').innerHTML = Object.keys(MATS).map(k => `<span class="chip big">${MATS[k].icon} ${MATS[k].name}: <b>${mats[k]}</b></span>`).join('');
+  document.getElementById('owned').innerHTML = ITEM_ORDER.filter(id => owned.has(id)).map(id => {
+    const it = ITEMS[id], on = equip.weapon === id || equip.armor === id;
+    const stat = it.type === 'weapon' ? `${it.dmg} damage` : `blocks ${Math.round(it.armor * 100)}% of damage`;
+    return `<button class="ibtn${on ? ' on' : ''}" data-equip="${id}"><span class="ic">${it.icon}</span><b>${it.name}</b><small>${on ? (it.type === 'weapon' ? 'In your hand' : 'Wearing it') : 'Press to ' + (it.type === 'weapon' ? 'hold' : 'wear')} · ${stat}</small></button>`;
+  }).join('');
+  const recipes = ITEM_ORDER.filter(id => ITEMS[id].cost && !owned.has(id));
+  document.getElementById('recipes').innerHTML = recipes.length ? recipes.map(id => {
+    const it = ITEMS[id], ok = canAfford(it.cost);
+    const stat = it.type === 'weapon' ? `${it.dmg} damage` + (it.note ? ', ' + it.note : '') : `blocks ${Math.round(it.armor * 100)}% of damage`;
+    return `<button class="ibtn${ok ? '' : ' cant'}${invPending === id ? ' pending' : ''}" data-craft="${id}"><span class="ic">${it.icon}</span><b>${it.name}</b><small>${stat}</small><span class="cost">${costText(it.cost)}</span></button>`;
+  }).join('') : '<p class="done">You have made everything!</p>';
+  document.getElementById('invMsg').textContent = msg || 'Chop trees for wood. Hit big rocks for stone and iron. Beat enemies for iron and gems.';
+  const list = invButtons();
+  invSel = Math.min(invSel, list.length - 1);
+  list.forEach((b, i) => b.classList.toggle('sel', i === invSel));
+}
+const invButtons = () => [...invEl.querySelectorAll('button')];
+function openInv(fromMouse) {
+  if (state !== 'play' || player.ko) return;
+  state = 'inv'; invPending = null; invFromMouse = fromMouse; invSel = 0;
+  keys.clear(); mouseHeld = false; swingT = -1;
+  if (document.pointerLockElement) document.exitPointerLock();
+  renderInv();
+  invEl.classList.add('show');
+  hintEl.classList.remove('show');
+  tone('triangle', 500, 700, 0.12, 0.06);
+}
+function closeInv(fromMouse) {
+  if (state !== 'inv') return;
+  invEl.classList.remove('show');
+  state = 'play';
+  keys.clear();
+  updateHud();
+  writeSave();
+  if (fromMouse || invFromMouse) lockMouse();
+}
+function invAction(btn) {
+  if (!btn) return;
+  if (btn.dataset.close !== undefined) { closeInv(true); return; }
+  const eq = btn.dataset.equip, cr = btn.dataset.craft;
+  if (eq) {
+    const it = ITEMS[eq];
+    if (it.type === 'weapon') equip.weapon = eq;
+    else equip.armor = equip.armor === eq ? null : eq;   // press again to take armor off
+    tone('triangle', 660, 880, 0.12, 0.07);
+    renderInv(it.type === 'weapon' ? `You're holding the ${it.name}.` : equip.armor ? `You're wearing the ${it.name}.` : `You took off the ${it.name}.`);
+    updateHud(); writeSave();
+  } else if (cr) {
+    const it = ITEMS[cr];
+    if (!canAfford(it.cost)) {
+      const need = Object.keys(it.cost).filter(k => mats[k] < it.cost[k]).map(k => `${it.cost[k] - mats[k]} more ${MATS[k].name.toLowerCase()}`).join(' and ');
+      thump(0.15);
+      renderInv(`You need ${need}` + (it.cost.scale && mats.scale < 1 ? '. Dragon scales come from beating a wyvern.' : '.'));
+      return;
+    }
+    if (it.cost.scale && invPending !== cr) {     // dragon scale: make them choose on purpose
+      invPending = cr;
+      const other = cr === 'dragonsword' ? 'Dragon chest plate' : 'Dragon sword';
+      renderInv(`⚠️ This uses your dragon scale, so you can't make the ${other} with it. Press again to make the ${it.name}.`);
+      return;
+    }
+    for (const k in it.cost) mats[k] -= it.cost[k];
+    owned.add(cr); invPending = null;
+    if (it.type === 'weapon') equip.weapon = cr; else equip.armor = cr;
+    [523, 659, 784, 1047].forEach((f, i) => tone('triangle', f, f, 0.25, 0.09, i * 0.09));
+    renderInv(`${it.icon} You made the ${it.name}! ` + (it.type === 'weapon' ? "It's in your hand now." : "You're wearing it now."));
+    updateHud(); writeSave();
+  }
+}
+invEl.addEventListener('click', e => { const b = e.target.closest('button'); if (b) { invSel = invButtons().indexOf(b); invAction(b); } });
+invEl.addEventListener('mousemove', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const i = invButtons().indexOf(b);
+  if (i >= 0 && i !== invSel) { invSel = i; invButtons().forEach((x, k) => x.classList.toggle('sel', k === invSel)); }
+});
+// move the highlight to the nearest button in a direction
+function invMove(dx, dy) {
+  const list = invButtons(); if (!list.length) return;
+  const r0 = list[invSel].getBoundingClientRect(), cx = r0.left + r0.width / 2, cy = r0.top + r0.height / 2;
+  let best = -1, bs = Infinity;
+  list.forEach((b, i) => {
+    if (i === invSel) return;
+    const r = b.getBoundingClientRect(), vx = r.left + r.width / 2 - cx, vy = r.top + r.height / 2 - cy;
+    if (dx && (Math.sign(vx) !== dx || Math.abs(vx) < 8)) return;
+    if (dy && (Math.sign(vy) !== dy || Math.abs(vy) < 8)) return;
+    const s = dx ? Math.abs(vx) + Math.abs(vy) * 3 : Math.abs(vy) + Math.abs(vx) * 3;
+    if (s < bs) { bs = s; best = i; }
+  });
+  if (best >= 0) { invSel = best; list.forEach((b, i) => b.classList.toggle('sel', i === invSel)); list[invSel].scrollIntoView({ block: 'nearest' }); }
+}
+function invPad(dt) {
+  if (!pad.connected) return;
+  const dirY = pad.btn[12] ? -1 : pad.btn[13] ? 1 : pad.ly < -0.5 ? -1 : pad.ly > 0.5 ? 1 : 0;
+  const dirX = pad.btn[14] ? -1 : pad.btn[15] ? 1 : pad.lx < -0.5 ? -1 : pad.lx > 0.5 ? 1 : 0;
+  if (dirX || dirY) {
+    invRepeat -= dt;
+    if (invRepeat <= 0) { if (dirY) invMove(0, dirY); else invMove(dirX, 0); invRepeat = invRepeat < -10 ? 0.35 : 0.2; }
+  } else invRepeat = -20;
+  if (pressed(0)) invAction(invButtons()[invSel]);
+  else if (pressed(1) || pressed(3) || pressed(9)) closeInv(false);
 }
 
 /* =====================================================================
@@ -2500,23 +2802,26 @@ let swingT = -1, swingHit = false, hurtFlash = 0, shake = 0, mouseHeld = false;
 const hudEl = document.getElementById('hud'), hpFill = document.getElementById('hpFill');
 const hurtEl = document.getElementById('hurt'), koEl = document.getElementById('ko');
 function updateHud() {
+  document.getElementById('bpKey').textContent = pad.connected ? 'Y' : 'I';
   hpFill.style.width = Math.max(0, player.hp) + '%';
-  document.getElementById('weaponName').textContent = WEAPONS[weaponTier].icon + ' ' + WEAPONS[weaponTier].name;
-  document.getElementById('gemCount').textContent = '💎 ' + gems;
+  const w = curWeapon(), ar = equip.armor && ITEMS[equip.armor];
+  document.getElementById('weaponName').textContent = w.icon + ' ' + w.name;
+  document.getElementById('armorName').textContent = ar ? ar.icon + ' ' + ar.name : '👕 No armor';
+  document.getElementById('gemCount').textContent = '💎 ' + mats.gems;
 }
 function startSwing() {
   if (swingT >= 0 || player.ko) return;
   swingT = 0; swingHit = false;
-  noiseHit('bandpass', weaponTier ? 1800 : 2600, 1.2, 0.16, 0.1, 600);
+  noiseHit('bandpass', equip.weapon !== 'fists' ? 1800 : 2600, 1.2, 0.16, 0.1, 600);
 }
 function updateSwing(dt) {
   if (swingT < 0) return;
-  swingT += dt / WEAPONS[weaponTier].time;
+  swingT += dt / curWeapon().time;
   if (!swingHit && swingT >= 0.42) { swingHit = true; landHit(); }
   if (swingT >= 1) swingT = -1;
 }
 function landHit() {
-  const w = WEAPONS[weaponTier];
+  const w = curWeapon();
   const fx = Math.sin(player.yaw), fz = -Math.cos(player.yaw);
   let best = null, bestD = Infinity;
   for (const a of animals) {
@@ -2530,7 +2835,7 @@ function landHit() {
       if (d - r < bestD) { bestD = d - r; best = a; }
     }
   }
-  if (!best) return;
+  if (!best) { tryHarvest(); return; }
   const a = best, sp = a.sp;
   a.hp -= w.dmg; a.flash = 1;
   if (sp.knock) {
@@ -2547,6 +2852,7 @@ function landHit() {
 function hurtPlayer(dmg, dirx, dirz, knock) {
   if (player.ko) return;
   const kb = knock === undefined ? 6 : knock;
+  dmg = Math.max(1, Math.round(dmg * (1 - armorValue())));   // chest plates block some of it
   player.hp -= dmg; player.hurtT = 0;
   hurtFlash = Math.max(hurtFlash, dmg >= 8 ? 1 : 0.6); shake = Math.max(shake, dmg >= 8 ? 0.25 : 0.1);
   player.kx += dirx * kb; player.kz += dirz * kb;
@@ -2600,7 +2906,7 @@ function drawHand() {
   ox += Math.cos(player.bob * 0.5) * 0.012 * mv;
   const t = swingT;
   if (t >= 0) {
-    if (weaponTier === 0) {
+    if (equip.weapon === 'fists') {
       const k = Math.sin(Math.PI * Math.min(1, t));
       oz -= 0.32 * k; ox -= 0.15 * k; oy += 0.07 * k;
     } else {
@@ -2620,11 +2926,40 @@ function drawHand() {
   const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
   gl.uniform3fv(progWorld.u.uSun, norm3(dot(camR, SUN), dot(camU, SUN), -dot(camF, SUN)));
   drawMesh(handMesh, handM, 0);
-  if (weaponTier > 0) drawMesh(weaponMeshes[weaponTier], mChain(handM, mRz(-0.6), mRx(-0.45)), 0);
+  if (weaponMeshes[equip.weapon]) drawMesh(weaponMeshes[equip.weapon], mChain(handM, mRz(-0.6), mRx(-0.45)), 0);
 }
 
 setWorldSeed(worldSeed);
 placePlayer(savedPos || findSpawn());
+// Shortcut: index.html?dragon starts you 14 m (inside the ring of spikes) from the nearest sleeping dragon, looking at it.
+// It stays asleep until you're right next to it (or hit it), so you can walk around and look.
+if (['dragon', 'wyvern'].some(k => new URLSearchParams(location.search).has(k))) {
+  let lair = null, best = Infinity;
+  const lcx = Math.floor(player.x / LAIR_CELL), lcz = Math.floor(player.z / LAIR_CELL);
+  for (let dz = -4; dz <= 4; dz++) for (let dx = -4; dx <= 4; dx++) {
+    const l = lairInCell(lcx + dx, lcz + dz);
+    if (l) { const d = Math.hypot(l.x - player.x, l.z - player.z); if (d < best) { best = d; lair = l; } }
+  }
+  if (lair) {
+    let spot = null;
+    for (let i = 0; i < 24 && !spot; i++) {
+      const a = (i + 0.5) / 24 * Math.PI * 2, x = lair.x + Math.sin(a) * 16, z = lair.z + Math.cos(a) * 16;
+      if (sample(x, z).h > 1) spot = { x, z };
+    }
+    spot = spot || { x: lair.x + 16, z: lair.z };
+    dragonWakeDist = 11;
+    dragonView = true;
+    placePlayer({ x: spot.x, z: spot.z, yaw: Math.atan2(lair.x - spot.x, -(lair.z - spot.z)) });
+    player.pitch = Math.atan2(sample(lair.x, lair.z).h + 3 - (player.feet + EYE), 16);
+    settings.animals = true;     // the dragon only shows up with enemies on
+    // put the dragon there right away, so it's already visible behind the menu
+    const st = { alive: true, until: 0, lair };
+    lairState.set(lair.key, st);
+    st.dragon = spawnAnimal('dragon', lair.x, lair.z, { asleep: true, home: { x: lair.x, z: lair.z, r: 6 },
+      onGone: why => { st.alive = false; if (why === 'killed') st.until = nowS() + 600; else if (why === 'ko') st.until = nowS() + 40; } });
+    st.dragon.yaw = Math.atan2(player.x - lair.x, player.z - lair.z) + 1.2;   // side-on, so you see the wings
+  }
+}
 updateHud();
 refreshLabels();
 setSel(0);
@@ -2637,6 +2972,7 @@ function frame(now) {
   pollPad();
   if (state === 'play') {
     if (pressed(9) || pressed(8)) openMenu();
+    else if (pressed(3)) openInv(false);
     else {
       if (!player.ko) updatePlayer(dt);
       updateSwing(dt);
@@ -2647,9 +2983,11 @@ function frame(now) {
       updateLairs(dt);
       updateHealth(dt);
     }
+  } else if (state === 'inv') {
+    invPad(dt);
   } else {
     menuPad(dt);
-    if (!started) player.yaw += dt * 0.05;     // slow look-around behind the title
+    if (!started && !dragonView) player.yaw += dt * 0.05;     // slow look-around behind the title
   }
   updateChunks(player.x, player.z, state === 'play' ? 6 : 12);
   updateWorldSounds(dt);
