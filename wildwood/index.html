@@ -2009,17 +2009,30 @@ function snakeModel() {
   const bg = new Geo(512); blob(bg, 0, 0.08, 0, 1, 0.8, 1.15, BAND, r, 0.06, -1, 0); blob(bg, 0, -0.28, 0, 0.92, 0.56, 1.08, BELLY, r, 0.03, 1, 0);
   const hg = new Geo(512);
   blob(hg, 0, 0.05, 0.25, 0.62, 0.42, 0.85, shade(GREEN, 0.9), r, 0.08, -1, 0);
-  blob(hg, 0, -0.14, 0.45, 0.5, 0.2, 0.72, [0.93, 0.86, 0.6], r, 0.05, -1, 0);
+  blob(hg, 0, -0.26, 0.55, 0.42, 0.05, 0.6, [0.6, 0.06, 0.1], r, 0.03, -1, 0);   // inside of the mouth
   for (const sd of [-1, 1]) {
     blob(hg, sd * 0.33, 0.25, 0.6, 0.13, 0.13, 0.13, [1.0, 0.85, 0.1], r, 0, -1, 0);
     blob(hg, sd * 0.39, 0.27, 0.66, 0.05, 0.1, 0.05, DK, r, 0, -1, 0);
     tube(hg, [sd * 0.18, -0.12, 0.9], [sd * 0.17, -0.42, 0.98], 0.05, 0.01, 4, [0.98, 0.97, 0.92], r, false);
   }
-  const RED = [0.85, 0.1, 0.15];
-  tri(hg, [0, -0.08, 1.05], [-0.03, -0.08, 1.5], [0.03, -0.08, 1.5], [0, 1, 0], 1, RED, RED, RED, 0, 0, 0);
-  tri(hg, [-0.03, -0.08, 1.48], [-0.12, -0.08, 1.62], [0, -0.08, 1.5], [0, 1, 0], 1, RED, RED, RED, 0, 0, 0);
-  tri(hg, [0.03, -0.08, 1.48], [0.12, -0.08, 1.62], [0, -0.08, 1.5], [0, 1, 0], 1, RED, RED, RED, 0, 0, 0);
-  return { seg: makeMesh(sg), band: makeMesh(bg), head: makeMesh(hg) };
+  // lower jaw, hinged at (0, -0.05, -0.15) under the back of the head
+  const jg = new Geo(512), RED = [0.85, 0.1, 0.15];
+  blob(jg, 0, -0.09, 0.6, 0.5, 0.17, 0.72, BELLY, r, 0.05, -1, 0);
+  blob(jg, 0, 0.0, 0.62, 0.36, 0.04, 0.55, [0.7, 0.12, 0.15], r, 0.03, -1, 0);
+  for (const sd of [-1, 1]) tube(jg, [sd * 0.2, 0.0, 0.95], [sd * 0.19, 0.16, 0.99], 0.035, 0.008, 4, [0.98, 0.97, 0.92], r, false);
+  tri(jg, [0, 0.02, 1.2], [-0.03, 0.02, 1.65], [0.03, 0.02, 1.65], [0, 1, 0], 1, RED, RED, RED, 0, 0, 0);
+  tri(jg, [-0.03, 0.02, 1.63], [-0.12, 0.02, 1.77], [0, 0.02, 1.65], [0, 1, 0], 1, RED, RED, RED, 0, 0, 0);
+  tri(jg, [0.03, 0.02, 1.63], [0.12, 0.02, 1.77], [0, 0.02, 1.65], [0, 1, 0], 1, RED, RED, RED, 0, 0, 0);
+  // a smooth tube that joins one body part to the next: green on top, cream underneath
+  const tg = new Geo(512), N = 14;
+  for (let i = 0; i < N; i++) {
+    const a0 = i / N * Math.PI * 2, a1 = (i + 1) / N * Math.PI * 2;
+    const p0 = [Math.cos(a0), Math.sin(a0)], p1 = [Math.cos(a1), Math.sin(a1)];
+    const col = ((p0[1] + p1[1]) / 2 < -0.45) ? BELLY : GREEN;
+    const v = (p, z) => tg.v(p[0], p[1], z, p[0], p[1], 0, -1, col[0], col[1], col[2], 0);
+    v(p0, 0); v(p1, 0); v(p1, 1); v(p0, 0); v(p1, 1); v(p0, 1);
+  }
+  return { seg: makeMesh(sg), band: makeMesh(bg), head: makeMesh(hg), jaw: makeMesh(jg), tube: makeMesh(tg) };
 }
 function dragonModel() {
   const g = new Geo(4096), r = mulberry32(23);
@@ -2082,7 +2095,7 @@ const SPECIES = {
     barH: 1.75, drops: { gems: 3, iron: 2 }, knock: 0.35, sinkH: 1.7, legLen: 0.55, hipY: 0.62, hips: [[0.25, 0.44], [-0.25, 0.44], [0.25, -0.44], [-0.25, -0.44]] },
   // bosses
   snake: { name: 'Giant snake', boss: true, swims: true, hp: 200, dmg: 18, reach: 3.3, windup: 0.45, cd: 1.5, walk: 1.8, run: 5.0, sight: 28, turn: 2.5,
-    radius: 1.0, drops: { gems: 15, iron: 3, apples: 2 }, knock: 0, sinkH: 2.0, legLen: 1, giveUp: 55, segs: 16, spacing: 1.15 },
+    radius: 1.0, drops: { gems: 15, iron: 3, apples: 2, fang: 2 }, knock: 0, sinkH: 2.0, legLen: 1, giveUp: 55, segs: 16, spacing: 1.15 },
   dragon: { name: 'Dragon', boss: true, scale: 1.5, tilt: -0.2, hp: 500, dmg: 25, reach: 8.0, windup: 0.8, cd: 2.2, walk: 2.0, run: 4.6, sight: 40, turn: 1.4,
     radius: 4.5, drops: { gems: 25, iron: 4, scale: 1, apples: 3 }, knock: 0, sinkH: 9, giveUp: 75, legLen: 1.8, hipY: 1.95, hips: [[1.2, -0.4], [-1.2, -0.4]] },
 };
@@ -2119,6 +2132,7 @@ const MATS = {
   iron: { name: 'Iron', icon: '⚙️' },
   gems: { name: 'Gems', icon: '💎' },
   scale: { name: 'Dragon scale', icon: '🐉' },
+  fang: { name: 'Giant fang', icon: '🦷' },
 };
 const ITEMS = {
   fists:       { name: 'Fists', icon: '✊', type: 'weapon', dmg: 2, reach: 2.3, time: 0.28 },
@@ -2127,9 +2141,11 @@ const ITEMS = {
   club:        { name: 'Stone club', icon: '🔨', type: 'weapon', dmg: 4, reach: 2.9, time: 0.42, cost: { wood: 2, stone: 3 }, mine: 2, note: 'breaks 2 stone at a time' },
   ironsword:   { name: 'Iron sword', icon: '⚔️', type: 'weapon', dmg: 5, reach: 3.0, time: 0.36, cost: { wood: 1, iron: 4 } },
   crystal:     { name: 'Crystal sword', icon: '🗡️', type: 'weapon', dmg: 6, reach: 3.2, time: 0.38, cost: { iron: 2, gems: 12 } },
+  venomglaive: { name: 'Venom glaive', icon: '🔱', type: 'weapon', dmg: 8, reach: 4.2, time: 0.46, poison: 2, cost: { fang: 1, wood: 2, iron: 3 }, note: 'reaches far and poisons what it hits' },
   dragonsword: { name: 'Dragon sword', icon: '🔥', type: 'weapon', dmg: 10, reach: 3.5, time: 0.4, cost: { scale: 1, iron: 3 } },
   woodplate:   { name: 'Wooden chest plate', icon: '🟫', type: 'armor', armor: 0.15, cost: { wood: 8 } },
   ironplate:   { name: 'Iron chest plate', icon: '🛡️', type: 'armor', armor: 0.35, cost: { iron: 8 } },
+  venomplate:  { name: 'Venom chest plate', icon: '🐍', type: 'armor', armor: 0.45, thorns: true, cost: { fang: 1, iron: 6 }, note: 'poisons anything that bites you' },
   dragonplate: { name: 'Dragon chest plate', icon: '🐲', type: 'armor', armor: 0.6, cost: { scale: 1, iron: 4 } },
 };
 const ITEM_ORDER = Object.keys(ITEMS);
@@ -2155,6 +2171,14 @@ function weaponModel(id) {
     tube(g, [0, -0.12, 0], [0, 0.1, 0], 0.03, 0.03, 6, [0.4, 0.22, 0.15], r, true);
     tube(g, [-0.13, 0.11, 0], [0.13, 0.11, 0], 0.03, 0.03, 6, [0.95, 0.75, 0.2], r, true);
     tube(g, [0, 0.12, 0], [0, 0.82, 0], 0.055, 0.012, 4, [0.55, 0.88, 1.0], r, false);
+  } else if (id === 'venomglaive') {
+    const IV = [0.97, 0.95, 0.86], GR = [0.35, 0.75, 0.22];
+    tube(g, [0, -0.55, 0], [0, 0.95, 0], 0.03, 0.028, 6, [0.3, 0.22, 0.15], r, true);
+    tube(g, [0, 0.9, 0], [0, 1.0, 0], 0.045, 0.045, 6, GR, r, true);
+    tube(g, [0, 0.98, 0], [0.05, 1.3, 0], 0.075, 0.045, 6, IV, r, false);
+    tube(g, [0.05, 1.3, 0], [0.15, 1.55, 0], 0.045, 0.008, 6, IV, r, false);
+    blob(g, 0.08, 1.25, 0.05, 0.03, 0.045, 0.03, GR, r, 0, -1, 0);
+    blob(g, 0.13, 1.47, 0.02, 0.02, 0.03, 0.02, GR, r, 0, -1, 0);
   } else if (id === 'dragonsword') {
     tube(g, [0, -0.14, 0], [0, 0.1, 0], 0.032, 0.032, 6, [0.15, 0.1, 0.1], r, true);
     tube(g, [-0.16, 0.11, 0], [0.16, 0.13, 0], 0.035, 0.02, 6, [0.25, 0.1, 0.08], r, true);
@@ -2179,6 +2203,11 @@ const matMeshes = hiDetail(() => {
   g = new Geo(256); blob(g, 0, 0, 0, 0.17, 0.13, 0.15, [0.55, 0.55, 0.57], r, 0.4, -1, 0); out.stone = makeMesh(g);
   g = new Geo(256); tube(g, [-0.16, 0, 0], [0.16, 0, 0], 0.08, 0.07, 4, [0.72, 0.74, 0.8], r, true); out.iron = makeMesh(g);
   g = new Geo(64); octa(g, 0.2, 0.1, [0.95, 0.25, 0.12]); out.scale = makeMesh(g);
+  g = new Geo(256);                                        // a big curved fang
+  tube(g, [0, -0.28, 0], [0, 0.05, 0.06], 0.1, 0.065, 6, [0.97, 0.95, 0.86], r, true);
+  tube(g, [0, 0.05, 0.06], [0.02, 0.32, 0.2], 0.065, 0.008, 6, [0.97, 0.95, 0.86], r, false);
+  blob(g, 0.02, 0.3, 0.19, 0.03, 0.03, 0.03, [0.45, 0.9, 0.25], r, 0, -1, 0);
+  out.fang = makeMesh(g);
   return out;
 });
 const handMesh = hiDetail(() => {
@@ -2190,7 +2219,7 @@ const handMesh = hiDetail(() => {
 hiDetail(() => { for (const id of ITEM_ORDER) weaponMeshes[id] = weaponModel(id); });
 
 // what you have (loaded from the save, with old saves upgraded)
-const mats = { wood: 0, stone: 0, iron: 0, gems: 0, scale: 0 };
+const mats = { wood: 0, stone: 0, iron: 0, gems: 0, scale: 0, fang: 0 };
 const owned = new Set(['fists']);
 const equip = { weapon: 'fists', armor: null };
 (function loadInventory() {
@@ -2393,7 +2422,7 @@ function alertAnimal(a) {
   makeBar(a);
   spotSound(a.kind);
   if (a.kind === 'dragon') { rumble(0.9, 0.9, 700); shake = 0.6; a.roarT = 1.5; a.flyCd = 9 + Math.random() * 4; toast('🐉 The dragon woke up!'); }
-  if (a.kind === 'snake') toast('🐍 A giant snake!');
+  if (a.kind === 'snake') { toast('🐍 A giant snake!'); a.roarT = 1.2; }
   if (a.kind === 'wolf') for (const b of animals) if (b !== a && !b.alerted && !b.dead && b.kind === 'wolf' && Math.hypot(b.x - a.x, b.z - a.z) < 15) { b.alerted = true; b.waterT = 0; makeBar(b); }
 }
 function calmAnimal(a) {
@@ -2421,6 +2450,7 @@ function killAnimal(a) {
   for (let i = 0; i < D.gems; i++) addPickup('gem', a.x, py, a.z, 0, spread);
   for (let i = count(D.iron); i > 0; i--) addPickup('iron', a.x, py, a.z, 0, spread);
   for (let i = count(D.scale); i > 0; i--) addPickup('scale', a.x, py, a.z, 0, 1);
+  for (let i = count(D.fang); i > 0; i--) addPickup('fang', a.x, py, a.z, 0, 1.2);
   const apples = D.apples || (Math.random() < 0.35 ? 1 : 0);
   for (let i = 0; i < apples; i++) addPickup('apple', a.x, py, a.z, 0, spread);
 }
@@ -2477,7 +2507,11 @@ function fight(a, dt, dist, dx, dz, playerWet) {
     if (a.windup <= 0) {
       a.lunge = 1; a.atkCd = sp.cd;
       if (a.kind === 'dragon') { thump(0.5); noiseHit('lowpass', 700, 0.8, 0.15, 0.4); }   // CHOMP
-      if (dist < sp.reach + 0.7 && canBite) hurtPlayer(sp.dmg, dx / dist, dz / dist, sp.boss ? 9 : 6);
+      if (a.kind === 'snake') { noiseHit('lowpass', 900, 0.8, 0.12, 0.35); thump(0.3); }   // snap
+      if (dist < sp.reach + 0.7 && canBite) {
+        hurtPlayer(sp.dmg, dx / dist, dz / dist, sp.boss ? 9 : 6);
+        if (equip.armor && ITEMS[equip.armor].thorns) { a.poisonT = 4; a.poisonTick = 1; }   // venom chest plate bites back
+      }
     }
     return 0;
   }
@@ -2566,6 +2600,14 @@ function updateAnimals(dt) {
     }
     a.roarT = Math.max(0, (a.roarT || 0) - dt);
     a.flash = Math.max(0, a.flash - dt * 5);
+    if (a.poisonT > 0) {                       // poison: 2 damage a second for a few seconds
+      a.poisonT -= dt; a.poisonTick -= dt;
+      if (a.poisonTick <= 0) {
+        a.poisonTick = 1; a.hp -= 2; a.flash = Math.max(a.flash, 0.35);
+        if (!a.alerted) alertAnimal(a);
+        if (a.hp <= 0) { killAnimal(a); continue; }
+      }
+    }
     a.atkCd -= dt;
     const dx = player.x - a.x, dz = player.z - a.z, dist = Math.hypot(dx, dz) || 0.001;
     let targetYaw = a.yaw, speed = 0;
@@ -2711,14 +2753,26 @@ function drawAnimals(time) {
 }
 function drawSnake(a, sink, flash) {
   const m = a.sp.model;
-  let px = a.x, pz = a.z;
-  a.segs.forEach((s, i) => {
-    const yaw = Math.atan2(px - s.x, pz - s.z);
-    drawMesh(i % 3 === 1 ? m.band : m.seg, mChain(mT(s.x, s.y - sink, s.z), mRy(yaw), mS(snakeR(a.sp, i))), flash);
-    px = s.x; pz = s.z;
-  });
   const lift = a.dead ? 0 : a.windup > 0 ? 1.1 : a.lunge * 0.65 + (a.alerted ? 0.65 : 0);
-  drawMesh(m.head, mChain(mT(a.x, a.y + 0.92 + lift - sink, a.z), mRy(a.yaw), mRx(a.windup > 0 ? -0.3 : a.lunge * 0.3), mS(1.6)), flash);
+  const head = [a.x, a.y + 0.92 + lift - sink, a.z];
+  // join the head and every body part with a smooth tube so it reads as one long body
+  let prev = head, prevR = snakeR(a.sp, 0) * 0.85;
+  a.segs.forEach((s, i) => {
+    const r = snakeR(a.sp, i), cur = [s.x, s.y - sink, s.z];
+    const dx = prev[0] - cur[0], dy = prev[1] - cur[1], dz = prev[2] - cur[2], L = Math.hypot(dx, dy, dz);
+    if (L > 0.01) {
+      const tr = (r + prevR) / 2 * 0.92;
+      drawMesh(m.tube, mChain(mT(cur[0], cur[1], cur[2]), mRy(Math.atan2(dx, dz)), mRx(-Math.atan2(dy, Math.hypot(dx, dz))), mS3(tr, tr * 0.9, L)), flash);
+    }
+    drawMesh(i % 3 === 1 ? m.band : m.seg, mChain(mT(cur[0], cur[1], cur[2]), mRy(Math.atan2(dx, dz)), mS(r)), flash);
+    prev = cur; prevR = r;
+  });
+  const headM = mChain(mT(head[0], head[1], head[2]), mRy(a.yaw), mRx(a.windup > 0 ? -0.3 : a.lunge * 0.3), mS(1.6));
+  drawMesh(m.head, headM, flash);
+  // the jaw opens wide to get ready, snaps shut on the bite, and opens to hiss
+  const open = a.dead ? 0.6 : a.windup > 0 ? 0.15 + 0.85 * (1 - a.windup / a.sp.windup) : a.lunge > 0.6 ? 0
+    : a.roarT > 0 ? 0.7 * Math.min(1, a.roarT * 2) : 0.04;
+  drawMesh(m.jaw, mChain(headM, mT(0, -0.05, -0.15), mRx(open)), flash);
 }
 function updateBars() {
   for (const a of animals) {
@@ -2731,6 +2785,7 @@ function updateBars() {
     a.bar.style.display = '';
     a.bar.style.transform = `translate(${sx.toFixed(1)}px,${sy.toFixed(1)}px) translate(-50%,-100%)`;
     a.barFill.style.width = Math.max(0, a.hp / a.sp.hp * 100).toFixed(1) + '%';
+    a.barFill.style.background = a.poisonT > 0 ? '#6fd34a' : '';
   }
   // the big bar at the top for a snake or dragon that's after you
   let boss = null, bd = Infinity;
@@ -2739,6 +2794,7 @@ function updateBars() {
     bossEl.classList.add('show');
     bossName.textContent = (boss.kind === 'dragon' ? '🐉 ' : '🐍 ') + boss.sp.name;
     bossFill.style.width = Math.max(0, boss.hp / boss.sp.hp * 100).toFixed(1) + '%';
+    bossFill.style.background = boss.poisonT > 0 ? 'linear-gradient(#a6f07f,#3f9f2a)' : '';
   } else bossEl.classList.remove('show');
 }
 
@@ -2774,6 +2830,7 @@ function collect(p) {
     const k = p.kind === 'gem' ? 'gems' : p.kind;
     mats[k]++;
     if (k === 'gems') { tone('sine', 1300, 1700, 0.09, 0.07); tone('sine', 1950, 2500, 0.14, 0.07, 0.07); }
+    else if (k === 'fang') { [392, 523, 659].forEach((f, i) => tone('triangle', f, f, 0.25, 0.09, i * 0.1)); toast('🦷 A giant fang! Make venom gear in your backpack.'); writeSave(); }
     else if (k === 'scale') { [523, 659, 784, 1047, 1319].forEach((f, i) => tone('triangle', f, f, 0.3, 0.09, i * 0.1)); toast('🐉 You got a dragon scale! Open your backpack to use it.'); writeSave(); }
     else tone('triangle', k === 'iron' ? 1100 : 700, k === 'iron' ? 1400 : 900, 0.08, 0.06);
     feed(`${MATS[k].icon} +1 ${MATS[k].name}`);
@@ -2811,16 +2868,16 @@ function renderInv(msg) {
   document.getElementById('mats').innerHTML = Object.keys(MATS).map(k => `<span class="chip big">${MATS[k].icon} ${MATS[k].name}: <b>${mats[k]}</b></span>`).join('');
   document.getElementById('owned').innerHTML = ITEM_ORDER.filter(id => owned.has(id)).map(id => {
     const it = ITEMS[id], on = equip.weapon === id || equip.armor === id;
-    const stat = it.type === 'weapon' ? `${it.dmg} damage` : `blocks ${Math.round(it.armor * 100)}% of damage`;
+    const stat = (it.type === 'weapon' ? `${it.dmg} damage` : `blocks ${Math.round(it.armor * 100)}% of damage`) + (it.note ? ', ' + it.note : '');
     return `<button class="ibtn${on ? ' on' : ''}" data-equip="${id}"><span class="ic">${it.icon}</span><b>${it.name}</b><small>${on ? (it.type === 'weapon' ? 'In your hand' : 'Wearing it') : 'Press to ' + (it.type === 'weapon' ? 'hold' : 'wear')} · ${stat}</small></button>`;
   }).join('');
   const recipes = ITEM_ORDER.filter(id => ITEMS[id].cost && !owned.has(id));
   document.getElementById('recipes').innerHTML = recipes.length ? recipes.map(id => {
     const it = ITEMS[id], ok = canAfford(it.cost);
-    const stat = it.type === 'weapon' ? `${it.dmg} damage` + (it.note ? ', ' + it.note : '') : `blocks ${Math.round(it.armor * 100)}% of damage`;
+    const stat = (it.type === 'weapon' ? `${it.dmg} damage` : `blocks ${Math.round(it.armor * 100)}% of damage`) + (it.note ? ', ' + it.note : '');
     return `<button class="ibtn${ok ? '' : ' cant'}${invPending === id ? ' pending' : ''}" data-craft="${id}"><span class="ic">${it.icon}</span><b>${it.name}</b><small>${stat}</small><span class="cost">${costText(it.cost)}</span></button>`;
   }).join('') : '<p class="done">You have made everything!</p>';
-  document.getElementById('invMsg').textContent = msg || 'Chop trees for wood. Hit big rocks for stone and iron. Beat enemies for iron and gems.';
+  document.getElementById('invMsg').textContent = msg || 'Chop trees for wood. Hit big rocks for stone and iron. Beat enemies for iron and gems. Giant snakes drop fangs.';
   const list = invButtons();
   invSel = Math.min(invSel, list.length - 1);
   list.forEach((b, i) => b.classList.toggle('sel', i === invSel));
@@ -2861,7 +2918,7 @@ function invAction(btn) {
     if (!canAfford(it.cost)) {
       const need = Object.keys(it.cost).filter(k => mats[k] < it.cost[k]).map(k => `${it.cost[k] - mats[k]} more ${MATS[k].name.toLowerCase()}`).join(' and ');
       thump(0.15);
-      renderInv(`You need ${need}` + (it.cost.scale && mats.scale < 1 ? '. Dragon scales come from beating a dragon.' : '.'));
+      renderInv(`You need ${need}` + (it.cost.scale && mats.scale < 1 ? '. Dragon scales come from beating a dragon.' : it.cost.fang && mats.fang < it.cost.fang ? '. Giant fangs come from beating a giant snake.' : '.'));
       return;
     }
     if (it.cost.scale && invPending !== cr) {     // dragon scale: make them choose on purpose
@@ -2954,6 +3011,7 @@ function landHit() {
   if (!best) { tryHarvest(); return; }
   const a = best, sp = a.sp;
   a.hp -= w.dmg; a.flash = 1;
+  if (w.poison) { a.poisonT = 4; a.poisonTick = 1; }
   if (sp.knock) {
     const d = Math.hypot(a.x - player.x, a.z - player.z) || 1, kb = 6 * sp.knock;
     a.kx += (a.x - player.x) / d * kb; a.kz += (a.z - player.z) / d * kb;
