@@ -86,6 +86,18 @@ Bumping into an obstacle makes the chicken stumble for about half a second. Ther
 - The Skin Shop has 28 skins, from free (Classic) to 1000 coins (Diamond). Some have animated touches: Lava glows, Galaxy twinkles, Ghost floats and is see-through, Rainbow changes color.
 - The world picker shows your best place in each world as a medal.
 
+## Secret cheat: the chicken dance
+
+During a race, enter **down, down, left, right, left, right**:
+
+- **Keyboard:** arrow keys.
+- **Controller:** d-pad, or flicks of the left stick.
+- **Touch:** swipes. On touch screens a quick tap jumps (when the finger lifts, or after 0.11 s) and a swipe of 30 px or more counts as a direction instead. Swiping up also jumps.
+
+The chicken flashes rainbow with a star trail, runs at 2.1× speed, and smashes through obstacles, puddles and yucky items all the way to the finish. A "CHICKEN DANCE!" banner shows and a power-up song plays.
+
+A cheat run is just for fun. Coins you grab still count (there's no coin magnet, so it earns less than playing normally), but you get no finish bonus, stars, best time or medal, and it doesn't unlock the next world. The code lives in `CHEAT_CODE`, `cheatInput` and `activateCheat`.
+
 ## Saved data
 
 One `localStorage` key, `chickenrunner.save.v1`: coins, owned skins, the current skin, best time, stars and race place per world, and the music and sound toggles. Bad values are cleaned up on load.

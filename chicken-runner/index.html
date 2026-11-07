@@ -479,6 +479,15 @@ const SONG_SRC = [
     bass: { style: 'drone', wave: 'sine', vol: 0.3, oct: 2 },
     drums: { kick: 'x.......', hat: '....x...' } },
 
+  { name: 'Chicken Dance power-up', bpm: 184, order: 'AB',
+    parts: {
+      A: { lead: 'C5 E5 G5 C6 G5 E5 C5 E5 | D5 F5 A5 D6 A5 F5 D5 F5 | E5 G5 B5 E6 B5 G5 E5 G5 | F5 A5 C6 F6 C6 A5 G5 B5', chords: 'C Dm Em F' },
+      B: { lead: 'C6 - G5 - E5 - G5 - | A5 - F5 - D5 - F5 - | G5 - E5 - C5 - E5 - | D5 E5 F5 G5 A5 B5 C6 -', chords: 'C F C G' },
+    },
+    lead: { wave: 'square', vol: 0.08, gate: 0.6 },
+    bass: { style: 'octave', wave: 'triangle', vol: 0.26, oct: 2 },
+    drums: { kick: 'x.x.x.x.', clap: '..x...x.', hat: 'xxxxxxxx' } },
+
   { name: 'Menu', bpm: 112, order: 'AB',
     parts: {
       A: { lead: 'G4 . B4 . D5 . B4 . | C5 . E5 . D5 - - . | B4 . D5 . G5 . F#5 . | E5 . D5 . C5 B4 A4 .', chords: 'G C G D' },
@@ -561,6 +570,7 @@ const DRUMS = {
 };
 
 let songIdx = -1, songStep = 0, nextNoteT = 0;
+const CHEAT_SONG = 6, MENU_SONG = 7;
 function setEcho(){
   if (!actx || !echoDelay) return;
   const s = SONGS[songIdx] || SONGS[SONGS.length - 1], stepDur = 60 / s.bpm / 2;
@@ -615,8 +625,8 @@ function updateAudioToggles(){
 function drawChicken(c, skin, o){
   const t = o.t || 0, ph = o.phase || 0;
   let body = skin.body, wing = skin.wing, belly = skin.belly;
-  if (skin.rainbow) {
-    const h = (t * 140) % 360;
+  if (skin.rainbow || o.rainbow) {
+    const h = (t * (o.rainbow ? 700 : 140)) % 360;
     body = `hsl(${h},90%,64%)`; wing = `hsl(${(h + 50) % 360},90%,55%)`; belly = `hsl(${(h + 100) % 360},90%,80%)`;
   }
   const ink = '#2a1d12';
@@ -1401,6 +1411,39 @@ function updateRival(v, dt, r){
     else if (!v.ahead && d > 20) { v.ahead = true; if (clock - v.lastMsg > 1.5 && r.raceT > 1) { v.lastMsg = clock; popup(v.name + ' passed you!', c.x, c.y + 84, '#ffb3b3', 14); } }
   }
 }
+/* ---------------- Secret cheat: "the chicken dance" ----------------
+   During a race, enter DOWN DOWN LEFT RIGHT LEFT RIGHT (arrow keys, d-pad / left stick, or swipes).
+   The chicken flashes rainbow, runs at double speed and smashes through everything to the finish.
+   Coins grabbed still count, but the race gives no bonus, stars, best time, medal or unlock. */
+const CHEAT_CODE = ['down', 'down', 'left', 'right', 'left', 'right'];
+let cheatBuf = [], cheatLastT = 0;
+function cheatInput(dir){
+  if (state !== 'play' || !run || run.finished || run.cheat) return;
+  const now = performance.now();
+  if (now - cheatLastT > 1500) cheatBuf = [];
+  cheatLastT = now;
+  cheatBuf.push(dir);
+  if (cheatBuf.length > CHEAT_CODE.length) cheatBuf.shift();
+  if (cheatBuf.join() === CHEAT_CODE.join()) { cheatBuf = []; activateCheat(); }
+}
+function activateCheat(){
+  const r = run, c = r.c;
+  r.cheat = true;
+  Object.assign(r.eff, { slow: 0, cloud: 0, fast: 0 });
+  c.stun = 0;
+  sfx('good'); setTimeout(() => sfx('bigcoin'), 160);
+  rumble(0.5, 0.8, 300);
+  burst(c.x, c.y + 24, 30, { color: ['#ff5c8a', '#ffd23f', '#8fe36b', '#5ec8ff', '#b48cff'], speed: 260, spread: Math.PI * 2, life: 0.9, g: 0, kind: 'star', size: 4 });
+  songIdx = -1; playSong(CHEAT_SONG);
+}
+function smash(o){ // cheat mode: obstacles go flying
+  o.hit = true;
+  o.knock = { t: 0, y: 0, vy: 420, rot: 0, vr: (Math.random() < 0.5 ? -1 : 1) * 9, vx: 520 };
+  sfx('shield'); rumble(0.3, 0.3, 90);
+  burst(o.x + (o.w || 0) / 2, 30, 10, { color: ['#ffd23f', '#ffffff', '#ff5c8a'], speed: 240, spread: Math.PI * 2, life: 0.5, g: 0, kind: 'star', size: 3 });
+  popup(pick1(['POW!', 'BAM!', 'BOOM!', 'WHAM!']), o.x, 90, '#ffffff', 20);
+}
+
 function racePlace(r){
   return 1 + r.rivals.filter(v => v.finished ? (!r.finished || v.finishT < r.time) : (!r.finished && v.x > r.c.x)).length;
 }
@@ -1442,6 +1485,7 @@ function pressJump(){
 
 function hitObstacle(o){
   const c = run.c;
+  if (run.cheat && !o.hit) { smash(o); return; }
   if (c.inv > 0 || o.hit) return;
   o.hit = true;
   o.knock = { t: 0, y: 0, vy: 260, rot: 0, vr: (Math.random() < 0.5 ? -1 : 1) * 5, vx: 220 };
@@ -1494,7 +1538,27 @@ function starsFor(m, time){
 }
 function starTimes(m){ const par = (m.length - START_X) / BASE_SPEED; return [par * 0.95, par * 1.1]; }
 
+function showCheatResults(){
+  const r = run;
+  bankCoins(); persist();
+  $('resTitle').textContent = 'Cheat run!';
+  $('resStars').innerHTML = '🌈🐔🌈';
+  $('resNote').textContent = 'Cheat run, just for fun! Your coins count, but there are no stars, medals or bonus.';
+  $('resPlace').textContent = ord(r.place) + ' (cheat)';
+  $('resTime').textContent = fmtTime(r.time);
+  $('resCoins').textContent = '+' + r.coinsGot;
+  $('resBonus').textContent = '+0';
+  $('resHint').textContent = 'Race without the chicken dance to earn stars and medals.';
+  const next = MAPS[r.mi + 1] && mapUnlocked(r.mi + 1);
+  $('nextBtn').style.display = next ? '' : 'none';
+  $('againBtn').classList.toggle('primary', !next);
+  $('pauseBtn').classList.remove('show');
+  state = 'results';
+  show('results');
+  playSong(MENU_SONG);
+}
 function showResults(){
+  if (run.cheat) return showCheatResults();
   const r = run, m = r.m;
   const stars = starsFor(m, r.time);
   const place = r.place;
@@ -1531,7 +1595,7 @@ function showResults(){
   $('pauseBtn').classList.remove('show');
   state = 'results';
   show('results');
-  playSong(6);
+  playSong(MENU_SONG);
 }
 
 /* =========================================================
@@ -1576,7 +1640,11 @@ function update(dt){
   c.stun = Math.max(0, c.stun - dt); c.inv = Math.max(0, c.inv - dt); c.flap = Math.max(0, c.flap - dt);
   c.buffer = Math.max(0, c.buffer - dt);
 
-  const target = c.stun > 0 ? 0 : BASE_SPEED * (e.fast > 0 ? FAST_MULT : 1) * (e.slow > 0 ? SLOW_MULT : 1);
+  const target = r.cheat ? BASE_SPEED * 2.1 : c.stun > 0 ? 0 : BASE_SPEED * (e.fast > 0 ? FAST_MULT : 1) * (e.slow > 0 ? SLOW_MULT : 1);
+  if (r.cheat && Math.random() < dt * 40) {
+    const hue = Math.floor(Math.random() * 360);
+    r.particles.push({ x: c.x - 14, y: c.y + 10 + Math.random() * 30, vx: -60, vy: (Math.random() - 0.5) * 40, life: 0.5, max: 0.5, color: `hsl(${hue},95%,65%)`, size: 3, kind: 'star', g: 0, rot: 0 });
+  }
   c.speed += (target - c.speed) * Math.min(1, dt * (c.stun > 0 ? 6 : 4));
   c.x += c.speed * dt;
   c.phase += Math.max(0, c.speed) * dt * 0.055;
@@ -1624,6 +1692,7 @@ function update(dt){
   // puddles
   for (const p of r.puddles) {
     if (p.hit) continue;
+    if (r.cheat) continue;
     if (c.onGround && c.x > p.x + 10 && c.x < p.x + p.w - 10) {
       p.hit = true; e.slow = Math.max(e.slow, 3); e.fast = 0; sfx('splash');
       popup(m.puddle.name + '! Sticky...', c.x, 70, '#ffe9b0', 16);
@@ -1633,6 +1702,8 @@ function update(dt){
   // items
   for (const it of r.items) {
     if (it.got || Math.abs(it.x - c.x) > 60) continue;
+    if (r.cheat && it.x < c.x + 30 && it.x > c.x - 30) { it.got = true; burst(it.x, it.y, 8, { color: ['#ffd23f', '#ffffff'], speed: 160, spread: Math.PI * 2, life: 0.4, g: 0, kind: 'star', size: 3 }); continue; }
+    if (r.cheat) continue;
     if (it.x + 14 > cl - 4 && it.x - 14 < cr + 4 && it.y + 14 > cb - 2 && it.y - 14 < ct + 4) collectItem(it);
   }
   // coins
@@ -1641,7 +1712,7 @@ function update(dt){
     const dx = co.x - c.x;
     if (dx < -60) continue;
     if (dx > 400) break;
-    if (e.magnet > 0 && Math.abs(dx) < 190) {
+    if (e.magnet > 0 && !r.cheat && Math.abs(dx) < 190) {
       const ty = c.y + 20, d = Math.hypot(dx, co.y - ty) || 1, sp = 520 * dt;
       co.x -= dx / d * Math.min(sp, d); co.y -= (co.y - ty) / d * Math.min(sp, d);
     }
@@ -1740,7 +1811,7 @@ function render(){
     const x = SX(c.x), y = SY(c.y);
     // shadow
     ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.beginPath(); ctx.ellipse(x, gy + 2, Math.max(6, 16 - c.y * 0.05), 4, 0, 0, 7); ctx.fill();
-    if (r.eff.fast > 0) {
+    if (r.eff.fast > 0 || r.cheat) {
       ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 2;
       for (let i = 0; i < 4; i++) { const ly = y - 10 - i * 9, lx = x - 30 - ((t * 400 + i * 37) % 40); ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx - 22, ly); ctx.stroke(); }
     }
@@ -1751,7 +1822,12 @@ function render(){
       ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.strokeStyle = '#9fb7e0'; ctx.lineWidth = 1.5;
       ctx.save(); ctx.translate(-6, -34); ctx.rotate(-0.6 + f); ctx.beginPath(); ctx.ellipse(-14, 0, 16, 7, 0, 0, 7); ctx.fill(); ctx.stroke(); ctx.restore();
     }
-    drawChicken(ctx, skinById(save.skin), { t, phase: c.phase, air: !c.onGround, flap: c.flap, stun: c.stun, stand: r.countdown > 0 || (r.finished && c.speed < 20) });
+    if (r.cheat) {
+      const hue = (t * 700) % 360, g = ctx.createRadialGradient(0, -28, 6, 0, -28, 48);
+      g.addColorStop(0, `hsla(${hue},100%,70%,.55)`); g.addColorStop(1, `hsla(${hue},100%,70%,0)`);
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, -28, 48, 0, 7); ctx.fill();
+    }
+    drawChicken(ctx, skinById(save.skin), { t, phase: c.phase, air: !c.onGround, flap: c.flap, stun: c.stun, rainbow: r.cheat, stand: r.countdown > 0 || (r.finished && c.speed < 20) });
     ctx.globalAlpha = 1;
     if (r.eff.shield) { ctx.strokeStyle = `rgba(127,212,255,${0.6 + Math.sin(t * 6) * 0.25})`; ctx.fillStyle = 'rgba(127,212,255,.15)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(2, -28, 34, 0, 7); ctx.fill(); ctx.stroke(); }
     if (r.eff.cloud > 0) { ctx.save(); ctx.translate(4, -82); ctx.scale(1.2, 1.2); drawItem(ctx, 'cloud', t, false); ctx.restore(); }
@@ -1840,6 +1916,13 @@ function drawHUD(t){
     ctx.fillStyle = '#433db0'; rr(ctx, 50, y + 21, 74, 6, 3); ctx.fill();
     ctx.fillStyle = good ? '#ffd23f' : '#b48cff'; rr(ctx, 50, y + 21, Math.max(3, 74 * frac), 6, 3); ctx.fill();
   });
+  if (r.cheat && !r.finished) {
+    ctx.save(); ctx.textAlign = 'center'; ctx.font = '400 26px "Lilita One", sans-serif';
+    const yb = 18 + 66 + Math.sin(t * 10) * 3, txt = 'CHICKEN DANCE!';
+    ctx.lineWidth = 6; ctx.strokeStyle = '#151233'; ctx.strokeText(txt, viewW / 2, yb);
+    ctx.fillStyle = `hsl(${(t * 500) % 360},95%,65%)`; ctx.fillText(txt, viewW / 2, yb);
+    ctx.restore();
+  }
   // countdown
   if (r.countdown > 0 || r.time < 0.7) {
     const txt = r.countdown > 0 ? String(Math.ceil(r.countdown / 0.8)) : 'GO!';
@@ -1892,7 +1975,7 @@ function show(id){
 }
 function goMenu(id){
   if (run && (state === 'pause' || state === 'play')) bankCoins();
-  if (['title', 'how', 'maps', 'shop'].includes(id)) { $('pauseBtn').classList.remove('show'); playSong(6); if (state !== 'results') run = null; }
+  if (['title', 'how', 'maps', 'shop'].includes(id)) { $('pauseBtn').classList.remove('show'); playSong(MENU_SONG); if (state !== 'results') run = null; }
   if (id === 'maps') buildMapGrid();
   if (id === 'shop') buildShop();
   state = id;
@@ -2065,6 +2148,10 @@ function handlePad(dt){
   if (anyNew) { audioInit(); if (state === 'title') updatePadStatus(); }
   if (state === 'play') {
     if ([0, 1, 2, 3, 12].some(padPressed)) pressJump();
+    if (padPressed(13)) cheatInput('down'); if (padPressed(14)) cheatInput('left'); if (padPressed(15)) cheatInput('right');
+    const ax = pad.gp.axes[0] || 0, ay = pad.gp.axes[1] || 0;
+    const sdir = ay > 0.6 ? 'down' : ax < -0.6 ? 'left' : ax > 0.6 ? 'right' : (Math.abs(ax) < 0.3 && Math.abs(ay) < 0.3) ? null : pad.stickDir;
+    if (sdir !== pad.stickDir) { pad.stickDir = sdir; if (sdir) cheatInput(sdir); }
     if (padPressed(9) || padPressed(8)) pauseGame();
     return;
   }
@@ -2118,12 +2205,36 @@ $('resShopBtn').onclick = () => { sfx('click'); shopReturn = 'results'; buildSho
 $('resMenuBtn').onclick = () => { sfx('click'); goMenu('title'); };
 
 document.addEventListener('pointermove', () => { if (padSel) setPadSel(null); });
-canvas.addEventListener('pointerdown', e => { if (state === 'play') { e.preventDefault(); pressJump(); } });
+let touch = null;
+canvas.addEventListener('pointerdown', e => {
+  if (state !== 'play') return;
+  e.preventDefault();
+  if (e.pointerType === 'mouse') { pressJump(); return; }
+  // touch: decide between a tap (jump) and a swipe (cheat code)
+  const t = { id: e.pointerId, x: e.clientX, y: e.clientY, done: false };
+  touch = t;
+  try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+  setTimeout(() => { if (!t.done && touch === t && Math.hypot(t.lx - t.x || 0, t.ly - t.y || 0) < 14) { t.done = true; pressJump(); } }, 110);
+});
+canvas.addEventListener('pointermove', e => {
+  const t = touch; if (!t || t.done || e.pointerId !== t.id) return;
+  t.lx = e.clientX; t.ly = e.clientY;
+  const dx = e.clientX - t.x, dy = e.clientY - t.y;
+  if (Math.hypot(dx, dy) < 30) return;
+  t.done = true;
+  if (Math.abs(dx) > Math.abs(dy)) cheatInput(dx > 0 ? 'right' : 'left');
+  else if (dy > 0) cheatInput('down');
+  else pressJump();  // swipe up jumps
+});
+const endTouch = e => { const t = touch; if (!t || e.pointerId !== t.id) return; if (!t.done) { t.done = true; pressJump(); } touch = null; };
+canvas.addEventListener('pointerup', endTouch);
+canvas.addEventListener('pointercancel', e => { if (touch && e.pointerId === touch.id) touch = null; });
 window.addEventListener('keydown', e => {
   const k = e.key;
   if (state !== 'play' && (k === ' ' || k === 'Enter') && performance.now() - shownAt < 600) { e.preventDefault(); return; }
   if (state === 'play') {
     if (k === ' ' || k === 'ArrowUp' || k === 'w' || k === 'W') { e.preventDefault(); if (!e.repeat) pressJump(); }
+    else if (k === 'ArrowDown' || k === 'ArrowLeft' || k === 'ArrowRight') { e.preventDefault(); if (!e.repeat) cheatInput(k.slice(5).toLowerCase()); }
     else if (k === 'Escape' || k === 'p' || k === 'P') { e.preventDefault(); pauseGame(); }
     return;
   }
@@ -2143,7 +2254,7 @@ buildLegend();
 updateAudioToggles();
 updatePadStatus();
 show('title');
-playSong(6);
+playSong(MENU_SONG);
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (state === 'maps') buildMapGrid(); });
 requestAnimationFrame(t => { lastT = t; requestAnimationFrame(frame); });
 </script>
