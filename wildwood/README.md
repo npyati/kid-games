@@ -18,6 +18,7 @@ A 3D exploring game. You walk through a forest that goes on forever: pines, birc
 | Wolf | 15 | 9 | packs of 2 or 3, mostly in forests | 1 gem, usually 1 fur, sometimes 1 iron |
 | Bear | 20 | 16 | lives by a cave and comes back 2 minutes after it's beaten | 3 gems, 2 iron, 2 fur |
 | Goblin | 18 | 8 axe chop | in camps out in open fields (3 to 5 per camp, they come as a gang); camps come back 4 minutes after they're cleared | 3 gems, sometimes iron or wood; 1 in 4 drop their crude goblin axe; clearing a camp leaves 6 gems, 2 iron and an apple by the fire |
+| Leviathan (boss) | 750 | 30 bite, 20 tail whip, water spray | big lakes only; a huge purple sea serpent (about 40 m long) with a blue belly, horns and small wings; rears up out of the water to fight and sprays water from up to 24 m away; comes back 5 minutes after it's beaten | 30 gems, 4 iron, 3 apples |
 | Ogre (mini-boss) | 150 | 20, a big club smash | wanders forests now and then (about a 1 in 3 chance per minute in a forest), comes back 2½ minutes after it's beaten; slower than you when you run | 8 gems, 2 iron, 2 fur, 1 apple |
 | Giant snake (boss) | 200 | 18 bite, 12 tail whip | marshes; it can swim (about 16 m long); opens its jaw wide and snaps, and whips its tail at you if you're near the tail | 15 gems, 3 iron, 2 apples, 2 giant fangs |
 | Dragon (boss) | 650 | 25 bite, plus fire | two legs and big wings, about 25 m long with its tail; sleeps in a volcano on a mountaintop; comes back 10 minutes after it's beaten | 25 gems, 4 iron, 3 apples, 1 dragon scale |
@@ -82,3 +83,4 @@ One `localStorage` key, `wildwood.v1`: music, sound, look direction and enemy se
 - `wildwood/?ogre` puts an ogre in the forest 32 m in front of you.
 - `wildwood/?snake` takes you to the nearest marsh with a giant snake lying 15 m in front of you. It stays calm until you get within about 7 m or hit it.
 - `wildwood/?goblin` takes you to the nearest goblin camp, 22 m from the fire. The goblins stay calm until you get within about 7 m or hit one.
+- `wildwood/?leviathan` puts you on the shore of the nearest big lake with the Leviathan in the water in front of you. It stays calm until you get within about 16 m or hit it.

@@ -137,7 +137,7 @@ nav button:focus-visible,nav a:focus-visible{outline:none;border-color:var(--sun
       <div><b>Keyboard and mouse</b>WASD: walk · Mouse: look · Click or F: swing · Space: jump · Shift: run · I or Tab: backpack · Esc: menu</div>
       <div><b>Animals</b>Foxes, deer and rabbits are friendly. Wolves, and bears from caves, chase you once they spot you. Beat them for gems, iron and apples. They can't swim!</div>
       <div><b>Crafting</b>Swing at trees for wood and at big rocks for stone. Open your backpack to make axes, swords and chest plates.</div>
-      <div><b>Bosses</b>Goblins camp in open fields. Ogres roam the forests. Giant snakes hide in marshes. Dragons sleep in volcanoes on mountaintops, ringed by tall black spikes. They can fly!</div>
+      <div><b>Bosses</b>Goblins camp in open fields. Ogres roam the forests. Giant snakes hide in marshes. The Leviathan lives in big lakes. Dragons sleep in volcanoes on mountaintops, ringed by tall black spikes. They can fly!</div>
     </div>
     <p id="padStatus">Plug in an Xbox controller and press any button.</p>
   </div>
@@ -1446,6 +1446,7 @@ function fireSound() {
   noiseHit('bandpass', 2500, 0.6, 2.0, 0.12);
 }
 function spotSound(kind) {
+  if (kind === 'leviathan') { tone('sawtooth', 70, 40, 2.0, 0.3, 0, 500); tone('sine', 160, 90, 1.6, 0.15, 0.2); noiseHit('lowpass', 600, 0.6, 1.5, 0.35, 200); return; }
   if (kind === 'goblin') { [700, 900, 760, 980].forEach((f, i) => tone('square', f, f * 0.8, 0.08, 0.04, i * 0.09, 2200)); return; }
   if (kind === 'ogre') { tone('sawtooth', 130, 70, 1.0, 0.22, 0, 600); tone('sawtooth', 95, 60, 0.9, 0.12, 0.15, 400); return; }
   if (kind === 'snake') { noiseHit('bandpass', 5500, 0.8, 1.1, 0.2); return; }
@@ -1455,6 +1456,7 @@ function spotSound(kind) {
   else { tone('sawtooth', 95, 60, 1.0, 0.22, 0, 500); noiseHit('lowpass', 380, 0.7, 0.9, 0.2); }
 }
 function growlSound(kind) {
+  if (kind === 'leviathan') { tone('sawtooth', 90, 55, 0.7, 0.25, 0, 450); return; }
   if (kind === 'goblin') { tone('square', 500, 300, 0.15, 0.05, 0, 1600); return; }
   if (kind === 'ogre') { tone('sawtooth', 150, 90, 0.7, 0.2, 0, 500); return; }
   if (kind === 'snake') { noiseHit('bandpass', 5000, 0.8, 0.5, 0.15); return; }
@@ -2071,6 +2073,44 @@ function rabbitModel() {
   B(-0.05, 0.05, 0.1, 0.025, 0.04, 0.03, GR);
   return { body: makeMesh(g), leg: null };
 }
+function leviathanModel() {
+  const r = mulberry32(37);
+  const PURPLE = [0.46, 0.22, 0.62], RIDGE = [0.32, 0.14, 0.46], BELLY = [0.36, 0.62, 0.98], DK = [0.08, 0.05, 0.12];
+  const HORN = [0.92, 0.88, 0.78], EYE = [0.4, 1.0, 0.95];
+  const sg = new Geo(512); blob(sg, 0, 0.08, 0, 1, 0.8, 1.15, PURPLE, r, 0.06, -1, 0); blob(sg, 0, -0.28, 0, 0.92, 0.56, 1.08, BELLY, r, 0.03, 1, 0);
+  const bg = new Geo(768); blob(bg, 0, 0.08, 0, 1, 0.8, 1.15, RIDGE, r, 0.06, -1, 0); blob(bg, 0, -0.28, 0, 0.92, 0.56, 1.08, BELLY, r, 0.03, 1, 0);
+  tube(bg, [0, 0.75, 0.2], [0, 1.45, -0.35], 0.28, 0.02, 5, RIDGE, r, false);            // spike down the back
+  const hg = new Geo(1024);
+  blob(hg, 0, 0.1, 0.25, 0.62, 0.38, 0.85, shade(PURPLE, 0.9), r, 0.06, -1, 0, -0.1);
+  blob(hg, 0, -0.105, 0.52, 0.42, 0.01, 0.56, [0.35, 0.05, 0.25], r, 0, -1, 0);
+  for (const sd of [-1, 1]) {
+    blob(hg, sd * 0.33, 0.28, 0.6, 0.13, 0.11, 0.13, EYE, r, 0, -1, 0);                 // glowing eyes
+    blob(hg, sd * 0.38, 0.29, 0.66, 0.04, 0.09, 0.04, DK, r, 0, -1, 0);
+    tube(hg, [sd * 0.18, -0.1, 0.86], [sd * 0.17, -0.26, 0.9], 0.05, 0.01, 4, HORN, r, false);   // fangs
+    tube(hg, [sd * 0.25, 0.4, 0.1], [sd * 0.45, 0.85, -0.45], 0.1, 0.015, 6, HORN, r, false);     // horns
+    tube(hg, [sd * 0.45, 0.3, -0.1], [sd * 0.62, 0.48, -0.5], 0.05, 0.01, 5, HORN, r, false);
+    blob(hg, sd * 0.2, 0.15, 1.02, 0.04, 0.03, 0.03, DK, r, 0, -1, 0);                  // nostrils
+  }
+  const jg = new Geo(512);
+  blob(jg, 0, -0.08, 0.58, 0.46, 0.15, 0.55, BELLY, r, 0.03, -1, 0, undefined, 0);
+  blob(jg, 0, -0.004, 0.62, 0.34, 0.008, 0.42, [0.45, 0.08, 0.3], r, 0, -1, 0);
+  for (const sd of [-1, 1]) tube(jg, [sd * 0.18, 0, 0.92], [sd * 0.17, 0.14, 0.95], 0.035, 0.008, 4, HORN, r, false);
+  const tg = new Geo(512), N = 14;
+  for (let i = 0; i < N; i++) {
+    const a0 = i / N * Math.PI * 2, a1 = (i + 1) / N * Math.PI * 2;
+    const p0 = [Math.cos(a0), Math.sin(a0)], p1 = [Math.cos(a1), Math.sin(a1)];
+    const col = ((p0[1] + p1[1]) / 2 < -0.45) ? BELLY : PURPLE;
+    const v = (p, z) => tg.v(p[0], p[1], z, p[0], p[1], 0, -1, col[0], col[1], col[2], 0);
+    v(p0, 0); v(p1, 0); v(p1, 1); v(p0, 0); v(p1, 1); v(p0, 1);
+  }
+  const wg = new Geo(256);                                   // small wings, pivot at the base
+  const SH = [0, 0, 0], E = [0.55, 0.35, -0.15], T = [1.0, 0.1, -0.5], F = [0.6, -0.15, -0.6];
+  tube(wg, SH, E, 0.05, 0.035, 4, RIDGE, r, false); tube(wg, E, T, 0.035, 0.01, 4, RIDGE, r, false);
+  const M = [0.55, 0.35, 0.85];
+  tri(wg, SH, E, T, faceN(SH, E, T), 0, M, M, shade(M, 0.85), 0, 0, 0);
+  tri(wg, SH, T, F, faceN(SH, T, F), 0, M, shade(M, 0.85), shade(M, 0.9), 0, 0, 0);
+  return { seg: makeMesh(sg), band: makeMesh(bg), head: makeMesh(hg), jaw: makeMesh(jg), tube: makeMesh(tg), wing: makeMesh(wg) };
+}
 function snakeModel() {
   const r = mulberry32(19);
   const GREEN = [0.30, 0.50, 0.16], BAND = [0.72, 0.68, 0.22], DK = [0.1, 0.1, 0.06];
@@ -2246,7 +2286,10 @@ const SPECIES = {
   bear: { name: 'Bear', hp: 20, dmg: 16, reach: 2.6, windup: 0.6, cd: 1.8, walk: 1.3, run: 5.4, sight: 26, turn: 3, radius: 1.0,
     barH: 1.75, drops: { gems: 3, iron: 2, fur: 2 }, knock: 0.35, sinkH: 1.7, legLen: 0.55, hipY: 0.62, hips: [[0.25, 0.44], [-0.25, 0.44], [0.25, -0.44], [-0.25, -0.44]] },
   // bosses
-  snake: { name: 'Giant snake', boss: true, swims: true, hp: 200, dmg: 18, reach: 3.3, windup: 0.45, cd: 1.5, walk: 1.8, run: 5.0, sight: 28, turn: 2.5,
+  leviathan: { name: 'Leviathan', boss: true, serpent: true, swims: true, waterOnly: true, bodyR: 1.6, headScale: 3.2, rearH: 7,
+    calmWake: 16, hp: 750, dmg: 30, whipDmg: 20, reach: 6.5, windup: 0.6, cd: 1.8, walk: 2.2, run: 6.0, sight: 40, turn: 1.8,
+    radius: 1.8, drops: { gems: 30, iron: 4, apples: 3 }, knock: 0, sinkH: 4, legLen: 1, giveUp: 70, segs: 20, spacing: 2.2 },
+  snake: { name: 'Giant snake', boss: true, serpent: true, swims: true, hp: 200, dmg: 18, reach: 3.3, windup: 0.45, cd: 1.5, walk: 1.8, run: 5.0, sight: 28, turn: 2.5,
     radius: 1.0, drops: { gems: 15, iron: 3, apples: 2, fang: 2 }, knock: 0, sinkH: 2.0, legLen: 1, giveUp: 55, segs: 16, spacing: 1.15 },
   goblin: { name: 'Goblin', hp: 18, dmg: 8, reach: 2.2, windup: 0.45, cd: 1.2, walk: 1.8, run: 6.2, sight: 24, turn: 6, radius: 0.45,
     barH: 2.0, drops: { gems: 3, iron: 0.5, wood: 0.5, item: 'goblinaxe', itemChance: 0.25 }, knock: 0.7, sinkH: 1.8,
@@ -2264,10 +2307,12 @@ SPECIES.bear.model = bearModel();
 SPECIES.deer.model = deerModel();
 SPECIES.rabbit.model = rabbitModel();
 SPECIES.snake.model = snakeModel();
+SPECIES.leviathan.model = leviathanModel();
 SPECIES.dragon.model = dragonModel();
 SPECIES.ogre.model = ogreModel();
 SPECIES.goblin.model = goblinModel();
 });
+const waterMeshes = [[0.55, 0.82, 1.0], [0.88, 0.96, 1.0]].map((c, i) => { const g = new Geo(64); blob(g, 0, 0, 0, 1, 1, 1, c, mulberry32(50 + i), 0.3, -1, 0); return makeMesh(g); });
 const flameMeshes = [[1.0, 0.45, 0.05], [1.0, 0.75, 0.1], [1.0, 0.25, 0.02]].map((c, i) => { const g = new Geo(64); blob(g, 0, 0, 0, 1, 1, 1, c, mulberry32(30 + i), 0.4, -1, 0); return makeMesh(g); });
 
 /* ---------- drops and weapons ---------- */
@@ -2479,6 +2524,23 @@ const MAX_ANIMALS = 7;
 const caveState = new Map(), lairState = new Map();
 const snakeState = { alive: false, until: 0 };
 const ogreState = { alive: false, until: 0 };
+const levState = { alive: false, until: 0 };
+function spawnLeviathan(x, z, extra) {
+  levState.alive = true;
+  const lv = spawnAnimal('leviathan', x, z, Object.assign({ home: { x, z, r: 40 }, onGone: why => {
+    levState.alive = false; if (why === 'killed') levState.until = nowS() + 300; else if (why === 'ko') levState.until = nowS() + 60; } }, extra || {}));
+  // lay its body out in the water
+  let px = x, pz = z, yaw = lv.yaw;
+  for (const sg of lv.segs) {
+    for (let t = 0; t < 12; t++) {
+      const nx = px - Math.sin(yaw) * lv.sp.spacing, nz = pz - Math.cos(yaw) * lv.sp.spacing;
+      if (groundAt(nx, nz) < -1.2) { px = nx; pz = nz; break; }
+      yaw += 0.5;
+    }
+    sg.x = px; sg.z = pz;
+  }
+  return lv;
+}
 const campState = new Map();
 function spawnCampGoblins(c, st, calm) {
   const y = sample(c.x, c.z).h, n = 3 + (Math.random() * 3 | 0);
@@ -2534,13 +2596,19 @@ function tailOffset(a, i) {
   if (w <= 0) return null;
   const s = a.segs[i], p = i > 0 ? a.segs[i - 1] : a;
   const dx = p.x - s.x, dz = p.z - s.z, L = Math.hypot(dx, dz) || 1;
-  const k = 2.6 * w * whipCurve(a.whipT) * a.whipSide;
+  const k = 2.6 * ((a.sp.bodyR || 0.8) / 0.8) * w * whipCurve(a.whipT) * a.whipSide;
   return [dz / L * k, -dx / L * k];
 }
-function snakeR(sp, i) { return i < 3 ? 0.8 : 0.8 * (1 - (i - 3) / (sp.segs - 3) * 0.75); }
+function snakeR(sp, i) { const R = sp.bodyR || 0.8; return i < 3 ? R : R * (1 - (i - 3) / (sp.segs - 3) * 0.75); }
+// where a serpent's head is, including how high it has reared up
+function serpentHead(a) {
+  const sp = a.sp, R = sp.bodyR || 0.8;
+  const lift = sp.rearH ? (a.rearV || 0) * sp.rearH : a.dead ? 0 : a.windup > 0 ? 1.1 : a.lunge * 0.65 + (a.alerted ? 0.65 : 0);
+  return [a.x, a.y + R * 1.15 + lift, a.z, lift];
+}
 // circles you can bump into or hit: [x, z, radius, y]
 function bodyCircles(a) {
-  if (a.kind === 'snake') return [[a.x, a.z, 0.9, a.y]].concat(a.segs.map((s, i) => { const o = tailOffset(a, i); return [s.x + (o ? o[0] : 0), s.z + (o ? o[1] : 0), snakeR(a.sp, i), s.y]; }));
+  if (a.sp.serpent) return [[a.x, a.z, (a.sp.bodyR || 0.8) * 1.1, a.y]].concat(a.segs.map((s, i) => { const o = tailOffset(a, i); return [s.x + (o ? o[0] : 0), s.z + (o ? o[1] : 0), snakeR(a.sp, i), s.y]; }));
   return [[a.x, a.z, a.sp.radius, a.y]];
 }
 function spawnAnimal(kind, x, z, opts) {
@@ -2553,7 +2621,7 @@ function spawnAnimal(kind, x, z, opts) {
     buck: kind === 'deer' && Math.random() < 0.5, flying: false, flyAlt: 0, flyCd: 10, flyT: 0, roarT: 0, whipT: 0, whipCd: 2, whipSide: 1, whipHit: false };
   if (opts) Object.assign(a, opts);
   if (a.home) a.yaw = Math.random() * 6.28;
-  if (kind === 'snake') {
+  if (sp.serpent) {
     a.segs = [];
     for (let i = 1; i <= sp.segs; i++) a.segs.push({ x: x - Math.sin(a.yaw) * i * sp.spacing, z: z - Math.cos(a.yaw) * i * sp.spacing, y: 0 });
   }
@@ -2633,6 +2701,15 @@ function updateLairs(dt) {
     if (!st) { st = { alive: false, until: 0, left: 0, camp: c }; campState.set(c.key, st); }
     if (!st.alive && now > st.until && Math.hypot(c.x - player.x, c.z - player.z) < 100) spawnCampGoblins(c, st);
   }
+  // the leviathan lives in the big lakes
+  if (!levState.alive && now > levState.until && Math.random() < 0.02 && sample(player.x, player.z).lake > LAKE_T - 0.12) {
+    for (let t = 0; t < 12; t++) {
+      const ang = Math.random() * Math.PI * 2, d = 40 + Math.random() * 60;
+      const x = player.x + Math.sin(ang) * d, z = player.z - Math.cos(ang) * d;
+      const s = sample(x, z);
+      if (s.h < -2.5 && s.lake > LAKE_T + 0.03) { spawnLeviathan(x, z); break; }
+    }
+  }
   // ogres wander the forests now and then
   if (envForest > 0.6 && !ogreState.alive && now > ogreState.until && Math.random() < 0.004) {
     const heading = Math.hypot(player.vx, player.vz) > 1 ? Math.atan2(player.vx, -player.vz) : player.yaw;
@@ -2683,6 +2760,7 @@ function alertAnimal(a) {
   spotSound(a.kind);
   if (a.kind === 'dragon') { rumble(0.9, 0.9, 700); shake = 0.6; a.roarT = 1.5; a.flyCd = 9 + Math.random() * 4; toast('🐉 The dragon woke up!'); }
   if (a.kind === 'snake') { toast('🐍 A giant snake!'); a.roarT = 1.2; }
+  if (a.kind === 'leviathan') { toast('🌊 The Leviathan rises!'); a.roarT = 1.6; rumble(0.8, 0.8, 600); shake = 0.5; }
   if (a.kind === 'ogre') { toast('👹 An ogre!'); rumble(0.5, 0.5, 300); }
   if (a.kind === 'goblin' && !animals.some(b => b !== a && b.kind === 'goblin' && b.alerted)) toast('👺 Goblins!');
   if (a.kind === 'wolf' || a.kind === 'goblin') for (const b of animals) if (b !== a && !b.alerted && !b.dead && b.kind === a.kind && Math.hypot(b.x - a.x, b.z - a.z) < (a.kind === 'goblin' ? 25 : 15)) { b.alerted = true; b.waterT = 0; b.calm = false; makeBar(b); }
@@ -2767,7 +2845,21 @@ function fight(a, dt, dist, dx, dz, playerWet) {
       return 0;
     }
   }
-  if (a.kind === 'snake') {
+  if (a.kind === 'leviathan') {
+    a.sprayCd = (a.sprayCd === undefined ? 3 : a.sprayCd) - dt;
+    if (a.sprayT > 0) {
+      a.sprayT -= dt; emitSpray(a, dt);
+      a.sprayTick = (a.sprayTick || 0) - dt;
+      if (a.sprayTick <= 0) { a.sprayTick = 0.2; if (inSpray(a)) hurtPlayer(3, dx / dist, dz / dist, 3); }
+      return 0;
+    }
+    if (a.windup <= 0 && a.whipT <= 0 && dist > sp.reach && dist < 24 && a.sprayCd <= 0) {
+      a.sprayT = 2.0; a.sprayCd = 5 + Math.random() * 2;
+      noiseHit('bandpass', 1500, 0.4, 2.0, 0.3, 700); noiseHit('highpass', 4000, 0.5, 1.8, 0.12);
+      return 0;
+    }
+  }
+  if (sp.serpent) {
     a.whipCd -= dt;
     if (a.whipT > 0) {                      // whipping its tail
       a.whipT += dt;
@@ -2777,7 +2869,7 @@ function fight(a, dt, dist, dx, dz, playerWet) {
         for (let i = n - 7; i < n; i++) {
           const s = a.segs[i], o = tailOffset(a, i) || [0, 0];
           const ex = player.x - (s.x + o[0]), ez = player.z - (s.z + o[1]), d = Math.hypot(ex, ez) || 0.01;
-          if (d < snakeR(sp, i) + 1.3 && !playerWet) { hurtPlayer(12, ex / d, ez / d, 11); noiseHit('lowpass', 1200, 0.7, 0.12, 0.4); break; }
+          if (d < snakeR(sp, i) + 1.3 && (!playerWet || sp.swims)) { hurtPlayer(sp.whipDmg || 12, ex / d, ez / d, 11); noiseHit('lowpass', 1200, 0.7, 0.12, 0.4); break; }
         }
       }
       if (a.whipT >= WHIP_T) a.whipT = 0;
@@ -2787,7 +2879,7 @@ function fight(a, dt, dist, dx, dz, playerWet) {
       const n = a.segs.length;
       let best = Infinity, bi = n - 1;
       for (let i = n - 8; i < n; i++) { const s = a.segs[i], d = Math.hypot(player.x - s.x, player.z - s.z); if (d < best) { best = d; bi = i; } }
-      if (best < 4.8) {                      // you're near the tail: whip it at you
+      if (best < 4.8 * (sp.bodyR || 0.8) / 0.8) {   // you're near the tail: whip it at you
         const s = a.segs[bi], p = a.segs[bi - 1];
         const dx = p.x - s.x, dz = p.z - s.z;
         a.whipSide = ((player.x - s.x) * dz - (player.z - s.z) * dx) >= 0 ? 1 : -1;
@@ -2804,7 +2896,7 @@ function fight(a, dt, dist, dx, dz, playerWet) {
       a.lunge = 1; a.atkCd = sp.cd;
       if (a.kind === 'dragon') { thump(0.5); noiseHit('lowpass', 700, 0.8, 0.15, 0.4); }   // CHOMP
       if (a.kind === 'ogre') { thump(0.7); noiseHit('lowpass', 400, 0.7, 0.4, 0.4); shake = Math.max(shake, 0.35); rumble(0.6, 0.4, 250); }   // SMASH
-      if (a.kind === 'snake') { noiseHit('lowpass', 900, 0.8, 0.12, 0.35); thump(0.3); }   // snap
+      if (sp.serpent) { noiseHit('lowpass', 900, 0.8, 0.12, 0.35); thump(0.3); }   // snap
       if (dist < sp.reach + 0.7 && canBite) {
         hurtPlayer(sp.dmg, dx / dist, dz / dist, sp.boss ? 9 : 6);
         const ar = equip.armor && ITEMS[equip.armor];
@@ -2835,6 +2927,32 @@ function creatureMats(a, sink, lift, roll) {
   const tilt = !sp.tilt || a.asleep ? 0 : (a.flyAlt || 0) > 1 ? -0.05 : sp.tilt;
   const body = tilt ? mChain(base, mT(0, sp.hipY, sp.hips[0][1]), mRx(tilt), mT(0, -sp.hipY, -sp.hips[0][1])) : base;
   return { base, body };
+}
+// the leviathan's water spray: arcs from its mouth toward you
+function sprayAim(a) {
+  const h = serpentHead(a), sc = a.sp.headScale || 1.6;
+  const sy = Math.sin(a.yaw), cy = Math.cos(a.yaw);
+  const m = [h[0] + sy * 1.1 * sc, h[1] - 0.1 * sc, h[2] + cy * 1.1 * sc];
+  const hd = Math.max(3, Math.hypot(player.x - m[0], player.z - m[2]));
+  const slope = Math.max(-1.5, Math.min(0.6, (player.feet + 1.0 - m[1]) / hd)) + 0.12;
+  const L = Math.hypot(1, slope);
+  return { m, d: [sy / L, slope / L, cy / L] };
+}
+function inSpray(a) {
+  const { m, d } = sprayAim(a);
+  const px = player.x - m[0], py = player.feet + 1 - m[1], pz = player.z - m[2];
+  const t = Math.max(0, Math.min(24, px * d[0] + py * d[1] + pz * d[2]));
+  return Math.hypot(px - d[0] * t, py - d[1] * t, pz - d[2] * t) < 1.6 + t * 0.08;
+}
+function emitSpray(a, dt) {
+  a.sprayAcc = (a.sprayAcc || 0) + dt * 80;
+  const { m, d } = sprayAim(a);
+  while (a.sprayAcc >= 1) {
+    a.sprayAcc -= 1;
+    const spd = 24 + Math.random() * 5, j = () => (Math.random() - 0.5) * 0.16;
+    flames.push({ x: m[0], y: m[1], z: m[2], vx: (d[0] + j()) * spd, vy: (d[1] + j()) * spd + 2, vz: (d[2] + j()) * spd,
+      t: 0, life: 0.9 + Math.random() * 0.3, m: Math.random() * 2 | 0, water: true });
+  }
 }
 // fire goes the way the dragon faces, tipped up or down to reach your height
 function fireAim(a) {
@@ -2889,10 +3007,10 @@ function updateFlames(dt) {
   for (const f of flames) {
     f.t += dt;
     const k = Math.exp(-dt * 0.9);
-    f.vx *= k; f.vz *= k; f.vy = f.vy * k + dt * 2;
+    f.vx *= k; f.vz *= k; f.vy = f.water ? f.vy * k - dt * 9 : f.vy * k + dt * 2;
     f.x += f.vx * dt; f.y += f.vy * dt; f.z += f.vz * dt;
     const g = groundAt(f.x, f.z) + 0.3;
-    if (f.y < g) { f.y = g; f.vy = Math.abs(f.vy) * 0.2; }
+    if (f.y < g || (f.water && f.y < WATER_Y)) { if (f.water) f.t = f.life; else { f.y = g; f.vy = Math.abs(f.vy) * 0.2; } }
   }
   flames = flames.filter(f => f.t < f.life);
 }
@@ -2929,7 +3047,7 @@ function updateAnimals(dt) {
       if (a.asleep) { if (canSpot && dist < dragonWakeDist) alertAnimal(a); }
       else {
         wander(a, dx, dz, dt); targetYaw = a.wanderYaw; speed = a.wanderSpeed;
-        if (canSpot && dist < sp.sight && (!playerWet || sp.swims) && !(a.calm && dist > 7)) {
+        if (canSpot && dist < sp.sight && (!playerWet || sp.swims) && !(a.calm && dist > (sp.calmWake || 7))) {
           const facing = (Math.sin(a.yaw) * dx + Math.cos(a.yaw) * dz) / dist;
           if (dist < sp.sight * 0.5 || facing > -0.2) alertAnimal(a);
         }
@@ -2948,10 +3066,11 @@ function updateAnimals(dt) {
     a.yaw += Math.max(-turn * dt, Math.min(turn * dt, dy));
     const want = speed * Math.max(0.15, Math.cos(dy));
     a.speed += (want - a.speed) * Math.min(1, dt * 6);
-    const moveYaw = a.kind === 'snake' ? a.yaw + Math.sin(a.legPhase) * 0.45 : a.yaw;
+    const moveYaw = sp.serpent ? a.yaw + Math.sin(a.legPhase) * 0.45 : a.yaw;
     const nx = a.x + (Math.sin(moveYaw) * a.speed + a.kx) * dt, nz = a.z + (Math.cos(moveYaw) * a.speed + a.kz) * dt;
     const k = Math.exp(-dt * 6); a.kx *= k; a.kz *= k;
-    if (sp.swims || a.flyAlt > 1 || groundAt(nx, nz) > 0.3) { a.x = nx; a.z = nz; }
+    if (sp.waterOnly ? groundAt(nx, nz) < -1.2 : (sp.swims || a.flyAlt > 1 || groundAt(nx, nz) > 0.3)) { a.x = nx; a.z = nz; }
+    else if (sp.waterOnly && !a.alerted) a.wanderT = 0;
     else if (a.fleeT > 0) a.yaw += 1.2;           // running into water: turn aside
     else if (!a.alerted) a.wanderT = 0;
     if (!sp.boss || a.kind === 'ogre') pushOutTrees(a, sp.radius * 0.6);
@@ -2960,14 +3079,18 @@ function updateAnimals(dt) {
       a.flyAlt = (a.flyAlt || 0) + (want - (a.flyAlt || 0)) * Math.min(1, dt * (want > a.flyAlt ? 0.9 : 1.4));
       if (a.flying && a.flyT <= 0 && a.flyAlt < 0.3) { a.flying = false; a.flyAlt = 0; a.flyCd = 14 + Math.random() * 8; thump(0.5); shake = 0.4; }
     }
-    a.y = sp.swims ? Math.max(groundAt(a.x, a.z), -0.25) : groundAt(a.x, a.z) + (a.flyAlt || 0);
-    a.legPhase += Math.abs(a.speed) * dt * (sp.hop ? 7 : a.kind === 'snake' ? 1.4 : 1.6 / sp.legLen);
-    if (a.kind === 'snake') {
+    a.y = sp.waterOnly ? WATER_Y - (sp.bodyR || 0.8) * 0.45 : sp.swims ? Math.max(groundAt(a.x, a.z), -0.25) : groundAt(a.x, a.z) + (a.flyAlt || 0);
+    a.legPhase += Math.abs(a.speed) * dt * (sp.hop ? 7 : sp.serpent ? 1.4 / ((sp.bodyR || 0.8) / 0.8) : 1.6 / sp.legLen);
+    if (sp.rearH) {                            // the leviathan rears up out of the water to fight
+      const want = a.dead ? 0 : !a.alerted ? 0 : (a.windup > 0 || a.sprayT > 0 || dist < 16) ? 1 : 0.35;
+      a.rearV = (a.rearV || 0) + (want - (a.rearV || 0)) * Math.min(1, dt * 1.8);
+    }
+    if (sp.serpent) {
       let px = a.x, pz = a.z;
       a.segs.forEach((s, i) => {
         const ex = s.x - px, ez = s.z - pz, d = Math.hypot(ex, ez) || 1e-4;
         if (d > sp.spacing) { s.x = px + ex / d * sp.spacing; s.z = pz + ez / d * sp.spacing; }
-        s.y = Math.max(groundAt(s.x, s.z), -0.25) + snakeR(sp, i) * 0.95;
+        s.y = sp.waterOnly ? WATER_Y - snakeR(sp, i) * 0.4 : Math.max(groundAt(s.x, s.z), -0.25) + snakeR(sp, i) * 0.95;
         px = s.x; pz = s.z;
       });
     }
@@ -3017,11 +3140,11 @@ function drawAnimals(time) {
     if (a.dead) {
       const t = a.deadT;
       sink = t < 0.35 ? -Math.sin(t / 0.35 * Math.PI) * (sp.boss ? 0.8 : 0.35) : Math.max(0, t - 1.0) * sp.sinkH * (sp.boss ? 0.45 : 0.9);
-      if (a.kind !== 'snake') roll = Math.min(1, Math.max(0, t - 0.15) / 0.4) * Math.PI / 2 * a.rollDir;
+      if (!sp.serpent) roll = Math.min(1, Math.max(0, t - 0.15) / 0.4) * Math.PI / 2 * a.rollDir;
       flashD = Math.max(0, 0.7 - t);
     }
     const flash = Math.max(a.flash * 0.8, flashD);
-    if (a.kind === 'snake') { drawSnake(a, sink, flash); continue; }
+    if (sp.serpent) { drawSnake(a, sink, flash); continue; }
     let lift = 0;
     if (sp.hop && !a.dead) lift = Math.abs(Math.sin(a.legPhase)) * 0.22 * Math.min(1, Math.abs(a.speed) / 2);
     if (a.asleep) lift -= 1.0 + Math.sin(time * 1.2) * 0.05;
@@ -3063,19 +3186,22 @@ function drawAnimals(time) {
   for (const f of flames) {
     if (Math.hypot(f.x - player.x, f.y - eyeY, f.z - player.z) < 2.2) continue;   // don't fill the screen
     const s = f.small ? 0.12 + Math.sin(Math.min(1, f.t / f.life) * Math.PI) * 0.22 : 0.25 + Math.sin(Math.min(1, f.t / f.life) * Math.PI) * 0.9 + f.t * 0.3;
-    drawMesh(flameMeshes[f.m], mChain(mT(f.x, f.y, f.z), mS(s)), f.t < 0.12 ? 0.5 : 0);
+    drawMesh(f.water ? waterMeshes[f.m] : flameMeshes[f.m], mChain(mT(f.x, f.y, f.z), mS(f.water ? 0.1 + f.t * 0.22 : s)), f.t < 0.12 ? 0.5 : 0);
   }
   gl.uniform1f(progWorld.u.uEmit, 0);
   gl.uniform1f(progWorld.u.uFlash, 0);
 }
 function drawSnake(a, sink, flash) {
   const m = a.sp.model;
-  const lift = a.dead ? 0 : a.windup > 0 ? 1.1 : a.lunge * 0.65 + (a.alerted ? 0.65 : 0);
-  const head = [a.x, a.y + 0.92 + lift - sink, a.z];
+  const hp = serpentHead(a), lift = hp[3];
+  const head = [hp[0], hp[1] - sink, hp[2]];
+  const sp = a.sp, arch = sp.rearH ? lift : 0;
   // join the head and every body part with a smooth tube so it reads as one long body
   let prev = head, prevR = snakeR(a.sp, 0) * 0.85;
   a.segs.forEach((s, i) => {
-    const r = snakeR(a.sp, i), o = tailOffset(a, i), cur = [s.x + (o ? o[0] : 0), s.y - sink, s.z + (o ? o[1] : 0)];
+    const r = snakeR(a.sp, i), o = tailOffset(a, i);
+    const rise = arch * Math.pow(Math.max(0, 1 - (i + 1) / 7), 1.6);   // the neck arches up behind a rearing head
+    const cur = [s.x + (o ? o[0] : 0), s.y - sink + rise, s.z + (o ? o[1] : 0)];
     const dx = prev[0] - cur[0], dy = prev[1] - cur[1], dz = prev[2] - cur[2], L = Math.hypot(dx, dy, dz);
     if (L > 0.01) {
       const tr = (r + prevR) / 2 * 0.92;
@@ -3084,12 +3210,18 @@ function drawSnake(a, sink, flash) {
     drawMesh(i % 3 === 1 ? m.band : m.seg, mChain(mT(cur[0], cur[1], cur[2]), mRy(Math.atan2(dx, dz)), mS(r)), flash);
     prev = cur; prevR = r;
   });
-  const headM = mChain(mT(head[0], head[1], head[2]), mRy(a.yaw), mRx(a.windup > 0 ? -0.3 : a.lunge * 0.3), mS(1.6));
+  const pitch = (a.windup > 0 ? -0.3 : a.lunge * 0.3) + (sp.rearH ? 0.3 * (a.rearV || 0) : 0);
+  const headM = mChain(mT(head[0], head[1], head[2]), mRy(a.yaw), mRx(pitch), mS(sp.headScale || 1.6));
   drawMesh(m.head, headM, flash);
-  // the jaw opens wide to get ready, snaps shut on the bite, and opens to hiss
+  // the jaw opens wide to get ready, snaps shut on the bite, and opens to hiss (and to spray)
   const open = a.dead ? 0.6 : a.windup > 0 ? 0.15 + 0.85 * (1 - a.windup / a.sp.windup) : a.lunge > 0.6 ? 0
-    : a.roarT > 0 ? 0.7 * Math.min(1, a.roarT * 2) : 0.04;
+    : a.sprayT > 0 ? 0.75 : a.roarT > 0 ? 0.7 * Math.min(1, a.roarT * 2) : 0.04;
   drawMesh(m.jaw, mChain(headM, mT(0, -0.11, -0.15), mRx(open)), flash);
+  if (m.wing) {             // little wings behind the head
+    const flap = 0.3 + Math.sin(performance.now() / 1000 * (a.alerted ? 6 : 2)) * (a.alerted ? 0.5 : 0.2);
+    drawMesh(m.wing, mChain(headM, mT(0.42, 0.15, -0.35), mRz(flap)), flash);
+    drawMesh(m.wing, mChain(headM, mT(-0.42, 0.15, -0.35), mS3(-1, 1, 1), mRz(flap)), flash);
+  }
 }
 function updateBars() {
   for (const a of animals) {
@@ -3109,7 +3241,7 @@ function updateBars() {
   for (const a of animals) if (a.sp.boss && a.alerted && !a.dead) { const d = Math.hypot(a.x - player.x, a.z - player.z); if (d < bd) { bd = d; boss = a; } }
   if (boss && state === 'play') {
     bossEl.classList.add('show');
-    bossName.textContent = ({ dragon: '🐉 ', snake: '🐍 ', ogre: '👹 ' }[boss.kind] || '') + boss.sp.name;
+    bossName.textContent = ({ dragon: '🐉 ', snake: '🐍 ', ogre: '👹 ', leviathan: '🌊 ' }[boss.kind] || '') + boss.sp.name;
     bossFill.style.width = Math.max(0, boss.hp / boss.sp.hp * 100).toFixed(1) + '%';
     bossFill.style.background = boss.poisonT > 0 ? 'linear-gradient(#a6f07f,#3f9f2a)' : '';
   } else bossEl.classList.remove('show');
@@ -3328,7 +3460,7 @@ function landHit() {
     for (const [x, z, r, y] of bodyCircles(a)) {
       const dx = x - player.x, dz = z - player.z, d = Math.hypot(dx, dz) || 0.001;
       if (d - r > w.reach) continue;
-      if (Math.abs(y - player.feet) > (a.kind === 'dragon' ? 5 : 2.5)) continue;
+      if (Math.abs(y - player.feet) > (a.kind === 'dragon' ? 5 : a.kind === 'leviathan' ? 4 : 2.5)) continue;
       const facing = (dx * fx + dz * fz) / d;
       if (facing < 0.45 && d > r + 0.7) continue;
       if (d - r < bestD) { bestD = d - r; best = a; }
@@ -3486,6 +3618,41 @@ if (new URLSearchParams(location.search).has('snake')) {
   sn.wanderYaw = sn.yaw; sn.wanderT = 10; sn.wanderSpeed = 0;   // holds still for a bit so you can look
   player.pitch = Math.atan2(sn.y + 1 - (player.feet + EYE), 15);
   dragonView = true;
+}
+// Shortcut: index.html?leviathan puts you on the shore of the nearest big lake, with the Leviathan
+// lying in the water in front of you. It stays calm until you get close (or hit it).
+if (new URLSearchParams(location.search).has('leviathan')) {
+  let lake = null;
+  for (let r = 0; r < 5000 && !lake; r += 30) {
+    const steps = Math.max(1, Math.floor(2 * Math.PI * r / 30));
+    for (let k = 0; k < steps; k++) {
+      const a = k / steps * Math.PI * 2, x = player.x + Math.cos(a) * r, z = player.z + Math.sin(a) * r;
+      const sm = sample(x, z);
+      if (sm.lake > LAKE_T + 0.06 && sm.h < -2.8) { lake = { x, z }; break; }
+    }
+  }
+  if (lake) {
+    // walk out from the deep water until we reach dry land, and stand there facing the lake
+    let shore = null;
+    for (let i = 0; i < 16 && !shore; i++) {
+      const a = i / 16 * Math.PI * 2;
+      for (let d = 10; d < 200; d += 3) {
+        const x = lake.x + Math.sin(a) * d, z = lake.z + Math.cos(a) * d;
+        if (sample(x, z).h > 1.0) { shore = { x: x + Math.sin(a) * 4, z: z + Math.cos(a) * 4, d }; break; }
+      }
+    }
+    if (shore) {
+      placePlayer({ x: shore.x, z: shore.z, yaw: Math.atan2(lake.x - shore.x, -(lake.z - shore.z)) });
+      settings.animals = true;
+      const lx = player.x + Math.sin(player.yaw) * 30, lz = player.z - Math.cos(player.yaw) * 30;
+      const spot = sample(lx, lz).h < -1.5 ? { x: lx, z: lz } : lake;
+      const lv = spawnLeviathan(spot.x, spot.z, { calm: true });
+      lv.yaw = Math.atan2(player.x - spot.x, player.z - spot.z) + Math.PI / 2; lv.wanderYaw = lv.yaw;
+      lv.wanderT = 10; lv.wanderSpeed = 0;
+      player.pitch = -0.05;
+      dragonView = true;
+    }
+  }
 }
 // Shortcut: index.html?goblin takes you to the nearest goblin camp, 22 m from the fire.
 // The goblins stay calm until you get close (or hit one).
