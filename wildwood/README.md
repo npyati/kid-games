@@ -15,8 +15,8 @@ A 3D exploring game. You walk through a forest that goes on forever: pines, birc
 
 | Enemy | Health | Bite | Where | Drops |
 |---|---|---|---|---|
-| Wolf | 15 | 9 | packs of 2 or 3, mostly in forests | 1 gem, sometimes 1 iron |
-| Bear | 20 | 16 | lives by a cave and comes back 2 minutes after it's beaten | 3 gems, 2 iron |
+| Wolf | 15 | 9 | packs of 2 or 3, mostly in forests | 1 gem, usually 1 fur, sometimes 1 iron |
+| Bear | 20 | 16 | lives by a cave and comes back 2 minutes after it's beaten | 3 gems, 2 iron, 2 fur |
 | Giant snake (boss) | 200 | 18 | marshes; it can swim (about 16 m long); opens its jaw wide and snaps | 15 gems, 3 iron, 2 apples, 2 giant fangs |
 | Dragon (boss) | 500 | 25 bite, plus fire | two legs and big wings, about 25 m long with its tail; sleeps in a volcano on a mountaintop; comes back 10 minutes after it's beaten | 25 gems, 4 iron, 3 apples, 1 dragon scale |
 
@@ -31,7 +31,7 @@ A 3D exploring game. You walk through a forest that goes on forever: pines, birc
 
 Open the backpack with **Y** (controller) or **I** / **Tab** (keyboard). It shows your materials, lets you choose what to hold and wear, and lists what you can craft. Crafted things are yours to keep.
 
-- **Wood:** swing at a tree (5 per tree). **Stone:** swing at a big rock (4 per rock, and sometimes iron). **Iron and gems:** beat enemies. **Dragon scale:** one from each dragon you beat. **Giant fangs:** two from each giant snake you beat.
+- **Wood:** swing at a tree (5 per tree). **Stone:** swing at a big rock (4 per rock, and sometimes iron). **Iron, gems and fur:** beat enemies (wolves usually drop 1 fur, bears 2). **Dragon scale:** one from each dragon you beat. **Giant fangs:** two from each giant snake you beat.
 
 | Item | Damage or armor | Recipe |
 |---|---|---|
@@ -39,16 +39,26 @@ Open the backpack with **Y** (controller) or **I** / **Tab** (keyboard). It show
 | Stick | 3 | 1 wood |
 | Wooden axe | 4, chops 2 wood per hit | 4 wood |
 | Stone club | 4, breaks 2 stone per hit | 2 wood, 3 stone |
+| Stone spear | 4, reaches far | 3 wood, 2 stone |
+| Iron axe | 5, chops 3 wood per hit | 2 wood, 3 iron |
 | Iron sword | 5 | 1 wood, 4 iron |
+| Fang dagger | 5, very fast, poisons | 1 giant fang, 1 iron |
+| Iron hammer | 6, slow, knocks enemies far, breaks 3 stone | 1 wood, 5 iron |
 | Crystal sword | 6 | 2 iron, 12 gems |
+| Crystal spear | 6, reaches far | 2 wood, 1 iron, 8 gems |
+| Crystal axe | 7, chops 3 wood per hit | 1 wood, 2 iron, 10 gems |
 | Venom glaive | 8, reaches far, poisons (2 damage a second for 4 seconds) | 1 giant fang, 2 wood, 3 iron |
 | Dragon sword | 10 | 1 dragon scale, 3 iron |
 | Wooden chest plate | blocks 15% | 8 wood |
+| Fur chest plate | blocks 20% | 6 fur |
+| Stone chest plate | blocks 25% | 10 stone, 2 wood |
+| Spiked chest plate | blocks 30%; anything that bites you takes 3 damage | 6 iron, 4 stone |
 | Iron chest plate | blocks 35% | 8 iron |
 | Venom chest plate | blocks 45%, poisons anything that bites you | 1 giant fang, 6 iron |
+| Crystal chest plate | blocks 50% | 4 iron, 20 gems |
 | Dragon chest plate | blocks 60% | 1 dragon scale, 4 iron |
 
-The two dragon recipes both need the scale, so you have to choose. One snake's two fangs make both venom items. A poisoned enemy's health bar turns green. The backpack asks you to press a second time before it uses the scale.
+The two dragon recipes both need the scale, so you have to choose. One snake's two fangs make two of the three fang items (venom glaive, venom chest plate, fang dagger). A poisoned enemy's health bar turns green. The backpack asks you to press a second time before it uses the scale.
 
 ## How the world is made
 
