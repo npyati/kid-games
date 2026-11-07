@@ -2043,12 +2043,12 @@ function ogreModel() {
   const SKIN = [0.55, 0.6, 0.34], DSKIN = [0.42, 0.47, 0.25], CLOTH = [0.45, 0.3, 0.18], HAIR = [0.25, 0.16, 0.1];
   const IVORY = [0.96, 0.93, 0.8], DK = [0.08, 0.06, 0.05];
   const B = (x, y, z, rx, ry, rz, c, j) => blob(g, x, y, z, rx, ry, rz, c, r, j === undefined ? 0.1 : j, -1, 0);
-  B(0, 1.35, 0, 0.72, 0.4, 0.56, CLOTH);                     // loincloth
-  tube(g, [-0.72, 1.55, 0], [0.72, 1.55, 0], 0.09, 0.09, 6, [0.3, 0.2, 0.12], r, true);   // belt
-  B(0, 1.88, 0.14, 0.86, 0.7, 0.76, SKIN);                   // big belly
-  B(0, 2.38, -0.02, 0.88, 0.55, 0.6, SKIN);                  // chest and shoulders
-  B(0.62, 2.5, -0.05, 0.38, 0.3, 0.36, DSKIN);               // shoulder lumps
-  B(-0.62, 2.5, -0.05, 0.38, 0.3, 0.36, DSKIN);
+  B(0, 1.35, 0, 0.6, 0.4, 0.5, CLOTH);                       // loincloth
+  tube(g, [-0.6, 1.55, 0], [0.6, 1.55, 0], 0.08, 0.08, 6, [0.3, 0.2, 0.12], r, true);    // belt
+  B(0, 1.88, 0.12, 0.72, 0.68, 0.64, SKIN);                  // belly
+  B(0, 2.38, -0.02, 0.74, 0.55, 0.52, SKIN);                 // chest and shoulders
+  B(0.55, 2.5, -0.05, 0.32, 0.28, 0.32, DSKIN);              // shoulder lumps
+  B(-0.55, 2.5, -0.05, 0.32, 0.28, 0.32, DSKIN);
   B(0, 2.95, 0.15, 0.36, 0.38, 0.36, SKIN);                  // small head
   B(0, 3.09, 0.42, 0.32, 0.07, 0.1, DSKIN);                  // one big eyebrow
   for (const sd of [-1, 1]) {
@@ -2062,13 +2062,13 @@ function ogreModel() {
   B(0, 2.79, 0.53, 0.14, 0.012, 0.04, [0.35, 0.1, 0.1], 0);   // mouth
   B(0, 3.32, 0.04, 0.13, 0.11, 0.13, HAIR);                  // tuft of hair
   const lg = new Geo(512);
-  tube(lg, [0, 0.05, 0], [0, -0.6, 0.05], 0.32, 0.26, 7, SKIN, r, false);
-  tube(lg, [0, -0.6, 0.05], [0, -1.15, 0], 0.25, 0.2, 7, SKIN, r, false);
+  tube(lg, [0, 0.05, 0], [0, -0.6, 0.05], 0.28, 0.23, 7, SKIN, r, false);
+  tube(lg, [0, -0.6, 0.05], [0, -1.15, 0], 0.22, 0.18, 7, SKIN, r, false);
   blob(lg, 0, -1.2, 0.15, 0.26, 0.12, 0.36, DSKIN, r, 0.1, -1, 0);
   const arm = withClub => {
     const ag = new Geo(1024);
-    tube(ag, [0, 0, 0], [0, -0.65, 0.05], 0.24, 0.2, 7, SKIN, r, false);
-    tube(ag, [0, -0.65, 0.05], [0, -1.25, 0.12], 0.2, 0.22, 7, SKIN, r, false);
+    tube(ag, [0, 0, 0], [0, -0.65, 0.05], 0.21, 0.18, 7, SKIN, r, false);
+    tube(ag, [0, -0.65, 0.05], [0, -1.25, 0.12], 0.18, 0.2, 7, SKIN, r, false);
     blob(ag, 0, -1.32, 0.12, 0.2, 0.18, 0.2, DSKIN, r, 0.1, -1, 0);
     if (withClub) {                                           // a big spiked wooden club
       tube(ag, [0, -1.3, 0.05], [0, -1.62, 1.0], 0.07, 0.11, 6, [0.42, 0.28, 0.16], r, true);
@@ -2146,8 +2146,8 @@ const SPECIES = {
   snake: { name: 'Giant snake', boss: true, swims: true, hp: 200, dmg: 18, reach: 3.3, windup: 0.45, cd: 1.5, walk: 1.8, run: 5.0, sight: 28, turn: 2.5,
     radius: 1.0, drops: { gems: 15, iron: 3, apples: 2, fang: 2 }, knock: 0, sinkH: 2.0, legLen: 1, giveUp: 55, segs: 16, spacing: 1.15 },
   ogre: { name: 'Ogre', boss: true, hp: 150, dmg: 20, reach: 3.6, windup: 0.9, cd: 2.0, walk: 1.4, run: 4.8, sight: 28, turn: 2.5,
-    radius: 0.9, drops: { gems: 8, iron: 2, fur: 2, apples: 1 }, knock: 0.15, sinkH: 3.5, giveUp: 60, legLen: 1.2, hipY: 1.25,
-    hips: [[0.45, 0], [-0.45, 0]], shoulders: [[0.98, 2.45, 0], [-0.98, 2.45, 0]] },
+    radius: 0.8, drops: { gems: 8, iron: 2, fur: 2, apples: 1 }, knock: 0.15, sinkH: 3.5, giveUp: 60, legLen: 1.2, hipY: 1.25,
+    hips: [[0.38, 0], [-0.38, 0]], shoulders: [[0.84, 2.45, 0], [-0.84, 2.45, 0]] },
   dragon: { name: 'Dragon', boss: true, scale: 1.5, tilt: -0.2, hp: 500, dmg: 25, reach: 8.0, windup: 0.8, cd: 2.2, walk: 2.0, run: 4.6, sight: 40, turn: 1.4,
     radius: 4.5, drops: { gems: 25, iron: 4, scale: 1, apples: 3 }, knock: 0, sinkH: 9, giveUp: 75, legLen: 1.8, hipY: 1.95, hips: [[1.2, -0.4], [-1.2, -0.4]] },
 };
