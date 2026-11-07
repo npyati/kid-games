@@ -19,7 +19,7 @@ A 3D exploring game. You walk through a forest that goes on forever: pines, birc
 | Bear | 20 | 16 | lives by a cave and comes back 2 minutes after it's beaten | 3 gems, 2 iron, 2 fur |
 | Ogre (mini-boss) | 150 | 20, a big club smash | wanders forests now and then (about a 1 in 3 chance per minute in a forest), comes back 2½ minutes after it's beaten; slower than you when you run | 8 gems, 2 iron, 2 fur, 1 apple |
 | Giant snake (boss) | 200 | 18 | marshes; it can swim (about 16 m long); opens its jaw wide and snaps | 15 gems, 3 iron, 2 apples, 2 giant fangs |
-| Dragon (boss) | 500 | 25 bite, plus fire | two legs and big wings, about 25 m long with its tail; sleeps in a volcano on a mountaintop; comes back 10 minutes after it's beaten | 25 gems, 4 iron, 3 apples, 1 dragon scale |
+| Dragon (boss) | 650 | 25 bite, plus fire | two legs and big wings, about 25 m long with its tail; sleeps in a volcano on a mountaintop; comes back 10 minutes after it's beaten | 25 gems, 4 iron, 3 apples, 1 dragon scale |
 
 - Enemies wander until they spot you (they see farther in front of them). Then a health bar pops up over their head, they chase you, and they bite when they're close. Bosses get a big health bar across the top of the screen instead.
 - You run faster than all of them. Wolves and bears can't swim, so jumping in water is a good escape. Snakes can swim.
