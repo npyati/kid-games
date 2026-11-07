@@ -134,8 +134,8 @@ nav button:focus-visible,nav a:focus-visible{outline:none;border-color:var(--sun
       <a data-act="home" href="../">All games</a>
     </nav>
     <div class="howto">
-      <div><b>Xbox controller</b>Left stick: walk · Right stick: look · A: jump · RT: swing or shoot · LB: block with a shield · LT or click left stick: run · Y: backpack · Start: menu</div>
-      <div><b>Keyboard and mouse</b>WASD: walk · Mouse: look · Click or F: swing or shoot · Right-click or Q: block · Space: jump · Shift: run · I or Tab: backpack · Esc: menu</div>
+      <div><b>Xbox controller</b>Left stick: walk · Right stick: look · A: jump · RT: swing or shoot · LB: block with a shield · D-pad right: sword ↔ bow · D-pad left: shield on/off · LT or click left stick: run · Y: backpack · Start: menu</div>
+      <div><b>Keyboard and mouse</b>WASD: walk · Mouse: look · Click or F: swing or shoot · Right-click or Q: block · 1: sword · 2: bow · 3: shield on/off · Space: jump · Shift: run · I or Tab: backpack · Esc: menu</div>
       <div><b>Animals</b>Foxes, deer and rabbits are friendly. Wolves, and bears from caves, chase you once they spot you. Beat them for gems, iron and apples. They can't swim!</div>
       <div><b>Crafting</b>Swing at trees for wood and at big rocks for stone. Open your backpack to make axes, swords, bows, shields and chest plates.</div>
       <div><b>Bosses</b>Crocodiles lurk in rivers. Goats (leave them alone!) and ice ogres live in the icy mountains. Goblins camp in open fields. Ogres roam the forests. Giant snakes hide in marshes. The Leviathan lives in big lakes. Dragons sleep in volcanoes on mountaintops, ringed by tall black spikes. They can fly!</div>
@@ -1734,6 +1734,9 @@ addEventListener('keydown', e => {
   if (state === 'play') {
     if (e.code === 'Escape' || e.code === 'KeyP') { openMenu(); e.preventDefault(); return; }
     if (e.code === 'KeyI' || e.code === 'Tab') { openInv(false); e.preventDefault(); return; }
+    if (e.code === 'Digit1') { pickWeapon('melee'); return; }
+    if (e.code === 'Digit2') { pickWeapon('bow'); return; }
+    if (e.code === 'Digit3') { toggleShield(); return; }
     keys.add(e.code);
     if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
   } else {
@@ -2649,6 +2652,33 @@ const equip = { weapon: 'fists', armor: null, shield: null };
   if (owned.has(e.armor) && ITEMS[e.armor].type === 'armor') equip.armor = e.armor;
 })();
 const curWeapon = () => ITEMS[equip.weapon];
+// quick-switching: remember the last sword-type weapon, bow and shield you used
+const lastGear = { melee: null, bow: null, shield: null };
+const bestOwned = type => ITEM_ORDER.filter(id => owned.has(id) && ITEMS[id].type === type).sort((a, b) => (ITEMS[b].dmg || ITEMS[b].block || 0) - (ITEMS[a].dmg || ITEMS[a].block || 0))[0] || null;
+function pickWeapon(kind) {
+  const cur = curWeapon();
+  if (cur.type === 'bow') lastGear.bow = equip.weapon; else lastGear.melee = equip.weapon;
+  const want = kind === 'bow' ? (owned.has(lastGear.bow) ? lastGear.bow : bestOwned('bow'))
+    : (owned.has(lastGear.melee) ? lastGear.melee : bestOwned('weapon') || 'fists');
+  if (!want) { feed('No bow yet! Make one in your backpack.'); return; }
+  if (want === equip.weapon) return;
+  equip.weapon = want; swingT = -1;
+  const it = ITEMS[want];
+  feed(`${it.icon} ${it.name}` + (it.type === 'bow' ? ` · ➶ ${mats.arrows}` : ''));
+  tone('triangle', 520, 700, 0.08, 0.05);
+  updateHud(); writeSave();
+}
+function swapWeaponBow() { pickWeapon(curWeapon().type === 'bow' ? 'melee' : 'bow'); }
+function toggleShield() {
+  if (equip.shield) { lastGear.shield = equip.shield; feed(`Put away the ${ITEMS[equip.shield].name}`); equip.shield = null; }
+  else {
+    const sh = owned.has(lastGear.shield) ? lastGear.shield : bestOwned('shield');
+    if (!sh) { feed('No shield yet! Make one in your backpack.'); return; }
+    equip.shield = sh; feed(`${ITEMS[sh].icon} ${ITEMS[sh].name} (hold LB to block)`);
+  }
+  tone('triangle', 440, 620, 0.08, 0.05);
+  updateHud(); writeSave();
+}
 const armorValue = () => equip.armor ? ITEMS[equip.armor].armor : 0;
 
 // trees give wood and big rocks give stone (sometimes iron), a few times each
@@ -3501,7 +3531,7 @@ function drawAnimals(time) {
     if (a.asleep) lift -= 1.0 + Math.sin(time * 1.2) * 0.05;
     const { base, body } = creatureMats(a, sink, lift, roll);
     drawMesh(sp.model.body, body, flash);
-    if (sp.model.jaw) {       // open wide to bite, snap shut, open to roar and breathe fire
+    if (a.kind === 'dragon') {   // open wide to bite, snap shut, open to roar and breathe fire
       const open = a.dead ? 0.5 : a.windup > 0 ? 0.15 + 0.65 * (1 - a.windup / sp.windup) : a.lunge > 0.6 ? 0
         : a.fireT > 0 ? 0.55 : a.roarT > 0 ? 0.6 * Math.min(1, a.roarT * 2) : a.asleep ? 0 : 0.06;
       drawMesh(sp.model.jaw, mChain(body, mT(0, 4.45, 4.6), mRx(open)), flash);
@@ -4175,6 +4205,8 @@ function frame(now) {
   if (state === 'play') {
     if (pressed(9) || pressed(8)) openMenu();
     else if (pressed(3)) openInv(false);
+    else if (pressed(15)) swapWeaponBow();       // D-pad right: sword <-> bow
+    else if (pressed(14)) toggleShield();        // D-pad left: shield on / off
     else {
       if (!player.ko) updatePlayer(dt);
       updateSwing(dt);

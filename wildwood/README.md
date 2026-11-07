@@ -6,8 +6,8 @@ A 3D exploring game. You walk through a forest that goes on forever: pines, birc
 
 ## Controls
 
-- **Xbox controller:** left stick to walk, right stick to look, RT (or RB) to swing or shoot, LB to block with a shield, A to jump, LT (or click the left stick) to run, Start to open the menu. Hold RT to keep swinging. In the menu, use the stick or d-pad and press A to choose, or B to go back.
-- **Keyboard and mouse:** WASD to walk, mouse to look (click the game to grab the mouse), click or F to swing or shoot, right-click or Q to block, Space to jump, Shift to run, Esc for the menu. Arrow keys work too.
+- **Xbox controller:** left stick to walk, right stick to look, RT (or RB) to swing or shoot, LB to block with a shield, D-pad right to swap between your sword and your bow, D-pad left to take your shield out or put it away, A to jump, LT (or click the left stick) to run, Start to open the menu. Hold RT to keep swinging. In the menu, use the stick or d-pad and press A to choose, or B to go back.
+- **Keyboard and mouse:** WASD to walk, mouse to look (click the game to grab the mouse), click or F to swing or shoot, right-click or Q to block, 1 / 2 / 3 for sword / bow / shield on-off, Space to jump, Shift to run, Esc for the menu. Arrow keys work too.
 
 ## Animals and fighting
 
