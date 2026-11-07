@@ -1,6 +1,6 @@
 # Wildwood
 
-A 3D exploring game. You walk through a forest that goes on forever: pines, birches, leafy trees, ferns, tall grass, flowers, mushrooms and rocks. Every few minutes of walking you reach a river or a lake, and you can wade in and swim. There are also icy mountains, muddy marshes, rocky caves, and very rarely, a dragon's lair.
+A 3D exploring game. You walk through a forest that goes on forever: pines, birches, leafy trees, ferns, tall grass, flowers, mushrooms and rocks. Every few minutes of walking you reach a river or a lake, and you can wade in and swim. There are also icy mountains, the ocean with sandy beaches, muddy marshes, rocky caves, and very rarely, a dragon's lair.
 
 **Play it:** https://npyati.github.io/kid-games/wildwood/
 
@@ -15,6 +15,8 @@ A 3D exploring game. You walk through a forest that goes on forever: pines, birc
 
 **Dragonlings** are neutral too: part goblin, part dragon (red scales, little horns and wings, a spear, and a green tunic with a rope belt and a yellow scarf). They live in camps in forests (the nearest is usually about 450 m away when you're in a forest): nest huts, a campfire, a dragon-head totem and a little gold. Camp creatures (goblins and dragonlings) walk around their campfire, not through it. Leave them alone and they leave you alone; hit one and the whole camp fights back with spears (7) and little puffs of fire (2 every ⅕ second). 20 health; when you beat one it doesn't fall over: it drops 2 gems (and sometimes iron) and runs away into the forest. New ones move in 4 minutes after a camp is beaten.
 
+**Fish** swim in rivers and lakes, just under the surface, and now and then one jumps out with a splash: silver trout with a pink stripe, orange sunfish, blue striped bluegills, and (rarely, about 1 in 16) a golden fish. They dart away if you get very close, but they don't fight back. One hit (two with fists) catches one: it flips belly up and leaves fish scales floating on the water (a golden fish leaves a golden scale, a fish scale and 2 gems). Up to 8 are around you at a time when you're near water. Fish stay even with **Enemies: off**.
+
 **Goats** live in the mountains and are neutral: they leave you alone unless you hit one, then that one and its herd headbutt you (12 health, 6 damage, a big knockback; they drop fur).
 
 | Enemy | Health | Bite | Where | Drops |
@@ -22,6 +24,7 @@ A 3D exploring game. You walk through a forest that goes on forever: pines, birc
 | Wolf | 15 | 9 | packs of 2 or 3, mostly in forests | 1 gem, usually 1 fur, sometimes 1 iron |
 | Bear | 20 | 16 | lives by a cave and comes back 2 minutes after it's beaten | 3 gems, 2 iron, 2 fur |
 | Crocodile | 30 | 12 bite, 10 tail whip | in rivers (up to 3 at a time, they spawn in the water near you); they float with just their back showing and come out onto land; the tail whip hits you if you're behind it | 1 croc skin, 1 gem |
+| Shark | 45 | 9 | the ocean (up to 2 at a time); you see its fin sticking out of the water. It only comes after you when you're in the water, and it can't come into the shallows | 2 shark teeth, 2 gems |
 | Goblin | 18 | 8 axe chop | in camps out in open fields (3 to 5 per camp, they come as a gang); camps come back 4 minutes after they're cleared | 3 gems, sometimes iron or wood; 1 in 4 drop their crude goblin axe; clearing a camp leaves 6 gems, 2 iron and an apple by the fire |
 | Leviathan (boss) | 650 | 30 bite, 20 tail whip, water spray | big lakes only; a huge purple sea serpent (about 40 m long) with a blue belly, horns and two pairs of small wings on its back; rears up out of the water to fight, lunges its head out to bite from up to 11 m, and sprays water from its open mouth from up to 24 m away; comes back 5 minutes after it's beaten | 30 gems, 4 iron, 3 apples |
 | Ice ogre (mini-boss) | 200 | 22 club smash; frost slam | snowy mountains; same as an ogre but with bluish-white skin and an ice club. Its frost slam sends a line of ice spikes racing along the ground at you: 15 damage and you're frozen (slow) for 3 seconds | 10 gems, 2 iron, 2 frost crystals, 1 apple |
@@ -40,7 +43,7 @@ A 3D exploring game. You walk through a forest that goes on forever: pines, birc
 
 Open the backpack with **Y** (controller) or **I** / **Tab** (keyboard). It shows your materials, lets you choose what to hold and wear, and lists what you can craft. Crafted things are yours to keep.
 
-- **Wood:** swing at a tree (5 per tree). **Stone:** swing at a big rock (4 per rock, and sometimes iron). **Iron, gems and fur:** beat enemies (wolves usually drop 1 fur, bears 2). **Dragon scale:** one from each dragon you beat. **Giant fangs:** two from each giant snake you beat. **Frost crystals:** two from each ice ogre. **Croc skin:** one from each crocodile.
+- **Wood:** swing at a tree (5 per tree). **Stone:** swing at a big rock (4 per rock, and sometimes iron). **Iron, gems and fur:** beat enemies (wolves usually drop 1 fur, bears 2). **Dragon scale:** one from each dragon you beat. **Giant fangs:** two from each giant snake you beat. **Frost crystals:** two from each ice ogre. **Croc skin:** one from each crocodile. **Fish scales:** one from each fish. **Golden scale:** from the rare golden fish. **Shark teeth:** two from each shark.
 
 | Item | Damage or armor | Recipe |
 |---|---|---|
@@ -56,6 +59,10 @@ Open the backpack with **Y** (controller) or **I** / **Tab** (keyboard). It show
 | Iron hammer | 6, slow, knocks enemies far, breaks 3 stone | 1 wood, 5 iron |
 | Croc-tail whip | 6, reaches very far (4.6 m) | 2 croc skin, 1 wood |
 | Croc-jaw mace | 7, big knockback | 2 croc skin, 2 iron |
+| Scale sword | 6, quick | 6 fish scales, 1 iron |
+| Scale spear | 6, reaches far | 5 fish scales, 2 wood |
+| Golden trident | 8, double damage to anything that swims (fish, crocodiles, sharks, snakes, the Leviathan), reaches far | 1 golden scale, 4 fish scales, 2 iron |
+| Shark-tooth sword | 9 | 4 shark teeth, 2 iron, 1 wood |
 | Crystal sword | 6 | 2 iron, 12 gems |
 | Crystal spear | 6, reaches far | 2 wood, 1 iron, 8 gems |
 | Crystal axe | 7, chops 3 wood per hit | 1 wood, 2 iron, 10 gems |
@@ -66,6 +73,7 @@ Open the backpack with **Y** (controller) or **I** / **Tab** (keyboard). It show
 | Venom bow | 7-damage poison arrows | 1 giant fang, 2 wood, 1 fur |
 | Frost bow | 7-damage arrows that slow enemies | 1 frost crystal, 2 wood, 1 fur |
 | Croc-tooth bow | 8-damage arrows | 2 croc skin, 2 wood, 1 fur |
+| Scale bow | 7-damage arrows, shoots quickly | 6 fish scales, 2 wood |
 | Crystal bow | 8-damage arrows | 2 wood, 1 iron, 12 gems |
 | Dragon bow | 12-damage arrows | 1 dragon scale, 2 wood, 2 iron |
 | 10 arrows | for bows (your first bow comes with 10) | 1 wood, 1 stone |
@@ -73,25 +81,28 @@ Open the backpack with **Y** (controller) or **I** / **Tab** (keyboard). It show
 | Fur chest plate | blocks 20% | 6 fur |
 | Stone chest plate | blocks 25% | 10 stone, 2 wood |
 | Spiked chest plate | blocks 30%; anything that bites you takes 3 damage | 6 iron, 4 stone |
+| Scale chest plate | blocks 35% | 10 fish scales |
 | Iron chest plate | blocks 35% | 8 iron |
 | Venom chest plate | blocks 45%, poisons anything that bites you | 1 giant fang, 6 iron |
 | Crystal chest plate | blocks 50% | 4 iron, 20 gems |
 | Dragon chest plate | blocks 60% | 1 dragon scale, 4 iron |
 | Wooden shield | blocks 40% when raised | 6 wood |
 | Iron shield | blocks 60% | 5 iron, 1 wood |
+| Scale shield | blocks 65% | 8 fish scales, 1 wood |
 | Spiked shield | blocks 55%; attackers take 4 damage | 4 iron, 4 stone |
 | Venom shield | blocks 65%; poisons attackers | 1 giant fang, 3 iron |
 | Frost shield | blocks 70%; slows attackers | 1 frost crystal, 3 iron |
 | Crystal shield | blocks 75% | 2 iron, 15 gems |
 | Dragon shield | blocks 90%, even dragon fire | 1 dragon scale, 3 iron |
 
-Bows go in your hand like a weapon: RT shoots an arrow where your crosshair points (they drop a little over distance and stick in the ground and trees). A shield goes on your other arm: hold LB to raise it, which blocks hits from in front but slows you down and stops you swinging. The four dragon recipes (sword, chest plate, bow, shield) all need the scale, so you have to choose. One snake's two fangs make two of the three fang items (venom glaive, venom chest plate, fang dagger). A poisoned enemy's health bar turns green. The backpack asks you to press a second time before it uses the scale.
+Bows go in your hand like a weapon: RT shoots an arrow where your crosshair points (they drop a little over distance and stick in the ground and trees). A shield goes on your other arm: hold LB to raise it, which blocks hits from in front and slows you down, but you can still swing or shoot. You can't raise it while swimming. The four dragon recipes (sword, chest plate, bow, shield) all need the scale, so you have to choose. One snake's two fangs make two of the three fang items (venom glaive, venom chest plate, fang dagger). A poisoned enemy's health bar turns green. The backpack asks you to press a second time before it uses the scale.
 
 ## How the world is made
 
 - Everything is in `index.html`, drawn with plain WebGL 2 (no libraries).
 - The world is built from a seed in 64 m squares ("chunks") as you walk, and dropped again once they're far behind. Grass, ferns and flowers are only built for the squares close to you.
 - Rivers follow the zero lines of a slow, wiggly noise, and lakes are where a second noise is high. Marshes are where a third noise is high, but only on low ground (so they never leave cliffs next to hills). Icy mountains (sharp peaks up to about 150 m, snow above about 30 m, icy blue on steep high faces, frosty pines, light snowfall; you reach a range about every 6 minutes of walking; rivers and lakes stay out of them), goblin camps (at most one per 640 m square, in open fields; the nearest is usually about 500 m away), caves (at most one per 384 m square) and dragon lairs (at most one per 1 km square, on the highest ground there but never in or next to the icy mountains or snow, with a volcano built into the ground: a 14 m cone with a lava-cracked crater, lava streaks and smoke) are placed from the seed too.
+- The ocean is where a fourth, very slow noise is high. The land around it comes down to a sandy beach about 100 m wide, then the sea floor drops to about 14 m deep. Mountains and marshes fade out before the coast. It covers about 1/6 of the world; walking in a straight line you reach it about every 6 to 7 minutes (sometimes 3, sometimes 12).
 - The terrain code sits between `TERRAIN-BEGIN` and `TERRAIN-END` so a checker script can run it in Node. On four seeds: water about once per km (around 1 minute of walking), a marsh about every 1.4 km (around 5 minutes), a cave about every 550 m, and the nearest dragon lair is usually about 550 to 620 m away.
 - Creatures, your hand and items use rounder shapes (each ball has 80 faces instead of 20) than trees and rocks, which there are thousands of.
 - **New world** in the menu picks a new seed.
@@ -111,3 +122,5 @@ One `localStorage` key, `wildwood.v1`: music, sound, look direction and enemy se
 - `wildwood/?iceogre` does the same, with a calm ice ogre 25 m in front of you.
 - `wildwood/?croc` puts you on a river bank with a calm crocodile in the water in front of you.
 - `wildwood/?dragonling` takes you to the nearest dragonling camp.
+- `wildwood/?fish` puts you on a river bank with one of each kind of fish in the water in front of you.
+- `wildwood/?ocean` puts you on the nearest beach looking out to sea; `wildwood/?shark` does the same with a shark in the water in front of you.
