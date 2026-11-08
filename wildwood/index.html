@@ -1835,7 +1835,7 @@ function pad3(notes, t, dur) {
 function scheduleMusic() {
   if (!audioOn()) return;
   const now = actx.currentTime;
-  if (!settings.music) { music.nextT = now + 0.3; return; }
+  if (!settings.music || bossFight()) { music.nextT = now + 0.3; return; }     // boss music takes over during a boss fight
   if (music.nextT < now) music.nextT = now + 0.05;
   while (music.nextT < now + 0.4) {
     const t = music.nextT, b = music.beat;
@@ -1846,6 +1846,88 @@ function scheduleMusic() {
     }
     music.beat++;
     music.nextT += BEAT;
+  }
+}
+
+/* ---------- boss music (made with the kids using Ask Claude) ----------
+   Plays instead of the regular music while a boss is after you, and stops when the fight is over.
+   Most bosses get the saved "regular boss music" (three parts that change as the fight goes on);
+   a dragon fight gets a faster, fiery theme. It follows the Music on/off setting. */
+const BOSS_SECTIONS = [
+  { arp: [293, 311, 349, 293, 261.6, 293, 233, 261.6], bass: [73.4, 73.4, 69.3, 65.4], chords: [[146.8, 174.6, 220], [146.8, 164.8, 220], [138.6, 164.8, 207.7], [130.8, 155.6, 196]], step: 0.17, wave: 'triangle' },
+  { arp: [440, 415.3, 349, 311, 293, 311, 349, 415.3], bass: [73.4, 65.4, 69.3, 73.4], chords: [[146.8, 174.6, 220], [138.6, 164.8, 207.7], [130.8, 155.6, 196], [146.8, 185, 220]], step: 0.17, wave: 'sine' },
+  { arp: [311, 293, 261.6, 233, 220, 233, 261.6, 293], bass: [73.4, 65.4, 69.3, 73.4], chords: [[146.8, 174.6, 220], [130.8, 155.6, 196], [138.6, 164.8, 207.7], [146.8, 164.8, 220]], step: 0.16, wave: 'triangle' }
+];
+const DRAGON_SECTIONS = [
+  { arp: [164.8, 196, 246.9, 329.6, 293.7, 246.9, 196, 185], bass: [41.2, 41.2, 38.9, 36.7], chords: [[82.4, 98, 123.5], [82.4, 98, 123.5], [77.8, 92.5, 116.5], [73.4, 87.3, 110]], step: 0.12, wave: 'sawtooth' },
+  { arp: [329.6, 392, 493.9, 659.3, 587.3, 493.9, 392, 370], bass: [41.2, 38.9, 36.7, 41.2], chords: [[82.4, 98, 123.5], [77.8, 92.5, 116.5], [73.4, 87.3, 110], [82.4, 103.8, 123.5]], step: 0.12, wave: 'triangle' }
+];
+const bossMusic = { t: 0, i: 0 };
+function bossFight() { return state === 'play' && animals.some(a => a.sp.boss && a.alerted && !a.dead); }
+function mtone(type, f0, f1, dur, vol, delay) {          // like tone(), but on the music bus and the Music setting
+  if (!audioOn() || !settings.music) return;
+  const t = actx.currentTime + (delay || 0);
+  const o = actx.createOscillator(); o.type = type;
+  o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  const g = actx.createGain();
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(musicBus);
+  o.start(t); o.stop(t + dur + 0.05);
+}
+function mthump(vol) {
+  if (!audioOn() || !settings.music) return;
+  const t = actx.currentTime;
+  const o = actx.createOscillator(); o.frequency.setValueAtTime(130, t); o.frequency.exponentialRampToValueAtTime(55, t + 0.15);
+  const g = actx.createGain(); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+  o.connect(g); g.connect(musicBus); o.start(t); o.stop(t + 0.2);
+}
+function updateBossMusic(dt) {
+  if (!bossFight() || !settings.music || !audioOn()) { bossMusic.t = 0; return; }
+  const dragonFight = animals.some(a => a.kind === 'dragon' && a.alerted && !a.dead);
+  bossMusic.t -= dt;
+  if (bossMusic.t > 0) return;
+  const secs = dragonFight ? DRAGON_SECTIONS : BOSS_SECTIONS;
+  const sec = secs[Math.floor(bossMusic.i / 32) % secs.length], n = bossMusic.i % 8, f = sec.arp[n];
+  mtone(sec.wave, f, f * 1.005, sec.step * 2.5, dragonFight ? 0.08 : 0.1);
+  mtone('sine', f * 0.5, f * 0.5 * 1.003, sec.step * 2.5, dragonFight ? 0.07 : 0.06);
+  if (dragonFight) { if (n % 2 === 0) mtone('square', f * 2, f * 2, sec.step, 0.025); }
+  else {
+    mtone('triangle', f * 1.5, f * 1.5, sec.step * 1.5, 0.04, 0.02);              // harmony
+    if (n % 2 === 1) mtone('sine', f * 2, f * 2 * 1.005, sec.step, 0.035, 0.05);   // a little sparkle
+  }
+  if (n === 0) {
+    const k = Math.floor(bossMusic.i / 8) % sec.bass.length, b = sec.bass[k];
+    mtone('sine', b, b * 0.98, 2.5, 0.8);
+    for (const c of sec.chords[k]) { mtone('triangle', c, c * 1.002, 2.5, 0.07); mtone('sine', c * 1.004, c * 1.004, 2.5, 0.045); }
+  }
+  if (dragonFight ? n % 2 === 0 : n % 4 === 0) mthump(0.9);
+  bossMusic.i++;
+  bossMusic.t = sec.step;
+}
+// during a dragon fight the dragon gives a huge roar every 4-6 seconds; flying dragons glide forward now and then and bob
+let dragonRoarT = 0;
+function updateDragonExtras(dt) {
+  const d = animals.find(a => a.kind === 'dragon' && a.alerted && !a.dead);
+  if (!d) dragonRoarT = 0;
+  else if ((dragonRoarT -= dt) <= 0) {
+    dragonRoarT = 4 + Math.random() * 2;
+    d.roarT = 1.5;
+    growlSound('dragon');
+    rumble(1, 1, 900);
+    for (let i = 0; i < players.length; i++) { usePlayer(i); shake = Math.max(shake, 0.8); }
+    usePlayer(0);
+    tone('sawtooth', 160, 50, 2.2, 0.45, 0, 900);
+    tone('sawtooth', 220, 70, 2.0, 0.3, 0.1, 1200);
+    tone('square', 90, 40, 1.8, 0.2, 0.05, 700);
+    noiseHit('lowpass', 700, 0.7, 2.0, 0.6);
+  }
+  const t = performance.now() / 1000;
+  for (const a of animals) {
+    if (a.kind !== 'dragon' || a.dead || !a.flying) continue;
+    const glide = Math.max(0, Math.sin(t * 0.5 + (a.id || 0)));
+    a.x += Math.sin(a.yaw) * glide * 2.5 * dt;
+    a.z += Math.cos(a.yaw) * glide * 2.5 * dt;
+    a.flyAlt = (a.flyAlt || 0) + Math.sin(t * 1.3 + (a.id || 0)) * 0.4 * dt;
   }
 }
 
@@ -2766,6 +2848,7 @@ function dragonModel() {
     const top = 2.6 + 1.15 * Math.sqrt(Math.max(0, 1 - (z / 2.8) ** 2));
     tube(g, [0, top - 0.2, z], [0, top + 0.75, z - 0.25], 0.22, 0.02, 4, DARK, r, false);
   }
+  for (const z of [-2.0, -1.2, -0.4, 0.4, 1.2, 2.0]) tube(g, [0, 3.4, z], [0, 3.95, z], 0.2, 0.01, 5, [0.95, 0.95, 0.95], r, false);   // white spikes down the back
   // the tail is drawn in moving pieces (see drawDragonTail): red on top, yellow underneath, spikes on top
   const tsg = new Geo(512); blob(tsg, 0, 0.08, 0, 1, 0.8, 1.15, RED, r, 0.06, -1, 0); blob(tsg, 0, -0.28, 0, 0.92, 0.56, 1.08, BELLY, r, 0.03, 1, 0);
   const tbg = new Geo(768); blob(tbg, 0, 0.08, 0, 1, 0.8, 1.15, shade(RED, 0.82), r, 0.06, -1, 0); blob(tbg, 0, -0.28, 0, 0.92, 0.56, 1.08, BELLY, r, 0.03, 1, 0);
@@ -2819,7 +2902,13 @@ function dragonModel() {
   blob(wfa, 0, L2 + 0.02, -0.05, 0.36, 0.26, 0.42, DARK, r, 0.08, -1, 0);  // the knuckle it walks on
   tube(wfa, [0, L2 - 0.1, -0.3], [0.05, L2 - 0.05, -1.0], 0.1, 0.01, 4, HORN, r, false);   // thumb claw
   for (const sd of [-1, 0, 1]) tube(wfa, [sd * 0.2, L2 + 0.1, -0.3], [sd * 0.25, L2 + 0.2, -0.62], 0.08, 0.01, 4, HORN, r, false);
-  return { body: makeMesh(g), head: makeMesh(hg), leg: makeMesh(lg), wing: makeMesh(wg), wingArmU: makeMesh(wua), wingArmF: makeMesh(wfa), jaw: makeMesh(jg),
+  // the wing skin stretched out to the side of the forearm, so you can see it from the front (two-sided)
+  const wsl = new Geo(256), SK = [0.58, 0.16, 0.13];
+  const SP = [[0, 0, 0], [1.0, L2 * 0.25, 0.05], [1.35, L2 * 0.6, 0.05], [0.7, L2 * 0.95, 0.05]];
+  const two = (p, q, w) => { const n = faceN(p, q, w); tri(wsl, p, q, w, n, 0, SK, shade(SK, 1.12), shade(SK, 0.88), 0, 0, 0); tri(wsl, p, w, q, [-n[0], -n[1], -n[2]], 0, SK, shade(SK, 0.88), shade(SK, 1.12), 0, 0, 0); };
+  two(SP[0], SP[1], SP[2]); two(SP[0], SP[2], Wk); two(SP[2], SP[3], Wk);
+  for (let i = 0; i < 3; i++) tube(wsl, SP[0], SP[i + 1], 0.07, 0.03, 4, [0.2, 0.05, 0.05], r, false);
+  return { body: makeMesh(g), head: makeMesh(hg), leg: makeMesh(lg), wing: makeMesh(wg), wingArmU: makeMesh(wua), wingArmF: makeMesh(wfa), wingSail: makeMesh(wsl), jaw: makeMesh(jg),
     tailSeg: makeMesh(tsg), tailBand: makeMesh(tbg), tailTube: makeMesh(ttg), tailSpade: makeMesh(tspg) };
 }
 // giant spider (open fields): a round black body with yellow spots, eight small red eyes, fangs, and 8 long legs
@@ -3819,9 +3908,9 @@ function fight(a, dt, dist, dx, dz, playerWet) {
     }
     if (a.windup <= 0 && !a.flying) {
       const front = (dx * Math.sin(a.yaw) + dz * Math.cos(a.yaw)) / dist;
-      if (front < 0.1 && dist < 13 && a.swipeCd <= 0) {           // you're beside or behind it: tail swipe
+      if (dist < 11 && a.swipeCd <= 0) {                          // you're close: a big tail whip
         const lx = dx * Math.cos(a.yaw) - dz * Math.sin(a.yaw);
-        a.swipeSide = lx > 0 ? 1 : -1; a.swipeT = 0.0001; a.swipeHit = false; a.swipeCd = 4 + Math.random() * 2;
+        a.swipeSide = lx > 0 ? 1 : -1; a.swipeT = 0.0001; a.swipeHit = false; a.swipeCd = 3 + Math.random() * 1.5;
         growlSound('dragon'); setTimeout(() => noiseHit('bandpass', 900, 1.2, 0.35, 0.3, 300), 400);
         return 0;
       }
@@ -3836,10 +3925,7 @@ function fight(a, dt, dist, dx, dz, playerWet) {
       spotSound('dragon'); rumble(0.5, 0.6, 400); a.roarT = 1.2;
       return 0;
     }
-    if (a.windup <= 0 && dist >= sp.reach && dist < 22 && a.fireCd <= 0) {
-      a.fireT = 2.2; a.fireCd = 5 + Math.random() * 3; fireSound();
-      return 0;
-    }
+    // on the ground it bites, whips and stomps; it only breathes fire from the air
   }
   if (sp.puff) {                   // dragonling: a little puff of fire from a few metres away
     a.puffCd = (a.puffCd === undefined ? 2 : a.puffCd) - dt;
@@ -4051,16 +4137,17 @@ const v3 = { sub: (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], add: (a, b)
 function drawWingLegs(a, body, wa, ww, flash) {
   const m = a.sp.model;
   const perCycle = 2 * Math.PI / (1.6 / a.sp.legLen) / (a.sp.scale || 1);   // body units walked in one step cycle
-  const DUTY = 0.62, stride = perCycle * DUTY, LIFT = 0.65, GROUND = -wa[1] + 0.05;
+  const DUTY = 0.66, stride = perCycle * DUTY * 0.85, LIFT = 0.28, GROUND = -wa[1] + 0.05;
   for (const sd of [1, -1]) {
     let p = (a.legPhase / (2 * Math.PI) + (sd > 0 ? 0.5 : 0)) % 1; if (p < 0) p += 1;
     let fz, fy;
     if (p < DUTY) { fz = stride * (0.5 - p / DUTY); fy = GROUND; }                 // planted: slides back as the body goes forward
-    else { const q = (p - DUTY) / (1 - DUTY), e = q * q * (3 - 2 * q); fz = stride * (-0.5 + e); fy = GROUND + LIFT * Math.sin(Math.PI * q); }
-    const W = [0.85, fy, 0.95 + fz];                                                 // knuckle, from the shoulder (this side, not mirrored)
+    else { const q = (p - DUTY) / (1 - DUTY), e = q * q * (3 - 2 * q); fz = stride * (-0.5 + e); fy = GROUND + LIFT * Math.pow(Math.sin(Math.PI * q), 1.3); }
+    const W = [0.95, fy, 0.95 + fz];                                                 // knuckle, from the shoulder (this side, not mirrored)
     const dl = Math.min(WING_L1 + WING_L2 - 0.05, v3.len(W)), dn = v3.norm(W);
     const along = (WING_L1 * WING_L1 + dl * dl - WING_L2 * WING_L2) / (2 * dl), h = Math.sqrt(Math.max(0, WING_L1 * WING_L1 - along * along));
-    const pole = v3.norm(v3.sub([0.55, 0.55, -0.65], v3.mul(dn, v3.dot([0.55, 0.55, -0.65], dn))));   // elbows point up, out and back
+    const hint = [0.9, -0.5, -0.25];                                                 // relaxed elbows: out to the side and a little down
+    const pole = v3.norm(v3.sub(hint, v3.mul(dn, v3.dot(hint, dn))));
     const E = v3.add(v3.mul(dn, along), v3.mul(pole, h)), Wp = v3.mul(dn, dl);
     const bone = (from, to) => {                                                     // +y along the bone, +x out to the side
       const Y = v3.norm(v3.sub(to, from)), X = v3.norm(v3.sub([1, 0, 0], v3.mul(Y, Y[0]))), Z = v3.cross(X, Y);
@@ -4069,6 +4156,7 @@ function drawWingLegs(a, body, wa, ww, flash) {
     const root = mChain(body, mT(sd * wa[0], wa[1], wa[2]), mS3(sd, 1, 1), mS(ww));
     drawMesh(m.wingArmU, mChain(root, bone([0, 0, 0], E)), flash);
     drawMesh(m.wingArmF, mChain(root, bone(E, Wp)), flash);
+    drawMesh(m.wingSail, mChain(root, bone(E, Wp), mS3(1, Math.min(1.1, Math.max(0.6, v3.len(v3.sub(Wp, E)) / WING_L2)), 1)), flash);
   }
 }
 function drawDragonNeck(a, body, headM, flash) {
@@ -4094,7 +4182,7 @@ function dragonTail(a) {
   const pts = [];
   let x = 0, y = 2.5, z = -2.3, ang = 0;
   for (let i = 0; i < N; i++) {
-    ang += Math.sin(t * 1.4 - i * 0.6) * sway + swipe * 0.15;
+    ang += Math.sin(t * 1.4 - i * 0.6) * sway + swipe * 0.3;
     const nx = x + Math.sin(ang) * L, nz = z - Math.cos(ang) * L, ny = y - (a.asleep ? 0.12 : 0.02);
     pts.push({ x: nx, y: ny, z: nz, px: x, py: y, pz: z, r: 0.6 * (1 - (i / (N - 1)) * 0.82) });
     x = nx; y = ny; z = nz;
@@ -6146,6 +6234,8 @@ function frame(now) {
       usePlayer(0);
       updateAnimals(dt);
       usePlayer(0);
+      updateDragonExtras(dt);
+      updateBossMusic(dt);
       updateFlames(dt);
       updateSmoke(dt);
       updateSnow(dt);
