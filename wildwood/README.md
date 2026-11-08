@@ -14,13 +14,15 @@ A 3D exploring game. You walk through a forest that goes on forever: pines, birc
 
 Plug in a second Xbox controller and press Start (or A) on it while playing, or choose **👥 Add player 2** in the menu. The screen splits: player 1 on the left (green tunic), player 2 on the right (orange tunic). Each of you sees the other walking around, with their chest plate on, their sword (or other weapon) or bow in their right hand and their shield on their left arm (held up in front when they block).
 
-- **Your own:** health, knockouts (the other player keeps playing), your swing, your camera and controller, and **your own gear**: the weapons, bows, shields and chest plates you've crafted or picked up, and what you're holding and wearing. Player 2 starts with just fists. Player 1 also keeps the keyboard and mouse.
-- **Shared:** the world, the animals and the materials: wood, stone, iron, gems, arrows and the rest. Either player can open their backpack (Y) and craft with the shared materials; it pauses for both and says whose it is. Things you drop fly to whoever is closest (a dropped weapon goes to whoever picks it up).
+- **Your own:** health, knockouts (the other player keeps playing), your swing, your camera and controller, and **your own gear**: the weapons, bows, shields and chest plates you've crafted or picked up, and what you're holding and wearing, and **your own materials** (wood, stone, iron, gems, arrows and the rest). Player 2 starts with just fists and no materials. Player 1 also keeps the keyboard and mouse. Look (normal or flipped) is set for each player.
+- **Your own backpack and menu, on your own half:** Y (or I/Tab on the keyboard) opens your backpack and Start (or Esc) opens your own small menu (Keep playing, Backpack, Music, Sounds, Look, Enemies, Main menu, and Leave the game for player 2). They cover only your half of the screen; the other player keeps playing, and nothing can hurt you while yours is open. **🏠 Main menu (pauses both)** opens the full menu for saved games, full screen and All games.
+- **Shared:** the world and the animals. Things that drop fly to whoever is closest, and go into that player's own materials (a dropped weapon goes to whoever picks it up).
+- Saves from before players had their own materials split the shared materials in half the first time player 2 joins again.
 - **Animals** go after whichever player is closer, and new animals and bosses show up around each of you in turn. The world is loaded around both players, so you can split up.
 - **Locator bar:** at the top right of each half, a bar shows where the other player is: the dot is in the middle when they're straight ahead and slides left or right as they move off to the side (◀ ▶ when they're behind you, ▲ ▼ when they're well above or below), with how far away they are.
 - **Boss bars:** each half shows its own stack of boss bars, for the bosses that are after that player.
-- **Menu:** either player's Start opens it. **👥 Player 2: leave** goes back to one player. If player 2's controller unplugs, the game pauses until it's back.
-- Player 1's spot and gear and player 2's gear are saved with the game (player 2 gets their gear back when they join again). Split screen draws at a slightly lower resolution (it draws the world twice).
+- **Leaving:** player 2 can choose **👋 Leave the game** in their menu, or anyone can choose **👥 Player 2: leave** in the main menu. If player 2's controller unplugs, the game pauses until it's back.
+- Player 1's spot, gear and materials and player 2's gear, materials and look setting are saved with the game (player 2 gets them back when they join again). Split screen draws at a slightly lower resolution (it draws the world twice).
 
 ## Animals and fighting
 

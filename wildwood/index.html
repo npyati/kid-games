@@ -77,6 +77,14 @@ body.two #hud2.show ~ #cross2{display:block}
 body.two.playing #split{display:block}
 body.two #hurt,body.two #frost,body.two #ko{right:50%}
 body.two #hurt2,body.two #frost2,body.two #ko2{left:50%}
+/* two players: each one's backpack and menu cover only their own half */
+body.two .overlay.half0{right:50%}
+body.two .overlay.half1{left:50%}
+.pmenu .panel{width:min(360px,100%);gap:10px}
+.pmenu h2{font-family:var(--display);font-weight:400;font-size:32px;margin:0;text-align:center;color:var(--leaf)}
+.pmenu.half1 h2{color:#ffb347}
+.pmenu nav{grid-template-columns:1fr}
+.pmenu .pmnote{margin:0;text-align:center;color:var(--muted);font-size:14px}
 .hp{display:flex;align-items:center;gap:8px;background:rgba(21,18,63,.75);border-radius:999px;padding:6px 12px 6px 8px}
 .hp span{font-size:20px;line-height:1}
 .hpbar{width:min(180px,40vw);height:14px;background:#3a1530;border-radius:999px;overflow:hidden;border:2px solid #15123f}
@@ -193,7 +201,7 @@ body.two.playing .locator{display:block}
       <div><b>Keyboard and mouse</b>WASD: walk · Mouse: look · Click or F: swing or shoot · Right-click or Q: block (you can still swing) · 1: sword · 2: bow · 3: shield on/off · Space: jump · Shift: run · I or Tab: backpack · Esc: menu</div>
       <div><b>Animals</b>Foxes, deer and rabbits are friendly. Wolves, and bears from caves, chase you once they spot you. Beat them for gems, iron and apples. They can't swim!</div>
       <div><b>Crafting</b>Swing at trees for wood and at big rocks for stone. Catch fish in rivers for their scales (golden fish are rare!). Open your backpack to make axes, swords, bows, shields and chest plates.</div>
-      <div><b>Two players</b>Plug in a second controller (Xbox or Nintendo) and press Start (+ on Nintendo) on it (or choose 👥 Add player 2). The screen splits in two. You share one backpack, and each of you has your own health and gear in hand.</div>
+      <div><b>Two players</b>Plug in a second controller (Xbox or Nintendo) and press Start (+ on Nintendo) on it (or choose 👥 Add player 2). The screen splits in two. Each of you has your own health, gear and materials. Your backpack (Y) and menu (Start) open on your own side, and the other player keeps playing.</div>
       <div><b>Saved games</b>Make as many games as you like with 💾 Saved games. Each one has its own world and its own things. New game starts from scratch.</div>
       <div id="howClaude" hidden><b>🎤 Ask Claude (at home only)</b>Hold V, or LB + RB together on a controller (L + R on Nintendo), and say what should happen: "spawn ten wolves in front of me", "build a tower", "make me giant". Let go and Claude makes it happen. Press T to type instead. Big ideas take a little longer.</div>
       <div><b>Bosses</b>Dragonlings live in forest camps: leave them alone and they'll leave you alone. Crocodiles lurk in rivers. Sharks swim in the ocean, but only bother you in the water. Goats (leave them alone!) and ice ogres live in the icy mountains. Goblins camp in open fields, and giant spiders wander them (watch out for poison breath, and jump when it stomps!). Ogres roam the forests. Giant snakes hide in marshes. The Leviathan lives in big lakes. Dragons sleep in volcanoes on mountaintops, ringed by tall black spikes. They walk on their folded wings, and they can fly!</div>
@@ -219,13 +227,29 @@ body.two.playing .locator{display:block}
 <div id="inv" class="overlay">
   <div class="panel invp">
     <h2>🎒 Backpack</h2>
-    <div id="mats" class="mats"></div>
+    <div class="mats" data-bp="mats"></div>
     <h3>Your things <small>choose what to hold and wear</small></h3>
-    <div id="owned" class="grid"></div>
+    <div class="grid" data-bp="owned"></div>
     <h3>Craft <small>things you can make</small></h3>
-    <div id="recipes" class="grid"></div>
-    <p id="invMsg" class="invmsg"></p>
+    <div class="grid" data-bp="recipes"></div>
+    <p class="invmsg" data-bp="msg"></p>
     <button class="closeb" data-close>Close (B)</button>
+  </div>
+</div>
+<div id="pmenu" class="overlay pmenu">
+  <div class="panel">
+    <h2>Player 1</h2>
+    <nav>
+      <button class="primary" data-pm="resume">Keep playing</button>
+      <button data-pm="backpack">🎒 Backpack</button>
+      <button data-pm="music">Music: on</button>
+      <button data-pm="sfx">Sounds: on</button>
+      <button data-pm="invert">Look: normal</button>
+      <button data-pm="animals">Enemies: on</button>
+      <button data-pm="main">🏠 Main menu (pauses both)</button>
+      <button data-pm="leave">👋 Leave the game</button>
+    </nav>
+    <p class="pmnote"></p>
   </div>
 </div>
 <div id="saves" class="overlay">
@@ -331,12 +355,12 @@ function writeSave() {
   writeSettings();
   try {
     localStorage.setItem(SLOT_PREFIX + currentSlot, JSON.stringify({
-      seed: worldSeed, mats, owned: [...(pslots[0] ? pslots[0].owned : owned)], equip: pslots[0] ? pslots[0].equip : equip, p2: p2Gear(),
+      seed: worldSeed, mats: pslots[0] ? pslots[0].mats : mats, owned: [...(pslots[0] ? pslots[0].owned : owned)], equip: pslots[0] ? pslots[0].equip : equip, p2: p2Gear(),
       pos: { x: +players[0].x.toFixed(2), z: +players[0].z.toFixed(2), yaw: +players[0].yaw.toFixed(3), seed: worldSeed },
     }));
   } catch (e) {}
   const m = curMeta();
-  if (m) { m.seed = worldSeed; m.gems = mats.gems; m.things = Math.max(0, (pslots[0] ? pslots[0].owned : owned).size - 1); if (started) m.last = Date.now(); writeSlots(); }
+  if (m) { m.seed = worldSeed; m.gems = (pslots[0] ? pslots[0].mats : mats).gems; m.things = Math.max(0, (pslots[0] ? pslots[0].owned : owned).size - 1); if (started) m.last = Date.now(); writeSlots(); }
 }
 
 /* =====================================================================
@@ -2001,6 +2025,7 @@ function showHint() {
 }
 function openMenu() {
   if (state === 'menu') return;
+  closeHalfUIs();
   state = 'menu';
   refreshLabels();
   menuEl.classList.add('show');
@@ -2082,6 +2107,82 @@ function menuPad(dt) {
   else if ((pressed(1) || pressed(9)) && started) startPlay(false);
 }
 
+/* ---------- two players: each player's own little menu, on their half of the screen ---------- */
+let pmEl = document.getElementById('pmenu');
+const pmEls = [pmEl, (() => { const c = pmEl.cloneNode(true); c.id = 'pmenu2'; c.querySelector('h2').textContent = 'Player 2'; pmEl.after(c); return c; })()];
+let pmSel = 0, pmRepeat = 0;
+const pmButtons = () => [...pmEl.querySelectorAll('button')].filter(b => !b.hidden);
+function pmRender() {
+  const b = k => pmEl.querySelector(`[data-pm=${k}]`);
+  b('music').textContent = 'Music: ' + (settings.music ? 'on' : 'off');
+  b('sfx').textContent = 'Sounds: ' + (settings.sfx ? 'on' : 'off');
+  b('invert').textContent = 'Look: ' + ((curP === 0 ? settings.invert : p2Invert) ? 'flipped' : 'normal');
+  b('animals').textContent = 'Enemies: ' + (settings.animals ? 'on' : 'off');
+  b('leave').hidden = curP === 0;
+  pmEl.querySelector('.pmnote').textContent = `Only you are stopped. Player ${2 - curP} keeps playing.`;
+  const list = pmButtons();
+  pmSel = Math.max(0, Math.min(pmSel, list.length - 1));
+  list.forEach((x, i) => x.classList.toggle('sel', i === pmSel));
+}
+function openHalfMenu() {
+  if (state !== 'play' || players.length < 2 || ui !== 'play') return;
+  ui = 'menu'; pmSel = 0;
+  keys.clear(); mouseHeld = false; swingT = -1;
+  if (curP === 0 && document.pointerLockElement) document.exitPointerLock();
+  pmEl.classList.remove('half0', 'half1'); pmEl.classList.add('show', 'half' + curP);
+  pmRender();
+  tone('triangle', 500, 700, 0.12, 0.06);
+}
+function closeHalfMenu(fromMouse) {
+  if (ui !== 'menu') return;
+  pmEl.classList.remove('show');
+  ui = 'play'; keys.clear();
+  if (curP === 0 && fromMouse) lockMouse();
+}
+// close every player's backpack and half menu (before the shared main menu, or when player 2 leaves)
+function closeHalfUIs() {
+  const was = curP;
+  for (let i = 0; i < pslots.length; i++) {
+    usePlayer(i);
+    if (ui === 'inv') invEl.classList.remove('show');
+    if (ui === 'menu') pmEl.classList.remove('show');
+    ui = 'play';
+  }
+  if (state === 'inv') state = 'play';
+  usePlayer(was);
+}
+function pmAction(btn, fromMouse) {
+  if (!btn) return;
+  const act = btn.dataset.pm;
+  if (act === 'resume') closeHalfMenu(fromMouse);
+  else if (act === 'backpack') { closeHalfMenu(false); openInv(fromMouse); }
+  else if (act === 'invert') {
+    if (curP === 0) settings.invert = !settings.invert; else p2Invert = !p2Invert;
+    writeSave(); pmRender();
+  }
+  else if (act === 'music' || act === 'sfx' || act === 'animals') {
+    doAction(act, fromMouse);
+    const was = curP;                               // both players' menus show the shared settings
+    for (let i = 0; i < pslots.length; i++) { usePlayer(i); if (ui === 'menu') pmRender(); }
+    usePlayer(was);
+  }
+  else if (act === 'main') { usePlayer(0); openMenu(); }
+  else if (act === 'leave') { usePlayer(0); removePlayer2(); }
+}
+function pmPad(dt) {
+  if (!pad.connected) return;
+  const dirY = pad.btn[12] ? -1 : pad.btn[13] ? 1 : pad.ly < -0.5 ? -1 : pad.ly > 0.5 ? 1 : 0;
+  if (dirY) {
+    pmRepeat -= dt;
+    if (pmRepeat <= 0) { const n = pmButtons().length; pmSel = (pmSel + dirY + n) % n; pmRender(); pmRepeat = pmRepeat < -10 ? 0.35 : 0.2; }
+  } else pmRepeat = -20;
+  if (pressed(0)) pmAction(pmButtons()[pmSel], false);
+  else if (pressed(1) || pressed(9) || pressed(8)) closeHalfMenu(false);
+}
+pmEls.forEach((el, owner) => {
+  el.addEventListener('click', e => { const b = e.target.closest('button'); if (b && pslots[owner]) { usePlayer(owner); pmSel = pmButtons().indexOf(b); pmAction(b, true); usePlayer(0); } });
+});
+
 addEventListener('keydown', e => {
   initAudio();
   if (state === 'saves') {
@@ -2095,7 +2196,7 @@ addEventListener('keydown', e => {
     e.preventDefault();
     return;
   }
-  if (state === 'inv') {
+  if (state === 'inv' || (state === 'play' && ui === 'inv')) {     // (outside a frame, the globals are player 1's)
     if (['Escape', 'KeyI', 'Tab', 'KeyB'].includes(e.code)) closeInv(false);
     else if (e.code === 'ArrowDown') invMove(0, 1);
     else if (e.code === 'ArrowUp') invMove(0, -1);
@@ -2105,8 +2206,15 @@ addEventListener('keydown', e => {
     e.preventDefault();
     return;
   }
+  if (state === 'play' && ui === 'menu') {
+    if (['Escape', 'KeyP', 'Backspace'].includes(e.code)) closeHalfMenu(false);
+    else if (e.code === 'ArrowDown' || e.code === 'ArrowUp') { const n = pmButtons().length; pmSel = (pmSel + (e.code === 'ArrowDown' ? 1 : -1) + n) % n; pmRender(); }
+    else if (e.code === 'Enter' || e.code === 'Space') pmAction(pmButtons()[pmSel], false);
+    e.preventDefault();
+    return;
+  }
   if (state === 'play') {
-    if (e.code === 'Escape' || e.code === 'KeyP') { openMenu(); e.preventDefault(); return; }
+    if (e.code === 'Escape' || e.code === 'KeyP') { if (players.length > 1) openHalfMenu(); else openMenu(); e.preventDefault(); return; }
     if (e.code === 'KeyI' || e.code === 'Tab') { openInv(false); e.preventDefault(); return; }
     if (e.code === 'Digit1') { pickWeapon('melee'); return; }
     if (e.code === 'Digit2') { pickWeapon('bow'); return; }
@@ -2125,7 +2233,7 @@ let rightHeld = false;
 document.addEventListener('contextmenu', e => { if (state === 'play') e.preventDefault(); });
 document.addEventListener('mousedown', e => {
   initAudio();
-  if (state !== 'play') return;
+  if (state !== 'play' || ui !== 'play') return;
   if (e.button === 2) { rightHeld = true; return; }
   if (document.pointerLockElement === canvas) { if (e.button === 0) mouseHeld = true; }
   else if (e.target === canvas) lockMouse();
@@ -2137,7 +2245,7 @@ document.addEventListener('mousemove', e => {
 let lockedOnce = false;
 document.addEventListener('pointerlockchange', () => {
   if (document.pointerLockElement === canvas) lockedOnce = true;
-  else if (lockedOnce && state === 'play') openMenu();
+  else if (lockedOnce && state === 'play' && ui === 'play') { if (players.length > 1) openHalfMenu(); else openMenu(); }
 });
 document.addEventListener('visibilitychange', () => { if (document.hidden) { if (state === 'play') openMenu(); writeSave(); } });
 addEventListener('pagehide', writeSave);
@@ -2148,7 +2256,7 @@ addEventListener('pagehide', writeSave);
 let birdTimer = 3, saveTimer = 0, waterTimer = 0, envForest = 0.5, envWater = 0, envMarsh = 0, envSnow = 0, envMtn = 0, envOcean = 0;
 function updatePlayer(dt) {
   // look
-  const inv = settings.invert ? -1 : 1;
+  const inv = (curP === 0 ? settings.invert : p2Invert) ? -1 : 1;
   const rx = pad.rx, ry = pad.ry;
   player.yaw += (rx * Math.abs(rx) * 2.6) * dt + mouseDX * 0.0023;
   player.pitch -= (ry * Math.abs(ry) * 1.9 * inv) * dt + mouseDY * 0.0023 * inv;
@@ -3292,7 +3400,7 @@ const arrowMesh = (() => {      // points along +z
 })();
 
 // what you have (loaded from the save, with old saves upgraded)
-const mats = { wood: 0, stone: 0, iron: 0, gems: 0, scale: 0, fang: 0, fur: 0, frost: 0, skin: 0, fishscale: 0, goldscale: 0, tooth: 0, arrows: 0 };
+let mats = { wood: 0, stone: 0, iron: 0, gems: 0, scale: 0, fang: 0, fur: 0, frost: 0, skin: 0, fishscale: 0, goldscale: 0, tooth: 0, arrows: 0 };
 let owned = new Set(['fists']);       // swapped per player in split screen (each player has their own gear)
 let equip = { weapon: 'fists', armor: null, shield: null };
 (function loadInventory() {
@@ -4809,8 +4917,11 @@ function feed(msg) {
 /* =====================================================================
    Backpack: materials, equipment and crafting
    ===================================================================== */
-const invEl = document.getElementById('inv');
+// each player has their own backpack panel (player 2's is a copy); usePlayer swaps invEl and the rest
+let invEl = document.getElementById('inv');
+const invEls = [invEl, (() => { const c = invEl.cloneNode(true); c.id = 'inv2'; invEl.after(c); return c; })()];
 let invSel = 0, invPending = null, invFromMouse = false, invRepeat = 0;
+let ui = 'play';           // what this player is doing: 'play', 'inv' (backpack) or 'menu' (their half-screen menu)
 const canAfford = cost => Object.keys(cost).every(k => mats[k] >= cost[k]);
 const costText = cost => Object.keys(cost).map(k => `<span class="chip${mats[k] >= cost[k] ? '' : ' short'}">${MATS[k].icon} ${cost[k]} ${MATS[k].name}</span>`).join('');
 function itemStat(it) {
@@ -4819,44 +4930,49 @@ function itemStat(it) {
   return base + (it.note ? ', ' + it.note : '');
 }
 function renderInv(msg) {
-  document.getElementById('mats').innerHTML = Object.keys(MATS).map(k => `<span class="chip big">${MATS[k].icon} ${MATS[k].name}: <b>${mats[k]}</b></span>`).join('');
-  document.getElementById('owned').innerHTML = ITEM_ORDER.filter(id => owned.has(id)).map(id => {
+  invEl.querySelector('[data-bp=mats]').innerHTML = Object.keys(MATS).map(k => `<span class="chip big">${MATS[k].icon} ${MATS[k].name}: <b>${mats[k]}</b></span>`).join('');
+  invEl.querySelector('[data-bp=owned]').innerHTML = ITEM_ORDER.filter(id => owned.has(id)).map(id => {
     const it = ITEMS[id], on = equip.weapon === id || equip.armor === id || equip.shield === id;
     const holdable = it.type === 'weapon' || it.type === 'bow';
     const where = on ? (holdable ? 'In your hand' : it.type === 'shield' ? 'On your arm' : 'Wearing it') : 'Press to ' + (holdable ? 'hold' : it.type === 'shield' ? 'carry' : 'wear');
     return `<button class="ibtn${on ? ' on' : ''}" data-equip="${id}"><span class="ic">${it.icon}</span><b>${it.name}</b><small>${where} · ${itemStat(it)}</small></button>`;
   }).join('');
   const recipes = ITEM_ORDER.filter(id => ITEMS[id].cost && (ITEMS[id].type === 'ammo' || !owned.has(id)));
-  document.getElementById('recipes').innerHTML = recipes.length ? recipes.map(id => {
+  invEl.querySelector('[data-bp=recipes]').innerHTML = recipes.length ? recipes.map(id => {
     const it = ITEMS[id], ok = canAfford(it.cost);
     const stat = itemStat(it);
     return `<button class="ibtn${ok ? '' : ' cant'}${invPending === id ? ' pending' : ''}" data-craft="${id}"><span class="ic">${it.icon}</span><b>${it.name}</b><small>${stat}</small><span class="cost">${costText(it.cost)}</span></button>`;
   }).join('') : '<p class="done">You have made everything!</p>';
-  document.getElementById('invMsg').textContent = msg || 'Chop trees for wood. Hit big rocks for stone and iron. Beat enemies for iron, gems and fur. Giant snakes drop fangs, crocodiles drop croc skin.';
+  invEl.querySelector('[data-bp=msg]').textContent = msg || 'Chop trees for wood. Hit big rocks for stone and iron. Beat enemies for iron, gems and fur. Giant snakes drop fangs, crocodiles drop croc skin.';
   const list = invButtons();
   invSel = Math.min(invSel, list.length - 1);
   list.forEach((b, i) => b.classList.toggle('sel', i === invSel));
 }
 const invButtons = () => [...invEl.querySelectorAll('button')];
 function openInv(fromMouse) {
-  if (state !== 'play' || player.ko) return;
-  state = 'inv'; invPending = null; invFromMouse = fromMouse; invSel = 0; invOwner = curP;
+  if (state !== 'play' || player.ko || ui !== 'play') return;
+  ui = 'inv';
+  if (players.length === 1) state = 'inv';      // one player: the whole game waits. Two: only this player does
+  invPending = null; invFromMouse = fromMouse; invSel = 0; invOwner = curP;
   keys.clear(); mouseHeld = false; swingT = -1;
-  if (document.pointerLockElement) document.exitPointerLock();
-  invEl.querySelector('h2').textContent = players.length > 1 ? `🎒 Backpack (Player ${curP + 1})` : '🎒 Backpack';
+  if (curP === 0 && document.pointerLockElement) document.exitPointerLock();
+  invEl.classList.remove('half0', 'half1');
+  if (players.length > 1) invEl.classList.add('half' + curP);
+  invEl.querySelector('h2').textContent = players.length > 1 ? `🎒 Player ${curP + 1}'s backpack` : '🎒 Backpack';
   renderInv();
   invEl.classList.add('show');
   hintEl.classList.remove('show');
   tone('triangle', 500, 700, 0.12, 0.06);
 }
 function closeInv(fromMouse) {
-  if (state !== 'inv') return;
+  if (ui !== 'inv') return;
   invEl.classList.remove('show');
-  state = 'play';
+  ui = 'play';
+  if (state === 'inv') state = 'play';
   keys.clear();
   updateHud();
   writeSave();
-  if (fromMouse || invFromMouse) lockMouse();
+  if (curP === 0 && (fromMouse || invFromMouse)) lockMouse();
 }
 function invAction(btn) {
   if (!btn) return;
@@ -4903,11 +5019,15 @@ function invAction(btn) {
     updateHud(); writeSave();
   }
 }
-invEl.addEventListener('click', e => { const b = e.target.closest('button'); if (b) { usePlayer(invOwner); invSel = invButtons().indexOf(b); invAction(b); usePlayer(0); } });
-invEl.addEventListener('mousemove', e => {
-  const b = e.target.closest('button'); if (!b) return;
-  const i = invButtons().indexOf(b);
-  if (i >= 0 && i !== invSel) { invSel = i; invButtons().forEach((x, k) => x.classList.toggle('sel', k === invSel)); }
+invEls.forEach((el, owner) => {
+  el.addEventListener('click', e => { const b = e.target.closest('button'); if (b && pslots[owner]) { usePlayer(owner); invSel = invButtons().indexOf(b); invAction(b); usePlayer(0); } });
+  el.addEventListener('mousemove', e => {
+    const b = e.target.closest('button'); if (!b || !pslots[owner]) return;
+    usePlayer(owner);
+    const i = invButtons().indexOf(b);
+    if (i >= 0 && i !== invSel) { invSel = i; invButtons().forEach((x, k) => x.classList.toggle('sel', k === invSel)); }
+    usePlayer(0);
+  });
 });
 // move the highlight to the nearest button in a direction
 function invMove(dx, dy) {
@@ -5082,10 +5202,6 @@ function updateHud() {
   const sh = equip.shield && ITEMS[equip.shield];
   q('shield').textContent = sh ? sh.icon + ' ' + sh.name : 'No shield';
   q('gems').textContent = '💎 ' + mats.gems;
-  if (players.length > 1 && pslots[1 - curP]) {     // the other player's gem and arrow counts change too (shared backpack)
-    const o = pslots[1 - curP].hudEl;
-    o.querySelector('[data-h=gems]').textContent = '💎 ' + mats.gems;
-  }
 }
 function startSwing() {
   if (swingT >= 0 || player.ko) return;            // you can swing or shoot with your shield up
@@ -5131,7 +5247,7 @@ function landHit() {
   if (a.hp <= 0) killAnimal(a);
 }
 function hurtPlayer(dmg, dirx, dirz, knock, src) {
-  if (player.ko) return;
+  if (player.ko || ui !== 'play') return;          // in their backpack or menu (two players): safe
   let kb = knock === undefined ? 6 : knock;
   // a raised shield blocks hits from in front of you
   const sh = equip.shield && ITEMS[equip.shield];
@@ -5207,14 +5323,16 @@ let camR = [1, 0, 0], camU = [0, 1, 0], camF = [0, 0, -1], blockV = 0;
 function makeSlot(pl, pd, eq, els) {
   return Object.assign({ player: pl, pad: pd, equip: eq, owned: new Set(['fists']), lastGear: { melee: null, bow: null, shield: null }, swingT: -1, swingHit: false,
     hurtFlash: 0, shake: 0, blockV: 0, camR: [1, 0, 0], camU: [0, 1, 0], camF: [0, 0, -1], keys: new Set(), mouseDX: 0, mouseDY: 0,
-    mouseHeld: false, rightHeld: false }, els);
+    mouseHeld: false, rightHeld: false, ui: 'play', invSel: 0, invPending: null, invRepeat: 0, invFromMouse: false, pmSel: 0, pmRepeat: 0 }, els);
 }
 pslots[0] = makeSlot(player, pad, equip, { hudEl, hpFill, hurtEl, koEl, frostEl });
 pslots[0].lastGear = lastGear; pslots[0].keys = keys; pslots[0].owned = owned;
+Object.assign(pslots[0], { mats, invEl: invEls[0], pmEl: pmEls[0] });
 function stashPlayer() {
   const s = pslots[curP];
   Object.assign(s, { player, pad, equip, owned, lastGear, swingT, swingHit, hurtFlash, shake, blockV, camR, camU, camF, keys, mouseDX, mouseDY,
-    mouseHeld, rightHeld, hudEl, hpFill, hurtEl, koEl, frostEl });
+    mouseHeld, rightHeld, hudEl, hpFill, hurtEl, koEl, frostEl,
+    mats, ui, invEl, invSel, invPending, invRepeat, invFromMouse, pmEl, pmSel, pmRepeat });
 }
 // make player i the one the game is working with (only player 1 uses the keyboard and mouse)
 function usePlayer(i) {
@@ -5223,24 +5341,33 @@ function usePlayer(i) {
   curP = i;
   const s = pslots[i];
   ({ player, pad, equip, owned, lastGear, swingT, swingHit, hurtFlash, shake, blockV, camR, camU, camF, keys, mouseDX, mouseDY,
-    mouseHeld, rightHeld, hudEl, hpFill, hurtEl, koEl, frostEl } = s);
+    mouseHeld, rightHeld, hudEl, hpFill, hurtEl, koEl, frostEl,
+    mats, ui, invEl, invSel, invPending, invRepeat, invFromMouse, pmEl, pmSel, pmRepeat } = s);
 }
 // player 2's own gear (what they've crafted or picked up), kept with the saved game while they're away
-let p2Saved = null;
+let p2Saved = null, p2Invert = false;
 function p2Gear() {
-  if (players.length > 1 && pslots[1]) return { owned: [...pslots[1].owned], equip: Object.assign({}, pslots[1].equip) };
+  if (players.length > 1 && pslots[1]) return { owned: [...pslots[1].owned], equip: Object.assign({}, pslots[1].equip), mats: Object.assign({}, pslots[1].mats), invert: p2Invert };
   return p2Saved;
 }
 function loadP2Gear() {
   const g = p2Saved || saved.p2, own = new Set(['fists']), eq = { weapon: 'fists', armor: null, shield: null };
+  const m = {};
+  for (const k in mats) m[k] = 0;
   if (g && typeof g === 'object') {
+    if (g.mats && typeof g.mats === 'object') { for (const k in m) if (okCount(g.mats[k])) m[k] = g.mats[k]; }
+    else {                       // from before players had their own materials: split the shared ones fairly
+      const p1 = pslots[0].mats;
+      for (const k in m) { m[k] = Math.floor(p1[k] / 2); p1[k] -= m[k]; }
+    }
+    p2Invert = g.invert === true;
     if (Array.isArray(g.owned)) for (const id of g.owned) if (typeof id === 'string' && ITEMS[id] && ITEMS[id].type !== 'ammo') own.add(id);
     const e = g.equip && typeof g.equip === 'object' ? g.equip : {};
     if (own.has(e.weapon) && (ITEMS[e.weapon].type === 'weapon' || ITEMS[e.weapon].type === 'bow')) eq.weapon = e.weapon;
     if (own.has(e.armor) && ITEMS[e.armor].type === 'armor') eq.armor = e.armor;
     if (own.has(e.shield) && ITEMS[e.shield].type === 'shield') eq.shield = e.shield;
   }
-  return { own, eq };
+  return { own, eq, mats: m };
 }
 function addPlayer2() {
   if (players.length > 1) return;
@@ -5250,7 +5377,7 @@ function addPlayer2() {
   p2.feet = Math.max(groundAt(p2.x, p2.z), SWIM_FEET); p2.onGround = true;
   const h2 = document.getElementById('hud2');
   const g2 = loadP2Gear();
-  pslots[1] = makeSlot(p2, pad2, g2.eq, { owned: g2.own, hudEl: h2, hpFill: h2.querySelector('[data-h=hp]'),
+  pslots[1] = makeSlot(p2, pad2, g2.eq, { owned: g2.own, mats: g2.mats, invEl: invEls[1], pmEl: pmEls[1], hudEl: h2, hpFill: h2.querySelector('[data-h=hp]'),
     hurtEl: document.getElementById('hurt2'), koEl: document.getElementById('ko2'), frostEl: document.getElementById('frost2') });
   players.push(p2);
   document.body.classList.add('two');
@@ -5263,6 +5390,10 @@ function addPlayer2() {
 function removePlayer2() {
   if (players.length < 2) return;
   usePlayer(0);
+  const p1ui = ui;
+  usePlayer(1); if (ui === 'inv') invEl.classList.remove('show'); if (ui === 'menu') pmEl.classList.remove('show'); ui = 'play'; usePlayer(0);
+  if (p1ui === 'menu') { pmEl.classList.remove('show'); ui = 'play'; }
+  if (p1ui === 'inv') { invEl.classList.remove('half0'); state = 'inv'; }    // one player: an open backpack pauses the game again
   p2Saved = p2Gear();
   players.length = 1; pslots.length = 1;
   document.body.classList.remove('two');
@@ -5755,7 +5886,7 @@ GAME STATE you can read and change directly:
   Water-only kinds need water: check groundAt(x, z) < -1.5 first, and say so if there's no water nearby.
 - Trees and rocks are baked into the world and can't be changed one by one; to "change" one, build a new thing in its place.
 - settings.animals (false = enemies off; then enemies won't chase). settings.music, settings.sfx.
-- mats - materials the players share: wood, stone, iron, gems, scale (dragon scale), arrows, fang, fur, frost, skin, fishscale, goldscale, tooth.
+- mats - the materials of whichever player the code is running as (each player has their own; give() gives to the speaker): wood, stone, iron, gems, scale (dragon scale), arrows, fang, fur, frost, skin, fishscale, goldscale, tooth.
 - ITEMS[id] - gear. owned (a Set of ids). You can change gear stats, e.g. ITEMS.dragonsword.dmg = 50.
   Weapons: stick axe club stonespear ironaxe ironsword fangdagger hammer goblinaxe crocwhip scalesword scalespear trident sharksword crocmace crystal crystalspear crystalaxe venomglaive dragonsword
   Bows: woodbow ironbow venombow frostbow crocbow scalebow crystalbow dragonbow. Armor: woodplate furplate stoneplate spikedplate scaleplate ironplate venomplate crystalplate dragonplate.
@@ -5923,7 +6054,11 @@ function removeHook(name) { claudeHooks = claudeHooks.filter(h => h.name !== Str
 function clearHooks() { claudeHooks = []; claudeTimers = []; }
 function later(seconds, fn) { claudeTimers.push({ t: Math.max(0, +seconds || 0), fn }); }
 function wait(seconds) { return new Promise(res => later(seconds, res)); }
-function give(mat, n = 1) {
+function give(mat, n = 1) {             // to the player who spoke (each player has their own materials)
+  usePlayer(claudeSpeaker);
+  try { giveNow(mat, n); } finally { usePlayer(0); }
+}
+function giveNow(mat, n) {
   if (!(mat in mats)) throw new Error('No material called ' + mat + '. Materials: ' + Object.keys(mats).join(', '));
   mats[mat] = Math.max(0, Math.min(99999, (mats[mat] || 0) + Math.round(n)));
   updateHud(); writeSave();
@@ -6003,7 +6138,8 @@ function claudeContext() {
     if (t.mesh !== undefined) return `- "${t.name}": ${t.about || 'a build'}; ${claudeWhere(p, t.x, t.z)}; scale ${JSON.stringify(t.scale)}${t.hidden ? '; hidden' : ''}; o = ${JSON.stringify(t.o).slice(0, 300)}`;
     return `- "${t.name}": ${t.about}`;
   });
-  const haveMats = Object.keys(mats).filter(k => mats[k] > 0).map(k => k + ' ' + mats[k]).join(', ') || 'none';
+  const sm = (pslots[claudeSpeaker] || pslots[0]).mats;
+  const haveMats = Object.keys(sm).filter(k => sm[k] > 0).map(k => k + ' ' + sm[k]).join(', ') || 'none';
   return [
     `Speaker: player ${claudeSpeaker + 1} of ${players.length}, at x ${p.x.toFixed(1)}, z ${p.z.toFixed(1)}, feet y ${p.feet.toFixed(1)}, yaw ${p.yaw.toFixed(2)}, health ${Math.round(p.hp)}, in ${where}.`,
     `LOOKING AT: ${claudeLookingAt(p)}.`,
@@ -6194,7 +6330,7 @@ claudeType.addEventListener('blur', () => { if (claudeTyping) claudeCloseType();
 
 // the keyboard's V and T are handled before the game's own keys
 addEventListener('keydown', e => {
-  if (!claudeReady || state !== 'play' || claudeTyping) return;
+  if (!claudeReady || state !== 'play' || claudeTyping || ui !== 'play') return;
   if (e.code === 'KeyV') { if (!e.repeat) claudeListen(0); e.preventDefault(); e.stopImmediatePropagation(); }
   else if (e.code === 'KeyT') { claudeOpenType(); e.preventDefault(); e.stopImmediatePropagation(); }
 }, true);
@@ -6204,7 +6340,7 @@ addEventListener('keyup', e => { if (e.code === 'KeyV' && claudeListening && cla
 let claudePadHeld = [false, false];
 function claudeFrame(dt, playing) {
   if (!claudeReady) return;
-  claudeEl.classList.toggle('show', state === 'play');
+  claudeEl.classList.toggle('show', state === 'play' && ui === 'play' && (players.length < 2 || pslots[1].ui === 'play'));   // hidden while anyone's backpack or menu is open
   if (state !== 'play') { if (claudeListening) claudeStopListening(); if (claudeTyping) claudeCloseType(); }
   for (let i = 0; i < players.length; i++) {
     const pd = i === 0 ? pad1 : pad2;
@@ -6241,6 +6377,12 @@ function frame(now) {
     let paused = false;
     for (let i = 0; i < players.length && !paused; i++) {
       usePlayer(i);
+      if (players.length > 1) {                      // two players: menus and backpacks are each player's own
+        if (ui === 'inv') { invPad(dt); continue; }
+        if (ui === 'menu') { pmPad(dt); paused = state !== 'play'; continue; }
+        if (pressed(9) || pressed(8)) { openHalfMenu(); continue; }
+        if (pressed(3)) { openInv(false); continue; }
+      }
       if (pressed(9) || pressed(8)) { usePlayer(0); openMenu(); paused = true; }
       else if (pressed(3)) { openInv(false); paused = state === 'inv'; }
       else if (pressed(15)) swapWeaponBow();       // D-pad right: sword <-> bow
@@ -6248,7 +6390,7 @@ function frame(now) {
     }
     usePlayer(0);
     if (!paused) {
-      for (let i = 0; i < players.length; i++) { usePlayer(i); if (!player.ko) updatePlayer(dt); updateSwing(dt); }
+      for (let i = 0; i < players.length; i++) { usePlayer(i); if (!player.ko && ui === 'play') updatePlayer(dt); updateSwing(dt); }
       usePlayer(0);
       updateAnimals(dt);
       usePlayer(0);
