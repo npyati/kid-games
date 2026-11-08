@@ -92,11 +92,9 @@ Building one puts it right in front of you, facing you (not in water). You can b
 | Little hut | 40 wood, 10 stone | |
 | Healing well | 30 stone, 10 wood, 8 gems | heals 12 a second close by |
 | Stone arch | 40 stone | you can walk through the middle |
-| Gem statue | 30 stone, 20 gems | |
 | Wooden house | 60 wood, 15 stone, 4 iron | |
 | Stone house | 60 stone, 20 wood, 6 iron | |
 | Lookout tower | 50 wood, 15 stone, 3 iron | |
-| Crystal fountain | 40 stone, 30 gems, 5 iron | heals 20 a second close by |
 | Castle tower | 80 stone, 15 iron | |
 | Dragon statue | 50 stone, 30 gems, 10 iron | |
 

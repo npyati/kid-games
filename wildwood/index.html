@@ -3339,11 +3339,9 @@ const ITEMS = {
   hut:         { name: 'Little hut', icon: '🛖', type: 'build', cost: { wood: 40, stone: 10 }, solid: [[0, 0, 1.55]] },
   well:        { name: 'Healing well', icon: '🪣', type: 'build', cost: { stone: 30, wood: 10, gems: 8 }, heal: 12, note: 'stand close to heal fast', solid: [[0, 0, 1.1]] },
   archway:     { name: 'Stone arch', icon: '⛩️', type: 'build', cost: { stone: 40 }, note: 'you can walk through the middle', solid: [[-1.4, 0, 0.5], [1.4, 0, 0.5]] },
-  statue:      { name: 'Gem statue', icon: '💎', type: 'build', cost: { stone: 30, gems: 20 }, solid: [[0, 0, 0.85]] },
   house:       { name: 'Wooden house', icon: '🏠', type: 'build', cost: { wood: 60, stone: 15, iron: 4 }, solid: [[-1, 0, 1.75], [1, 0, 1.75]] },
   stonehouse:  { name: 'Stone house', icon: '🏡', type: 'build', cost: { stone: 60, wood: 20, iron: 6 }, solid: [[-1, 0, 1.75], [1, 0, 1.75]] },
   tower:       { name: 'Lookout tower', icon: '🗼', type: 'build', cost: { wood: 50, stone: 15, iron: 3 }, solid: [[0, 0, 1.3]] },
-  fountain:    { name: 'Crystal fountain', icon: '⛲', type: 'build', cost: { stone: 40, gems: 30, iron: 5 }, heal: 20, note: 'stand close to heal super fast', solid: [[0, 0, 1.9]] },
   castletower: { name: 'Castle tower', icon: '🏰', type: 'build', cost: { stone: 80, iron: 15 }, solid: [[0, 0, 1.8]] },
   dragonstatue:{ name: 'Dragon statue', icon: '🐲', type: 'build', cost: { stone: 50, gems: 30, iron: 10 }, solid: [[0, 0, 1.3]] },
 };
@@ -5639,7 +5637,7 @@ function updateHealth(dt) {
     }
   } else {
     if (player.hurtT > 4 && player.hp < 100) player.hp = Math.min(100, player.hp + 5 * dt);
-    const hr = player.hp < 100 ? healHereRate(player.x, player.z) : 0;      // campfires, wells and fountains
+    const hr = player.hp < 100 ? healHereRate(player.x, player.z) : 0;      // campfires and wells
     if (hr) player.hp = Math.min(100, player.hp + hr * dt);
   }
   hurtFlash = Math.max(0, hurtFlash - dt * 2.5);
@@ -6238,7 +6236,7 @@ GAME STATE you can read and change directly:
   Shields: woodshield ironshield scaleshield spikedshield venomshield frostshield crystalshield dragonshield.
   Buildings (type 'build', made in the backpack's Buildings section, saved with the world): giveItem(id) puts one in front of the speaker for free.
   placed is the array of them: { id, x, z, yaw }; remove one with placed.splice(i, 1). Ids: campfire bench fence woodwall stonewall garden lamppost bed tent
-  snowman hut well archway statue house stonehouse tower fountain castletower dragonstatue.
+  snowman hut well archway house stonehouse tower castletower dragonstatue.
 - Wheat (mats.wheat) grows in wheat fields (isWheat(x, z)); swinging at it picks it. Horses: spawnHorse(x, z, coat 0-4, { tame: true }) makes one
   (tame ones have a saddle and can be ridden with X / R; wild ones are tamed by feeding wheat). player.riding is the horse a player is on.
 - addPickup(kind, x, y, z) drops a collectible: kind is a material name, 'gem', or 'apple' (heals).
@@ -6482,13 +6480,6 @@ const BUILD_MAKE = {
     box(g, 0, 3.2, 0, 3.8, 0.7, 0.9, BS2);
     box(g, 0, 3.9, 0, 3.2, 0.3, 0.7, BS);
   },
-  statue(g) {
-    box(g, 0, 0, 0, 1.5, 1.1, 1.5, BS);
-    box(g, 0, 1.1, 0, 1.2, 0.15, 1.2, BS2);
-    spike(g, 0, 1.25, 0, 0.55, 1.6, [0.4, 0.85, 1.0], 6);
-    spike(g, 0.42, 1.25, 0.2, 0.28, 0.9, [0.75, 0.5, 1.0], 6);
-    spike(g, -0.38, 1.25, -0.2, 0.25, 0.75, [0.55, 1.0, 0.75], 6);
-  },
   house(g) {
     box(g, 0, 0, 0, 4.2, 2.7, 3.4, [0.78, 0.6, 0.4]);
     box(g, 0, 2.7, 0, 4.4, 0.15, 3.6, BW2);
@@ -6513,14 +6504,6 @@ const BUILD_MAKE = {
     for (const [x, z, w, d] of [[0, -1.15, 2.4, 0.1], [0, 1.15, 2.4, 0.1], [-1.15, 0, 0.1, 2.4], [1.15, 0, 0.1, 2.4]]) box(g, x, 5.2, z, w, 0.7, d, BW2);
     for (const x of [-1.1, 1.1]) for (const z of [-1.1, 1.1]) pole(g, [x, 5.2, z], [x, 6.6, z], 0.06, 0.06, BW2, 4);
     spike(g, 0, 6.6, 0, 2.0, 1.2, [0.75, 0.25, 0.2], 4);
-  },
-  fountain(g) {
-    pole(g, [0, 0, 0], [0, 0.55, 0], 1.9, 1.9, BS, 14);
-    pole(g, [0, 0.55, 0], [0, 0.57, 0], 1.65, 1.65, [0.35, 0.7, 1.0], 14);
-    pole(g, [0, 0.55, 0], [0, 1.6, 0], 0.25, 0.2, BS2, 8);
-    pole(g, [0, 1.6, 0], [0, 1.8, 0], 0.7, 0.55, BS, 10);
-    pole(g, [0, 1.8, 0], [0, 1.82, 0], 0.5, 0.5, [0.35, 0.7, 1.0], 10);
-    spike(g, 0, 1.8, 0, 0.3, 1.0, [0.45, 0.9, 1.0], 6);
   },
   castletower(g) {
     pole(g, [0, 0, 0], [0, 7, 0], 1.7, 1.6, BS, 12);
@@ -6551,7 +6534,9 @@ function buildMesh(id) {
 }
 (function loadPlaced() {
   if (!Array.isArray(G0.builds)) return;
+  const GONE = { statue: { stone: 30, gems: 20 }, fountain: { stone: 40, gems: 30, iron: 5 } };   // buildings we took out of the game: give back what they cost
   for (const b of G0.builds.slice(0, 400)) {
+    if (b && GONE[b.id]) { for (const k in GONE[b.id]) mats[k] += GONE[b.id][k]; continue; }
     if (!b || typeof b !== 'object' || !ITEMS[b.id] || ITEMS[b.id].type !== 'build') continue;
     if (![b.x, b.z, b.yaw].every(v => typeof v === 'number' && isFinite(v) && Math.abs(v) < 1e6)) continue;
     placed.push({ id: b.id, x: b.x, z: b.z, yaw: b.yaw });
@@ -6586,7 +6571,7 @@ function solidPlacedNear(x, z, fn) {
     for (const [lx, lz, r] of S) fn(b.x + lx * c + lz * s, b.z - lx * s + lz * c, r, 3);
   }
 }
-// campfires, wells and fountains heal whoever stands close
+// campfires and wells heal whoever stands close
 function healHereRate(x, z) {
   let h = 0;
   for (const b of placed) { const it = ITEMS[b.id]; if (it.heal && Math.abs(b.x - x) < 5 && Math.abs(b.z - z) < 5 && Math.hypot(b.x - x, b.z - z) < 4.5) h = Math.max(h, it.heal); }
