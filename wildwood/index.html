@@ -5377,7 +5377,9 @@ function usePlayer(i) {
 let p2Saved = null, p2Invert = false;
 function p2Gear() {
   if (players.length > 1 && pslots[1]) return { owned: [...pslots[1].owned], equip: Object.assign({}, pslots[1].equip), mats: Object.assign({}, pslots[1].mats), invert: p2Invert };
-  return p2Saved;
+  // not playing right now: keep what player 2 had (from earlier this session, or from the save this page loaded),
+  // so saving while they're away never wipes their gear
+  return p2Saved || (saved.p2 && typeof saved.p2 === 'object' ? saved.p2 : null);
 }
 function loadP2Gear() {
   const g = p2Saved || saved.p2, own = new Set(['fists']), eq = { weapon: 'fists', armor: null, shield: null };
