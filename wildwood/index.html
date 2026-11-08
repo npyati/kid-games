@@ -157,6 +157,11 @@ body.two.playing .locator{display:block}
 .ibtn.pending{border-color:#ff9a4f}
 .ibtn.sel,.closeb.sel{box-shadow:0 0 0 3px var(--sun);border-color:var(--sun)}
 .done{color:var(--muted);margin:0}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center}
+.tab{font:inherit;font-size:15px;font-weight:700;color:var(--cream);background:var(--night);border:3px solid var(--edge);border-radius:999px;padding:6px 14px;cursor:pointer}
+.tab.on{background:var(--sun);border-color:var(--sun);color:var(--ink)}
+.tab.sel{box-shadow:0 0 0 3px var(--sun);border-color:var(--sun)}
+.tabs .tabkey{font-size:12px;color:var(--muted);padding:0 4px}
 .invmsg{margin:0;min-height:1.4em;text-align:center;color:var(--cream);font-size:15px}
 .closeb{font:inherit;font-size:17px;color:var(--cream);background:var(--night);border:3px solid var(--edge);border-radius:14px;padding:10px;cursor:pointer}
 #frost,#frost2{position:fixed;inset:0;pointer-events:none;opacity:0;background:radial-gradient(ellipse at center,transparent 40%,rgba(170,220,255,.75))}
@@ -231,9 +236,10 @@ body.two.playing .locator{display:block}
   <div class="panel invp">
     <h2>🎒 Backpack</h2>
     <div class="mats" data-bp="mats"></div>
-    <h3>Your things <small>choose what to hold and wear</small></h3>
+    <div class="tabs" data-bp="tabs"></div>
+    <h3 data-bp="h-owned">Your things <small>choose what to hold and wear</small></h3>
     <div class="grid" data-bp="owned"></div>
-    <h3>Craft <small>things you can make</small></h3>
+    <h3 data-bp="h-craft">Craft <small>things you can make</small></h3>
     <div class="grid" data-bp="recipes"></div>
     <p class="invmsg" data-bp="msg"></p>
     <button class="closeb" data-close>Close (B)</button>
@@ -358,7 +364,7 @@ function writeSave() {
   writeSettings();
   try {
     localStorage.setItem(SLOT_PREFIX + currentSlot, JSON.stringify({
-      seed: worldSeed, mats: pslots[0] ? pslots[0].mats : mats, owned: [...(pslots[0] ? pslots[0].owned : owned)], equip: pslots[0] ? pslots[0].equip : equip, p2: p2Gear(),
+      seed: worldSeed, mats: pslots[0] ? pslots[0].mats : mats, owned: [...(pslots[0] ? pslots[0].owned : owned)], equip: pslots[0] ? pslots[0].equip : equip, p2: p2Gear(), builds: placed,
       pos: { x: +players[0].x.toFixed(2), z: +players[0].z.toFixed(2), yaw: +players[0].yaw.toFixed(3), seed: worldSeed },
     }));
   } catch (e) {}
@@ -2206,6 +2212,9 @@ addEventListener('keydown', e => {
     else if (e.code === 'ArrowLeft') invMove(-1, 0);
     else if (e.code === 'ArrowRight') invMove(1, 0);
     else if (e.code === 'Enter' || e.code === 'Space') invAction(invButtons()[invSel]);
+    else if (e.code === 'KeyQ') setInvTab(invTab - 1);
+    else if (e.code === 'KeyE') setInvTab(invTab + 1);
+    else if (/^Digit[1-5]$/.test(e.code)) setInvTab(+e.code[5] - 1);
     e.preventDefault();
     return;
   }
@@ -2459,6 +2468,7 @@ function render(time, eye, rect) {
   }
   drawAnimals(time);
   drawThings();
+  drawPlaced();
   if (players.length > 1) drawOtherPlayers();
   drawShadows();
   drawPickups(time);
@@ -3201,11 +3211,11 @@ const ITEMS = {
   crystal:     { name: 'Crystal sword', icon: '🗡️', type: 'weapon', dmg: 6, reach: 3.2, time: 0.38, cost: { iron: 2, gems: 12 } },
   crystalspear:{ name: 'Crystal spear', icon: '🔹', type: 'weapon', dmg: 6, reach: 4.2, time: 0.4, cost: { wood: 2, iron: 1, gems: 8 }, note: 'reaches far' },
   crystalaxe:  { name: 'Crystal axe', icon: '💠', type: 'weapon', dmg: 7, reach: 3.0, time: 0.42, chop: 3, cost: { wood: 1, iron: 2, gems: 10 }, note: 'chops 3 wood at a time' },
-  venomglaive: { name: 'Venom glaive', icon: '🔱', type: 'weapon', dmg: 8, reach: 4.2, time: 0.46, poison: 2, cost: { fang: 1, wood: 2, iron: 3 }, note: 'reaches far and poisons what it hits' },
+  venomglaive: { name: 'Venom glaive', icon: '🔱', type: 'weapon', dmg: 8, reach: 4.2, time: 0.46, poison: 2, cost: { fang: 5, wood: 2, iron: 3 }, note: 'reaches far and poisons what it hits' },
   dragonsword: { name: 'Dragon sword', icon: '🔥', type: 'weapon', dmg: 10, reach: 3.5, time: 0.4, cost: { scale: 1, iron: 3 } },
   woodbow:     { name: 'Wooden bow', icon: '🏹', type: 'bow', dmg: 1, speed: 38, time: 0.6, cost: { wood: 4, fur: 1 }, note: 'shoots arrows' },
   ironbow:     { name: 'Iron bow', icon: '🏹', type: 'bow', dmg: 1.5, speed: 48, time: 0.55, cost: { wood: 2, iron: 3, fur: 1 }, note: 'shoots arrows' },
-  venombow:    { name: 'Venom bow', icon: '🏹', type: 'bow', dmg: 3.5, speed: 50, time: 0.5, poison: 2, cost: { fang: 1, wood: 2, fur: 1 }, note: 'poison arrows' },
+  venombow:    { name: 'Venom bow', icon: '🏹', type: 'bow', dmg: 3.5, speed: 50, time: 0.5, poison: 2, cost: { fang: 5, wood: 2, fur: 1 }, note: 'poison arrows' },
   frostbow:    { name: 'Frost bow', icon: '🏹', type: 'bow', dmg: 3.5, speed: 50, time: 0.5, slow: 3, cost: { frost: 1, wood: 2, fur: 1 }, note: 'arrows slow enemies down' },
   crocbow:     { name: 'Croc-tooth bow', icon: '🏹', type: 'bow', dmg: 2, speed: 52, time: 0.5, cost: { skin: 2, wood: 2, fur: 1 }, note: 'shoots arrows' },
   scalebow:    { name: 'Scale bow', icon: '🏹', type: 'bow', dmg: 3.5, speed: 54, time: 0.42, cost: { fishscale: 6, wood: 2 }, note: 'shoots quickly' },
@@ -3218,7 +3228,7 @@ const ITEMS = {
   spikedplate: { name: 'Spiked chest plate', icon: '🦔', type: 'armor', armor: 0.3, spikes: 3, cost: { iron: 6, stone: 4 }, note: 'anything that bites you takes 3 damage' },
   scaleplate:  { name: 'Scale chest plate', icon: '🐟', type: 'armor', armor: 0.35, cost: { fishscale: 10 } },
   ironplate:   { name: 'Iron chest plate', icon: '🛡️', type: 'armor', armor: 0.35, cost: { iron: 8 } },
-  venomplate:  { name: 'Venom chest plate', icon: '🐍', type: 'armor', armor: 0.45, thorns: true, cost: { fang: 1, iron: 6 }, note: 'poisons anything that bites you' },
+  venomplate:  { name: 'Venom chest plate', icon: '🐍', type: 'armor', armor: 0.45, thorns: true, cost: { fang: 5, iron: 6 }, note: 'poisons anything that bites you' },
   crystalplate:{ name: 'Crystal chest plate', icon: '💎', type: 'armor', armor: 0.5, cost: { iron: 4, gems: 20 } },
   dragonplate: { name: 'Dragon chest plate', icon: '🐲', type: 'armor', armor: 0.6, cost: { scale: 1, iron: 4 } },
   woodshield:  { name: 'Wooden shield', icon: '🛡️', type: 'shield', block: 0.4, cost: { wood: 6 } },
@@ -3229,6 +3239,27 @@ const ITEMS = {
   frostshield: { name: 'Frost shield', icon: '🛡️', type: 'shield', block: 0.7, freeze: true, cost: { frost: 1, iron: 3 }, note: 'slows attackers down' },
   crystalshield:{ name: 'Crystal shield', icon: '🛡️', type: 'shield', block: 0.75, cost: { iron: 2, gems: 15 } },
   dragonshield:{ name: 'Dragon shield', icon: '🛡️', type: 'shield', block: 0.9, cost: { scale: 1, iron: 3 }, note: 'even blocks dragon fire' },
+  // buildings: making one puts it right in front of you (you can make as many as you like). solid: circles [x, z, r] that you bump into
+  campfire:    { name: 'Campfire', icon: '🔥', type: 'build', cost: { wood: 12, stone: 8 }, heal: 8, note: 'stand close to heal fast', solid: [[0, 0, 0.7]] },
+  bench:       { name: 'Bench', icon: '🪑', type: 'build', cost: { wood: 12 }, solid: [[-0.6, 0, 0.4], [0.6, 0, 0.4]] },
+  fence:       { name: 'Fence', icon: '🪵', type: 'build', cost: { wood: 15 }, solid: [[-2, 0, 0.3], [-1, 0, 0.3], [0, 0, 0.3], [1, 0, 0.3], [2, 0, 0.3]] },
+  woodwall:    { name: 'Wooden wall', icon: '🟫', type: 'build', cost: { wood: 20 }, solid: [[-1.5, 0, 0.45], [-0.5, 0, 0.45], [0.5, 0, 0.45], [1.5, 0, 0.45]] },
+  stonewall:   { name: 'Stone wall', icon: '🧱', type: 'build', cost: { stone: 25 }, solid: [[-1.5, 0, 0.55], [-0.5, 0, 0.55], [0.5, 0, 0.55], [1.5, 0, 0.55]] },
+  garden:      { name: 'Flower garden', icon: '🌷', type: 'build', cost: { wood: 10, gems: 5 }, note: 'you can walk through it' },
+  lamppost:    { name: 'Lamp post', icon: '🏮', type: 'build', cost: { iron: 8, wood: 5, gems: 3 }, solid: [[0, 0, 0.25]] },
+  bed:         { name: 'Bed', icon: '🛏️', type: 'build', cost: { wood: 20, fur: 8 }, note: 'when you get knocked out, you wake up at your bed', solid: [[0, -0.5, 0.65], [0, 0.5, 0.65]] },
+  tent:        { name: 'Tent', icon: '⛺', type: 'build', cost: { wood: 12, fur: 10 }, solid: [[0, 0, 1.3]] },
+  snowman:     { name: 'Snowman', icon: '⛄', type: 'build', cost: { frost: 2, wood: 5 }, solid: [[0, 0, 0.7]] },
+  hut:         { name: 'Little hut', icon: '🛖', type: 'build', cost: { wood: 40, stone: 10 }, solid: [[0, 0, 1.55]] },
+  well:        { name: 'Healing well', icon: '🪣', type: 'build', cost: { stone: 30, wood: 10, gems: 8 }, heal: 12, note: 'stand close to heal fast', solid: [[0, 0, 1.1]] },
+  archway:     { name: 'Stone arch', icon: '⛩️', type: 'build', cost: { stone: 40 }, note: 'you can walk through the middle', solid: [[-1.4, 0, 0.5], [1.4, 0, 0.5]] },
+  statue:      { name: 'Gem statue', icon: '💎', type: 'build', cost: { stone: 30, gems: 20 }, solid: [[0, 0, 0.85]] },
+  house:       { name: 'Wooden house', icon: '🏠', type: 'build', cost: { wood: 60, stone: 15, iron: 4 }, solid: [[-1, 0, 1.75], [1, 0, 1.75]] },
+  stonehouse:  { name: 'Stone house', icon: '🏡', type: 'build', cost: { stone: 60, wood: 20, iron: 6 }, solid: [[-1, 0, 1.75], [1, 0, 1.75]] },
+  tower:       { name: 'Lookout tower', icon: '🗼', type: 'build', cost: { wood: 50, stone: 15, iron: 3 }, solid: [[0, 0, 1.3]] },
+  fountain:    { name: 'Crystal fountain', icon: '⛲', type: 'build', cost: { stone: 40, gems: 30, iron: 5 }, heal: 20, note: 'stand close to heal super fast', solid: [[0, 0, 1.9]] },
+  castletower: { name: 'Castle tower', icon: '🏰', type: 'build', cost: { stone: 80, iron: 15 }, solid: [[0, 0, 1.8]] },
+  dragonstatue:{ name: 'Dragon statue', icon: '🐲', type: 'build', cost: { stone: 50, gems: 30, iron: 10 }, solid: [[0, 0, 1.3]] },
 };
 const ITEM_ORDER = Object.keys(ITEMS);
 function weaponModel(id) {
@@ -3641,6 +3672,7 @@ function nearbyTreesAt(x, z, fn) {
     for (let i = 0; i < t.length; i += 4) fn(t[i], t[i + 1], t[i + 2], t[i + 3]);
   }
   solidThingsNear(x, z, fn);            // things built with Ask Claude are solid too
+  solidPlacedNear(x, z, fn);            // and so are buildings made in the backpack
 }
 function pushOutTrees(o, radius) {
   nearbyTreesAt(o.x, o.z, (tx, tz, r) => {
@@ -4955,24 +4987,51 @@ const canAfford = cost => Object.keys(cost).every(k => mats[k] >= cost[k]);
 const costText = cost => Object.keys(cost).map(k => `<span class="chip${mats[k] >= cost[k] ? '' : ' short'}">${MATS[k].icon} ${cost[k]} ${MATS[k].name}</span>`).join('');
 function itemStat(it) {
   const base = it.type === 'weapon' ? `${it.dmg} damage` : it.type === 'bow' ? `${it.dmg} damage arrows` : it.type === 'armor' ? `blocks ${Math.round(it.armor * 100)}% of damage`
-    : it.type === 'shield' ? `blocks ${Math.round(it.block * 100)}% when you raise it` : `you have ${mats.arrows}`;
-  return base + (it.note ? ', ' + it.note : '');
+    : it.type === 'shield' ? `blocks ${Math.round(it.block * 100)}% when you raise it` : it.type === 'build' ? '' : `you have ${mats.arrows}`;
+  return base && it.note ? base + ', ' + it.note : base || it.note || '';
+}
+// the backpack's sections; each player remembers which one they had open
+const BP_TABS = [
+  { k: 'weapon', label: '⚔️ Weapons', types: ['weapon'], own: 'Your weapons', ownSmall: 'choose what to hold', msg: 'Chop trees for wood. Hit big rocks for stone and iron. Beat enemies for iron, gems and fur. Giant snakes drop fangs, crocodiles drop croc skin.' },
+  { k: 'bow', label: '🏹 Bows', types: ['bow', 'ammo'], own: 'Your bows', ownSmall: 'choose what to hold', msg: 'Bows need arrows. Make more arrows here.' },
+  { k: 'shield', label: '🛡️ Shields', types: ['shield'], own: 'Your shields', ownSmall: 'choose what to carry', msg: 'Hold LB (or Q / right-click) to block with your shield.' },
+  { k: 'armor', label: '🦺 Armor', types: ['armor'], own: 'Your armor', ownSmall: 'choose what to wear', msg: 'Armor blocks some of the damage when something bites you.' },
+  { k: 'build', label: '🏠 Buildings', types: ['build'], own: 'Nearby', ownSmall: 'buildings close to you', msg: 'A building goes right in front of you. Make as many as you like!' },
+];
+let invTab = 0;
+const curTab = () => BP_TABS[invTab];
+function setInvTab(i, keepSel) {
+  invTab = (i + BP_TABS.length) % BP_TABS.length; invPending = null;
+  if (!keepSel) invSel = BP_TABS.length;           // first thing in the new section
+  renderInv();
+  tone('triangle', 600, 760, 0.06, 0.04);
+  const b = invButtons()[invSel]; if (b) b.scrollIntoView({ block: 'nearest' });
 }
 function renderInv(msg) {
+  const tab = curTab();
+  invEl.querySelector('[data-bp=tabs]').innerHTML = `<span class="tabkey">${pad.connected ? 'LB' : 'Q'}</span>` +
+    BP_TABS.map((t, i) => `<button class="tab${i === invTab ? ' on' : ''}" data-tab="${i}">${t.label}</button>`).join('') +
+    `<span class="tabkey">${pad.connected ? 'RB' : 'E'}</span>`;
+  invEl.querySelector('[data-bp=h-owned]').innerHTML = `${tab.own} <small>${tab.ownSmall}</small>`;
+  invEl.querySelector('[data-bp=h-craft]').innerHTML = tab.k === 'build' ? 'Build <small>it goes right in front of you</small>' : 'Craft <small>things you can make</small>';
   invEl.querySelector('[data-bp=mats]').innerHTML = Object.keys(MATS).map(k => `<span class="chip big">${MATS[k].icon} ${MATS[k].name}: <b>${mats[k]}</b></span>`).join('');
-  invEl.querySelector('[data-bp=owned]').innerHTML = ITEM_ORDER.filter(id => owned.has(id)).map(id => {
+  if (tab.k === 'build') {
+    const near = placed.filter(b => Math.hypot(b.x - player.x, b.z - player.z) < 30).length, close = nearestPlaced(player.x, player.z, 12);
+    invEl.querySelector('[data-bp=owned]').innerHTML = (close ? `<button class="ibtn" data-takedown><span class="ic">🔨</span><b>Take down the ${ITEMS[close.id].name}</b><small>the closest building; you get everything back</small></button>` : '') +
+      `<p class="done">${near ? `${near} building${near === 1 ? '' : 's'} close by.` : 'No buildings close by yet.'}</p>`;
+  } else invEl.querySelector('[data-bp=owned]').innerHTML = ITEM_ORDER.filter(id => owned.has(id) && tab.types.includes(ITEMS[id].type)).map(id => {
     const it = ITEMS[id], on = equip.weapon === id || equip.armor === id || equip.shield === id;
     const holdable = it.type === 'weapon' || it.type === 'bow';
     const where = on ? (holdable ? 'In your hand' : it.type === 'shield' ? 'On your arm' : 'Wearing it') : 'Press to ' + (holdable ? 'hold' : it.type === 'shield' ? 'carry' : 'wear');
     return `<button class="ibtn${on ? ' on' : ''}" data-equip="${id}"><span class="ic">${it.icon}</span><b>${it.name}</b><small>${where} · ${itemStat(it)}</small></button>`;
   }).join('');
-  const recipes = ITEM_ORDER.filter(id => ITEMS[id].cost && (ITEMS[id].type === 'ammo' || !owned.has(id)));
+  const recipes = ITEM_ORDER.filter(id => ITEMS[id].cost && tab.types.includes(ITEMS[id].type) && (ITEMS[id].type === 'ammo' || ITEMS[id].type === 'build' || !owned.has(id)));
   invEl.querySelector('[data-bp=recipes]').innerHTML = recipes.length ? recipes.map(id => {
     const it = ITEMS[id], ok = canAfford(it.cost);
     const stat = itemStat(it);
     return `<button class="ibtn${ok ? '' : ' cant'}${invPending === id ? ' pending' : ''}" data-craft="${id}"><span class="ic">${it.icon}</span><b>${it.name}</b><small>${stat}</small><span class="cost">${costText(it.cost)}</span></button>`;
-  }).join('') : '<p class="done">You have made everything!</p>';
-  invEl.querySelector('[data-bp=msg]').textContent = msg || 'Chop trees for wood. Hit big rocks for stone and iron. Beat enemies for iron, gems and fur. Giant snakes drop fangs, crocodiles drop croc skin.';
+  }).join('') : '<p class="done">You have made everything here!</p>';
+  invEl.querySelector('[data-bp=msg]').textContent = msg || tab.msg.replace('LB', btnName('LB'));
   const list = invButtons();
   invSel = Math.min(invSel, list.length - 1);
   list.forEach((b, i) => b.classList.toggle('sel', i === invSel));
@@ -4982,7 +5041,7 @@ function openInv(fromMouse) {
   if (state !== 'play' || player.ko || ui !== 'play') return;
   ui = 'inv';
   if (players.length === 1) state = 'inv';      // one player: the whole game waits. Two: only this player does
-  invPending = null; invFromMouse = fromMouse; invSel = 0; invOwner = curP;
+  invPending = null; invFromMouse = fromMouse; invSel = BP_TABS.length; invOwner = curP;
   keys.clear(); mouseHeld = false; swingT = -1;
   if (curP === 0 && document.pointerLockElement) document.exitPointerLock();
   invEl.classList.remove('half0', 'half1');
@@ -5006,6 +5065,18 @@ function closeInv(fromMouse) {
 function invAction(btn) {
   if (!btn) return;
   if (btn.dataset.close !== undefined) { closeInv(true); return; }
+  if (btn.dataset.tab !== undefined) { setInvTab(+btn.dataset.tab, true); return; }
+  if (btn.dataset.takedown !== undefined) {
+    const b = nearestPlaced(player.x, player.z, 12);
+    if (!b) { renderInv('No building close enough to take down.'); return; }
+    placed.splice(placed.indexOf(b), 1);
+    const it = ITEMS[b.id];
+    for (const k in it.cost) mats[k] += it.cost[k];
+    noiseHit('lowpass', 600, 0.8, 0.2, 0.3); thump(0.3);
+    renderInv(`You took down the ${it.name} and got everything back.`);
+    updateHud(); writeSave();
+    return;
+  }
   const eq = btn.dataset.equip, cr = btn.dataset.craft;
   if (eq) {
     const it = ITEMS[eq];
@@ -5022,6 +5093,15 @@ function invAction(btn) {
       const need = Object.keys(it.cost).filter(k => mats[k] < it.cost[k]).map(k => `${it.cost[k] - mats[k]} more ${MATS[k].name.toLowerCase()}`).join(' and ');
       thump(0.15);
       renderInv(`You need ${need}` + (it.cost.scale && mats.scale < 1 ? '. Dragon scales come from beating a dragon.' : it.cost.fang && mats.fang < it.cost.fang ? '. Giant fangs come from beating a giant snake.' : '.'));
+      return;
+    }
+    if (it.type === 'build') {
+      const why = placeBuilding(cr);
+      if (why) { thump(0.15); renderInv(why); return; }
+      for (const k in it.cost) mats[k] -= it.cost[k];
+      [392, 523, 659, 784].forEach((f, i) => tone('triangle', f, f, 0.2, 0.08, i * 0.08)); thump(0.25);
+      renderInv(`${it.icon} You built the ${it.name}! It's right in front of you.` + (it.heal ? ' Stand close to it to heal.' : cr === 'bed' ? " Now if you get knocked out, you'll wake up here." : ''));
+      updateHud(); writeSave();
       return;
     }
     if (it.cost.scale && invPending !== cr) {     // dragon scale: make them choose on purpose
@@ -5087,6 +5167,8 @@ function invPad(dt) {
     if (invRepeat <= 0) { if (dirY) invMove(0, dirY); else invMove(dirX, 0); invRepeat = invRepeat < -10 ? 0.35 : 0.2; }
   } else invRepeat = -20;
   if (pressed(0)) invAction(invButtons()[invSel]);
+  else if (pressed(4)) setInvTab(invTab - 1);
+  else if (pressed(5)) setInvTab(invTab + 1);
   else if (pressed(1) || pressed(3) || pressed(9)) closeInv(false);
 }
 
@@ -5325,10 +5407,19 @@ function updateHealth(dt) {
     if (player.ko <= 0) {
       player.ko = 0; player.hp = 100;
       koEl.classList.remove('show');
-      toast(players.length > 1 ? `💪 Player ${curP + 1} feels better!` : '💪 You feel better!');
+      const bed = nearestPlaced(player.x, player.z, Infinity, 'bed');
+      if (bed) {                                      // wake up next to your bed
+        const c = Math.cos(bed.yaw), s = Math.sin(bed.yaw);
+        teleport(bed.x - 1.6 * c, bed.z + 1.6 * s, player);
+      }
+      toast((players.length > 1 ? `💪 Player ${curP + 1} feels better!` : '💪 You feel better!') + (bed ? ' 🛏️' : ''));
       spawnTimer = 10;
     }
-  } else if (player.hurtT > 4 && player.hp < 100) player.hp = Math.min(100, player.hp + 5 * dt);
+  } else {
+    if (player.hurtT > 4 && player.hp < 100) player.hp = Math.min(100, player.hp + 5 * dt);
+    const hr = player.hp < 100 ? healHereRate(player.x, player.z) : 0;      // campfires, wells and fountains
+    if (hr) player.hp = Math.min(100, player.hp + hr * dt);
+  }
   hurtFlash = Math.max(0, hurtFlash - dt * 2.5);
   player.frozenT = Math.max(0, (player.frozenT || 0) - dt);
   if (player.poisonT > 0 && !player.ko) {            // poison: 2 damage a second for a few seconds
@@ -5352,7 +5443,7 @@ let camR = [1, 0, 0], camU = [0, 1, 0], camF = [0, 0, -1], blockV = 0;
 function makeSlot(pl, pd, eq, els) {
   return Object.assign({ player: pl, pad: pd, equip: eq, owned: new Set(['fists']), lastGear: { melee: null, bow: null, shield: null }, swingT: -1, swingHit: false,
     hurtFlash: 0, shake: 0, blockV: 0, camR: [1, 0, 0], camU: [0, 1, 0], camF: [0, 0, -1], keys: new Set(), mouseDX: 0, mouseDY: 0,
-    mouseHeld: false, rightHeld: false, ui: 'play', invSel: 0, invPending: null, invRepeat: 0, invFromMouse: false, pmSel: 0, pmRepeat: 0 }, els);
+    mouseHeld: false, rightHeld: false, ui: 'play', invSel: 0, invPending: null, invRepeat: 0, invFromMouse: false, pmSel: 0, pmRepeat: 0, invTab: 0 }, els);
 }
 pslots[0] = makeSlot(player, pad, equip, { hudEl, hpFill, hurtEl, koEl, frostEl });
 pslots[0].lastGear = lastGear; pslots[0].keys = keys; pslots[0].owned = owned;
@@ -5361,7 +5452,7 @@ function stashPlayer() {
   const s = pslots[curP];
   Object.assign(s, { player, pad, equip, owned, lastGear, swingT, swingHit, hurtFlash, shake, blockV, camR, camU, camF, keys, mouseDX, mouseDY,
     mouseHeld, rightHeld, hudEl, hpFill, hurtEl, koEl, frostEl,
-    mats, ui, invEl, invSel, invPending, invRepeat, invFromMouse, pmEl, pmSel, pmRepeat });
+    mats, ui, invEl, invSel, invPending, invRepeat, invFromMouse, pmEl, pmSel, pmRepeat, invTab });
 }
 // make player i the one the game is working with (only player 1 uses the keyboard and mouse)
 function usePlayer(i) {
@@ -5371,7 +5462,7 @@ function usePlayer(i) {
   const s = pslots[i];
   ({ player, pad, equip, owned, lastGear, swingT, swingHit, hurtFlash, shake, blockV, camR, camU, camF, keys, mouseDX, mouseDY,
     mouseHeld, rightHeld, hudEl, hpFill, hurtEl, koEl, frostEl,
-    mats, ui, invEl, invSel, invPending, invRepeat, invFromMouse, pmEl, pmSel, pmRepeat } = s);
+    mats, ui, invEl, invSel, invPending, invRepeat, invFromMouse, pmEl, pmSel, pmRepeat, invTab } = s);
 }
 // player 2's own gear (what they've crafted or picked up), kept with the saved game while they're away
 let p2Saved = null, p2Invert = false;
@@ -5922,6 +6013,9 @@ GAME STATE you can read and change directly:
   Weapons: stick axe club stonespear ironaxe ironsword fangdagger hammer goblinaxe crocwhip scalesword scalespear trident sharksword crocmace crystal crystalspear crystalaxe venomglaive dragonsword
   Bows: woodbow ironbow venombow frostbow crocbow scalebow crystalbow dragonbow. Armor: woodplate furplate stoneplate spikedplate scaleplate ironplate venomplate crystalplate dragonplate.
   Shields: woodshield ironshield scaleshield spikedshield venomshield frostshield crystalshield dragonshield.
+  Buildings (type 'build', made in the backpack's Buildings section, saved with the world): giveItem(id) puts one in front of the speaker for free.
+  placed is the array of them: { id, x, z, yaw }; remove one with placed.splice(i, 1). Ids: campfire bench fence woodwall stonewall garden lamppost bed tent
+  snowman hut well archway statue house stonehouse tower fountain castletower dragonstatue.
 - addPickup(kind, x, y, z) drops a collectible: kind is a material name, 'gem', or 'apple' (heals).
 - Sounds: thump(vol), tone(type, f0, f1, dur, vol, delay) e.g. tone('sine', 600, 1200, 0.3, 0.1).
 - Players walk 4.6 m/s and run 8.5 m/s. To make a player faster, a hook can add extra movement: p.x += p.vx * dt * (k - 1); p.z += p.vz * dt * (k - 1).
@@ -6079,6 +6173,201 @@ function solidThingsNear(x, z, fn) {
   }
 }
 
+/* ---------- buildings the players make in their backpack (saved with the world) ---------- */
+// each model is built facing -z (its front looks back at whoever built it)
+const BW = [0.55, 0.38, 0.2], BW2 = [0.42, 0.28, 0.15], BS = [0.58, 0.58, 0.6], BS2 = [0.45, 0.45, 0.48], BDARK = [0.16, 0.12, 0.1];
+const BUILD_MAKE = {
+  campfire(g) {
+    for (let i = 0; i < 9; i++) { const a = i / 9 * 6.283; ball(g, Math.cos(a) * 0.55, 0.08, Math.sin(a) * 0.55, 0.15, i % 2 ? BS : BS2); }
+    pole(g, [-0.45, 0.1, -0.2], [0.45, 0.22, 0.2], 0.08, 0.08, BW2, 6);
+    pole(g, [-0.45, 0.1, 0.2], [0.45, 0.22, -0.2], 0.08, 0.08, BW, 6);
+    egg(g, 0, 0.35, 0, 0.28, 0.4, 0.28, [1.0, 0.45, 0.1]);
+    egg(g, 0, 0.42, 0, 0.16, 0.3, 0.16, [1.0, 0.85, 0.25]);
+  },
+  bench(g) {
+    box(g, 0, 0.42, 0, 1.8, 0.1, 0.5, BW);
+    box(g, 0, 0.55, 0.22, 1.8, 0.45, 0.08, BW2);
+    for (const x of [-0.75, 0.75]) for (const z of [-0.18, 0.18]) box(g, x, 0, z, 0.1, 0.42, 0.1, BW2);
+  },
+  fence(g) {
+    for (let i = -2; i <= 2; i++) { box(g, i, 0, 0, 0.16, 1.15, 0.16, BW2); spike(g, i, 1.15, 0, 0.12, 0.15, BW2, 4); }
+    box(g, 0, 0.4, 0, 4.1, 0.12, 0.07, BW); box(g, 0, 0.82, 0, 4.1, 0.12, 0.07, BW);
+  },
+  woodwall(g) {
+    box(g, 0, 0, 0, 4, 1.8, 0.3, BW);
+    for (let i = -2; i <= 2; i++) box(g, i * 0.98, 0, 0, 0.22, 1.95, 0.38, BW2);
+  },
+  stonewall(g) {
+    box(g, 0, 0, 0, 4, 2, 0.7, BS);
+    for (let i = 0; i < 5; i++) box(g, -1.6 + i * 0.8, 2, 0, 0.45, 0.4, 0.7, BS2);
+  },
+  garden(g) {
+    box(g, 0, 0, 0, 2.4, 0.22, 1.5, BW2);
+    box(g, 0, 0.22, 0, 2.2, 0.04, 1.3, [0.3, 0.2, 0.12]);
+    const F = [[1, 0.35, 0.5], [1, 0.85, 0.2], [0.65, 0.4, 1], [1, 0.55, 0.2], [1, 1, 1], [0.95, 0.25, 0.3]];
+    for (let i = 0; i < 12; i++) {
+      const x = -0.9 + (i % 6) * 0.36, z = i < 6 ? -0.35 : 0.35, h = 0.45 + ((i * 7) % 5) * 0.06;
+      pole(g, [x, 0.24, z], [x, 0.24 + h, z], 0.025, 0.02, [0.3, 0.6, 0.25], 4);
+      ball(g, x, 0.27 + h, z, 0.1, F[i % 6]); ball(g, x, 0.29 + h, z - 0.06, 0.04, [1, 0.9, 0.3]);
+    }
+  },
+  lamppost(g) {
+    pole(g, [0, 0, 0], [0, 0.3, 0], 0.2, 0.15, [0.25, 0.25, 0.28], 8);
+    pole(g, [0, 0.3, 0], [0, 3, 0], 0.07, 0.06, [0.25, 0.25, 0.28], 8);
+    box(g, 0, 3, 0, 0.42, 0.5, 0.42, [0.2, 0.2, 0.22]);
+    box(g, 0, 3.05, 0, 0.34, 0.4, 0.44, [1.0, 0.9, 0.5]); box(g, 0, 3.05, 0, 0.44, 0.4, 0.34, [1.0, 0.9, 0.5]);
+    spike(g, 0, 3.5, 0, 0.42, 0.3, [0.2, 0.2, 0.22], 4);
+  },
+  bed(g) {
+    box(g, 0, 0, 0, 1.3, 0.4, 2.2, BW2);
+    box(g, 0, 0.4, 0, 1.2, 0.22, 2.1, [0.95, 0.95, 0.92]);
+    box(g, 0, 0.62, 0.7, 0.8, 0.14, 0.45, [1, 1, 1]);                // pillow
+    box(g, 0, 0.62, -0.35, 1.24, 0.06, 1.4, [0.8, 0.22, 0.25]);     // blanket
+    box(g, 0, 0, 1.08, 1.3, 1.05, 0.12, BW);                         // headboard
+  },
+  tent(g) {
+    spike(g, 0, 0, 0, 1.6, 2.0, [0.9, 0.58, 0.25], 4);
+    spike(g, 0, 0, -0.06, 0.62, 1.05, BDARK, 4);
+    pole(g, [0, 1.9, 0], [0, 2.3, 0], 0.03, 0.03, BW2, 4);
+  },
+  snowman(g) {
+    ball(g, 0, 0.5, 0, 0.6, [0.96, 0.97, 1]); ball(g, 0, 1.25, 0, 0.42, [0.96, 0.97, 1]); ball(g, 0, 1.85, 0, 0.3, [0.96, 0.97, 1]);
+    for (const x of [-0.1, 0.1]) ball(g, x, 1.93, -0.26, 0.04, BDARK);
+    pole(g, [0, 1.85, -0.27], [0, 1.84, -0.55], 0.05, 0.005, [1, 0.5, 0.1], 6);
+    for (const y of [1.1, 1.3, 1.5]) ball(g, 0, y, -0.4, 0.04, BDARK);
+    for (const sd of [-1, 1]) pole(g, [sd * 0.38, 1.35, 0], [sd * 0.95, 1.7, 0], 0.035, 0.02, BW2, 4);
+    pole(g, [0, 2.08, 0], [0, 2.42, 0], 0.2, 0.2, BDARK, 8); pole(g, [0, 2.08, 0], [0, 2.12, 0], 0.32, 0.32, BDARK, 8);
+  },
+  hut(g) {
+    box(g, 0, 0, 0, 2.6, 1.9, 2.6, BW);
+    spike(g, 0, 1.9, 0, 2.3, 1.5, [0.85, 0.72, 0.35], 4);
+    box(g, 0, 0, -1.31, 0.8, 1.3, 0.05, BDARK);
+    box(g, 0.85, 1.0, -1.31, 0.45, 0.4, 0.05, [0.55, 0.8, 1.0]);
+  },
+  well(g) {
+    pole(g, [0, 0, 0], [0, 0.85, 0], 1.0, 1.0, BS, 10);
+    pole(g, [0, 0.85, 0], [0, 0.87, 0], 0.8, 0.8, [0.3, 0.6, 0.95], 10);
+    for (const x of [-0.85, 0.85]) pole(g, [x, 0.85, 0], [x, 2.3, 0], 0.08, 0.08, BW2, 6);
+    pole(g, [-0.9, 2.0, 0], [0.9, 2.0, 0], 0.05, 0.05, BW2, 6);
+    box(g, 0, 1.55, 0, 0.3, 0.3, 0.3, BW);                        // bucket
+    spike(g, 0, 2.3, 0, 1.6, 0.9, [0.75, 0.25, 0.2], 4);
+  },
+  archway(g) {
+    for (const x of [-1.4, 1.4]) box(g, x, 0, 0, 0.8, 3.2, 0.8, BS);
+    box(g, 0, 3.2, 0, 3.8, 0.7, 0.9, BS2);
+    box(g, 0, 3.9, 0, 3.2, 0.3, 0.7, BS);
+  },
+  statue(g) {
+    box(g, 0, 0, 0, 1.5, 1.1, 1.5, BS);
+    box(g, 0, 1.1, 0, 1.2, 0.15, 1.2, BS2);
+    spike(g, 0, 1.25, 0, 0.55, 1.6, [0.4, 0.85, 1.0], 6);
+    spike(g, 0.42, 1.25, 0.2, 0.28, 0.9, [0.75, 0.5, 1.0], 6);
+    spike(g, -0.38, 1.25, -0.2, 0.25, 0.75, [0.55, 1.0, 0.75], 6);
+  },
+  house(g) {
+    box(g, 0, 0, 0, 4.2, 2.7, 3.4, [0.78, 0.6, 0.4]);
+    box(g, 0, 2.7, 0, 4.4, 0.15, 3.6, BW2);
+    spike(g, 0, 2.85, 0, 3.3, 1.9, [0.75, 0.22, 0.18], 4);
+    box(g, 0, 0, -1.71, 0.9, 1.8, 0.05, BW2);
+    ball(g, 0.3, 0.9, -1.75, 0.05, [1, 0.85, 0.3]);
+    for (const x of [-1.3, 1.3]) { box(g, x, 1.2, -1.71, 0.8, 0.7, 0.05, [0.55, 0.8, 1.0]); box(g, x, 1.2, -1.73, 0.06, 0.7, 0.05, BW2); }
+    box(g, 2.11, 1.2, 0, 0.05, 0.7, 0.8, [0.55, 0.8, 1.0]); box(g, -2.11, 1.2, 0, 0.05, 0.7, 0.8, [0.55, 0.8, 1.0]);
+  },
+  stonehouse(g) {
+    box(g, 0, 0, 0, 4.2, 2.8, 3.4, BS);
+    for (let i = 0; i < 4; i++) box(g, 0, 0.6 + i * 0.6, -1.71, 4.2, 0.05, 0.03, BS2);
+    spike(g, 0, 2.8, 0, 3.3, 1.8, [0.3, 0.32, 0.4], 4);
+    box(g, 1.2, 3.0, 0.6, 0.6, 1.6, 0.6, BS2);                     // chimney
+    box(g, 0, 0, -1.71, 1.0, 1.9, 0.05, BW2);
+    for (const x of [-1.35, 1.35]) box(g, x, 1.3, -1.71, 0.7, 0.7, 0.05, [1.0, 0.85, 0.45]);
+  },
+  tower(g) {
+    for (const x of [-0.9, 0.9]) for (const z of [-0.9, 0.9]) pole(g, [x, 0, z], [x * 0.85, 5, z * 0.85], 0.13, 0.1, BW2, 6);
+    pole(g, [-0.9, 1.6, -0.9], [0.9, 3.2, -0.9], 0.06, 0.06, BW, 4); pole(g, [0.9, 1.6, 0.9], [-0.9, 3.2, 0.9], 0.06, 0.06, BW, 4);
+    box(g, 0, 5, 0, 2.4, 0.2, 2.4, BW);
+    for (const [x, z, w, d] of [[0, -1.15, 2.4, 0.1], [0, 1.15, 2.4, 0.1], [-1.15, 0, 0.1, 2.4], [1.15, 0, 0.1, 2.4]]) box(g, x, 5.2, z, w, 0.7, d, BW2);
+    for (const x of [-1.1, 1.1]) for (const z of [-1.1, 1.1]) pole(g, [x, 5.2, z], [x, 6.6, z], 0.06, 0.06, BW2, 4);
+    spike(g, 0, 6.6, 0, 2.0, 1.2, [0.75, 0.25, 0.2], 4);
+  },
+  fountain(g) {
+    pole(g, [0, 0, 0], [0, 0.55, 0], 1.9, 1.9, BS, 14);
+    pole(g, [0, 0.55, 0], [0, 0.57, 0], 1.65, 1.65, [0.35, 0.7, 1.0], 14);
+    pole(g, [0, 0.55, 0], [0, 1.6, 0], 0.25, 0.2, BS2, 8);
+    pole(g, [0, 1.6, 0], [0, 1.8, 0], 0.7, 0.55, BS, 10);
+    pole(g, [0, 1.8, 0], [0, 1.82, 0], 0.5, 0.5, [0.35, 0.7, 1.0], 10);
+    spike(g, 0, 1.8, 0, 0.3, 1.0, [0.45, 0.9, 1.0], 6);
+  },
+  castletower(g) {
+    pole(g, [0, 0, 0], [0, 7, 0], 1.7, 1.6, BS, 12);
+    pole(g, [0, 7, 0], [0, 7.3, 0], 1.95, 1.95, BS2, 12);
+    for (let i = 0; i < 10; i++) { const a = i / 10 * 6.283; box(g, Math.cos(a) * 1.75, 7.3, Math.sin(a) * 1.75, 0.5, 0.6, 0.5, BS); }
+    box(g, 0, 0, -1.6, 1.1, 2.0, 0.2, BW2);
+    for (const y of [3.2, 5.2]) box(g, 0, y, -1.62, 0.35, 0.8, 0.1, BDARK);
+    pole(g, [0, 7.3, 0], [0, 9.5, 0], 0.05, 0.05, BW2, 4);
+    box(g, 0.45, 8.8, 0, 0.9, 0.6, 0.04, [0.85, 0.2, 0.25]);
+  },
+  dragonstatue(g) {
+    const R = [0.75, 0.2, 0.15], R2 = [0.55, 0.12, 0.1], GO = [1.0, 0.8, 0.2];
+    box(g, 0, 0, 0, 2.4, 0.8, 2.4, BS);
+    egg(g, 0, 1.6, 0.2, 0.6, 0.6, 0.9, R);
+    pole(g, [0, 1.8, -0.4], [0, 2.8, -0.8], 0.3, 0.2, R, 8);
+    egg(g, 0, 2.9, -1.0, 0.3, 0.28, 0.45, R);
+    for (const x of [-0.15, 0.15]) { ball(g, x, 3.05, -1.25, 0.06, GO); pole(g, [x, 3.1, -0.9], [x * 2, 3.5, -0.75], 0.06, 0.01, GO, 4); }
+    for (const sd of [-1, 1]) { pole(g, [sd * 0.4, 1.9, 0.2], [sd * 1.5, 2.8, 0.5], 0.12, 0.04, R2, 6); egg(g, sd * 1.0, 2.3, 0.45, 0.6, 0.45, 0.06, R2); }
+    for (const [x, z] of [[-0.4, -0.3], [0.4, -0.3], [-0.4, 0.7], [0.4, 0.7]]) pole(g, [x, 0.8, z], [x, 1.4, z], 0.15, 0.15, R2, 6);
+    pole(g, [0, 1.4, 0.9], [0.4, 1.0, 1.7], 0.25, 0.04, R, 6);
+  },
+};
+let placed = [];                       // { id, x, z, yaw } in this saved game
+const buildMeshes = {};
+function buildMesh(id) {
+  if (!buildMeshes[id]) { const g = new Geo(2048); BUILD_MAKE[id](g); buildMeshes[id] = makeMesh(g); }
+  return buildMeshes[id];
+}
+(function loadPlaced() {
+  if (!Array.isArray(G0.builds)) return;
+  for (const b of G0.builds.slice(0, 400)) {
+    if (!b || typeof b !== 'object' || !ITEMS[b.id] || ITEMS[b.id].type !== 'build') continue;
+    if (![b.x, b.z, b.yaw].every(v => typeof v === 'number' && isFinite(v) && Math.abs(v) < 1e6)) continue;
+    placed.push({ id: b.id, x: b.x, z: b.z, yaw: b.yaw });
+  }
+})();
+// put a new building in front of the player; returns null if it worked, or why it can't go there
+function placeBuilding(id) {
+  const it = ITEMS[id], reach = (it.solid || [[0, 0, 1]]).reduce((m, [x, z, r]) => Math.max(m, Math.hypot(x, z) + r), 1);
+  const dist = 1.6 + reach, sy = Math.sin(player.yaw), cy = Math.cos(player.yaw);
+  const x = player.x + sy * dist, z = player.z - cy * dist;
+  if (groundAt(x, z) < WATER_Y + 0.05) return "You can't build in the water. Find some dry land!";
+  if (placed.length >= 400) return 'You have built so much! Take some buildings down first.';
+  placed.push({ id, x: +x.toFixed(2), z: +z.toFixed(2), yaw: +(Math.PI - player.yaw).toFixed(3) });
+  return null;
+}
+function nearestPlaced(x, z, maxD, only) {
+  let best = null, bd = maxD;
+  for (const b of placed) { if (only && b.id !== only) continue; const d = Math.hypot(b.x - x, b.z - z); if (d < bd) { bd = d; best = b; } }
+  return best;
+}
+function drawPlaced() {
+  for (const b of placed) {
+    if (Math.abs(b.x - player.x) > FOG_END + 40 || Math.abs(b.z - player.z) > FOG_END + 40) continue;
+    drawMesh(buildMesh(b.id), mChain(mT(b.x, groundAt(b.x, b.z), b.z), mRy(b.yaw)));
+  }
+}
+function solidPlacedNear(x, z, fn) {
+  for (const b of placed) {
+    if (Math.abs(b.x - x) > 30 || Math.abs(b.z - z) > 30) continue;
+    const S = ITEMS[b.id].solid; if (!S) continue;
+    const c = Math.cos(b.yaw), s = Math.sin(b.yaw);
+    for (const [lx, lz, r] of S) fn(b.x + lx * c + lz * s, b.z - lx * s + lz * c, r, 3);
+  }
+}
+// campfires, wells and fountains heal whoever stands close
+function healHereRate(x, z) {
+  let h = 0;
+  for (const b of placed) { const it = ITEMS[b.id]; if (it.heal && Math.abs(b.x - x) < 5 && Math.abs(b.z - z) < 5 && Math.hypot(b.x - x, b.z - z) < 4.5) h = Math.max(h, it.heal); }
+  return h;
+}
+
 function say(text) { feed(String(text)); }
 function addHook(name, fn) { removeHook(name); claudeHooks.push({ name: String(name), fn }); }
 function removeHook(name) { claudeHooks = claudeHooks.filter(h => h.name !== String(name)); }
@@ -6098,6 +6387,7 @@ function giveItem(id) {
   const it = ITEMS[id];
   if (!it) throw new Error('No item called ' + id);
   if (it.type === 'ammo') { for (const k in it.give) give(k, it.give[k]); return; }
+  if (it.type === 'build') { usePlayer(claudeSpeaker); const why = placeBuilding(id); usePlayer(0); if (why) throw new Error(why); writeSave(); return; }
   usePlayer(claudeSpeaker);
   owned.add(id);
   if (it.type === 'weapon' || it.type === 'bow') equip.weapon = id;

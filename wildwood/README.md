@@ -63,7 +63,34 @@ The boss music, the dragon's roar, tail whip, air-only fire, glide, white spikes
 
 Gear made from common-enemy drops (fur, croc skin, shark teeth, and the goblin axe) has half the damage or protection of the original design, so it's an easy start rather than the best gear. Gear that needs a boss drop (fangs, frost crystals, dragon scales) is full strength.
 
-Open the backpack with **Y** (controller) or **I** / **Tab** (keyboard). It shows your materials, lets you choose what to hold and wear, and lists what you can craft. Crafted things are yours to keep.
+Open the backpack with **Y** (controller) or **I** / **Tab** (keyboard). It shows your materials at the top and has five sections: **⚔️ Weapons, 🏹 Bows (and arrows), 🛡️ Shields, 🦺 Armor and 🏠 Buildings**. Switch sections with **LB / RB** (controller), **Q / E** or **1–5** (keyboard), or by choosing a section's button. Each section shows what you have (choose what to hold and wear) and what you can craft. Crafted things are yours to keep.
+
+### Buildings
+
+Building one puts it right in front of you, facing you (not in water). You can build as many as you like, and they cost a lot. They're saved with the world, so both players see them, and they're solid. The Buildings section shows how many are close by and has **🔨 Take down** for the closest one (within 12 m), which gives back everything it cost.
+
+| Building | Cost | Special |
+|---|---|---|
+| Campfire | 12 wood, 8 stone | stand within about 4 m to heal 8 a second |
+| Bench | 12 wood | |
+| Fence | 15 wood | |
+| Wooden wall | 20 wood | |
+| Stone wall | 25 stone | |
+| Flower garden | 10 wood, 5 gems | you can walk through it |
+| Lamp post | 8 iron, 5 wood, 3 gems | |
+| Bed | 20 wood, 8 fur | when you're knocked out, you wake up next to your nearest bed |
+| Tent | 12 wood, 10 fur | |
+| Snowman | 2 frost crystals, 5 wood | |
+| Little hut | 40 wood, 10 stone | |
+| Healing well | 30 stone, 10 wood, 8 gems | heals 12 a second close by |
+| Stone arch | 40 stone | you can walk through the middle |
+| Gem statue | 30 stone, 20 gems | |
+| Wooden house | 60 wood, 15 stone, 4 iron | |
+| Stone house | 60 stone, 20 wood, 6 iron | |
+| Lookout tower | 50 wood, 15 stone, 3 iron | |
+| Crystal fountain | 40 stone, 30 gems, 5 iron | heals 20 a second close by |
+| Castle tower | 80 stone, 15 iron | |
+| Dragon statue | 50 stone, 30 gems, 10 iron | |
 
 - **Wood:** swing at a tree (5 per tree). **Stone:** swing at a big rock (4 per rock, and sometimes iron). **Iron, gems and fur:** beat enemies (wolves usually drop 1 fur, bears 2). **Dragon scale:** one from each dragon you beat. **Giant fangs:** two from each giant snake you beat. **Frost crystals:** two from each ice ogre. **Croc skin:** one from each crocodile. **Fish scales:** one from each fish. **Golden scale:** from the rare golden fish. **Shark teeth:** two from each shark.
 
@@ -88,11 +115,11 @@ Open the backpack with **Y** (controller) or **I** / **Tab** (keyboard). It show
 | Crystal sword | 6 | 2 iron, 12 gems |
 | Crystal spear | 6, reaches far | 2 wood, 1 iron, 8 gems |
 | Crystal axe | 7, chops 3 wood per hit | 1 wood, 2 iron, 10 gems |
-| Venom glaive | 8, reaches far, poisons (2 damage a second for 4 seconds) | 1 giant fang, 2 wood, 3 iron |
+| Venom glaive | 8, reaches far, poisons (2 damage a second for 4 seconds) | 5 giant fangs, 2 wood, 3 iron |
 | Dragon sword | 10 | 1 dragon scale, 3 iron |
 | Wooden bow | 1-damage arrows | 4 wood, 1 fur |
 | Iron bow | 1.5-damage arrows, faster | 2 wood, 3 iron, 1 fur |
-| Venom bow | 3.5-damage poison arrows | 1 giant fang, 2 wood, 1 fur |
+| Venom bow | 3.5-damage poison arrows | 5 giant fangs, 2 wood, 1 fur |
 | Frost bow | 3.5-damage arrows that slow enemies | 1 frost crystal, 2 wood, 1 fur |
 | Croc-tooth bow | 2-damage arrows | 2 croc skin, 2 wood, 1 fur |
 | Scale bow | 3.5-damage arrows, shoots quickly | 6 fish scales, 2 wood |
@@ -105,7 +132,7 @@ Open the backpack with **Y** (controller) or **I** / **Tab** (keyboard). It show
 | Spiked chest plate | blocks 30%; anything that bites you takes 3 damage | 6 iron, 4 stone |
 | Scale chest plate | blocks 35% | 10 fish scales |
 | Iron chest plate | blocks 35% | 8 iron |
-| Venom chest plate | blocks 45%, poisons anything that bites you | 1 giant fang, 6 iron |
+| Venom chest plate | blocks 45%, poisons anything that bites you | 5 giant fangs, 6 iron |
 | Crystal chest plate | blocks 50% | 4 iron, 20 gems |
 | Dragon chest plate | blocks 60% | 1 dragon scale, 4 iron |
 | Wooden shield | blocks 40% when raised | 6 wood |
@@ -117,7 +144,7 @@ Open the backpack with **Y** (controller) or **I** / **Tab** (keyboard). It show
 | Crystal shield | blocks 75% | 2 iron, 15 gems |
 | Dragon shield | blocks 90%, even dragon fire | 1 dragon scale, 3 iron |
 
-Bows go in your hand like a weapon: RT shoots an arrow where your crosshair points (they drop a little over distance and stick in the ground and trees). A shield goes on your other arm: hold LB to raise it, which blocks hits from in front and slows you down, but you can still swing or shoot. You can't raise it while swimming. The four dragon recipes (sword, chest plate, bow, shield) all need the scale, so you have to choose. One snake's two fangs make two of the three fang items (venom glaive, venom chest plate, fang dagger). A poisoned enemy's health bar turns green. The backpack asks you to press a second time before it uses the scale.
+Bows go in your hand like a weapon: RT shoots an arrow where your crosshair points (they drop a little over distance and stick in the ground and trees). A shield goes on your other arm: hold LB to raise it, which blocks hits from in front and slows you down, but you can still swing or shoot. You can't raise it while swimming. The four dragon recipes (sword, chest plate, bow, shield) all need the scale, so you have to choose. The venom glaive, venom bow and venom chest plate each take 5 giant fangs (three giant snakes' worth); the fang dagger and venom shield take 1. A poisoned enemy's health bar turns green. The backpack asks you to press a second time before it uses the scale.
 
 ## How the world is made
 
@@ -152,7 +179,7 @@ You can have as many saved games as you like. **💾 Saved games** in the menu l
 
 - `wildwood.v1`: settings shared by every game (music, sound, look direction, enemies) and the id of the open game.
 - `wildwood.slots`: the list of saved games: `{ id, name, seed, last, gems, things }`. Broken entries are dropped on load.
-- `wildwood.slot.<id>`: one game's world seed, where you were standing, your materials, the things you've crafted and what you're holding and wearing.
+- `wildwood.slot.<id>`: one game's world seed, where you were standing, your materials, the things you've crafted, what you're holding and wearing, and the buildings in this world.
 
 The first time this version loads, an older single save (everything was in `wildwood.v1`) becomes "Game 1", so nothing is lost. Older saves are upgraded too: gems carry over and any weapons you'd found are kept. If the place you saved is now out in the ocean, you wake up on the nearest beach.
 
