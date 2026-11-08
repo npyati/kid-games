@@ -1397,12 +1397,13 @@ function buildChunk(cx, cz) {
 
   // trees, bushes, rocks and logs
   const vg = new Geo(16384);
-  const CELL = 4, NC = CH / CELL;
+  const CELL = 4, NC = CH / CELL, foots = roomsNear(x0, z0, CH, 'foot');
   for (let j = 0; j < NC; j++) for (let i = 0; i < NC; i++) {
     const rng = mulberry32(hashInt(cx * NC + i, cz * NC + j, 1));
     const px = x0 + (i + 0.1 + rng() * 0.8) * CELL, pz = z0 + (j + 0.1 + rng() * 0.8) * CELL;
     const roll = rng();
     if (featureNear(px, pz)) continue;          // keep caves and lairs clear
+    if (foots.length && insideRooms(foots, px, pz, 'foot', 1.5)) continue;     // and the ground under buildings
     const s = sample(px, pz);
     if (s.rd < s.rw + 4 || s.lake > LAKE_T - 0.03) continue;
     const forest = s.forest, pine = s.pine, marsh = s.marsh, snowy = s.snow;
@@ -1434,6 +1435,7 @@ function buildChunk(cx, cz) {
     const px = x0 + (i + rng()) * RC, pz = z0 + (j + rng()) * RC;
     const roll = rng();
     if (featureNear(px, pz)) continue;
+    if (foots.length && insideRooms(foots, px, pz, 'foot', 2)) continue;
     const y = chunkHeight(ch, px, pz);
     if (roll < 0.22) {
       const size = 0.4 + rng() * rng() * 2.2;
@@ -1492,11 +1494,13 @@ function buildDetail(ch) {
   const lairHere = lairInCell(Math.floor((x0 + 32) / LAIR_CELL), Math.floor((z0 + 32) / LAIR_CELL));
   const onVolcano = (x, z) => lairHere && Math.hypot(x - lairHere.x, z - lairHere.z) < VOLC_R + 3;
   const meadowB = [0.24, 0.38, 0.13], meadowT = [0.50, 0.66, 0.28];
+  const rooms = roomsNear(x0, z0, CH);
   const forestB = [0.16, 0.28, 0.10], forestT = [0.36, 0.52, 0.20];
   for (let j = 0; j < GC; j++) for (let i = 0; i < GC; i++) {
     const rng = mulberry32(hashInt(cx * GC + i, cz * GC + j, 3));
     const px = x0 + (i + rng()) * gs, pz = z0 + (j + rng()) * gs;
     if (onVolcano(px, pz)) continue;
+    if (rooms.length && insideRooms(rooms, px, pz)) continue;
     const y = chunkHeight(ch, px, pz);
     if (y > 27) continue;                       // no grass or flowers in the snow
     const fi = Math.min(SEG, Math.round((px - x0) / STEP)), fj = Math.min(SEG, Math.round((pz - z0) / STEP));
@@ -1533,6 +1537,7 @@ function buildDetail(ch) {
     const rng = mulberry32(hashInt(cx * FC + i, cz * FC + j, 4));
     const px = x0 + (i + rng()) * fs, pz = z0 + (j + rng()) * fs;
     if (onVolcano(px, pz)) continue;
+    if (rooms.length && insideRooms(rooms, px, pz)) continue;
     const y = chunkHeight(ch, px, pz);
     if (y < 1.3 || y > 27) continue;
     const fi = Math.min(SEG, Math.round((px - x0) / STEP)), fj = Math.min(SEG, Math.round((pz - z0) / STEP));
@@ -2349,16 +2354,20 @@ function updatePlayer(dt) {
     if (performance.now() > horseMsgT) { feed("🐴 Your horse won't go in the water. Press " + (pad.connected ? btnName('X') : 'R') + ' to get off'); horseMsgT = performance.now() + 4000; }
   }
   if (pressed(2) || keys.has('KeyR')) { keys.delete('KeyR'); horseAction(); }
+  const climb = player.riding ? null : climbAndDecks(dt);
   // attack: RT or RB on the controller (hold to keep swinging), click or F on the keyboard
   if (pad.btn[7] || (pad.btn[5] && !talkCombo) || keys.has('KeyF') || keys.has('KeyJ') || mouseHeld) startSwing();
   const moved = Math.hypot(player.x - ox, player.z - oz);
 
   // up and down
   const ground = groundAt(player.x, player.z);
-  const floor = Math.max(ground, SWIM_FEET) + (player.riding ? RIDE_H : 0);
+  const floor = Math.max(ground, SWIM_FEET, roomFloorAt(player.x, player.z), climb ? climb.floor : -Infinity) + (player.riding ? RIDE_H : 0);
   const deep = !player.riding && ground < SWIM_FEET - 0.05;
   const wantJump = pressed(0) || keys.has('Space');
-  if (player.onGround) {
+  if (climb && climb.climbing) { player.onGround = true; player.vy = 0; }      // on a ladder: no jumping or falling
+  else if (player.onGround && player.feet - floor > 0.6) player.onGround = false;   // stepped off something high: fall
+  if (climb && climb.climbing) {}
+  else if (player.onGround) {
     if (wantJump && !deep) {
       player.vy = player.riding ? 7.5 : 5.4; player.onGround = false; keys.delete('Space');
       noiseHit('lowpass', 500, 0.7, 0.1, 0.18);
@@ -3276,6 +3285,36 @@ const MATS = {
   goldscale: { name: 'Golden scale', icon: '✨' },
   tooth: { name: 'Shark tooth', icon: '🦈' },
 };
+// buildings you can walk into: walls are rows of little bump circles, with a gap for each door (doors swing open when you come close)
+const WALL_R = 0.22;
+function wallCircles(x0, z0, x1, z1, r = WALL_R) {
+  const L = Math.hypot(x1 - x0, z1 - z0), n = Math.max(1, Math.ceil(L / (r * 1.4)));
+  const out = [];
+  for (let i = 0; i <= n; i++) out.push([x0 + (x1 - x0) * i / n, z0 + (z1 - z0) * i / n, r]);
+  return out;
+}
+// a room W wide (x) and D deep (z) with its door in the middle of the front (-z) wall
+function roomPlan(W, D, dw, doorCol) {
+  const hw = W / 2, hd = D / 2, g = dw / 2 + WALL_R;
+  return {
+    solid: [...wallCircles(-hw, -hd, -g, -hd), ...wallCircles(g, -hd, hw, -hd), ...wallCircles(-hw, hd, hw, hd), ...wallCircles(-hw, -hd, -hw, hd), ...wallCircles(hw, -hd, hw, hd)],
+    doors: [{ x: 0, z: -hd, w: dw, h: 2.15, c: doorCol, near: 3 }],
+    room: [-hw, -hd, hw, hd],
+  };
+}
+// the castle: 26 m square of walls with towers on the corners, a gatehouse in the front wall and a keep at the back
+const CASTLE = { S: 13, T: 1.4, H: 7, GW: 4.4, GH: 5.4, KW: 10, KD: 8, KZ: 5, KH: 8, KDW: 1.8 };
+function castlePlan() {
+  const { S, GW, GH, KW, KD, KZ, KDW } = CASTLE, g = GW / 2 + 0.8, r = 0.75;
+  const kx = KW / 2, k0 = KZ - KD / 2, k1 = KZ + KD / 2, kg = KDW / 2 + WALL_R;
+  return {
+    solid: [...wallCircles(-S, -S, -g, -S, r), ...wallCircles(g, -S, S, -S, r), ...wallCircles(-S, S, S, S, r), ...wallCircles(-S, -S, -S, S, r), ...wallCircles(S, -S, S, S, r),
+      [-S, -S, 2.7], [S, -S, 2.7], [-S, S, 2.7], [S, S, 2.7], [-3.9, -S, 1.6], [3.9, -S, 1.6],
+      ...wallCircles(-kx, k0, -kg, k0), ...wallCircles(kg, k0, kx, k0), ...wallCircles(-kx, k1, kx, k1), ...wallCircles(-kx, k0, -kx, k1), ...wallCircles(kx, k0, kx, k1)],
+    doors: [{ x: 0, z: -S, w: GW, h: GH, c: [0.42, 0.27, 0.14], two: true, near: 8, bands: true }, { x: 0, z: k0, w: KDW, h: 2.8, c: [0.42, 0.27, 0.14], two: true, near: 3.5 }],
+    room: [-kx, k0, kx, k1],
+  };
+}
 // gear made from common-enemy drops (fur, croc skin, shark teeth, the goblin axe) hits or protects half as hard as it used to
 const ITEMS = {
   fists:       { name: 'Fists', icon: '✊', type: 'weapon', dmg: 2, reach: 2.3, time: 0.28 },
@@ -3336,16 +3375,22 @@ const ITEMS = {
   bed:         { name: 'Bed', icon: '🛏️', type: 'build', cost: { wood: 20, fur: 8 }, note: 'when you get knocked out, you wake up at your bed', solid: [[0, -0.5, 0.65], [0, 0.5, 0.65]] },
   tent:        { name: 'Tent', icon: '⛺', type: 'build', cost: { wood: 12, fur: 10 }, solid: [[0, 0, 1.3]] },
   snowman:     { name: 'Snowman', icon: '⛄', type: 'build', cost: { frost: 2, wood: 5 }, solid: [[0, 0, 0.7]] },
-  hut:         { name: 'Little hut', icon: '🛖', type: 'build', cost: { wood: 40, stone: 10 }, solid: [[0, 0, 1.55]] },
+  hut:         { name: 'Little hut', icon: '🛖', type: 'build', cost: { wood: 40, stone: 10 }, note: 'open the door and go inside', ...roomPlan(3.2, 3.2, 1.2, [0.62, 0.42, 0.24]) },
   well:        { name: 'Healing well', icon: '🪣', type: 'build', cost: { stone: 30, wood: 10, gems: 8 }, heal: 12, note: 'stand close to heal fast', solid: [[0, 0, 1.1]] },
   archway:     { name: 'Stone arch', icon: '⛩️', type: 'build', cost: { stone: 40 }, note: 'you can walk through the middle', solid: [[-1.4, 0, 0.5], [1.4, 0, 0.5]] },
-  house:       { name: 'Wooden house', icon: '🏠', type: 'build', cost: { wood: 60, stone: 15, iron: 4 }, solid: [[-1, 0, 1.75], [1, 0, 1.75]] },
-  stonehouse:  { name: 'Stone house', icon: '🏡', type: 'build', cost: { stone: 60, wood: 20, iron: 6 }, solid: [[-1, 0, 1.75], [1, 0, 1.75]] },
-  tower:       { name: 'Lookout tower', icon: '🗼', type: 'build', cost: { wood: 50, stone: 15, iron: 3 }, solid: [[0, 0, 1.3]] },
+  house:       { name: 'Wooden house', icon: '🏠', type: 'build', cost: { wood: 60, stone: 15, iron: 4 }, note: 'open the door and go inside', ...roomPlan(5.2, 4.4, 1.2, [0.45, 0.28, 0.15]) },
+  stonehouse:  { name: 'Stone house', icon: '🏡', type: 'build', cost: { stone: 60, wood: 20, iron: 6 }, note: 'open the door and go inside', ...roomPlan(5.2, 4.4, 1.2, [0.36, 0.24, 0.14]) },
+  tower:       { name: 'Lookout tower', icon: '🗼', type: 'build', cost: { wood: 50, stone: 15, iron: 3 }, note: 'climb the ladder to the lookout room at the top',
+    solid: [[-0.9, -0.9, 0.2], [0.9, -0.9, 0.2], [-0.9, 0.9, 0.2], [0.9, 0.9, 0.2]], deck: { r: [-1.2, -1.2, 1.2, 1.2], y: 5.2, gap: 0.5 }, ladder: { x0: -0.45, x1: 0.45, z0: -1.85, z1: -1.2 } },
   castletower: { name: 'Castle tower', icon: '🏰', type: 'build', cost: { stone: 80, iron: 15 }, solid: [[0, 0, 1.8]] },
   dragonstatue:{ name: 'Dragon statue', icon: '🐲', type: 'build', cost: { stone: 50, gems: 30, iron: 10 }, solid: [[0, 0, 1.3]] },
+  castle:      { name: 'Castle', icon: '🏰', type: 'build', cost: { stone: 500, wood: 100 }, note: 'a big stone castle with a gate, towers and a keep you can go inside', ...castlePlan() },
 };
 const ITEM_ORDER = Object.keys(ITEMS);
+// each building's footprint (a box around its bump circles): trees and rocks there are cleared away
+for (const id in ITEMS) { const it = ITEMS[id]; if (it.type !== 'build') continue;
+  const S = it.solid || [[0, 0, 1]];
+  it.foot = [Math.min(...S.map(c => c[0] - c[2])), Math.min(...S.map(c => c[1] - c[2])), Math.max(...S.map(c => c[0] + c[2])), Math.max(...S.map(c => c[1] + c[2]))]; }
 function weaponModel(id) {
   const g = new Geo(1024), r = mulberry32(20 + ITEM_ORDER.indexOf(id));
   if (id === 'stick') {
@@ -5289,6 +5334,7 @@ function invAction(btn) {
     const b = nearestPlaced(player.x, player.z, 12);
     if (!b) { renderInv('No building close enough to take down.'); return; }
     placed.splice(placed.indexOf(b), 1);
+    rebuildChunksNear(b.x, b.z, 24);
     const it = ITEMS[b.id];
     for (const k in it.cost) mats[k] += it.cost[k];
     noiseHit('lowpass', 600, 0.8, 0.2, 0.3); thump(0.3);
@@ -6236,7 +6282,7 @@ GAME STATE you can read and change directly:
   Shields: woodshield ironshield scaleshield spikedshield venomshield frostshield crystalshield dragonshield.
   Buildings (type 'build', made in the backpack's Buildings section, saved with the world): giveItem(id) puts one in front of the speaker for free.
   placed is the array of them: { id, x, z, yaw }; remove one with placed.splice(i, 1). Ids: campfire bench fence woodwall stonewall garden lamppost bed tent
-  snowman hut well archway house stonehouse tower castletower dragonstatue.
+  snowman hut well archway house stonehouse tower castletower dragonstatue castle (hut, house, stonehouse and castle have doors that open and rooms inside; the tower has a ladder up to a lookout room).
 - Wheat (mats.wheat) grows in wheat fields (isWheat(x, z)); swinging at it picks it. Horses: spawnHorse(x, z, coat 0-4, { tame: true }) makes one
   (tame ones have a saddle and can be ridden with X / R; wild ones are tamed by feeding wheat). player.riding is the horse a player is on.
 - addPickup(kind, x, y, z) drops a collectible: kind is a material name, 'gem', or 'apple' (heals).
@@ -6399,6 +6445,106 @@ function solidThingsNear(x, z, fn) {
 /* ---------- buildings the players make in their backpack (saved with the world) ---------- */
 // each model is built facing -z (its front looks back at whoever built it)
 const BW = [0.55, 0.38, 0.2], BW2 = [0.42, 0.28, 0.15], BS = [0.58, 0.58, 0.6], BS2 = [0.45, 0.45, 0.48], BDARK = [0.16, 0.12, 0.1];
+// a stone wall from separate blocks, each a slightly different grey, so it looks like real stonework
+function wallSeg(g, ax, a0, a1, fixed, y0, y1, t, mat) {
+  const r = mulberry32(Math.round((a0 * 7 + a1 * 13 + fixed * 31 + y0 * 3) * 10) | 0);
+  const put = (a, b, ya, yb, col) => ax === 'x' ? box(g, (a + b) / 2, ya, fixed, b - a, yb - ya, t, col) : box(g, fixed, ya, (a + b) / 2, t, yb - ya, b - a, col);
+  if (!mat.stone) { put(a0, a1, y0, y1, mat.c); return; }
+  let y = y0;
+  if (y < 0) { put(a0, a1, y0, Math.min(0, y1), shade(mat.c, 0.85)); y = 0; }        // underground part: one plain slab
+  for (let row = 0; y < y1 - 0.01; row++) {
+    const yb = Math.min(y1, y + 0.45);
+    for (let a = a0 - (row % 2) * 0.45; a < a1 - 0.01; a += 0.9) {
+      const s0 = Math.max(a0, a), s1 = Math.min(a1, a + 0.9);
+      if (s1 - s0 < 0.02) continue;
+      const k = 0.82 + r() * 0.26;
+      const bump = r() * 0.04;
+      ax === 'x' ? box(g, (s0 + s1) / 2, y, fixed, s1 - s0 - 0.03, yb - y - 0.03, t + bump, shade(mat.c, k)) : box(g, fixed, y, (s0 + s1) / 2, t + bump, yb - y - 0.03, s1 - s0 - 0.03, shade(mat.c, k));
+    }
+    y = yb;
+  }
+}
+function stoneBox(g, x, y, z, w, h, d, under, seed) {     // a solid block of stonework (w along x, d along z)
+  const m = { c: [0.6, 0.6, 0.62], stone: true };
+  wallSeg(g, 'x', x - w / 2, x + w / 2, z - d / 2 + 0.06, y - (under || 0), y + h, 0.12, m);
+  wallSeg(g, 'x', x - w / 2, x + w / 2, z + d / 2 - 0.06, y - (under || 0), y + h, 0.12, m);
+  wallSeg(g, 'z', z - d / 2, z + d / 2, x - w / 2 + 0.06, y - (under || 0), y + h, 0.12, m);
+  wallSeg(g, 'z', z - d / 2, z + d / 2, x + w / 2 - 0.06, y - (under || 0), y + h, 0.12, m);
+  box(g, x, y + h - 0.05, z, w - 0.1, 0.05, d - 0.1, [0.5, 0.5, 0.52]);
+}
+function stoneTower(g, x, z, R, H) {                     // round tower: rings of stone, a wider ring and battlements on top
+  const r = mulberry32(Math.round(x * 13 + z * 7) | 0);
+  pole(g, [x, -1.5, z], [x, 0, z], R, R, shade(BS, 0.85), 12);
+  for (let y = 0; y < H; y += 0.5) pole(g, [x, y, z], [x, y + 0.5, z], R + (r() - 0.5) * 0.04, R + (r() - 0.5) * 0.04, shade(BS, 0.84 + r() * 0.24), 12);
+  pole(g, [x, H, z], [x, H + 0.5, z], R + 0.35, R + 0.35, BS2, 12);
+  for (let i = 0; i < 10; i++) { const a = i / 10 * 6.283; box(g, x + Math.cos(a) * (R + 0.1), H + 0.5, z + Math.sin(a) * (R + 0.1), 0.6, 0.7, 0.6, shade(BS, 0.9 + r() * 0.2)); }
+}
+function slit(g, x, y, z, a) {                           // an arrow slit in a tower
+  const c = Math.cos(a), s = Math.sin(a);
+  box(g, x + c * 0.03, y, z + s * 0.03, Math.abs(s) * 0.25 + 0.08, 1.1, Math.abs(c) * 0.25 + 0.08, BDARK);
+}
+function castleWindow(g, ax, a, face, y, out) {          // a tall window with a pointed top, glass and a stone sill
+  const GL = [0.35, 0.5, 0.72], FR = [0.75, 0.74, 0.72];
+  const P = (along, yy, w, h, d, col) => ax === 'x' ? box(g, a + along, yy, face, w, h, d, col) : box(g, face, yy, a + along, d, h, w, col);
+  P(0, y - 0.15, 1.3, 0.15, 0.3, FR);
+  P(0, y, 1.0, 1.5, 0.1, GL);
+  P(0, y, 0.08, 1.5, 0.14, FR); P(0, y + 0.72, 1.0, 0.08, 0.14, FR);
+  P(-0.55, y, 0.12, 1.6, 0.2, FR); P(0.55, y, 0.12, 1.6, 0.2, FR);
+  const sp = ax === 'x' ? [a, y + 1.5, face] : [face, y + 1.5, a];
+  spike(g, sp[0], sp[1], sp[2], 0.62, 0.55, FR, 4);
+}
+// a room's four walls, with a door gap in the front and window holes (filled with glass);
+// win: [side, 'F'|'B'|'L'|'R', along, width]
+function room(g, W, D, H, t, mat, dw, win) {
+  const hw = W / 2, hd = D / 2, GL = [0.55, 0.78, 0.95], FR = mat.stone ? BS2 : BW2;
+  const wall = (ax, a0, a1, fixed, holes) => {
+    const cuts = holes.slice().sort((p, q) => p[0] - q[0]);
+    let a = a0;
+    for (const [c, w, ya, yb] of cuts) {
+      wallSeg(g, ax, a, c - w / 2, fixed, -1.2, H, t, mat);
+      if (ya > 0) wallSeg(g, ax, c - w / 2, c + w / 2, fixed, -1.2, ya, t, mat);
+      wallSeg(g, ax, c - w / 2, c + w / 2, fixed, yb, H, t, mat);
+      if (ya > 0) {                                     // glass and a frame in the window
+        ax === 'x' ? box(g, c, ya, fixed, w, yb - ya, 0.04, GL) : box(g, fixed, ya, c, 0.04, yb - ya, w, GL);
+        ax === 'x' ? box(g, c, ya, fixed, 0.06, yb - ya, t + 0.04, FR) : box(g, fixed, ya, c, t + 0.04, yb - ya, 0.06, FR);
+        ax === 'x' ? box(g, c, ya - 0.06, fixed, w + 0.12, 0.06, t + 0.12, FR) : box(g, fixed, ya - 0.06, c, t + 0.12, 0.06, w + 0.12, FR);
+      }
+      a = c + w / 2;
+    }
+    wallSeg(g, ax, a, a1, fixed, -1.2, H, t, mat);
+  };
+  const holes = side => win.filter(w => w[1] === side).map(([, , c, w]) => [c, w, 1.0, 1.0 + w * 0.95]);
+  wall('x', -hw, hw, -hd, [[0, dw, 0, 2.15], ...holes('F')]);
+  wall('x', -hw, hw, hd, holes('B'));
+  wall('z', -hd - t / 2, hd + t / 2, -hw, holes('L'));
+  wall('z', -hd - t / 2, hd + t / 2, hw, holes('R'));
+  box(g, 0, -0.5, 0, W - t, 0.5 + ROOM_FLOOR, D - t, mat.stone ? [0.52, 0.5, 0.48] : [0.55, 0.4, 0.25]);    // the floor, a step up
+}
+function houseInside(g, stone) {
+  box(g, 0, 2.7, 0, 5.0, 0.06, 4.2, stone ? [0.42, 0.3, 0.2] : [0.6, 0.45, 0.28]);   // ceiling
+  const n0 = g.n;
+  box(g, -1.6, 0, 1.2, 1.3, 0.45, 1.7, BW2); box(g, -1.6, 0.45, 1.2, 1.2, 0.18, 1.6, [0.95, 0.95, 0.92]); box(g, -1.6, 0.63, 1.8, 0.8, 0.12, 0.35, [1, 1, 1]); box(g, -1.6, 0.63, 0.9, 1.22, 0.05, 1.0, [0.3, 0.45, 0.8]);   // bed
+  box(g, 0.6, 0, -0.2, 1.1, 0.75, 0.8, BW); box(g, 0.6, 0, -0.2, 0.9, 0.72, 0.6, BW2);                                      // table
+  for (const sx of [-1, 1]) { box(g, 0.6 + sx * 0.85, 0, -0.2, 0.4, 0.42, 0.4, BW2); box(g, 0.6 + sx * 1.02, 0.42, -0.2, 0.06, 0.5, 0.4, BW2); }   // chairs
+  ball(g, 0.6, 0.85, -0.2, 0.08, [1.0, 0.45, 0.3]); ball(g, 0.75, 0.82, -0.1, 0.06, [0.95, 0.85, 0.2]);          // fruit
+  box(g, -0.2, 0.012, -0.3, 1.8, 0.02, 1.4, [0.8, 0.3, 0.28]);                                                      // rug
+  liftFrom(g, n0, ROOM_FLOOR);
+}
+// move everything added since vertex n0 up by dy (furniture sits on the raised floor)
+function liftFrom(g, n0, dy) { for (let v = n0; v < g.n; v++) g.f[v * 5 + 1] += dy; }
+const ROOM_FLOOR = 0.3;
+// door leaves: hinge at x = 0; the left leaf reaches to +x, the right leaf to -x
+const doorMeshes = {};
+function doorMesh(w, h, c, side, bands) {
+  const k = [w, h, c.join(), side, !!bands].join('|');
+  if (doorMeshes[k]) return doorMeshes[k];
+  const g = new Geo(256), x = side * w / 2;
+  box(g, x, 0, 0, w - 0.04, h, 0.1, c);
+  for (let i = 1; i < 4; i++) box(g, side * (w * i / 4), 0.02, 0, 0.03, h - 0.04, 0.12, shade(c, 0.8));
+  if (bands) for (const y of [0.6, h / 2, h - 0.8]) box(g, x, y, 0, w - 0.06, 0.14, 0.14, [0.3, 0.3, 0.33]);
+  ball(g, side * (w - 0.14), h * 0.48, -0.08, 0.05, [0.95, 0.8, 0.3]); ball(g, side * (w - 0.14), h * 0.48, 0.08, 0.05, [0.95, 0.8, 0.3]);
+  return (doorMeshes[k] = makeMesh(g));
+}
 const BUILD_MAKE = {
   campfire(g) {
     for (let i = 0; i < 9; i++) { const a = i / 9 * 6.283; ball(g, Math.cos(a) * 0.55, 0.08, Math.sin(a) * 0.55, 0.15, i % 2 ? BS : BS2); }
@@ -6462,10 +6608,13 @@ const BUILD_MAKE = {
     pole(g, [0, 2.08, 0], [0, 2.42, 0], 0.2, 0.2, BDARK, 8); pole(g, [0, 2.08, 0], [0, 2.12, 0], 0.32, 0.32, BDARK, 8);
   },
   hut(g) {
-    box(g, 0, 0, 0, 2.6, 1.9, 2.6, BW);
-    spike(g, 0, 1.9, 0, 2.3, 1.5, [0.85, 0.72, 0.35], 4);
-    box(g, 0, 0, -1.31, 0.8, 1.3, 0.05, BDARK);
-    box(g, 0.85, 1.0, -1.31, 0.45, 0.4, 0.05, [0.55, 0.8, 1.0]);
+    room(g, 3.2, 3.2, 2.3, 0.16, { c: [0.62, 0.45, 0.26] }, 1.2, [[1, 'L', 0, 0.8], [1, 'R', 0, 0.8], [1, 'B', 0, 0.9]]);
+    spike(g, 0, 2.3, 0, 2.75, 1.6, [0.85, 0.72, 0.35], 4);
+    box(g, 0, 2.28, 0, 3.3, 0.06, 3.3, [0.5, 0.36, 0.2]);                // ceiling
+    const n0 = g.n;
+    box(g, 0.6, 0.02, 0.5, 1.4, 0.03, 1.0, [0.75, 0.3, 0.25]);            // rug
+    box(g, -0.95, 0, 0.7, 0.8, 0.45, 1.3, [0.95, 0.95, 0.92]); box(g, -0.95, 0.45, 1.15, 0.7, 0.12, 0.35, [1, 1, 1]);   // little bed
+    liftFrom(g, n0, ROOM_FLOOR);
   },
   well(g) {
     pole(g, [0, 0, 0], [0, 0.85, 0], 1.0, 1.0, BS, 10);
@@ -6481,29 +6630,39 @@ const BUILD_MAKE = {
     box(g, 0, 3.9, 0, 3.2, 0.3, 0.7, BS);
   },
   house(g) {
-    box(g, 0, 0, 0, 4.2, 2.7, 3.4, [0.78, 0.6, 0.4]);
-    box(g, 0, 2.7, 0, 4.4, 0.15, 3.6, BW2);
-    spike(g, 0, 2.85, 0, 3.3, 1.9, [0.75, 0.22, 0.18], 4);
-    box(g, 0, 0, -1.71, 0.9, 1.8, 0.05, BW2);
-    ball(g, 0.3, 0.9, -1.75, 0.05, [1, 0.85, 0.3]);
-    for (const x of [-1.3, 1.3]) { box(g, x, 1.2, -1.71, 0.8, 0.7, 0.05, [0.55, 0.8, 1.0]); box(g, x, 1.2, -1.73, 0.06, 0.7, 0.05, BW2); }
-    box(g, 2.11, 1.2, 0, 0.05, 0.7, 0.8, [0.55, 0.8, 1.0]); box(g, -2.11, 1.2, 0, 0.05, 0.7, 0.8, [0.55, 0.8, 1.0]);
+    room(g, 5.2, 4.4, 2.8, 0.18, { c: [0.8, 0.62, 0.42] }, 1.2, [[1, 'F', -1.6, 0.9], [1, 'F', 1.6, 0.9], [1, 'L', 0, 1.0], [1, 'R', 0, 1.0], [1, 'B', -1.2, 0.9], [1, 'B', 1.2, 0.9]]);
+    box(g, 0, 2.78, 0, 5.5, 0.15, 4.7, BW2);
+    spike(g, 0, 2.93, 0, 4.0, 2.0, [0.75, 0.22, 0.18], 4);
+    houseInside(g, false);
   },
   stonehouse(g) {
-    box(g, 0, 0, 0, 4.2, 2.8, 3.4, BS);
-    for (let i = 0; i < 4; i++) box(g, 0, 0.6 + i * 0.6, -1.71, 4.2, 0.05, 0.03, BS2);
-    spike(g, 0, 2.8, 0, 3.3, 1.8, [0.3, 0.32, 0.4], 4);
-    box(g, 1.2, 3.0, 0.6, 0.6, 1.6, 0.6, BS2);                     // chimney
-    box(g, 0, 0, -1.71, 1.0, 1.9, 0.05, BW2);
-    for (const x of [-1.35, 1.35]) box(g, x, 1.3, -1.71, 0.7, 0.7, 0.05, [1.0, 0.85, 0.45]);
+    room(g, 5.2, 4.4, 2.9, 0.3, { c: BS, stone: true }, 1.2, [[1, 'F', -1.6, 0.8], [1, 'F', 1.6, 0.8], [1, 'L', 0, 0.9], [1, 'R', 0, 0.9], [1, 'B', -1.4, 0.8]]);
+    box(g, 0, 2.88, 0, 5.4, 0.15, 4.6, BS2);
+    spike(g, 0, 3.0, 0, 3.9, 1.9, [0.3, 0.32, 0.4], 4);
+    stoneBox(g, 1.4, 1.2, 2.25, 0.8, 4.4, 0.6, 1, 7);                    // chimney
+    const f0 = g.n;
+    stoneBox(g, 1.4, 0, 1.75, 1.4, 1.2, 0.6, 1, 8);                      // fireplace
+    box(g, 1.4, 0.05, 1.47, 0.8, 0.6, 0.04, BDARK); egg(g, 1.4, 0.2, 1.6, 0.25, 0.22, 0.12, [1.0, 0.5, 0.12]); egg(g, 1.4, 0.22, 1.55, 0.12, 0.14, 0.08, [1, 0.85, 0.3]);
+    liftFrom(g, f0, ROOM_FLOOR);
+    houseInside(g, true);
   },
   tower(g) {
-    for (const x of [-0.9, 0.9]) for (const z of [-0.9, 0.9]) pole(g, [x, 0, z], [x * 0.85, 5, z * 0.85], 0.13, 0.1, BW2, 6);
-    pole(g, [-0.9, 1.6, -0.9], [0.9, 3.2, -0.9], 0.06, 0.06, BW, 4); pole(g, [0.9, 1.6, 0.9], [-0.9, 3.2, 0.9], 0.06, 0.06, BW, 4);
-    box(g, 0, 5, 0, 2.4, 0.2, 2.4, BW);
-    for (const [x, z, w, d] of [[0, -1.15, 2.4, 0.1], [0, 1.15, 2.4, 0.1], [-1.15, 0, 0.1, 2.4], [1.15, 0, 0.1, 2.4]]) box(g, x, 5.2, z, w, 0.7, d, BW2);
-    for (const x of [-1.1, 1.1]) for (const z of [-1.1, 1.1]) pole(g, [x, 5.2, z], [x, 6.6, z], 0.06, 0.06, BW2, 4);
-    spike(g, 0, 6.6, 0, 2.0, 1.2, [0.75, 0.25, 0.2], 4);
+    for (const x of [-0.9, 0.9]) for (const z of [-0.9, 0.9]) pole(g, [x, 0, z], [x * 0.95, 5, z * 0.95], 0.13, 0.1, BW2, 6);
+    for (const x of [-0.9, 0.9]) { pole(g, [x, 1.4, -0.9], [x, 3.4, 0.9], 0.06, 0.06, BW, 4); pole(g, [x, 1.4, 0.9], [x, 3.4, -0.9], 0.06, 0.06, BW, 4); }   // braces on the sides only
+    box(g, 0, 5, 0, 2.6, 0.2, 2.6, BW);                                   // floor of the lookout room
+    // half walls all round, with a gap at the front for the ladder
+    box(g, 0, 5.2, 1.25, 2.6, 1.0, 0.1, BW2); box(g, -1.25, 5.2, 0, 0.1, 1.0, 2.6, BW2); box(g, 1.25, 5.2, 0, 0.1, 1.0, 2.6, BW2);
+    box(g, -0.9, 5.2, -1.25, 0.8, 1.0, 0.1, BW2); box(g, 0.9, 5.2, -1.25, 0.8, 1.0, 0.1, BW2);
+    for (const x of [-1.25, 1.25]) for (const z of [-1.25, 1.25]) pole(g, [x, 5.2, z], [x, 7.6, z], 0.07, 0.07, BW2, 4);
+    box(g, 0, 7.55, 0, 2.7, 0.08, 2.7, BW);                              // ceiling
+    spike(g, 0, 7.6, 0, 2.2, 1.3, [0.75, 0.25, 0.2], 4);
+    // the ladder up the front
+    for (const x of [-0.32, 0.32]) pole(g, [x, 0, -1.35], [x, 6.2, -1.35], 0.04, 0.04, BW2, 5);
+    for (let y = 0.3; y < 5.1; y += 0.35) pole(g, [-0.32, y, -1.35], [0.32, y, -1.35], 0.025, 0.025, BW, 4);
+    // a bench and a telescope inside
+    box(g, 0, 5.2, 0.95, 1.8, 0.45, 0.4, BW);
+    for (const [x, z] of [[0.75, 0.3], [0.55, 0.0], [0.95, 0.0]]) pole(g, [x, 5.2, z], [0.75, 6.25, 0.15], 0.02, 0.02, [0.3, 0.3, 0.32], 3);
+    pole(g, [0.75, 6.25, 0.15], [0.75, 6.45, -0.75], 0.07, 0.045, [0.85, 0.7, 0.3], 8);
   },
   castletower(g) {
     pole(g, [0, 0, 0], [0, 7, 0], 1.7, 1.6, BS, 12);
@@ -6513,6 +6672,52 @@ const BUILD_MAKE = {
     for (const y of [3.2, 5.2]) box(g, 0, y, -1.62, 0.35, 0.8, 0.1, BDARK);
     pole(g, [0, 7.3, 0], [0, 9.5, 0], 0.05, 0.05, BW2, 4);
     box(g, 0.45, 8.8, 0, 0.9, 0.6, 0.04, [0.85, 0.2, 0.25]);
+  },
+  castle(g) {
+    const { S, T, H, GW, GH, KW, KD, KZ, KH, KDW } = CASTLE, ROOF = [0.28, 0.33, 0.55], WOODC = [0.42, 0.27, 0.14];
+    const mat = { c: [0.6, 0.6, 0.62], stone: true };
+    // the curtain wall: front (with the gate), back and sides, and battlements on top
+    wallSeg(g, 'x', -S, -GW / 2, -S, -1.5, H, T, mat); wallSeg(g, 'x', GW / 2, S, -S, -1.5, H, T, mat);
+    wallSeg(g, 'x', -S, S, S, -1.5, H, T, mat);
+    wallSeg(g, 'z', -S, S, -S, -1.5, H, T, mat); wallSeg(g, 'z', -S, S, S, -1.5, H, T, mat);
+    for (const [ax, fx, a0, a1] of [['x', -S, -S, S], ['x', S, -S, S], ['z', -S, -S, S], ['z', S, -S, S]])
+      for (let a = a0 + 3.4; a < a1 - 3; a += 1.6) { if (ax === 'x' && fx === -S && Math.abs(a) < 5.4) continue; ax === 'x' ? stoneBox(g, a, H, fx, 0.8, 0.9, T, 0, 9) : stoneBox(g, fx, H, a, T, 0.9, 0.8, 0, 9); }
+    // windows all around the outside
+    for (let a = -8; a <= 8; a += 4) {
+      if (Math.abs(a) > 5) castleWindow(g, 'x', a, -S - T / 2 - 0.01, 3.6, -1);
+      castleWindow(g, 'x', a, S + T / 2 + 0.01, 3.6, 1);
+      castleWindow(g, 'z', a, -S - T / 2 - 0.01, 3.6, -1); castleWindow(g, 'z', a, S + T / 2 + 0.01, 3.6, 1);
+    }
+    // round towers on the corners, with pointy roofs and flags
+    for (const [x, z] of [[-S, -S], [S, -S], [-S, S], [S, S]]) {
+      stoneTower(g, x, z, 2.5, 11);
+      for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + Math.atan2(-z, -x) + 0.4; slit(g, x + Math.cos(a) * 2.52, 4 + (i % 2) * 3, z + Math.sin(a) * 2.52, a); }
+      spike(g, x, 11.5, z, 3.1, 4.5, ROOF, 10);
+      pole(g, [x, 15.8, z], [x, 18, z], 0.05, 0.05, BW2, 4); box(g, x + 0.5, 17.2, z, 1.0, 0.65, 0.04, [0.85, 0.2, 0.25]);
+    }
+    // the gatehouse: two square towers, a wall over the gate, and the portcullis pulled up
+    for (const sx of [-1, 1]) { stoneBox(g, sx * 3.9, -1.5, -S, 3.2, 10.5, 3.2, 0, 11); for (const dx of [-1, 1]) stoneBox(g, sx * 3.9 + dx * 1.1, 9, -S, 0.8, 0.9, 3.2, 0, 12); slit(g, sx * 3.9, 6.5, -S - 1.62, -Math.PI / 2); }
+    wallSeg(g, 'x', -GW / 2, GW / 2, -S, GH, 9, T + 0.4, mat);
+    for (let i = 0; i < 6; i++) pole(g, [-GW / 2 + 0.35 + i * (GW - 0.7) / 5, GH + 0.05, -S - 0.5], [-GW / 2 + 0.35 + i * (GW - 0.7) / 5, GH - 0.55, -S - 0.5], 0.05, 0.02, [0.25, 0.25, 0.28], 4);
+    box(g, 0, GH - 0.15, -S - 0.5, GW, 0.12, 0.1, [0.25, 0.25, 0.28]);
+    box(g, 0, 7.4, -S - T / 2 - 0.25, 1.4, 1.0, 0.05, [0.85, 0.2, 0.25]); box(g, 0, 7.6, -S - T / 2 - 0.27, 0.5, 0.6, 0.05, [1.0, 0.8, 0.2]);   // shield over the gate
+    // the keep, with its own doors, windows and a room inside
+    const k0 = KZ - KD / 2, k1 = KZ + KD / 2, kx = KW / 2;
+    wallSeg(g, 'x', -kx, -KDW / 2, k0, -1.5, KH, 0.6, mat); wallSeg(g, 'x', KDW / 2, kx, k0, -1.5, KH, 0.6, mat); wallSeg(g, 'x', -KDW / 2, KDW / 2, k0, 2.8, KH, 0.6, mat);
+    wallSeg(g, 'x', -kx, kx, k1, -1.5, KH, 0.6, mat); wallSeg(g, 'z', k0, k1, -kx, -1.5, KH, 0.6, mat); wallSeg(g, 'z', k0, k1, kx, -1.5, KH, 0.6, mat);
+    for (const x of [-3, 3]) { castleWindow(g, 'x', x, k0 - 0.31, 1.6, -1); castleWindow(g, 'x', x, k0 - 0.31, 4.8, -1); castleWindow(g, 'x', x, k1 + 0.31, 3.2, 1); }
+    castleWindow(g, 'x', 0, k0 - 0.31, 4.8, -1);
+    for (const sx of [-1, 1]) for (const z of [KZ - 2, KZ + 2]) castleWindow(g, 'z', z, sx * (kx + 0.31), 3.2, sx);
+    box(g, 0, KH - 0.1, KZ, KW, 0.2, KD, [0.45, 0.45, 0.48]);
+    for (let a = -kx + 0.4; a <= kx - 0.3; a += 1.2) { stoneBox(g, a, KH, k0, 0.7, 0.8, 0.6, 0, 13); stoneBox(g, a, KH, k1, 0.7, 0.8, 0.6, 0, 14); }
+    spike(g, 0, KH + 0.1, KZ, 5.2, 4.5, ROOF, 4);
+    for (const sx of [-1, 1]) { box(g, sx * 2.2, 3.2, k0 - 0.32, 0.9, 2.2, 0.05, [0.85, 0.2, 0.25]); box(g, sx * 2.2, 4.3, k0 - 0.34, 0.4, 0.4, 0.05, [1.0, 0.8, 0.2]); }   // banners
+    box(g, 0, -0.5, KZ, KW - 0.6, 0.5 + ROOM_FLOOR, KD - 0.6, [0.5, 0.45, 0.4]);       // floor
+    const n0 = g.n;
+    box(g, 0, 0.06, KZ - 0.6, 1.4, 0.02, KD - 2, [0.75, 0.15, 0.18]);                    // red carpet to the throne
+    box(g, 0, 0, k1 - 1.0, 1.2, 0.5, 1.0, [0.5, 0.45, 0.4]); box(g, 0, 0.5, k1 - 1.0, 0.9, 0.4, 0.7, [0.95, 0.75, 0.2]); box(g, 0, 0.9, k1 - 0.75, 0.9, 1.4, 0.2, [0.95, 0.75, 0.2]); box(g, 0, 0.6, k1 - 1.05, 0.7, 0.15, 0.5, [0.75, 0.15, 0.18]);   // throne
+    for (const sx of [-1, 1]) { box(g, sx * 3, 0, KZ, 0.9, 0.75, 3.6, WOODC); box(g, sx * 3, 0, KZ, 0.7, 0.72, 3.4, shade(WOODC, 0.7)); egg(g, sx * 3, 0.85, KZ - 1, 0.12, 0.1, 0.12, [1, 0.85, 0.3]); }   // long tables
+    liftFrom(g, n0, ROOM_FLOOR);
   },
   dragonstatue(g) {
     const R = [0.75, 0.2, 0.15], R2 = [0.55, 0.12, 0.1], GO = [1.0, 0.8, 0.2];
@@ -6550,6 +6755,7 @@ function placeBuilding(id) {
   if (groundAt(x, z) < WATER_Y + 0.05) return "You can't build in the water. Find some dry land!";
   if (placed.length >= 400) return 'You have built so much! Take some buildings down first.';
   placed.push({ id, x: +x.toFixed(2), z: +z.toFixed(2), yaw: +(Math.PI - player.yaw).toFixed(3) });
+  rebuildChunksNear(x, z, reach + 2);
   return null;
 }
 function nearestPlaced(x, z, maxD, only) {
@@ -6560,8 +6766,88 @@ function nearestPlaced(x, z, maxD, only) {
 function drawPlaced() {
   for (const b of placed) {
     if (Math.abs(b.x - player.x) > FOG_END + 40 || Math.abs(b.z - player.z) > FOG_END + 40) continue;
-    drawMesh(buildMesh(b.id), mChain(mT(b.x, groundAt(b.x, b.z), b.z), mRy(b.yaw)));
+    const base = mChain(mT(b.x, groundAt(b.x, b.z), b.z), mRy(b.yaw));
+    drawMesh(buildMesh(b.id), base);
+    const D = ITEMS[b.id].doors;
+    if (D) D.forEach((d, i) => {
+      const o = (b.open && b.open[i]) || 0;
+      if (d.two) {
+        const lw = d.w / 2;
+        drawMesh(doorMesh(lw, d.h, d.c, 1, d.bands), mChain(base, mT(d.x - d.w / 2 + 0.04, 0, d.z), mRy(-o * 1.6)));
+        drawMesh(doorMesh(lw, d.h, d.c, -1, d.bands), mChain(base, mT(d.x + d.w / 2 - 0.04, 0, d.z), mRy(o * 1.6)));
+      } else drawMesh(doorMesh(d.w, d.h, d.c, 1, d.bands), mChain(base, mT(d.x - d.w / 2 + 0.03, 0, d.z), mRy(-o * 1.6)));
+    });
   }
+}
+// doors swing open when someone comes close, and close again after they've gone
+function updateDoors(dt) {
+  for (const b of placed) {
+    const D = ITEMS[b.id].doors; if (!D) continue;
+    if (!players.some(p => Math.abs(p.x - b.x) < 40 && Math.abs(p.z - b.z) < 40)) continue;
+    if (!b.open) b.open = D.map(() => 0);
+    const c = Math.cos(b.yaw), s = Math.sin(b.yaw);
+    D.forEach((d, i) => {
+      const wx = b.x + d.x * c + d.z * s, wz = b.z - d.x * s + d.z * c;
+      const want = players.some(p => Math.hypot(p.x - wx, p.z - wz) < d.near) ? 1 : 0;
+      const was = b.open[i];
+      b.open[i] += Math.max(-dt * 1.6, Math.min(dt * 2.5, want - b.open[i]));
+      if (was === 0 && b.open[i] > 0) { const k = d.two && d.w > 3 ? 0.6 : 1; tone('triangle', 220 * k, 180 * k, 0.35, 0.04); noiseHit('lowpass', 500, 0.6, 0.25, 0.08); }
+      if (was > 0 && b.open[i] === 0) thump(0.12);
+    });
+  }
+}
+// no grass growing up through the floor inside a building
+function placedNow() { try { return placed; } catch (e) { return []; } }     // (chunks can be built before the buildings are loaded)
+function roomsNear(x0, z0, size, key = 'room') {
+  return placedNow().filter(b => ITEMS[b.id][key] && b.x > x0 - 30 && b.x < x0 + size + 30 && b.z > z0 - 30 && b.z < z0 + size + 30);
+}
+function insideRooms(list, x, z, key = 'room', m = 0.3) {
+  for (const b of list) {
+    const [r0, q0, r1, q1] = ITEMS[b.id][key], c = Math.cos(b.yaw), s = Math.sin(b.yaw), dx = x - b.x, dz = z - b.z;
+    const lx = c * dx - s * dz, lz = s * dx + c * dz;
+    if (lx > r0 - m && lx < r1 + m && lz > q0 - m && lz < q1 + m) return b;
+  }
+  return null;
+}
+// ladders and lookout decks: walk into a ladder to climb up, away from it to climb down; on the deck, the walls keep you from falling off
+function climbAndDecks(dt) {
+  const b = placedNow().find(b => ITEMS[b.id].deck && Math.abs(b.x - player.x) < 4 && Math.abs(b.z - player.z) < 4);
+  if (!b) return null;
+  const it = ITEMS[b.id], c = Math.cos(b.yaw), s = Math.sin(b.yaw), lad = it.ladder, dk = it.deck;
+  const deckY = groundAt(b.x, b.z) + dk.y, here = Math.max(groundAt(player.x, player.z), SWIM_FEET);
+  let dx = player.x - b.x, dz = player.z - b.z, lx = c * dx - s * dz, lz = s * dx + c * dz;
+  const lvz = s * player.vx + c * player.vz;              // how fast you're moving toward the tower
+  const out = { floor: -Infinity, climbing: false };
+  const onLad = lx > lad.x0 && lx < lad.x1 && lz > lad.z0 && lz < lad.z1 + 0.25;
+  if (onLad && (player.feet > here + 0.05 || lvz > 0.8) && player.feet < deckY - 0.02 + (lvz < -0.3 ? 1 : 0)) {
+    out.climbing = true;
+    const rate = Math.max(-3, Math.min(3, lvz * 0.7));
+    player.feet = Math.min(deckY, Math.max(here, player.feet + rate * dt));
+    lx = Math.max(lad.x0 + 0.05, Math.min(lad.x1 - 0.05, lx));
+    lz = Math.max(lad.z0 + 0.05, Math.min(player.feet >= deckY - 0.02 ? lz : lad.z1, lz));
+    if (player.feet >= deckY - 0.02 && lvz > 0) { out.climbing = false; out.floor = deckY; }
+    if (rate !== 0 && Math.random() < dt * 4) noiseHit('bandpass', 900, 2, 0.05, 0.12);
+  } else if (player.feet >= deckY - 0.4) {
+    const [r0, q0, r1, q1] = dk.r, m = 0.3;
+    if (lx > r0 - 0.5 && lx < r1 + 0.5 && lz > q0 - 0.7 && lz < q1 + 0.5) {
+      out.floor = deckY;
+      lx = Math.max(r0 + m, Math.min(r1 - m, lx));
+      if (Math.abs(lx) > dk.gap - 0.1) lz = Math.max(q0 + m, lz);       // the front wall, except the ladder gap
+      lz = Math.min(q1 - m, lz);
+      if (lz < q0 && !(lx > lad.x0 && lx < lad.x1)) lz = q0 + m;
+    }
+  }
+  player.x = b.x + lx * c + lz * s; player.z = b.z - lx * s + lz * c;
+  return out;
+}
+// inside a room you stand on its floor
+function roomFloorAt(x, z) {
+  const b = insideRooms(roomsNear(x - 1, z - 1, 2), x, z, 'room', -0.1);
+  return b ? groundAt(b.x, b.z) + ROOM_FLOOR : -Infinity;
+}
+// rebuild the ground nearby (to clear trees under a new building, or bring them back when it's taken down)
+function rebuildChunksNear(x, z, r) {
+  for (const [k, ch] of [...chunks]) if (x + r > ch.x0 && x - r < ch.x0 + CH && z + r > ch.z0 && z - r < ch.z0 + CH) { freeChunk(ch); chunks.delete(k); }
 }
 function solidPlacedNear(x, z, fn) {
   for (const b of placed) {
@@ -6933,6 +7219,7 @@ function frame(now) {
       updateIceSpikes(dt);
       updateArrows(dt);
       updatePickups(dt);
+      updateDoors(dt);
       usePlayer(spawnTurn++ % players.length);      // new animals and bosses show up around each player in turn
       updateSpawning(dt);
       updateWaterLife(dt);

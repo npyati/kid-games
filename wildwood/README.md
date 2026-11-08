@@ -75,7 +75,7 @@ Open the backpack with **Y** (controller) or **I** / **Tab** (keyboard). It show
 
 ### Buildings
 
-Building one puts it right in front of you, facing you (not in water). You can build as many as you like, and they cost a lot. They're saved with the world, so both players see them, and they're solid. The Buildings section shows how many are close by and has **🔨 Take down** for the closest one (within 12 m), which gives back everything it cost.
+Building one puts it right in front of you, facing you (not in water). You can build as many as you like, and they cost a lot. They're saved with the world, so both players see them, and they're solid. Trees and rocks where a building goes are cleared away (and come back if you take it down). Buildings with doors (the hut, the houses and the castle) open them by themselves when someone walks up and close them after you've gone; inside, you stand on the floor, a small step up. The Buildings section shows how many are close by and has **🔨 Take down** for the closest one (within 12 m), which gives back everything it cost.
 
 | Building | Cost | Special |
 |---|---|---|
@@ -89,14 +89,15 @@ Building one puts it right in front of you, facing you (not in water). You can b
 | Bed | 20 wood, 8 fur | when you're knocked out, you wake up next to your nearest bed |
 | Tent | 12 wood, 10 fur | |
 | Snowman | 2 frost crystals, 5 wood | |
-| Little hut | 40 wood, 10 stone | |
+| Little hut | 40 wood, 10 stone | a room you can go inside: the door opens as you walk up; a little bed, a rug, three windows |
 | Healing well | 30 stone, 10 wood, 8 gems | heals 12 a second close by |
 | Stone arch | 40 stone | you can walk through the middle |
-| Wooden house | 60 wood, 15 stone, 4 iron | |
-| Stone house | 60 stone, 20 wood, 6 iron | |
-| Lookout tower | 50 wood, 15 stone, 3 iron | |
+| Wooden house | 60 wood, 15 stone, 4 iron | go inside: bed, table and chairs, a rug, six windows |
+| Stone house | 60 stone, 20 wood, 6 iron | stone-block walls; go inside: a fireplace, bed, table and chairs |
+| Lookout tower | 50 wood, 15 stone, 3 iron | climb the ladder (walk into it to go up, away from it to come down) to a lookout room 5 m up with a bench and a telescope; you can walk underneath |
 | Castle tower | 80 stone, 15 iron | |
 | Dragon statue | 50 stone, 30 gems, 10 iron | |
+| Castle | 500 stone, 100 wood | 26 m across: stone-block walls with battlements and pointed windows, four round corner towers with flags, a gatehouse on the front with big double gates (they swing open when you come within 8 m), a courtyard, and a keep you can go inside (banners, a red carpet, a golden throne, long tables) |
 
 - **Wood:** swing at a tree (5 per tree). **Stone:** swing at a big rock (4 per rock, and sometimes iron). **Iron, gems and fur:** beat enemies (wolves usually drop 1 fur, bears 2). **Dragon scale:** one from each dragon you beat. **Giant fangs:** two from each giant snake you beat. **Frost crystals:** two from each ice ogre. **Croc skin:** one from each crocodile. **Fish scales:** one from each fish. **Golden scale:** from the rare golden fish. **Shark teeth:** two from each shark.
 
