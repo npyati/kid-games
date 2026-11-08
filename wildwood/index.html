@@ -205,10 +205,11 @@ body.two.playing .locator{display:block}
       <a data-act="home" href="../">All games</a>
     </nav>
     <div class="howto">
-      <div id="howPad"><b>Xbox controller</b>Left stick: walk · Right stick: look · A: jump · RT: swing or shoot · LB: block with a shield (you can still swing) · D-pad right: sword ↔ bow · D-pad left: shield on/off · LT or click left stick: run · Y: backpack · Start: menu</div>
-      <div><b>Keyboard and mouse</b>WASD: walk · Mouse: look · Click or F: swing or shoot · Right-click or Q: block (you can still swing) · 1: sword · 2: bow · 3: shield on/off · Space: jump · Shift: run · I or Tab: backpack · Esc: menu</div>
+      <div id="howPad"><b>Xbox controller</b>Left stick: walk · Right stick: look · A: jump · RT: swing or shoot · LB: block with a shield (you can still swing) · D-pad right: sword ↔ bow · D-pad left: shield on/off · LT or click left stick: run · X: feed or ride a horse · Y: backpack · Start: menu</div>
+      <div><b>Keyboard and mouse</b>WASD: walk · Mouse: look · Click or F: swing or shoot · Right-click or Q: block (you can still swing) · 1: sword · 2: bow · 3: shield on/off · Space: jump · Shift: run · R: feed or ride a horse · I or Tab: backpack · Esc: menu</div>
       <div><b>Animals</b>Foxes, deer and rabbits are friendly. Wolves, and bears from caves, chase you once they spot you. Beat them for gems, iron and apples. They can't swim!</div>
-      <div><b>Crafting</b>Swing at trees for wood and at big rocks for stone. Catch fish in rivers for their scales (golden fish are rare!). Open your backpack to make axes, swords, bows, shields and chest plates.</div>
+      <div><b>Wheat and horses</b>Golden wheat fields grow in open grassy land: swing at the wheat to pick it. Wild horses run around big open fields. Bring wheat and they'll come over: walk up and press X (R on the keyboard) to feed one. After a few bites it's yours, with a saddle! Press X next to it to ride (super fast, big jumps), and X again to get off.</div>
+      <div><b>Crafting</b>Swing at trees for wood and at big rocks for stone. Catch fish in rivers for their scales (golden fish are rare!). Open your backpack to make axes, swords, bows, shields, chest plates and buildings.</div>
       <div><b>Two players</b>Plug in a second controller (Xbox or Nintendo) and press Start (+ on Nintendo) on it (or choose 👥 Add player 2). The screen splits in two. Each of you has your own health, gear and materials. Your backpack (Y) and menu (Start) open on your own side, and the other player keeps playing.</div>
       <div><b>Saved games</b>Make as many games as you like with 💾 Saved games. Each one has its own world and its own things. New game starts from scratch.</div>
       <div id="howClaude" hidden><b>🎤 Ask Claude (at home only)</b>Hold V, or LB + RB together on a controller (L + R on Nintendo), and say what should happen: "spawn ten wolves in front of me", "build a tower", "make me giant". Let go and Claude makes it happen. Press T to type instead. Big ideas take a little longer.</div>
@@ -364,7 +365,7 @@ function writeSave() {
   writeSettings();
   try {
     localStorage.setItem(SLOT_PREFIX + currentSlot, JSON.stringify({
-      seed: worldSeed, mats: pslots[0] ? pslots[0].mats : mats, owned: [...(pslots[0] ? pslots[0].owned : owned)], equip: pslots[0] ? pslots[0].equip : equip, p2: p2Gear(), builds: placed,
+      seed: worldSeed, mats: pslots[0] ? pslots[0].mats : mats, owned: [...(pslots[0] ? pslots[0].owned : owned)], equip: pslots[0] ? pslots[0].equip : equip, p2: p2Gear(), builds: placed, horses: horsesRestored ? tameHorses() : G0.horses,
       pos: { x: +players[0].x.toFixed(2), z: +players[0].z.toFixed(2), yaw: +players[0].yaw.toFixed(3), seed: worldSeed },
     }));
   } catch (e) {}
@@ -622,6 +623,15 @@ function featureNear(x, z) {
   if (gc && (x - gc.x) ** 2 + (z - gc.z) ** 2 < 16 * 16) return true;
   const l = lairInCell(Math.floor(x / LAIR_CELL), Math.floor(z / LAIR_CELL));
   return !!(l && (x - l.x) ** 2 + (z - l.z) ** 2 < 36 * 36);
+}
+// Wheat fields: golden patches out in open, dry, grassy country (not in forests, marshes, snow or on beaches)
+const WHEAT_F = 0.011, WHEAT_T = 0.12;
+function wheatMask(x, z) { return perlin(x * WHEAT_F + 57.3, z * WHEAT_F - 19.9) + 0.22 * perlin(x * 0.05 + 3.3, z * 0.05 + 1.9); }
+function wheatOK(forest, marsh, h) { return forest < 0.3 && marsh < 0.1 && h > 1.3 && h < 24; }
+function isWheat(x, z) {
+  if (wheatMask(x, z) < WHEAT_T) return false;
+  const s = sample(x, z);
+  return wheatOK(s.forest, s.marsh, s.h) && s.coast < 0.3 && s.mtn < 0.05 && !featureNear(x, z);
 }
 /* TERRAIN-END */
 
@@ -1227,6 +1237,23 @@ function grassTuft(g, x, y, z, rng, hgt, cb, ct) {
     tri(g, [bx - px, y - 0.05, bz - pz], [bx + px, y - 0.05, bz + pz], tip, nn, 1, cb, cb, tc, 0, 0, 1);
   }
 }
+// a clump of golden wheat: thin stalks, each with a fat seed head
+function wheatClump(g, x, y, z, rng) {
+  const n = 5 + (rng() * 3 | 0), ST = [0.62, 0.55, 0.22];
+  for (let k = 0; k < n; k++) {
+    const a = rng() * Math.PI * 2, off = rng() * 0.45;
+    const bx = x + Math.cos(a) * off, bz = z + Math.sin(a) * off, h = 0.6 + rng() * 0.3;
+    const la = rng() * Math.PI * 2, lean = 0.06 + rng() * 0.1, tx = bx + Math.cos(la) * lean, tz = bz + Math.sin(la) * lean;
+    const w = 0.018, px = Math.cos(a + 1.57) * w, pz = Math.sin(a + 1.57) * w;
+    const nn = norm3(Math.cos(la) * 0.3, 1, Math.sin(la) * 0.3);
+    tri(g, [bx - px, y - 0.05, bz - pz], [bx + px, y - 0.05, bz + pz], [tx, y + h, tz], nn, 1, ST, ST, ST, 0, 0, 1);
+    const hc = shade([0.95, 0.78, 0.3], 0.9 + rng() * 0.2), hw = 0.045, hx = Math.cos(a + 1.57) * hw, hz = Math.sin(a + 1.57) * hw;
+    const top = [tx + Math.cos(la) * 0.04, y + h + 0.22, tz + Math.sin(la) * 0.04];
+    tri(g, [tx - hx, y + h + 0.08, tz - hz], [tx + hx, y + h + 0.08, tz + hz], top, nn, 1, hc, hc, shade(hc, 1.1), 0, 0, 1);
+    tri(g, [tx - hx, y + h + 0.08, tz - hz], [tx, y + h - 0.04, tz], [tx + hx, y + h + 0.08, tz + hz], nn, 1, hc, hc, hc, 0, 0, 1);
+  }
+}
+const wheatPicked = new Set();       // detail cells someone has picked (it grows back when you reload)
 const PETALS = [[0.98, 0.85, 0.2], [0.97, 0.97, 0.95], [0.72, 0.45, 0.95], [0.95, 0.35, 0.35], [0.98, 0.6, 0.8], [0.4, 0.6, 1.0]];
 function flower(g, x, y, z, rng, colorIdx) {
   const h = 0.3 + rng() * 0.25;
@@ -1353,6 +1380,7 @@ function buildChunk(cx, cz) {
       const n = norm3(H[i + (j + 1) * GW] - H[(i + 2) + (j + 1) * GW], 2 * STEP, H[(i + 1) + j * GW] - H[(i + 1) + (j + 2) * GW]);
       let c = groundColor(h, n[1], forestA[i + j * NV], varA[i + j * NV], marshA[i + j * NV]);
       if (lairHere) c = volcanoColor(c, x0 + i * STEP, z0 + j * STEP, lairHere);
+      if (h > 1.3 && wheatMask(x0 + i * STEP, z0 + j * STEP) >= WHEAT_T && isWheat(x0 + i * STEP, z0 + j * STEP)) c = mixc(c, [0.78, 0.66, 0.3], 0.7);   // wheat fields look golden from far away
       tg.v(x0 + i * STEP, h, z0 + j * STEP, n[0], n[1], n[2], -1, c[0], c[1], c[2], 0);
       if (h < minY) minY = h; if (h > maxY) maxY = h;
     }
@@ -1388,6 +1416,7 @@ function buildChunk(cx, cz) {
       if (roll < 0.07) { const dead = rng() < 0.6; ch.trees.push(px, pz, dead ? deadTree(vg, px, y, pz, rng) : leafTree(vg, px, y, pz, rng, 3), 0); shadeAt.push(px, pz, dead ? 1.6 : 2.8, 4, dead ? 0.45 : 1); }
       continue;
     }
+    if (forest < 0.3 && wheatMask(px, pz) >= WHEAT_T && isWheat(px, pz)) continue;     // wheat fields stay open
     if (roll < forest * 0.30 + 0.012) {
       let r;
       const kind = rng();
@@ -1481,6 +1510,11 @@ function buildDetail(ch) {
     }
     if (y < 0.9) {
       if (y > -0.5 && y < 0.8 && roll < 0.22) reeds(g, px, y, pz, rng);
+      continue;
+    }
+    if (wheatMask(px, pz) >= WHEAT_T && isWheat(px, pz)) {
+      if (!wheatPicked.has((cx * GC + i) + ',' + (cz * GC + j))) { wheatClump(g, px, y, pz, rng); wheatClump(g, px + gs * 0.45, chunkHeight(ch, px + gs * 0.45, pz + gs * 0.3), pz + gs * 0.3, rng); }
+      else grassTuft(g, px, y, pz, rng, 0.2, [0.45, 0.4, 0.2], [0.6, 0.55, 0.28]);      // stubble
       continue;
     }
     if (roll < 0.9 - forest * 0.55) {
@@ -2291,8 +2325,9 @@ function updatePlayer(dt) {
   const ground0 = groundAt(player.x, player.z);
   player.swimming = ground0 < SWIM_FEET - 0.05;
   player.wet = ground0 < 0.05;
-  let speed = player.run ? 8.5 : 4.6;
-  if (player.swimming) speed *= 0.5; else if (player.wet) speed *= 0.7;
+  let speed = player.riding ? (player.run ? 15 : 8.5) : player.run ? 8.5 : 4.6;     // a horse is fast
+  if (player.riding) player.swimming = false;
+  else if (player.swimming) speed *= 0.5; else if (player.wet) speed *= 0.7;
   if (player.frozenT > 0) speed *= 0.4;
   const talkCombo = pad.btn[4] && pad.btn[5];      // LB + RB together is Ask Claude's talk button, not block + swing
   player.blocking = !!equip.shield && !player.swimming && ((pad.btn[4] && !talkCombo) || keys.has('KeyQ') || rightHeld);
@@ -2307,20 +2342,25 @@ function updatePlayer(dt) {
   player.z += (player.vz + player.kz) * dt;
   const kd = Math.exp(-dt * 7); player.kx *= kd; player.kz *= kd;
   // bump into trunks and rocks
-  pushOutTrees(player, 0.35);
+  pushOutTrees(player, player.riding ? 0.7 : 0.35);
   pushOutCreatures();
+  if (player.riding && groundAt(player.x, player.z) < 0.3) {     // horses stay out of the water
+    player.x = ox; player.z = oz; player.vx *= -0.2; player.vz *= -0.2;
+    if (performance.now() > horseMsgT) { feed("🐴 Your horse won't go in the water. Press " + (pad.connected ? btnName('X') : 'R') + ' to get off'); horseMsgT = performance.now() + 4000; }
+  }
+  if (pressed(2) || keys.has('KeyR')) { keys.delete('KeyR'); horseAction(); }
   // attack: RT or RB on the controller (hold to keep swinging), click or F on the keyboard
   if (pad.btn[7] || (pad.btn[5] && !talkCombo) || keys.has('KeyF') || keys.has('KeyJ') || mouseHeld) startSwing();
   const moved = Math.hypot(player.x - ox, player.z - oz);
 
   // up and down
   const ground = groundAt(player.x, player.z);
-  const floor = Math.max(ground, SWIM_FEET);
-  const deep = ground < SWIM_FEET - 0.05;
+  const floor = Math.max(ground, SWIM_FEET) + (player.riding ? RIDE_H : 0);
+  const deep = !player.riding && ground < SWIM_FEET - 0.05;
   const wantJump = pressed(0) || keys.has('Space');
   if (player.onGround) {
     if (wantJump && !deep) {
-      player.vy = 5.4; player.onGround = false; keys.delete('Space');
+      player.vy = player.riding ? 7.5 : 5.4; player.onGround = false; keys.delete('Space');
       noiseHit('lowpass', 500, 0.7, 0.1, 0.18);
     } else {
       // walk down slopes smoothly, float up to the surface when swimming
@@ -2639,6 +2679,48 @@ function deerModel() {
   tube(lg, [0, 0.03, 0], [0, -0.8, 0], 0.055, 0.035, 5, shade(TAN, 0.85), r, false);
   blob(lg, 0, -0.81, 0.02, 0.04, 0.04, 0.05, DK, r, 0, -1, 0);
   return { body: makeMesh(g), leg: makeMesh(lg), antlers: makeMesh(ag) };
+}
+// horses: a few coats; the head is at +z like every animal
+function horseModel(coat, mane, blaze, seed) {
+  const g = new Geo(2048), r = mulberry32(seed), DK = [0.08, 0.06, 0.05], HOOF = [0.2, 0.17, 0.15];
+  const B = (x, y, z, rx, ry, rz, c, j) => blob(g, x, y, z, rx, ry, rz, c, r, j === undefined ? 0.08 : j, -1, 0);
+  B(0, 1.27, 0, 0.34, 0.38, 0.8, coat);                                   // body
+  B(0, 1.32, 0.52, 0.32, 0.36, 0.34, coat);                                 // chest
+  B(0, 1.33, -0.55, 0.34, 0.36, 0.34, coat);                                // rump
+  tube(g, [0, 1.42, 0.62], [0, 1.95, 0.95], 0.21, 0.13, 7, coat, r, false);  // neck
+  B(0, 2.0, 1.05, 0.12, 0.13, 0.17, coat);                                // head
+  tube(g, [0, 1.98, 1.1], [0, 1.82, 1.38], 0.1, 0.075, 6, coat, r, false);  // long nose
+  B(0, 1.8, 1.4, 0.08, 0.07, 0.07, shade(coat, 0.75));
+  for (const sd of [-1, 1]) {
+    B(sd * 0.1, 2.06, 1.12, 0.025, 0.03, 0.03, DK, 0);                    // eyes
+    const a = [sd * 0.05, 2.1, 1.0], b = [sd * 0.1, 2.32, 0.98], c = [sd * 0.1, 2.12, 0.94];
+    tri(g, a, b, c, faceN(a, b, c), 0, coat, shade(coat, 1.2), coat, 0, 0, 0);   // ears
+  }
+  if (blaze) tube(g, [0, 2.1, 1.12], [0, 1.86, 1.43], 0.03, 0.025, 4, [0.97, 0.96, 0.94], r, false);
+  for (let i = 0; i < 6; i++) { const t = i / 5; B(0, 2.12 - t * 0.62 + 0.05, 0.98 - t * 0.38, 0.05, 0.1, 0.09, mane, 0.2); }   // mane
+  tube(g, [0, 1.42, -0.95], [0, 1.0, -1.18], 0.09, 0.05, 6, mane, r, false);    // tail
+  tube(g, [0, 1.0, -1.18], [0, 0.55, -1.15], 0.05, 0.02, 6, mane, r, false);
+  const lg = new Geo(256);
+  tube(lg, [0, 0.05, 0], [0, -0.85, 0], 0.095, 0.06, 6, shade(coat, 0.9), r, false);
+  blob(lg, 0, -0.9, 0.02, 0.065, 0.06, 0.075, HOOF, r, 0, -1, 0);
+  return { body: makeMesh(g), leg: makeMesh(lg) };
+}
+const HORSE_COATS_DEF = [
+  [[0.5, 0.32, 0.18], [0.14, 0.1, 0.08], true],      // brown with a white stripe
+  [[0.16, 0.14, 0.14], [0.08, 0.07, 0.07], false],   // black
+  [[0.86, 0.85, 0.82], [0.7, 0.68, 0.64], false],    // white
+  [[0.72, 0.42, 0.2], [0.95, 0.88, 0.7], true],      // chestnut with a pale mane
+  [[0.58, 0.58, 0.6], [0.25, 0.25, 0.27], false],    // grey
+];
+let HORSE_COATS = [], saddleMesh = null;
+function makeHorseModels() {
+  HORSE_COATS = HORSE_COATS_DEF.map(([c, m, b], i) => horseModel(c, m, b, 40 + i));
+  const g = new Geo(512), r = mulberry32(49), LE = [0.45, 0.22, 0.12];
+  blob(g, 0, 1.63, 0.05, 0.36, 0.07, 0.4, LE, r, 0, -1, 0);                // saddle
+  blob(g, 0, 1.69, 0.38, 0.1, 0.08, 0.07, shade(LE, 0.8), r, 0, -1, 0);
+  for (const sd of [-1, 1]) tube(g, [sd * 0.35, 1.6, 0.05], [sd * 0.37, 1.05, 0.05], 0.025, 0.025, 4, [0.3, 0.3, 0.32], r, false);
+  tube(g, [-0.13, 1.84, 1.33], [0.13, 1.84, 1.33], 0.015, 0.015, 4, [0.3, 0.18, 0.1], r, false);   // bridle
+  saddleMesh = makeMesh(g);
 }
 function rabbitModel() {
   const g = new Geo(1024), r = mulberry32(17);
@@ -3084,6 +3166,8 @@ const SPECIES = {
   fox: { name: 'Fox', peaceful: true, flee: 5, walk: 1.6, run: 6.0, turn: 6, radius: 0.45, sinkH: 0.9,
     legLen: 0.3, hipY: 0.33, hips: [[0.1, 0.24], [-0.1, 0.24], [0.1, -0.24], [-0.1, -0.24]] },
   rabbit: { name: 'Rabbit', peaceful: true, flee: 7, walk: 0.9, run: 6.5, turn: 8, radius: 0.2, sinkH: 0.4, legLen: 0.15, hop: true },
+  horse: { name: 'Horse', peaceful: true, horse: true, flee: 0, walk: 1.4, run: 10, turn: 3.5, radius: 0.7, sinkH: 2.0,
+    legLen: 0.95, hipY: 1.0, hips: [[0.2, 0.55], [-0.2, 0.55], [0.2, -0.6], [-0.2, -0.6]] },
   deer: { name: 'Deer', peaceful: true, flee: 16, walk: 1.3, run: 9.5, turn: 4, radius: 0.6, sinkH: 1.9,
     legLen: 0.8, hipY: 0.85, hips: [[0.13, 0.4], [-0.13, 0.4], [0.13, -0.4], [-0.13, -0.4]] },
   // enemies
@@ -3133,6 +3217,7 @@ SPECIES.fox.model = canineModel(1, [0.88, 0.42, 0.12], [0.96, 0.92, 0.86], [0.18
 SPECIES.wolf.model = canineModel(1.4, [0.50, 0.50, 0.53], [0.80, 0.79, 0.76], [0.14, 0.13, 0.14], [0.25, 0.25, 0.27], 0.9);
 SPECIES.bear.model = bearModel();
 SPECIES.deer.model = deerModel();
+makeHorseModels(); SPECIES.horse.model = HORSE_COATS[0];
 SPECIES.rabbit.model = rabbitModel();
 SPECIES.snake.model = snakeModel();
 SPECIES.leviathan.model = leviathanModel();
@@ -3177,6 +3262,7 @@ const WOOD = [0.45, 0.30, 0.17];
 /* ---------- things you can hold, wear and craft ---------- */
 const MATS = {
   wood: { name: 'Wood', icon: '🪵' },
+  wheat: { name: 'Wheat', icon: '🌾' },
   stone: { name: 'Stone', icon: '🪨' },
   iron: { name: 'Iron', icon: '⚙️' },
   gems: { name: 'Gems', icon: '💎' },
@@ -3415,6 +3501,12 @@ const matMeshes = hiDetail(() => {
   out.fishscale = makeMesh(g);
   g = new Geo(256); blob(g, 0, 0, 0, 0.17, 0.035, 0.15, [1.0, 0.82, 0.2], r, 0, -1, 0); blob(g, 0, 0.03, 0.02, 0.1, 0.02, 0.09, [1.0, 0.95, 0.6], r, 0, -1, 0); out.goldscale = makeMesh(g);
   g = new Geo(256); tube(g, [0, -0.15, 0], [0, 0.25, 0], 0.14, 0.004, 3, [0.97, 0.96, 0.9], r, true); out.tooth = makeMesh(g);
+  g = new Geo(512);                                        // a little bundle of wheat
+  for (let i = 0; i < 5; i++) { const a = i * 1.26, ox = Math.cos(a) * 0.03, oz = Math.sin(a) * 0.03;
+    tube(g, [ox, -0.2, oz], [ox * 3, 0.15, oz * 3], 0.012, 0.012, 3, [0.7, 0.6, 0.25], r, false);
+    blob(g, ox * 3.3, 0.22, oz * 3.3, 0.03, 0.08, 0.03, [0.96, 0.8, 0.32], r, 0.1, -1, 0); }
+  tube(g, [0, -0.05, 0], [0, 0.0, 0], 0.05, 0.05, 6, [0.85, 0.3, 0.2], r, false);
+  out.wheat = makeMesh(g);
   return out;
 });
 const handMesh = hiDetail(() => {
@@ -3435,7 +3527,7 @@ const arrowMesh = (() => {      // points along +z
 })();
 
 // what you have (loaded from the save, with old saves upgraded)
-let mats = { wood: 0, stone: 0, iron: 0, gems: 0, scale: 0, fang: 0, fur: 0, frost: 0, skin: 0, fishscale: 0, goldscale: 0, tooth: 0, arrows: 0 };
+let mats = { wood: 0, wheat: 0, stone: 0, iron: 0, gems: 0, scale: 0, fang: 0, fur: 0, frost: 0, skin: 0, fishscale: 0, goldscale: 0, tooth: 0, arrows: 0 };
 let owned = new Set(['fists']);       // swapped per player in split screen (each player has their own gear)
 let equip = { weapon: 'fists', armor: null, shield: null };
 (function loadInventory() {
@@ -3495,7 +3587,7 @@ function tryHarvest() {
     if ((dx * fx + dz * fz) / d < 0.5) return;
     if (d - r < bestD) { bestD = d - r; best = { x, z, r, type }; }
   });
-  if (!best) return false;
+  if (!best) return pickWheat(fx, fz, w);
   const key = Math.round(best.x * 10) + '|' + Math.round(best.z * 10);
   const used = harvested.get(key) || 0;
   const hx = best.x - fx * best.r, hz = best.z - fz * best.r, hy = player.feet + 1.2;
@@ -3511,6 +3603,28 @@ function tryHarvest() {
   if (best.type === 0) { noiseHit('bandpass', 700, 2, 0.12, 0.35); thump(0.2); }
   else { tone('triangle', 1800, 1500, 0.08, 0.08); noiseHit('highpass', 3000, 0.7, 0.08, 0.15); }
   rumble(0.15, 0.3, 60);
+  return true;
+}
+
+// swing at wheat to pick it: a patch about 4 m across, gone until you reload
+function pickWheat(fx, fz, w) {
+  const tx = player.x + fx * 1.6, tz = player.z + fz * 1.6;
+  if (!isWheat(tx, tz) || player.swimming) return false;
+  const GC = 48, gs = CH / GC, ci = Math.floor(tx / gs), cj = Math.floor(tz / gs);
+  let got = 0;
+  const dirty = new Set();
+  for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) {
+    const k = (ci + di) + ',' + (cj + dj), cx = (ci + di) * gs + gs / 2, cz = (cj + dj) * gs + gs / 2;
+    if (wheatPicked.has(k) || !isWheat(cx, cz)) continue;
+    wheatPicked.add(k); got++;
+    dirty.add(ckey(Math.floor((ci + di) / GC), Math.floor((cj + dj) / GC)));
+  }
+  if (!got) { feed('This wheat is all picked'); return true; }
+  for (const k of dirty) { const ch = chunks.get(k); if (ch && ch.detailBuilt) { freeMesh(ch.detail); ch.detail = null; ch.detailBuilt = false; } }
+  const n = got >= 6 ? 2 : 1;
+  for (let i = 0; i < n * (w.chop || 1); i++) addPickup('wheat', tx, player.feet + 0.8, tz, 0, 0.4, 0.45);
+  noiseHit('highpass', 2600, 0.8, 0.12, 0.25); noiseHit('bandpass', 1200, 1.5, 0.08, 0.15);
+  rumble(0.1, 0.2, 50);
   return true;
 }
 
@@ -3739,8 +3853,93 @@ function spawnAnimal(kind, x, z, opts) {
   return a;
 }
 
+// horses live in big open grassy fields: no forest for 40 m around
+function openField(x, z) {
+  const s = sample(x, z);
+  if (s.forest > 0.15 || s.h < 1.3 || s.marsh > 0.1 || s.snow > 0.1 || s.mtn > 0.1 || s.coast > 0.3) return false;
+  for (let i = 0; i < 4; i++) { const t = sample(x + Math.cos(i * 1.571) * 30, z + Math.sin(i * 1.571) * 30); if (t.forest > 0.3 || t.h < 0.5) return false; }
+  return true;
+}
+// now and then a small herd of wild horses shows up in a big open field ahead of you
+let horseTimer = 15;
+function updateHorses(dt) {
+  horseTimer -= dt;
+  if (horseTimer > 0) return;
+  horseTimer = 12 + Math.random() * 10;
+  if (animals.some(a => a.kind === 'horse' && !a.tame && !a.dead)) return;    // one herd at a time
+  const moving = Math.hypot(player.vx, player.vz) > 1, heading = moving ? Math.atan2(player.vx, -player.vz) : player.yaw;
+  for (let tries = 0; tries < 6; tries++) {
+    const ang = heading + (Math.random() - 0.5) * Math.PI, d = 40 + Math.random() * 25;
+    const x = player.x + Math.sin(ang) * d, z = player.z - Math.cos(ang) * d;
+    if (!openField(x, z)) continue;
+    if (Math.random() < 0.5) return;               // not every field has horses
+    const n = 2 + (Math.random() < 0.5 ? 1 : 0);
+    for (let i = 0; i < n; i++) spawnHorse(x + (Math.random() - 0.5) * 8, z + (Math.random() - 0.5) * 8, Math.random() * HORSE_COATS.length | 0);
+    return;
+  }
+}
+function spawnHorse(x, z, coat, opts) {
+  const a = spawnAnimal('horse', x, z, opts);
+  a.coatN = coat; a.coat = HORSE_COATS[coat] || HORSE_COATS[0];
+  a.need = a.need || 3 + (Math.random() * 3 | 0);    // bites of wheat it takes to tame it
+  a.trust = a.trust || 0;
+  return a;
+}
+// tamed horses are saved with the world
+let horsesRestored = false;
+function restoreHorses() {
+  horsesRestored = true;
+  if (!Array.isArray(G0.horses)) return;
+  for (const h of G0.horses.slice(0, 30)) {
+    if (!h || typeof h !== 'object' || ![h.x, h.z].every(v => typeof v === 'number' && isFinite(v) && Math.abs(v) < 1e6)) continue;
+    const c = Number.isInteger(h.coat) && h.coat >= 0 && h.coat < HORSE_COATS.length ? h.coat : 0;
+    const a = spawnHorse(h.x, h.z, c, { tame: true, ambient: false });
+    a.home = { x: h.x, z: h.z, r: 5 };
+  }
+}
+const tameHorses = () => animals.filter(a => a.tame && !a.dead).map(a => ({ x: +a.x.toFixed(1), z: +a.z.toFixed(1), coat: a.coatN || 0 }));
+// X (or R): feed a wild horse some wheat, or get on and off your horse
+let horseMsgT = 0;
+function horseAction() {
+  if (player.riding) { dismount(player); return; }
+  let best = null, bd = 3.4;
+  for (const a of animals) { if (a.kind !== 'horse' || a.dead || a.rider) continue; const d = Math.hypot(a.x - player.x, a.z - player.z); if (d < bd) { bd = d; best = a; } }
+  if (!best) { if (animals.some(a => a.kind === 'horse' && !a.dead && Math.hypot(a.x - player.x, a.z - player.z) < 12)) feed('🐴 Get a little closer to the horse'); return; }
+  const h = best;
+  if (h.tame) {
+    player.riding = h; h.rider = player; h.home = null;
+    player.x = h.x; player.z = h.z; player.yaw = Math.PI - h.yaw; player.vx = player.vz = 0;
+    player.feet = Math.max(groundAt(h.x, h.z), SWIM_FEET) + RIDE_H; player.onGround = true;
+    tone('triangle', 392, 523, 0.15, 0.07); tone('triangle', 523, 659, 0.15, 0.07, 0.12);
+    feed(`🐴 Giddy up! Press ${pad.connected ? btnName('X') : 'R'} to get off`);
+    return;
+  }
+  if (mats.wheat < 1) { feed('🌾 Horses love wheat. Find a wheat field and pick some!'); thump(0.1); return; }
+  mats.wheat--; h.trust++; h.fleeT = 0; h.calmT = 10;
+  h.yaw = Math.atan2(player.x - h.x, player.z - h.z);
+  noiseHit('bandpass', 700, 2, 0.15, 0.2); tone('sine', 300, 260, 0.2, 0.05, 0.1);    // munch
+  if (h.trust >= h.need) {
+    h.tame = true; h.ambient = false; h.home = { x: h.x, z: h.z, r: 5 };
+    [523, 659, 784, 1047].forEach((f, i) => tone('triangle', f, f, 0.25, 0.09, i * 0.09));
+    toast(`💖 You tamed a horse! Press ${pad.connected ? btnName('X') : 'R'} next to it to ride.`);
+    writeSave();
+  } else feed('🐴 ' + '💗'.repeat(h.trust) + '🤍'.repeat(h.need - h.trust) + ' Munch munch!');
+  updateHud();
+}
+const RIDE_H = 0.95;
+function dismount(p) {
+  const h = p.riding; if (!h) return;
+  p.riding = null; h.rider = null; h.home = { x: h.x, z: h.z, r: 5 }; h.speed = 0;
+  const sx = Math.cos(p.yaw), sz = Math.sin(p.yaw);           // step off to the right
+  p.x = h.x + sx * 1.3; p.z = h.z + sz * 1.3;
+  p.feet = Math.max(groundAt(p.x, p.z), SWIM_FEET); p.vy = 0; p.onGround = true;
+  thump(0.15);
+  writeSave();
+}
 // friendly animals and wolf packs appear ahead of you as you walk
 function updateSpawning(dt) {
+  if (!horsesRestored) restoreHorses();
+  updateHorses(dt);
   spawnTimer -= dt;
   if (spawnTimer > 0) return;
   spawnTimer = 6 + Math.random() * 5;
@@ -4635,6 +4834,26 @@ function updateAnimals(dt) {
       a.retreatT += dt;
       targetYaw = Math.atan2(-dx, -dz); speed = sp.run * 1.15; a.fleeT = 1;
       if (a.retreatT > 6 || dist > 45) { a.remove = true; a.goneWhy = 'killed'; }
+    } else if (sp.horse) {
+      if (a.rider) {                              // someone is riding it: it goes where they go
+        const rd = a.rider;
+        a.x = rd.x; a.z = rd.z; a.yaw = Math.PI - rd.yaw; a.y = groundAt(a.x, a.z);
+        a.speed = Math.hypot(rd.vx, rd.vz);
+        a.legPhase += a.speed * dt * 1.6 / sp.legLen;
+        continue;
+      }
+      a.calmT = Math.max(0, (a.calmT || 0) - dt);
+      if (a.tame) {                               // your horse waits about where you left it
+        if (!a.home) a.home = { x: a.x, z: a.z, r: 5 };
+        wander(a, dx, dz, dt); targetYaw = a.wanderYaw; speed = a.wanderSpeed * 0.6;
+      } else {
+        const hasWheat = mats.wheat > 0, rushing = player.run && Math.hypot(player.vx, player.vz) > 6;
+        if (a.calmT <= 0 && dist < (rushing ? 12 : hasWheat ? 0 : 7)) a.fleeT = 3;    // wild horses are shy, unless you bring wheat
+        if (a.fleeT > 0) { a.fleeT -= dt; targetYaw = Math.atan2(-dx, -dz); speed = sp.run; }
+        else if (hasWheat && dist < 16) { targetYaw = Math.atan2(dx, dz); speed = dist > 2.6 ? sp.walk : 0; }   // comes over for the wheat
+        else { wander(a, dx, dz, dt); targetYaw = a.wanderYaw; speed = a.wanderSpeed; }
+        if (dist > 140) a.remove = true;
+      }
     } else if (sp.peaceful || sp.fish) {
       if (dist < sp.flee) a.fleeT = sp.fish ? Math.max(a.fleeT, 1.2) : 2.5;
       if (a.fleeT > 0) { a.fleeT -= dt; targetYaw = Math.atan2(-dx, -dz); speed = sp.run; }
@@ -4766,7 +4985,8 @@ function drawAnimals(time) {
       drawMesh(sp.model.body, mChain(body, mRy(Math.sin(a.dead ? 0 : time * (sp.fish ? 9 : 3) + a.legPhase) * (sp.fish ? 0.18 : 0.08) * (0.4 + Math.min(1, Math.abs(a.speed) / 2)))), flash);
       continue;
     }
-    drawMesh(sp.model.body, body, flash);
+    drawMesh((a.coat || sp.model).body, body, flash);
+    if (a.tame) drawMesh(saddleMesh, body, flash);
     if (a.kind === 'dragon') {   // neck, head, and a jaw that opens wide to bite, snaps shut, opens to roar and breathe fire
       const headM = dragonHeadM(a, body);
       drawDragonNeck(a, body, headM, flash);
@@ -4794,7 +5014,7 @@ function drawAnimals(time) {
       for (let i = 0; i < sp.hips.length; i++) {
         const h = sp.hips[i];
         const swing = a.asleep ? -1.2 : a.flyAlt > 1 ? 0.9 : Math.sin(a.legPhase + (i === 0 || i === 3 ? 0 : Math.PI)) * amp;
-        drawMesh(sp.model.leg, mChain(base, mT(h[0], sp.hipY, h[1]), mRx(swing)), flash);
+        drawMesh((a.coat || sp.model).leg, mChain(base, mT(h[0], sp.hipY, h[1]), mRx(swing)), flash);
       }
     }
     if (sp.model.tail) {          // crocodile tail and jaw
@@ -4944,6 +5164,7 @@ function collect(p) {
     if (k === 'gems') { tone('sine', 1300, 1700, 0.09, 0.07); tone('sine', 1950, 2500, 0.14, 0.07, 0.07); }
     else if (k === 'fishscale' && mats.fishscale === 1) { toast('🐟 Fish scales! Make scale gear in your backpack.'); writeSave(); }
     else if (k === 'goldscale') { [784, 988, 1175, 1568].forEach((f, i) => tone('triangle', f, f, 0.25, 0.08, i * 0.08)); toast('✨ A golden scale! Make the golden trident in your backpack.'); writeSave(); }
+    else if (k === 'wheat' && mats.wheat === 1) { toast('🌾 Wheat! Horses love it. Feed it to a horse to tame it.'); writeSave(); }
     else if (k === 'tooth' && mats.tooth === 1) { toast('🦈 Shark tooth! Make a shark-tooth sword in your backpack.'); writeSave(); }
     else if (k === 'skin' && mats.skin === 1) { toast('🐊 Croc skin! Make croc weapons in your backpack.'); writeSave(); }
     else if (k === 'frost') { [659, 880, 1175].forEach((f, i) => tone('sine', f, f, 0.3, 0.08, i * 0.1)); toast('❄️ A frost crystal! Make frost gear in your backpack.'); writeSave(); }
@@ -5382,6 +5603,7 @@ function hurtPlayer(dmg, dirx, dirz, knock, src) {
   updateHud();
 }
 function knockOut() {
+  dismount(player);
   player.hp = 0; player.ko = 3.2; swingT = -1; player.poisonT = 0;
   koEl.classList.add('show');
   [440, 370, 294].forEach((f, i) => tone('triangle', f, f * 0.98, 0.35, 0.08, i * 0.3));
@@ -5494,7 +5716,7 @@ function loadP2Gear() {
 function addPlayer2() {
   if (players.length > 1) return;
   usePlayer(0);
-  const p2 = Object.assign({}, player, { hp: 100, ko: 0, hurtT: 99, kx: 0, kz: 0, vx: 0, vz: 0, vy: 0, frozenT: 0, blocking: false });
+  const p2 = Object.assign({}, player, { riding: null, hp: 100, ko: 0, hurtT: 99, kx: 0, kz: 0, vx: 0, vz: 0, vy: 0, frozenT: 0, blocking: false });
   p2.x = player.x + Math.cos(player.yaw) * 2; p2.z = player.z + Math.sin(player.yaw) * 2;    // 2 m to player 1's right
   p2.feet = Math.max(groundAt(p2.x, p2.z), SWIM_FEET); p2.onGround = true;
   const h2 = document.getElementById('hud2');
@@ -5517,6 +5739,7 @@ function removePlayer2() {
   if (p1ui === 'menu') { pmEl.classList.remove('show'); ui = 'play'; }
   if (p1ui === 'inv') { invEl.classList.remove('half0'); state = 'inv'; }    // one player: an open backpack pauses the game again
   p2Saved = p2Gear();
+  dismount(players[1]);
   players.length = 1; pslots.length = 1;
   document.body.classList.remove('two');
   document.getElementById('hud2').classList.remove('show');
@@ -6016,6 +6239,8 @@ GAME STATE you can read and change directly:
   Buildings (type 'build', made in the backpack's Buildings section, saved with the world): giveItem(id) puts one in front of the speaker for free.
   placed is the array of them: { id, x, z, yaw }; remove one with placed.splice(i, 1). Ids: campfire bench fence woodwall stonewall garden lamppost bed tent
   snowman hut well archway statue house stonehouse tower fountain castletower dragonstatue.
+- Wheat (mats.wheat) grows in wheat fields (isWheat(x, z)); swinging at it picks it. Horses: spawnHorse(x, z, coat 0-4, { tame: true }) makes one
+  (tame ones have a saddle and can be ridden with X / R; wild ones are tamed by feeding wheat). player.riding is the horse a player is on.
 - addPickup(kind, x, y, z) drops a collectible: kind is a material name, 'gem', or 'apple' (heals).
 - Sounds: thump(vol), tone(type, f0, f1, dur, vol, delay) e.g. tone('sine', 600, 1200, 0.3, 0.1).
 - Players walk 4.6 m/s and run 8.5 m/s. To make a player faster, a hook can add extra movement: p.x += p.vx * dt * (k - 1); p.z += p.vz * dt * (k - 1).

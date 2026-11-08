@@ -6,9 +6,9 @@ A 3D exploring game. You walk through a forest that goes on forever: pines, birc
 
 ## Controls
 
-- **Xbox controller:** left stick to walk, right stick to look, RT (or RB) to swing or shoot, LB to block with a shield (you can keep swinging or shooting while you block), D-pad right to swap between your sword and your bow, D-pad left to take your shield out or put it away, A to jump, LT (or click the left stick) to run, Start to open the menu. Hold RT to keep swinging. In the menu, use the stick or d-pad and press A to choose, or B to go back.
+- **Xbox controller:** left stick to walk, right stick to look, RT (or RB) to swing or shoot, LB to block with a shield (you can keep swinging or shooting while you block), D-pad right to swap between your sword and your bow, D-pad left to take your shield out or put it away, A to jump, LT (or click the left stick) to run, X to feed or ride a horse, Start to open the menu. Hold RT to keep swinging. In the menu, use the stick or d-pad and press A to choose, or B to go back.
 - **Nintendo Switch Pro Controller** (or both Joy-Cons joined together): the same controls, with Nintendo's names: ZR to swing or shoot, L to block, ZL to run, + for the menu. The game matches buttons by letter, so A (on the right on Nintendo controllers) jumps and chooses, B goes back, Y opens the backpack, just like on Xbox. The hints and menu help switch to Nintendo names when one is plugged in. A single Joy-Con has only one stick, so the game asks for both or a Pro Controller. Tested in Chrome with a pretend controller.
-- **Keyboard and mouse:** WASD to walk, mouse to look (click the game to grab the mouse), click or F to swing or shoot, right-click or Q to block (you can still swing while blocking), 1 / 2 / 3 for sword / bow / shield on-off, Space to jump, Shift to run, Esc for the menu. Arrow keys work too.
+- **Keyboard and mouse:** WASD to walk, mouse to look (click the game to grab the mouse), click or F to swing or shoot, right-click or Q to block (you can still swing while blocking), 1 / 2 / 3 for sword / bow / shield on-off, Space to jump, Shift to run, R to feed or ride a horse, Esc for the menu. Arrow keys work too.
 
 ## Two players (split screen)
 
@@ -23,6 +23,14 @@ Plug in a second Xbox controller and press Start (or A) on it while playing, or 
 - **Boss bars:** each half shows its own stack of boss bars, for the bosses that are after that player.
 - **Leaving:** player 2 can choose **👋 Leave the game** in their menu, or anyone can choose **👥 Player 2: leave** in the main menu. If player 2's controller unplugs, the game pauses until it's back.
 - Player 1's spot, gear and materials and player 2's gear, materials and look setting are saved with the game (player 2 gets them back when they join again). Split screen draws at a slightly lower resolution (it draws the world twice).
+
+## Wheat and horses
+
+- **Wheat fields** are golden patches in open, dry, grassy country (not in forests, marshes, snow or on beaches), about one every 2 minutes of walking. The ground under them is golden too, so you can spot them from far away, and no trees grow in them. Swing at the wheat to pick it: each swing picks a patch about 4 m across and gives 1 wheat (2 from a full patch; an axe doubles it). Picked wheat turns to stubble and grows back the next time the game loads.
+- **Wild horses** come in herds of 2 or 3, in big open fields with no forest nearby: about one herd every 3–4 minutes of walking (more often out in open country). There are five coats: brown with a white stripe, black, white, chestnut with a pale mane, and grey. They're shy: they run if you get within 7 m, or within 12 m if you run at them. If you have wheat, they come over to you instead.
+- **Taming:** walk up to a horse (within about 3 m) and press **X** (controller) or **R** (keyboard) to feed it one wheat. Each horse needs 3 to 5 bites; hearts show how close you are. Then it's yours and wears a saddle. Tame horses never run away and wait near where you left them.
+- **Riding:** press X / R next to your horse to get on, and again to get off (you step off to the right). On a horse you walk at 8.5 m/s and gallop at 15 m/s (LT / Shift), jump higher, and see over the grass. Horses won't go into water. Getting knocked out drops you off your horse.
+- Tame horses are saved with the world (where they are, and their coat), so both players can ride them.
 
 ## Animals and fighting
 
@@ -179,7 +187,7 @@ You can have as many saved games as you like. **💾 Saved games** in the menu l
 
 - `wildwood.v1`: settings shared by every game (music, sound, look direction, enemies) and the id of the open game.
 - `wildwood.slots`: the list of saved games: `{ id, name, seed, last, gems, things }`. Broken entries are dropped on load.
-- `wildwood.slot.<id>`: one game's world seed, where you were standing, your materials, the things you've crafted, what you're holding and wearing, and the buildings in this world.
+- `wildwood.slot.<id>`: one game's world seed, where you were standing, your materials, the things you've crafted, what you're holding and wearing, the buildings in this world, and its tame horses.
 
 The first time this version loads, an older single save (everything was in `wildwood.v1`) becomes "Game 1", so nothing is lost. Older saves are upgraded too: gems carry over and any weapons you'd found are kept. If the place you saved is now out in the ocean, you wake up on the nearest beach.
 
