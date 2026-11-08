@@ -306,7 +306,7 @@ const curMeta = () => slots.find(m => m.id === currentSlot);
 const G0 = readJSON(SLOT_PREFIX + currentSlot) || {};
 // settings are shared by every saved game; everything else belongs to this one
 const saved = { music: S0.music, sfx: S0.sfx, invert: S0.invert, animals: S0.animals,
-  seed: validSeed(G0.seed) ? G0.seed : curMeta().seed, mats: G0.mats, owned: G0.owned, equip: G0.equip, pos: G0.pos, gems: G0.gems, weapon: G0.weapon };
+  seed: validSeed(G0.seed) ? G0.seed : curMeta().seed, mats: G0.mats, owned: G0.owned, equip: G0.equip, pos: G0.pos, gems: G0.gems, weapon: G0.weapon, p2: G0.p2 };
 const settings = {
   music: saved.music !== false,
   sfx: saved.sfx !== false,
@@ -331,12 +331,12 @@ function writeSave() {
   writeSettings();
   try {
     localStorage.setItem(SLOT_PREFIX + currentSlot, JSON.stringify({
-      seed: worldSeed, mats, owned: [...owned], equip: pslots[0] ? pslots[0].equip : equip,
+      seed: worldSeed, mats, owned: [...(pslots[0] ? pslots[0].owned : owned)], equip: pslots[0] ? pslots[0].equip : equip, p2: p2Gear(),
       pos: { x: +players[0].x.toFixed(2), z: +players[0].z.toFixed(2), yaw: +players[0].yaw.toFixed(3), seed: worldSeed },
     }));
   } catch (e) {}
   const m = curMeta();
-  if (m) { m.seed = worldSeed; m.gems = mats.gems; m.things = Math.max(0, owned.size - 1); if (started) m.last = Date.now(); writeSlots(); }
+  if (m) { m.seed = worldSeed; m.gems = mats.gems; m.things = Math.max(0, (pslots[0] ? pslots[0].owned : owned).size - 1); if (started) m.last = Date.now(); writeSlots(); }
 }
 
 /* =====================================================================
@@ -3185,7 +3185,7 @@ const arrowMesh = (() => {      // points along +z
 
 // what you have (loaded from the save, with old saves upgraded)
 const mats = { wood: 0, stone: 0, iron: 0, gems: 0, scale: 0, fang: 0, fur: 0, frost: 0, skin: 0, fishscale: 0, goldscale: 0, tooth: 0, arrows: 0 };
-const owned = new Set(['fists']);
+let owned = new Set(['fists']);       // swapped per player in split screen (each player has their own gear)
 let equip = { weapon: 'fists', armor: null, shield: null };
 (function loadInventory() {
   const okN = v => Number.isInteger(v) && v >= 0 && v < 1e6;
@@ -5096,15 +5096,15 @@ let camR = [1, 0, 0], camU = [0, 1, 0], camF = [0, 0, -1], blockV = 0;
 
 /* ---------- split screen: two players ---------- */
 function makeSlot(pl, pd, eq, els) {
-  return Object.assign({ player: pl, pad: pd, equip: eq, lastGear: { melee: null, bow: null, shield: null }, swingT: -1, swingHit: false,
+  return Object.assign({ player: pl, pad: pd, equip: eq, owned: new Set(['fists']), lastGear: { melee: null, bow: null, shield: null }, swingT: -1, swingHit: false,
     hurtFlash: 0, shake: 0, blockV: 0, camR: [1, 0, 0], camU: [0, 1, 0], camF: [0, 0, -1], keys: new Set(), mouseDX: 0, mouseDY: 0,
     mouseHeld: false, rightHeld: false }, els);
 }
 pslots[0] = makeSlot(player, pad, equip, { hudEl, hpFill, hurtEl, koEl, frostEl });
-pslots[0].lastGear = lastGear; pslots[0].keys = keys;
+pslots[0].lastGear = lastGear; pslots[0].keys = keys; pslots[0].owned = owned;
 function stashPlayer() {
   const s = pslots[curP];
-  Object.assign(s, { player, pad, equip, lastGear, swingT, swingHit, hurtFlash, shake, blockV, camR, camU, camF, keys, mouseDX, mouseDY,
+  Object.assign(s, { player, pad, equip, owned, lastGear, swingT, swingHit, hurtFlash, shake, blockV, camR, camU, camF, keys, mouseDX, mouseDY,
     mouseHeld, rightHeld, hudEl, hpFill, hurtEl, koEl, frostEl });
 }
 // make player i the one the game is working with (only player 1 uses the keyboard and mouse)
@@ -5113,8 +5113,25 @@ function usePlayer(i) {
   stashPlayer();
   curP = i;
   const s = pslots[i];
-  ({ player, pad, equip, lastGear, swingT, swingHit, hurtFlash, shake, blockV, camR, camU, camF, keys, mouseDX, mouseDY,
+  ({ player, pad, equip, owned, lastGear, swingT, swingHit, hurtFlash, shake, blockV, camR, camU, camF, keys, mouseDX, mouseDY,
     mouseHeld, rightHeld, hudEl, hpFill, hurtEl, koEl, frostEl } = s);
+}
+// player 2's own gear (what they've crafted or picked up), kept with the saved game while they're away
+let p2Saved = null;
+function p2Gear() {
+  if (players.length > 1 && pslots[1]) return { owned: [...pslots[1].owned], equip: Object.assign({}, pslots[1].equip) };
+  return p2Saved;
+}
+function loadP2Gear() {
+  const g = p2Saved || saved.p2, own = new Set(['fists']), eq = { weapon: 'fists', armor: null, shield: null };
+  if (g && typeof g === 'object') {
+    if (Array.isArray(g.owned)) for (const id of g.owned) if (typeof id === 'string' && ITEMS[id] && ITEMS[id].type !== 'ammo') own.add(id);
+    const e = g.equip && typeof g.equip === 'object' ? g.equip : {};
+    if (own.has(e.weapon) && (ITEMS[e.weapon].type === 'weapon' || ITEMS[e.weapon].type === 'bow')) eq.weapon = e.weapon;
+    if (own.has(e.armor) && ITEMS[e.armor].type === 'armor') eq.armor = e.armor;
+    if (own.has(e.shield) && ITEMS[e.shield].type === 'shield') eq.shield = e.shield;
+  }
+  return { own, eq };
 }
 function addPlayer2() {
   if (players.length > 1) return;
@@ -5123,7 +5140,8 @@ function addPlayer2() {
   p2.x = player.x + Math.cos(player.yaw) * 2; p2.z = player.z + Math.sin(player.yaw) * 2;    // 2 m to player 1's right
   p2.feet = Math.max(groundAt(p2.x, p2.z), SWIM_FEET); p2.onGround = true;
   const h2 = document.getElementById('hud2');
-  pslots[1] = makeSlot(p2, pad2, Object.assign({}, equip), { hudEl: h2, hpFill: h2.querySelector('[data-h=hp]'),
+  const g2 = loadP2Gear();
+  pslots[1] = makeSlot(p2, pad2, g2.eq, { owned: g2.own, hudEl: h2, hpFill: h2.querySelector('[data-h=hp]'),
     hurtEl: document.getElementById('hurt2'), koEl: document.getElementById('ko2'), frostEl: document.getElementById('frost2') });
   players.push(p2);
   document.body.classList.add('two');
@@ -5136,6 +5154,7 @@ function addPlayer2() {
 function removePlayer2() {
   if (players.length < 2) return;
   usePlayer(0);
+  p2Saved = p2Gear();
   players.length = 1; pslots.length = 1;
   document.body.classList.remove('two');
   document.getElementById('hud2').classList.remove('show');
@@ -5612,7 +5631,7 @@ GAME STATE you can read and change directly:
   Water-only kinds need water: check groundAt(x, z) < -1.5 first, and say so if there's no water nearby.
 - settings.animals (false = enemies off; then enemies won't chase). settings.music, settings.sfx.
 - mats - materials the players share: wood, stone, iron, gems, scale (dragon scale), arrows, fang, fur, frost, skin, fishscale, goldscale, tooth.
-- ITEMS[id] - gear. owned (a Set of ids). equip = { weapon, armor, shield } for player 1 (use giveItem for the speaker).
+- ITEMS[id] - gear. owned (a Set of ids) and equip = { weapon, armor, shield } are player 1's; each player has their own gear (use giveItem for the speaker).
   Weapons: stick axe club stonespear ironaxe ironsword fangdagger hammer goblinaxe crocwhip scalesword scalespear trident sharksword crocmace crystal crystalspear crystalaxe venomglaive dragonsword
   Bows: woodbow ironbow venombow frostbow crocbow scalebow crystalbow dragonbow. Armor: woodplate furplate stoneplate spikedplate scaleplate ironplate venomplate crystalplate dragonplate.
   Shields: woodshield ironshield scaleshield spikedshield venomshield frostshield crystalshield dragonshield.
@@ -5672,9 +5691,9 @@ function giveItem(id) {
   const it = ITEMS[id];
   if (!it) throw new Error('No item called ' + id);
   if (it.type === 'ammo') { for (const k in it.give) give(k, it.give[k]); return; }
-  owned.add(id);
   const i = claudeSpeaker;
   usePlayer(i);
+  owned.add(id);
   if (it.type === 'weapon' || it.type === 'bow') equip.weapon = id;
   else if (it.type === 'armor') equip.armor = id;
   else if (it.type === 'shield') equip.shield = id;

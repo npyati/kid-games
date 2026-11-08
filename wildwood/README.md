@@ -13,13 +13,13 @@ A 3D exploring game. You walk through a forest that goes on forever: pines, birc
 
 Plug in a second Xbox controller and press Start (or A) on it while playing, or choose **👥 Add player 2** in the menu. The screen splits: player 1 on the left (green tunic), player 2 on the right (orange tunic). Each of you sees the other walking around, with their chest plate on, their sword (or other weapon) or bow in their right hand and their shield on their left arm (held up in front when they block).
 
-- **Your own:** health, knockouts (the other player keeps playing), what you're holding and wearing, your swing, your camera and controller. Player 1 also keeps the keyboard and mouse.
-- **Shared:** the world, the animals and one backpack: materials, gems, arrows and everything you've crafted. Either player can open the backpack (Y); it pauses for both and says whose it is. Things you drop fly to whoever is closest.
+- **Your own:** health, knockouts (the other player keeps playing), your swing, your camera and controller, and **your own gear**: the weapons, bows, shields and chest plates you've crafted or picked up, and what you're holding and wearing. Player 2 starts with just fists. Player 1 also keeps the keyboard and mouse.
+- **Shared:** the world, the animals and the materials: wood, stone, iron, gems, arrows and the rest. Either player can open their backpack (Y) and craft with the shared materials; it pauses for both and says whose it is. Things you drop fly to whoever is closest (a dropped weapon goes to whoever picks it up).
 - **Animals** go after whichever player is closer, and new animals and bosses show up around each of you in turn. The world is loaded around both players, so you can split up.
 - **Locator bar:** at the top right of each half, a bar shows where the other player is: the dot is in the middle when they're straight ahead and slides left or right as they move off to the side (◀ ▶ when they're behind you, ▲ ▼ when they're well above or below), with how far away they are.
 - **Boss bars:** each half shows its own stack of boss bars, for the bosses that are after that player.
 - **Menu:** either player's Start opens it. **👥 Player 2: leave** goes back to one player. If player 2's controller unplugs, the game pauses until it's back.
-- Only player 1's spot and gear are saved. Split screen draws at a slightly lower resolution (it draws the world twice).
+- Player 1's spot and gear and player 2's gear are saved with the game (player 2 gets their gear back when they join again). Split screen draws at a slightly lower resolution (it draws the world twice).
 
 ## Animals and fighting
 
