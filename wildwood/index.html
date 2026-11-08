@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Wildwood</title>
-<meta name="description" content="Wander a 3D forest that goes on forever. Find rivers and lakes. Works with an Xbox controller.">
+<meta name="description" content="Wander a 3D forest that goes on forever. Find rivers and lakes. Works with an Xbox or Nintendo Switch controller.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@700;800;900&display=swap">
@@ -189,16 +189,16 @@ body.two.playing .locator{display:block}
       <a data-act="home" href="../">All games</a>
     </nav>
     <div class="howto">
-      <div><b>Xbox controller</b>Left stick: walk · Right stick: look · A: jump · RT: swing or shoot · LB: block with a shield (you can still swing) · D-pad right: sword ↔ bow · D-pad left: shield on/off · LT or click left stick: run · Y: backpack · Start: menu</div>
+      <div id="howPad"><b>Xbox controller</b>Left stick: walk · Right stick: look · A: jump · RT: swing or shoot · LB: block with a shield (you can still swing) · D-pad right: sword ↔ bow · D-pad left: shield on/off · LT or click left stick: run · Y: backpack · Start: menu</div>
       <div><b>Keyboard and mouse</b>WASD: walk · Mouse: look · Click or F: swing or shoot · Right-click or Q: block (you can still swing) · 1: sword · 2: bow · 3: shield on/off · Space: jump · Shift: run · I or Tab: backpack · Esc: menu</div>
       <div><b>Animals</b>Foxes, deer and rabbits are friendly. Wolves, and bears from caves, chase you once they spot you. Beat them for gems, iron and apples. They can't swim!</div>
       <div><b>Crafting</b>Swing at trees for wood and at big rocks for stone. Catch fish in rivers for their scales (golden fish are rare!). Open your backpack to make axes, swords, bows, shields and chest plates.</div>
-      <div><b>Two players</b>Plug in a second Xbox controller and press Start on it (or choose 👥 Add player 2). The screen splits in two. You share one backpack, and each of you has your own health and gear in hand.</div>
+      <div><b>Two players</b>Plug in a second controller (Xbox or Nintendo) and press Start (+ on Nintendo) on it (or choose 👥 Add player 2). The screen splits in two. You share one backpack, and each of you has your own health and gear in hand.</div>
       <div><b>Saved games</b>Make as many games as you like with 💾 Saved games. Each one has its own world and its own things. New game starts from scratch.</div>
-      <div id="howClaude" hidden><b>🎤 Ask Claude (at home only)</b>Hold V, or LB + RB together on a controller, and say what should happen: "spawn ten wolves in front of me", "build a tower", "make me giant". Let go and Claude makes it happen. Press T to type instead. Big ideas take a little longer.</div>
+      <div id="howClaude" hidden><b>🎤 Ask Claude (at home only)</b>Hold V, or LB + RB together on a controller (L + R on Nintendo), and say what should happen: "spawn ten wolves in front of me", "build a tower", "make me giant". Let go and Claude makes it happen. Press T to type instead. Big ideas take a little longer.</div>
       <div><b>Bosses</b>Dragonlings live in forest camps: leave them alone and they'll leave you alone. Crocodiles lurk in rivers. Sharks swim in the ocean, but only bother you in the water. Goats (leave them alone!) and ice ogres live in the icy mountains. Goblins camp in open fields, and giant spiders wander them (watch out for poison breath, and jump when it stomps!). Ogres roam the forests. Giant snakes hide in marshes. The Leviathan lives in big lakes. Dragons sleep in volcanoes on mountaintops, ringed by tall black spikes. They walk on their folded wings, and they can fly!</div>
     </div>
-    <p id="padStatus">Plug in an Xbox controller and press any button.</p>
+    <p id="padStatus">Plug in an Xbox or Nintendo Switch Pro controller and press any button.</p>
   </div>
 </div>
 <div id="bars"></div>
@@ -1590,13 +1590,20 @@ function deadzone(x, y, dz) {
   const k = Math.min(1, (m - dz) / (1 - dz)) / m;
   return [x * k, y * k];
 }
+// Nintendo Switch controllers (Pro Controller, Joy-Cons) come in with the standard layout, which matches buttons by
+// where they sit. Nintendo puts A on the right and B at the bottom (the other way round from Xbox), and X and Y swap
+// too, so we swap them back: on every controller the button with the letter A does what the game calls A.
+const isNintendo = gp => /057e|nintendo|pro controller|joy-?con/i.test(gp.id || '');
+const isSingleJoyCon = gp => /joy-?con/i.test(gp.id || '') && !/l\s*\+\s*r|200e/i.test(gp.id || '');
 function readPad(pd, gp) {
   pd.prev = pd.btn;
   if (!gp) { pd.btn = []; pd.lx = pd.ly = pd.rx = pd.ry = pd.lt = 0; pd.gp = null; return; }
   pd.gp = gp;
+  pd.nintendo = isNintendo(gp);
   [pd.lx, pd.ly] = deadzone(gp.axes[0] || 0, gp.axes[1] || 0, 0.16);
   [pd.rx, pd.ry] = deadzone(gp.axes[2] || 0, gp.axes[3] || 0, 0.14);
   pd.btn = gp.buttons.map(b => b.pressed);
+  if (pd.nintendo) { const b = pd.btn; [b[0], b[1]] = [b[1], b[0]]; [b[2], b[3]] = [b[3], b[2]]; }
   pd.lt = gp.buttons[6] ? gp.buttons[6].value : 0;
 }
 // the first controller is player 1's, the second one is player 2's
@@ -1604,11 +1611,20 @@ function pollPad() {
   const list = navigator.getGamepads ? Array.from(navigator.getGamepads()).filter(p => p && p.connected) : [];
   const g0 = list[0] || null, g1 = list[1] || null;
   readPad(pad1, g0); readPad(pad2, g1);
-  if (!!g0 !== pad1.connected) { pad1.connected = !!g0; padChanged(g0); }
-  if (!!g1 !== pad2.connected) { pad2.connected = !!g1; pad2Changed(g1); }
+  // (also when one controller is swapped for another, so the button names follow the new one)
+  if (!!g0 !== pad1.connected || (g0 && g0.id !== pad1.lastId)) { pad1.connected = !!g0; pad1.lastId = g0 && g0.id; padChanged(g0); }
+  if (!!g1 !== pad2.connected || (g1 && g1.id !== pad2.lastId)) { pad2.connected = !!g1; pad2.lastId = g1 && g1.id; pad2Changed(g1); }
+}
+// what a button is called on this kind of controller (only the shoulder, trigger and menu buttons differ)
+const NINTENDO_NAMES = { RT: 'ZR', LT: 'ZL', RB: 'R', LB: 'L', Start: '+', View: '−' };
+const btnName = (k, pd = pad) => (pd && pd.nintendo && NINTENDO_NAMES[k]) || k;
+function controllerHelp(pd) {
+  const n = k => btnName(k, pd);
+  return `<b>${pd && pd.nintendo ? 'Nintendo Switch controller' : 'Xbox controller'}</b>Left stick: walk · Right stick: look · A: jump · ${n('RT')}: swing or shoot · ${n('LB')}: block with a shield (you can still swing) · D-pad right: sword ↔ bow · D-pad left: shield on/off · ${n('LT')} or click left stick: run · Y: backpack · ${n('Start')}: menu`;
 }
 function pad2Changed(gp) {
-  if (gp) toast(players.length > 1 ? '🎮 Player 2\'s controller is back' : '🎮 Second controller! Press Start on it to add Player 2');
+  if (gp && isSingleJoyCon(gp)) toast('🎮 One Joy-Con has only one stick. Use both Joy-Cons together, or a Pro Controller');
+  else if (gp) toast(players.length > 1 ? '🎮 Player 2\'s controller is back' : `🎮 Second controller! Press ${isNintendo(gp) ? '+' : 'Start'} on it to add Player 2`);
   else if (players.length > 1) { toast('Player 2\'s controller disconnected'); if (state === 'play') openMenu(); }
 }
 const pressed = i => !!pad.btn[i] && !pad.prev[i];
@@ -1962,12 +1978,14 @@ function toast(msg) {
 }
 function padChanged(gp) {
   if (gp) {
-    padStatus.textContent = '🎮 Controller ready. Use the stick to pick and A to choose.';
+    const nin = isNintendo(gp);
+    padStatus.textContent = `🎮 ${nin ? 'Nintendo controller' : 'Controller'} ready. Use the stick to pick and A to choose.`;
     padStatus.classList.add('on');
-    toast('🎮 Controller connected');
+    toast(isSingleJoyCon(gp) ? '🎮 One Joy-Con has only one stick. Use both Joy-Cons together, or a Pro Controller' : nin ? '🎮 Nintendo controller connected' : '🎮 Controller connected');
+    document.getElementById('howPad').innerHTML = controllerHelp({ nintendo: nin });
     setSel(sel);
   } else {
-    padStatus.textContent = 'Plug in an Xbox controller and press any button.';
+    padStatus.textContent = 'Plug in an Xbox or Nintendo Switch Pro controller and press any button.';
     padStatus.classList.remove('on');
     toast('Controller disconnected');
     if (state === 'play') openMenu();
@@ -1976,7 +1994,7 @@ function padChanged(gp) {
 let hintTimer = 0;
 function showHint() {
   hintEl.textContent = pad.connected
-    ? 'Left stick: walk · Right stick: look · RT: swing · LB: block · A: jump · LT: run · Y: backpack · Start: menu'
+    ? `Left stick: walk · Right stick: look · ${btnName('RT')}: swing · ${btnName('LB')}: block · A: jump · ${btnName('LT')}: run · Y: backpack · ${btnName('Start')}: menu`
     : 'WASD: walk · Mouse: look · Click or F: swing · Right-click or Q: block · Space: jump · Shift: run · I: backpack · Esc: menu';
   hintEl.classList.add('show');
   clearTimeout(hintTimer); hintTimer = setTimeout(() => hintEl.classList.remove('show'), 7000);
@@ -2028,7 +2046,7 @@ function doAction(act, fromMouse) {
   else if (act === 'saves') { openSaves(); }
   else if (act === 'p2') {
     if (players.length > 1) removePlayer2();
-    else if (!pad2.connected) toast('Plug in a second Xbox controller first, then press any button on it');
+    else if (!pad2.connected) toast('Plug in a second controller (Xbox or Nintendo) first, then press any button on it');
     else addPlayer2();
   }
   else if (act === 'fullscreen') {
@@ -3313,7 +3331,7 @@ function toggleShield() {
   else {
     const sh = owned.has(lastGear.shield) ? lastGear.shield : bestOwned('shield');
     if (!sh) { feed('No shield yet! Make one in your backpack.'); return; }
-    equip.shield = sh; feed(`${ITEMS[sh].icon} ${ITEMS[sh].name} (hold LB to block)`);
+    equip.shield = sh; feed(`${ITEMS[sh].icon} ${ITEMS[sh].name} (hold ${btnName('LB')} to block)`);
   }
   tone('triangle', 440, 620, 0.08, 0.05);
   updateHud(); writeSave();
@@ -4848,7 +4866,7 @@ function invAction(btn) {
     const it = ITEMS[eq];
     let msg;
     if (it.type === 'weapon' || it.type === 'bow') { equip.weapon = eq; msg = `You're holding the ${it.name}.` + (it.type === 'bow' ? ` You have ${mats.arrows} arrows.` : ''); }
-    else if (it.type === 'shield') { equip.shield = equip.shield === eq ? null : eq; msg = equip.shield ? `The ${it.name} is on your arm. Hold LB (or Q / right-click) to block.` : `You put away the ${it.name}.`; }
+    else if (it.type === 'shield') { equip.shield = equip.shield === eq ? null : eq; msg = equip.shield ? `The ${it.name} is on your arm. Hold ${btnName('LB')} (or Q / right-click) to block.` : `You put away the ${it.name}.`; }
     else { equip.armor = equip.armor === eq ? null : eq; msg = equip.armor ? `You're wearing the ${it.name}.` : `You took off the ${it.name}.`; }   // press again to take it off
     tone('triangle', 660, 880, 0.12, 0.07);
     renderInv(msg);
@@ -4878,7 +4896,7 @@ function invAction(btn) {
     owned.add(cr);
     let msg = `${it.icon} You made the ${it.name}! `;
     if (it.type === 'weapon' || it.type === 'bow') { equip.weapon = cr; msg += "It's in your hand now."; }
-    else if (it.type === 'shield') { equip.shield = cr; msg += 'Hold LB (or Q / right-click) to block.'; }
+    else if (it.type === 'shield') { equip.shield = cr; msg += `Hold ${btnName('LB')} (or Q / right-click) to block.`; }
     else { equip.armor = cr; msg += "You're wearing it now."; }
     if (it.type === 'bow' && mats.arrows < 10) { mats.arrows += 10; msg += ' Here are 10 arrows to start.'; }
     renderInv(msg);

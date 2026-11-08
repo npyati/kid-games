@@ -7,6 +7,7 @@ A 3D exploring game. You walk through a forest that goes on forever: pines, birc
 ## Controls
 
 - **Xbox controller:** left stick to walk, right stick to look, RT (or RB) to swing or shoot, LB to block with a shield (you can keep swinging or shooting while you block), D-pad right to swap between your sword and your bow, D-pad left to take your shield out or put it away, A to jump, LT (or click the left stick) to run, Start to open the menu. Hold RT to keep swinging. In the menu, use the stick or d-pad and press A to choose, or B to go back.
+- **Nintendo Switch Pro Controller** (or both Joy-Cons joined together): the same controls, with Nintendo's names: ZR to swing or shoot, L to block, ZL to run, + for the menu. The game matches buttons by letter, so A (on the right on Nintendo controllers) jumps and chooses, B goes back, Y opens the backpack, just like on Xbox. The hints and menu help switch to Nintendo names when one is plugged in. A single Joy-Con has only one stick, so the game asks for both or a Pro Controller. Tested in Chrome with a pretend controller.
 - **Keyboard and mouse:** WASD to walk, mouse to look (click the game to grab the mouse), click or F to swing or shoot, right-click or Q to block (you can still swing while blocking), 1 / 2 / 3 for sword / bow / shield on-off, Space to jump, Shift to run, Esc for the menu. Arrow keys work too.
 
 ## Two players (split screen)
