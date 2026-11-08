@@ -2789,10 +2789,10 @@ function dragonModel() {
   return { body: makeMesh(g), head: makeMesh(hg), leg: makeMesh(lg), wing: makeMesh(wg), wingLeg: makeMesh(wlg), jaw: makeMesh(jg),
     tailSeg: makeMesh(tsg), tailBand: makeMesh(tbg), tailTube: makeMesh(ttg), tailSpade: makeMesh(tspg) };
 }
-// giant spider (open fields): a round purple body with yellow spots, big friendly-ish eyes, fangs, and 8 long legs
+// giant spider (open fields): a round black body with yellow spots, eight small red eyes, fangs, and 8 long legs
 function spiderModel() {
   const g = new Geo(2048), r = mulberry32(83);
-  const BODY = [0.36, 0.2, 0.48], DARK = [0.22, 0.12, 0.3], SPOT = [1.0, 0.82, 0.2], HORN = [0.95, 0.9, 0.78];
+  const BODY = [0.13, 0.12, 0.14], DARK = [0.07, 0.065, 0.08], SPOT = [1.0, 0.82, 0.2], HORN = [0.95, 0.9, 0.78];
   const B = (x, y, z, rx, ry, rz, c, j) => blob(g, x, y, z, rx, ry, rz, c, r, j === undefined ? 0.08 : j, -1, 0);
   B(0, 1.75, 0.55, 0.78, 0.62, 0.85, BODY);                 // head-and-chest
   B(0, 1.8, -0.45, 0.32, 0.3, 0.35, DARK);                  // waist
@@ -2800,10 +2800,11 @@ function spiderModel() {
   for (const [x, y, z, rr] of [[0, 3.2, -1.4, 0.3], [0.55, 3.0, -1.0, 0.22], [-0.55, 3.0, -1.0, 0.22], [0.5, 2.9, -2.1, 0.24], [-0.5, 2.9, -2.1, 0.24], [0, 2.75, -2.75, 0.22]])
     B(x, y, z, rr, rr * 0.55, rr, SPOT, 0.03);
   for (const sd of [-1, 1]) {
-    B(sd * 0.27, 2.05, 1.22, 0.2, 0.22, 0.12, [0.98, 0.98, 0.95], 0.02);          // two big eyes
-    B(sd * 0.29, 2.05, 1.32, 0.09, 0.12, 0.05, [0.08, 0.04, 0.1], 0.0);
-    B(sd * 0.29, 2.11, 1.36, 0.03, 0.03, 0.02, [1, 1, 1], 0.0);                    // a little shine
-    for (const [x, y] of [[0.52, 2.12], [0.62, 1.9], [0.12, 2.32]]) B(sd * x, y, 1.08, 0.07, 0.07, 0.05, [0.08, 0.04, 0.1], 0.0);   // six little eyes
+    // eight small shiny spider eyes in rows on the front of the head (two a bit bigger in the middle)
+    for (const [x, y, z, rr] of [[0.13, 2.08, 1.22, 0.1], [0.34, 2.12, 1.12, 0.07], [0.2, 2.3, 1.08, 0.065], [0.42, 1.95, 1.08, 0.06]]) {
+      B(sd * x, y, z, rr, rr, rr * 0.8, [0.55, 0.06, 0.08], 0.0);
+      B(sd * x + sd * rr * 0.2, y + rr * 0.35, z + rr * 0.6, rr * 0.28, rr * 0.28, rr * 0.2, [0.85, 0.75, 0.9], 0.0);   // shine
+    }
     B(sd * 0.2, 1.45, 1.22, 0.17, 0.24, 0.17, DARK);                                // jaws
     tube(g, [sd * 0.2, 1.3, 1.3], [sd * 0.13, 0.95, 1.45], 0.07, 0.015, 5, HORN, r, false);   // fangs
   }
@@ -2850,8 +2851,8 @@ const SPECIES = {
   iceogre: { name: 'Ice ogre', boss: true, frostSlam: true, hp: 400, dmg: 22, reach: 3.6, windup: 0.9, cd: 2.0, walk: 1.4, run: 4.8, sight: 30, turn: 2.5,
     radius: 0.8, drops: { gems: 10, iron: 2, frost: 2, apples: 1 }, knock: 0.15, sinkH: 3.5, giveUp: 60, legLen: 1.2, hipY: 1.25, hitH: 3.3,
     hips: [[0.38, 0], [-0.38, 0]], shoulders: [[0.84, 2.45, 0], [-0.84, 2.45, 0]] },
-  spider: { name: 'Giant spider', boss: true, spider: true, hp: 350, dmg: 14, reach: 3.6, windup: 0.6, cd: 1.8, walk: 1.8, run: 5.0, sight: 24, turn: 3,
-    radius: 1.6, hitH: 2.6, drops: { gems: 10, iron: 2, apples: 1 }, knock: 0.1, sinkH: 2.6, giveUp: 45, legLen: 1.6, hipY: 1.75, hips: [] },
+  spider: { name: 'Giant spider', boss: true, spider: true, scale: 0.85, hp: 350, dmg: 14, reach: 3.3, windup: 0.6, cd: 1.8, walk: 1.8, run: 5.0, sight: 24, turn: 3,
+    radius: 1.4, hitH: 2.2, drops: { gems: 10, iron: 2, apples: 1 }, knock: 0.1, sinkH: 2.6, giveUp: 45, legLen: 1.6, hipY: 1.75, hips: [] },
   ogre: { name: 'Ogre', boss: true, hitH: 3.3, hp: 300, dmg: 20, reach: 3.6, windup: 0.9, cd: 2.0, walk: 1.4, run: 4.8, sight: 28, turn: 2.5,
     radius: 0.8, drops: { gems: 8, iron: 2, fur: 2, apples: 1 }, knock: 0.15, sinkH: 3.5, giveUp: 60, legLen: 1.2, hipY: 1.25,
     hips: [[0.38, 0], [-0.38, 0]], shoulders: [[0.84, 2.45, 0], [-0.84, 2.45, 0]] },
@@ -3808,7 +3809,7 @@ function fight(a, dt, dist, dx, dz, playerWet) {
     a.stompCd = (a.stompCd === undefined ? 3 : a.stompCd) - dt;
     if (a.breathT > 0) {                     // poison breath: a green cloud from its fangs
       a.breathT -= dt;
-      const sy = Math.sin(a.yaw), cy = Math.cos(a.yaw), m = [a.x + sy * 1.5, a.y + 1.3, a.z + cy * 1.5];
+      const sy = Math.sin(a.yaw), cy = Math.cos(a.yaw), m = [a.x + sy * 1.3, a.y + 1.1, a.z + cy * 1.3];
       a.breathAcc = (a.breathAcc || 0) + dt * 26;
       while (a.breathAcc >= 1) {
         a.breathAcc -= 1;
