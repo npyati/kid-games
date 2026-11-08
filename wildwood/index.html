@@ -153,6 +153,20 @@ body.two.playing .locator{display:block}
 #ko,#ko2{position:fixed;inset:0;display:grid;place-items:center;background:rgba(10,8,30,.85);opacity:0;pointer-events:none;transition:opacity .6s;text-align:center;font-family:var(--display);font-size:clamp(28px,6vw,48px);color:var(--cream);padding:16px}
 #ko.show,#ko2.show{opacity:1}
 #ko small,#ko2 small{display:block;font-family:var(--body);font-size:18px;color:var(--muted);margin-top:8px}
+/* Ask Claude: local-only (needs serve.py), hidden everywhere else */
+#claude{position:fixed;left:50%;bottom:72px;transform:translateX(-50%);width:min(560px,calc(100vw - 32px));display:none;flex-direction:column;gap:6px;z-index:5;pointer-events:none}
+#claude.show{display:flex}
+#claudeBox{background:rgba(21,18,63,.88);border:3px solid var(--edge);border-radius:16px;padding:10px 14px;font-size:17px;line-height:1.35;color:var(--cream);box-shadow:0 6px 20px rgba(0,0,0,.35)}
+#claudeBox .who{font-family:var(--display);color:#ffb38a;margin-right:6px}
+#claudeBox .heard{color:var(--muted);font-style:italic}
+#claudeBox .err{color:#ff9c9c}
+#claudeBox.listen{border-color:#ff7a59}
+#claudeBox.listen .who::before{content:'';display:inline-block;width:10px;height:10px;border-radius:50%;background:#ff5a3c;margin-right:6px;animation:cpulse 1s infinite}
+@keyframes cpulse{50%{opacity:.25}}
+#claudeType{pointer-events:auto;font:inherit;font-size:17px;color:var(--cream);background:rgba(21,18,63,.95);border:3px solid #ffb38a;border-radius:14px;padding:9px 12px;outline:none;display:none}
+#claude.typing #claudeType{display:block}
+#claudeTip{align-self:center;font-size:13px;color:var(--cream);background:rgba(21,18,63,.7);border-radius:999px;padding:3px 12px}
+#claude.busy #claudeTip,#claude.typing #claudeTip{display:none}
 </style>
 </head>
 <body>
@@ -181,6 +195,7 @@ body.two.playing .locator{display:block}
       <div><b>Crafting</b>Swing at trees for wood and at big rocks for stone. Catch fish in rivers for their scales (golden fish are rare!). Open your backpack to make axes, swords, bows, shields and chest plates.</div>
       <div><b>Two players</b>Plug in a second Xbox controller and press Start on it (or choose 👥 Add player 2). The screen splits in two. You share one backpack, and each of you has your own health and gear in hand.</div>
       <div><b>Saved games</b>Make as many games as you like with 💾 Saved games. Each one has its own world and its own things. New game starts from scratch.</div>
+      <div id="howClaude" hidden><b>🎤 Ask Claude (at home only)</b>Hold V, or LB + RB together on a controller, and say what should happen: "spawn ten wolves in front of me", "build a tower", "make me giant". Let go and Claude makes it happen. Press T to type instead. Big ideas take a little longer.</div>
       <div><b>Bosses</b>Dragonlings live in forest camps: leave them alone and they'll leave you alone. Crocodiles lurk in rivers. Sharks swim in the ocean, but only bother you in the water. Goats (leave them alone!) and ice ogres live in the icy mountains. Goblins camp in open fields, and giant spiders wander them (watch out for poison breath, and jump when it stomps!). Ogres roam the forests. Giant snakes hide in marshes. The Leviathan lives in big lakes. Dragons sleep in volcanoes on mountaintops, ringed by tall black spikes. They walk on their folded wings, and they can fly!</div>
     </div>
     <p id="padStatus">Plug in an Xbox controller and press any button.</p>
@@ -232,6 +247,7 @@ body.two.playing .locator{display:block}
 <div id="ko2" class="p2half"><div>Player 2 got knocked out!<small>Taking a little rest…</small></div></div>
 <div id="hint"></div>
 <div id="toast"></div>
+<div id="claude"><div id="claudeBox" hidden></div><input id="claudeType" type="text" maxlength="400" autocomplete="off" placeholder="Tell Claude what to do… (Enter to send, Esc to cancel)"><div id="claudeTip">🎤 Hold <b>V</b> (or <b>LB + RB</b>) and talk to Claude · <b>T</b> to type</div></div>
 <div id="nogl"><div>This game needs WebGL 2, which this browser doesn't have.<br><br><a href="../">Back to all games</a></div></div>
 
 <script>
@@ -5543,6 +5559,330 @@ updateHud();
 refreshLabels();
 setSel(0);
 
+/* =====================================================================
+   Ask Claude (local only): hold V or LB+RB and say what should happen
+   ---------------------------------------------------------------------
+   Only appears when the page is served by ../serve.py, which runs the
+   `claude` CLI on this computer. On GitHub Pages or file:// the ping
+   fails and nothing here shows or runs.
+   Haiku answers first. When the request needs more (new shapes, new
+   behaviours, building things) it says ESCALATE and Sonnet takes over,
+   with permission to read this file. If the code Claude wrote throws,
+   Sonnet gets the error and one go at fixing it.
+   ===================================================================== */
+const claudeEl = document.getElementById('claude'), claudeBox = document.getElementById('claudeBox'), claudeType = document.getElementById('claudeType');
+let claudeReady = false, claudeBusy = false, claudeSpeaker = 0, claudeHideT = 0;
+let claudeHooks = [];                 // [{ name, fn(dt) }], run every frame while playing
+let claudeTimers = [];                // [{ t, fn }], game-time delays from later()
+const claudeLog = [];                 // the last few requests, so "do it again" and "now make them pink" work
+
+const CLAUDE_SYSTEM = `You are the magic helper inside Wildwood, a 3D open-world browser game for kids (ages 7 to 11).
+A kid just asked for something out loud. It came through speech-to-text, so expect odd spellings and misheard words; go with the most likely meaning.
+You make it happen by writing JavaScript that runs immediately inside the live game page.
+
+ALWAYS reply in exactly this shape:
+1. One short, cheerful sentence for the kid (15 words at most, no code words).
+2. One \`\`\`js code block. It runs in the page's global scope inside an async function, so you may use await.
+Do it right away. Never ask questions. Be generous and fun: if they say "a hundred dragons", cap it at something the game can handle (about 40 animals total, 6 bosses) and say so cheerfully.
+Kid-safe: silly, magical and adventurous are great. No gore, nothing scary-mean. If a request isn't okay for kids, reply kindly and send an empty code block.
+%ESCALATE%
+COORDINATES: x and z are the ground plane in metres, y is up. groundAt(x, z) is the ground height there; water surface is y = 0 (ground below 0 is underwater).
+For a player p, forward is (Math.sin(p.yaw), -Math.cos(p.yaw)) and right is (Math.cos(p.yaw), Math.sin(p.yaw)).
+
+HELPERS (made for you, prefer these):
+- me() -> the player who spoke. players[] has every player (1 or 2). Player fields: x, z, feet (y of feet), yaw, pitch, vx, vz, vy (set vy = 15 to launch them up), hp (0-100), onGround, swimming.
+- ahead(dist = 10, side = 0, p = me()) -> {x, z}: a point dist metres in front of p (side = metres to the right).
+- spawn(kind, count = 1, dist = 12, opts) -> array of the new animals, spread out in front of me(). opts is merged onto each animal.
+- say(text) -> a little message for the kid in the corner of the screen.
+- addHook(name, fn) -> fn(dt) runs every frame while the game is playing (dt in seconds). Use it for anything ongoing ("make it snow", "make wolves bounce"). Same name replaces. removeHook(name). clearHooks() stops them all (do that for "stop", "undo", "back to normal").
+- later(seconds, fn) -> run fn once after that much play time. await wait(seconds) also works.
+- give(mat, n) -> add n of a material. giveItem(id) -> own and equip an item.
+- teleport(x, z, p = me()) -> move a player, standing on the ground.
+- defeat(filter) -> defeat animals where filter(a) is true; they drop loot. vanish(filter) -> they just disappear.
+- heal(p = me()) -> full health.
+
+GAME STATE you can read and change directly:
+- animals[] - every creature. Fields: kind, sp (its SPECIES entry), x, z, y, yaw, hp, dead, alerted (true = chasing the nearest player), speed.
+  To change ONE animal's size, speed or strength, give it its own species copy: a.sp = Object.assign({}, a.sp, { scale: 3, run: 12, hp: 200, dmg: 2 }); a.hp = 200;
+  SPECIES[kind] fields: scale (size, default 1), walk, run (speeds m/s), hp, dmg, sight (metres it notices you from), peaceful, boss.
+  Peaceful animals run away and can't be hurt. alertAnimal(a) makes an enemy chase. calmAnimal(a) calms it.
+- Kinds: friendly fox, rabbit, deer; enemies wolf, bear, goblin, croc (water), shark (deep water only), goat (neutral), dragonling (neutral);
+  bosses dragon, ogre, iceogre, spider (giant spider), snake (giant snake), leviathan (lakes only, water); fish trout, sunfish, bluegill, goldfish (water only).
+  Water-only kinds need water: check groundAt(x, z) < -1.5 first, and say so if there's no water nearby.
+- settings.animals (false = enemies off; then enemies won't chase). settings.music, settings.sfx.
+- mats - materials the players share: wood, stone, iron, gems, scale (dragon scale), arrows, fang, fur, frost, skin, fishscale, goldscale, tooth.
+- ITEMS[id] - gear. owned (a Set of ids). equip = { weapon, armor, shield } for player 1 (use giveItem for the speaker).
+  Weapons: stick axe club stonespear ironaxe ironsword fangdagger hammer goblinaxe crocwhip scalesword scalespear trident sharksword crocmace crystal crystalspear crystalaxe venomglaive dragonsword
+  Bows: woodbow ironbow venombow frostbow crocbow scalebow crystalbow dragonbow. Armor: woodplate furplate stoneplate spikedplate scaleplate ironplate venomplate crystalplate dragonplate.
+  Shields: woodshield ironshield scaleshield spikedshield venomshield frostshield crystalshield dragonshield.
+  You can change gear stats too, e.g. ITEMS.dragonsword.dmg = 50.
+- addPickup(kind, x, y, z) drops a collectible: kind is a material name, 'gem', or 'apple' (heals).
+- Sounds: thump(vol), tone(type, f0, f1, dur, vol, delay) e.g. tone('sine', 600, 1200, 0.3, 0.1).
+- updatePlayer(dt) moves players (walk 4.6 m/s, run 8.5 m/s). To make a player faster, a hook can add extra movement along p.vx/p.vz each frame: p.x += p.vx * dt * (k - 1).
+Everything else in the game is plain top-level JavaScript too (WebGL 2, no libraries), so you may also replace or wrap a top-level function: e.g. const old = updateAnimals; updateAnimals = dt => { old(dt); ... }.
+
+EXAMPLE
+Kid: "spawn ten wolves in front of me"
+Reply:
+Ten wolves, coming right up! Get ready!
+\`\`\`js
+spawn('wolf', 10, 14);
+\`\`\``;
+
+const CLAUDE_ESC_HAIKU = `
+IF IT'S BIG: when the request needs something the helpers and state above don't cover well (brand-new 3D shapes or creatures, building structures like castles or towers, new creature behaviours, changing how the game works), reply with exactly the single word ESCALATE and nothing else. A smarter helper will take over. Simple things (spawning, sizes, speeds, giving stuff, teleporting, healing, jumping) you do yourself.
+`;
+const CLAUDE_ESC_SONNET = `
+You are the smarter helper: a quicker helper handed this one to you, or its code broke. You may Read and Grep index.html (this game's whole source, about 5,700 lines) to find what you need, but kids are waiting, so look up only what you must and keep it quick.
+Useful in the source: the Geo vertex builder and blob/tube/cone shapes, makeMesh(geo), drawMesh(mesh, modelMatrix), mT/mRy/mS/mChain matrix helpers, the render() function, buildChunk() for terrain, nearbyTreesAt/pushOutTrees for collisions.
+To draw new things every frame, wrap render or drawAnimals, e.g. const old = drawAnimals; drawAnimals = t => { old(t); drawMesh(myMesh, mT(x, y, z)); };
+`;
+
+function me() { return players[claudeSpeaker] || players[0]; }
+function ahead(dist = 10, side = 0, p = me()) {
+  const sy = Math.sin(p.yaw), cy = Math.cos(p.yaw);
+  return { x: p.x + sy * dist + cy * side, z: p.z - cy * dist + sy * side };
+}
+function spawn(kind, count = 1, dist = 12, opts) {
+  if (!SPECIES[kind]) throw new Error('No animal called ' + kind + '. Kinds: ' + Object.keys(SPECIES).join(', '));
+  count = Math.max(1, Math.min(40, count | 0));
+  const out = [], p = me(), cols = Math.ceil(Math.sqrt(count)), gap = Math.max(2, (SPECIES[kind].radius || 0.6) * 3 * (SPECIES[kind].scale || 1));
+  for (let i = 0; i < count; i++) {
+    const row = Math.floor(i / cols), col = i % cols;
+    const pt = ahead(dist + row * gap, (col - (cols - 1) / 2) * gap + (Math.random() - 0.5) * gap * 0.4, p);
+    const a = spawnAnimal(kind, pt.x, pt.z, opts);
+    a.yaw = Math.atan2(p.x - a.x, -(p.z - a.z)) + Math.PI;   // facing the player
+    out.push(a);
+  }
+  return out;
+}
+function say(text) { feed(String(text)); }
+function addHook(name, fn) { removeHook(name); claudeHooks.push({ name: String(name), fn }); }
+function removeHook(name) { claudeHooks = claudeHooks.filter(h => h.name !== String(name)); }
+function clearHooks() { claudeHooks = []; claudeTimers = []; }
+function later(seconds, fn) { claudeTimers.push({ t: Math.max(0, +seconds || 0), fn }); }
+function wait(seconds) { return new Promise(res => later(seconds, res)); }
+function give(mat, n = 1) {
+  if (!(mat in mats)) throw new Error('No material called ' + mat + '. Materials: ' + Object.keys(mats).join(', '));
+  mats[mat] = Math.max(0, Math.min(99999, (mats[mat] || 0) + Math.round(n)));
+  updateHud(); writeSave();
+}
+function giveItem(id) {
+  const it = ITEMS[id];
+  if (!it) throw new Error('No item called ' + id);
+  if (it.type === 'ammo') { for (const k in it.give) give(k, it.give[k]); return; }
+  owned.add(id);
+  const i = claudeSpeaker;
+  usePlayer(i);
+  if (it.type === 'weapon' || it.type === 'bow') equip.weapon = id;
+  else if (it.type === 'armor') equip.armor = id;
+  else if (it.type === 'shield') equip.shield = id;
+  updateHud(); usePlayer(0); writeSave();
+}
+function teleport(x, z, p = me()) {
+  p.x = x; p.z = z; p.vx = p.vz = p.vy = 0;
+  p.feet = Math.max(groundAt(x, z), SWIM_FEET);
+  updateChunks(x, z, 40);
+}
+function defeat(filter) { for (const a of animals.slice()) if (!a.dead && (!filter || filter(a))) { a.hp = 0; killAnimal(a); } }
+function vanish(filter) {
+  animals = animals.filter(a => { if (filter && !filter(a)) return true; dropBar(a); if (a.onGone) a.onGone('gone'); return false; });
+}
+function heal(p = me()) { p.hp = 100; p.ko = 0; usePlayer(players.indexOf(p)); updateHud(); usePlayer(0); }
+
+// a picture of the moment, so "in front of me", "these wolves" and "more" make sense
+function claudeContext() {
+  const p = me(), near = {};
+  for (const a of animals) {
+    if (a.dead || Math.hypot(a.x - p.x, a.z - p.z) > 80) continue;
+    near[a.kind] = (near[a.kind] || 0) + 1;
+  }
+  const s = sample(p.x, p.z);
+  const where = p.swimming ? 'swimming' : s.snow > 0.25 ? 'snowy mountains' : s.marsh > 0.3 ? 'marsh' : s.forest > 0.55 ? 'forest' : s.coast > 0.5 ? 'beach' : 'open fields';
+  const haveMats = Object.keys(mats).filter(k => mats[k] > 0).map(k => k + ' ' + mats[k]).join(', ') || 'none';
+  return [
+    `Speaker: player ${claudeSpeaker + 1} of ${players.length}. At x ${p.x.toFixed(1)}, z ${p.z.toFixed(1)}, feet y ${p.feet.toFixed(1)}, yaw ${p.yaw.toFixed(2)}, health ${Math.round(p.hp)}. In: ${where}.`,
+    `Creatures within 80 m: ${Object.keys(near).map(k => near[k] + ' ' + k).join(', ') || 'none'}. Total creatures loaded: ${animals.length}.`,
+    `Enemies setting: ${settings.animals ? 'on' : 'off'}. Materials: ${haveMats}.`,
+    `Running hooks: ${claudeHooks.map(h => h.name).join(', ') || 'none'}.`,
+  ].join('\n');
+}
+
+function claudeShow(html, cls, ms) {
+  claudeBox.hidden = false;
+  claudeBox.className = cls || '';
+  claudeBox.innerHTML = '<span class="who">Claude</span>' + html;
+  clearTimeout(claudeHideT);
+  if (ms) claudeHideT = setTimeout(() => { claudeBox.hidden = true; }, ms);
+}
+
+// One turn through serve.py. onText gets the reply as it streams in; resolves to the final text.
+async function claudeCall(model, message, onText) {
+  const system = CLAUDE_SYSTEM.replace('%ESCALATE%', model === 'haiku' ? CLAUDE_ESC_HAIKU : CLAUDE_ESC_SONNET);
+  const resp = await fetch('/api/claude', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ system, message, model, read: model !== 'haiku' }) });
+  if (!resp.ok || !resp.body) throw new Error('Claude server said ' + resp.status);
+  const reader = resp.body.getReader(), dec = new TextDecoder();
+  let buf = '', text = '', final = null, err = null;
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    let nl;
+    while ((nl = buf.indexOf('\n')) >= 0) {
+      const line = buf.slice(0, nl).trim(); buf = buf.slice(nl + 1);
+      if (!line) continue;
+      let ev; try { ev = JSON.parse(line); } catch (e) { continue; }
+      if (ev.type === 'stream_event' && ev.event) {
+        const e = ev.event;
+        if (e.type === 'content_block_delta' && e.delta && e.delta.type === 'text_delta') { text += e.delta.text; onText && onText(text, null); }
+        else if (e.type === 'content_block_start' && e.content_block && e.content_block.type === 'tool_use') { text = ''; onText && onText('', e.content_block.name); }
+      } else if (ev.type === 'result') { if (ev.is_error) err = ev.result || 'Claude had a problem'; else final = ev.result; }
+      else if (ev.type === 'server_error') err = ev.error;
+    }
+  }
+  if (err) throw new Error(err);
+  return final != null ? final : text;
+}
+
+function claudeParse(reply) {
+  const codes = [];
+  const say = reply.replace(/```(?:js|javascript)?\s*\n?([\s\S]*?)```/gi, (m, c) => { codes.push(c); return ''; }).trim();
+  return { say: say.split('\n').filter(Boolean)[0] || '', code: codes.join('\n') };
+}
+const claudeSpoken = t => esc(claudeParse(t.replace(/```[\s\S]*$/, '')).say);   // the kid-facing sentence, hiding half-written code
+
+async function claudeRun(code) {
+  if (!code.trim()) return;
+  const fn = (0, eval)('(async () => {\n' + code + '\n})');
+  await fn();
+}
+
+async function askClaude(said, who) {
+  said = String(said || '').trim();
+  if (!said || claudeBusy) return;
+  claudeBusy = true;
+  claudeSpeaker = who | 0;
+  claudeEl.classList.add('busy');
+  const heard = `<span class="heard">“${esc(said)}”</span><br>`;
+  const history = claudeLog.slice(-5).map(h => `Kid said: "${h.said}"\nYou did:\n${h.code.slice(0, 1200)}`).join('\n\n');
+  const prompt = (history ? 'EARLIER THIS GAME (oldest first):\n' + history + '\n\n' : '') + 'RIGHT NOW:\n' + claudeContext() + '\n\nKid says: "' + said + '"';
+  let model = 'haiku', reply = '', note = '';
+  const live = (t, tool) => claudeShow(heard + (tool ? '🔎 Looking through the game…' : t ? claudeSpoken(t) || '✨ …' : note || '🤔 Thinking…'));
+  try {
+    live('');
+    reply = await claudeCall(model, prompt, live);
+    if (/^\s*ESCALATE\b/.test(reply)) {
+      model = 'sonnet'; note = '🧠 That’s a big one. Thinking harder…'; live('');
+      reply = await claudeCall(model, prompt, live);
+    }
+    let { say: line, code } = claudeParse(reply);
+    try {
+      await claudeRun(code);
+    } catch (e) {
+      note = '🔧 Fixing a little mistake…'; live('');
+      model = 'sonnet';
+      reply = await claudeCall(model, prompt + '\n\nYour first try was:\n```js\n' + code + '\n```\nIt failed with: ' + (e && e.message || e) +
+        '\nAnything that already ran has happened (it may have partly worked). Write code that finishes the job correctly.', live);
+      ({ say: line, code } = claudeParse(reply));
+      await claudeRun(code);
+    }
+    claudeLog.push({ said, code });
+    if (claudeLog.length > 8) claudeLog.shift();
+    claudeShow(heard + esc(line || 'Done!'), '', 7000);
+    tone('sine', 660, 990, 0.18, 0.06); tone('sine', 990, 1320, 0.2, 0.05, 0.1);
+  } catch (e) {
+    console.warn('Claude:', e, '\nreply was:', reply);
+    claudeShow(heard + '<span class="err">Oops, that didn’t work. Try saying it another way?</span>', '', 7000);
+  } finally {
+    claudeBusy = false;
+    claudeEl.classList.remove('busy');
+  }
+}
+
+// ---- talking: Chrome's built-in speech recognition (sends audio to Google; needs the mic once) ----
+const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+let claudeRec = null, claudeHeard = '', claudeListening = false, claudeListenWho = 0;
+function claudeListen(who) {
+  if (!claudeReady || claudeBusy || claudeListening) return;
+  if (!SpeechRec) { claudeShow('This browser can’t hear you. Press <b>T</b> to type instead.', '', 5000); return; }
+  claudeListening = true; claudeListenWho = who; claudeHeard = '';
+  claudeRec = new SpeechRec();
+  claudeRec.lang = 'en-US'; claudeRec.interimResults = true; claudeRec.continuous = true;
+  claudeRec.onresult = e => {
+    let t = '';
+    for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript;
+    claudeHeard = t;
+    claudeShow('🎤 ' + esc(t || 'Listening…'), 'listen');
+  };
+  claudeRec.onerror = e => {
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') claudeShow('<span class="err">I need the microphone. Allow it in the address bar, or press <b>T</b> to type.</span>', '', 7000);
+  };
+  claudeRec.onend = () => {
+    claudeListening = false; claudeRec = null;
+    if (claudeHeard.trim()) askClaude(claudeHeard, claudeListenWho);
+    else if (!claudeBusy && claudeBox.className === 'listen') claudeShow('I didn’t hear anything. Hold the button while you talk!', '', 4000);
+  };
+  claudeShow('🎤 Listening…', 'listen');
+  try { claudeRec.start(); } catch (e) { claudeListening = false; claudeRec = null; }
+}
+function claudeStopListening() { if (claudeRec) try { claudeRec.stop(); } catch (e) {} }
+
+// ---- typing: T opens a box ----
+let claudeTyping = false;
+function claudeOpenType() {
+  if (!claudeReady || claudeBusy) return;
+  claudeTyping = true; keys.clear();
+  claudeEl.classList.add('typing');
+  claudeType.value = '';
+  setTimeout(() => claudeType.focus(), 0);
+}
+function claudeCloseType() { claudeTyping = false; claudeEl.classList.remove('typing'); claudeType.blur(); canvas.focus(); }
+claudeType.addEventListener('keydown', e => {
+  e.stopPropagation();
+  if (e.key === 'Enter') { const t = claudeType.value; claudeCloseType(); askClaude(t, 0); e.preventDefault(); }
+  else if (e.key === 'Escape') { claudeCloseType(); e.preventDefault(); }
+});
+claudeType.addEventListener('keyup', e => e.stopPropagation());
+claudeType.addEventListener('blur', () => { if (claudeTyping) claudeCloseType(); });
+
+// the keyboard's V and T are handled before the game's own keys
+addEventListener('keydown', e => {
+  if (!claudeReady || state !== 'play' || claudeTyping) return;
+  if (e.code === 'KeyV') { if (!e.repeat) claudeListen(0); e.preventDefault(); e.stopImmediatePropagation(); }
+  else if (e.code === 'KeyT') { claudeOpenType(); e.preventDefault(); e.stopImmediatePropagation(); }
+}, true);
+addEventListener('keyup', e => { if (e.code === 'KeyV' && claudeListening && claudeListenWho === 0) claudeStopListening(); }, true);
+
+// every frame: LB + RB held together on a controller is the talk button; hooks and timers run while playing
+let claudePadHeld = [false, false];
+function claudeFrame(dt, playing) {
+  if (!claudeReady) return;
+  claudeEl.classList.toggle('show', state === 'play');
+  if (state !== 'play') { if (claudeListening) claudeStopListening(); if (claudeTyping) claudeCloseType(); }
+  for (let i = 0; i < players.length; i++) {
+    const pd = i === 0 ? pad1 : pad2;
+    const held = !!(pd.connected && pd.btn[4] && pd.btn[5]);
+    if (held && !claudePadHeld[i] && state === 'play') claudeListen(i);
+    if (!held && claudePadHeld[i] && claudeListening && claudeListenWho === i) claudeStopListening();
+    claudePadHeld[i] = held;
+  }
+  if (!playing) return;
+  if (claudeTimers.length) {
+    const due = [];
+    claudeTimers = claudeTimers.filter(t => (t.t -= dt) > 0 || (due.push(t), false));
+    for (const t of due) try { t.fn(); } catch (e) { console.warn('Claude timer:', e); }
+  }
+  for (const h of claudeHooks.slice()) {
+    try { h.fn(dt); } catch (e) { console.warn('Claude hook ' + h.name + ':', e); removeHook(h.name); feed('✨ ' + h.name + ' stopped working'); }
+  }
+}
+
+// is serve.py there? (it never is on GitHub Pages, so this only ever succeeds at home)
+if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
+  fetch('/api/claude/ping').then(r => r.ok ? r.json() : null).then(j => { if (j && j.ok) { claudeReady = true; document.getElementById('howClaude').hidden = false; } }).catch(() => {});
+}
+
 let last = performance.now();
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000);
@@ -5580,6 +5920,7 @@ function frame(now) {
       for (let i = 0; i < players.length; i++) { usePlayer(i); updateHealth(dt); }
       usePlayer(0);
     }
+    claudeFrame(dt, !paused);
   } else if (state === 'inv') {
     usePlayer(invOwner); invPad(dt); usePlayer(0);
   } else if (state === 'saves') {
@@ -5589,6 +5930,7 @@ function frame(now) {
     if (players.length > 1 && started && state === 'menu' && ((pad2.btn[9] && !pad2.prev[9]) || (pad2.btn[1] && !pad2.prev[1]))) startPlay(false);
     if (!started && !dragonView) player.yaw += dt * 0.05;     // slow look-around behind the title
   }
+  if (state !== 'play') claudeFrame(dt, false);
   updateChunks(player.x, player.z, state === 'play' ? 6 : 12);
   updateWorldSounds(dt);
   saveTimer += dt;

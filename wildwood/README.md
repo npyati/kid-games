@@ -123,6 +123,17 @@ Bows go in your hand like a weapon: RT shoots an arrow where your crosshair poin
 - Creatures, your hand and items use rounder shapes (each ball has 80 faces instead of 20) than trees and rocks, which there are thousands of.
 - Every saved game has its own seed. **💾 Saved games → New game** picks a new one.
 
+## Ask Claude (local only)
+
+When the game is served by `serve.py` at the repo root (`python3 serve.py`, then open http://localhost:8765/wildwood/), a Claude panel appears while playing. It never shows on GitHub Pages or from `file://`, because there is no `/api/claude` there.
+
+- **Talk:** hold **V**, or **LB + RB** together on a controller, say what should happen, and let go. Chrome's speech recognition turns it into text (it sends the audio to Google and asks for the microphone once). **T** opens a box to type instead.
+- **What happens:** the request goes, with a snapshot of the moment (where the speaker is, what's nearby, materials, running hooks) and the last few requests, to `serve.py`. That runs the `claude` CLI on this Mac (your Claude Code login, no API key) and streams the answer back. Claude answers with one sentence for the kid and a block of JavaScript, which runs right away in the page.
+- **Which model:** Haiku answers first (about 2–3 seconds). If the request is big (new shapes, building, new behaviours), Haiku replies `ESCALATE` and Sonnet takes over, with permission to Read/Grep this folder only (about 10–20 seconds). If the code throws, Sonnet gets the error and one go at fixing it. The kids never pick a model.
+- **Helpers for Claude** (top level, in the "Ask Claude" section of the script): `me()`, `ahead()`, `spawn()`, `say()`, `addHook()`/`removeHook()`/`clearHooks()` (run every frame while playing), `later()`/`wait()`, `give()`, `giveItem()`, `teleport()`, `defeat()`, `vanish()`, `heal()`. The system prompt (`CLAUDE_SYSTEM`) describes these and the game state. Keep it in step when the game changes.
+- **Nothing Claude does is saved.** Built things and hooks last until the page reloads; materials and items it gives are saved like any others.
+- Claude's code runs with full access to the page on purpose (any idea can work). It can break the game until a reload.
+
 ## Saved data
 
 You can have as many saved games as you like. **💾 Saved games** in the menu lists them (name, gems, things made, when it was last played) with Play, Rename and Delete. Rename asks for the name in a typing box, so it needs a keyboard. Delete asks twice, and you can't delete the game you're playing. **➕ New game** starts from scratch: a new world, fists only, an empty backpack. Opening another game saves this one and reloads the page into it.

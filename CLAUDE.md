@@ -8,6 +8,7 @@ A collection of browser games for kids, hosted with GitHub Pages from the `npyat
 - `<game-name>/index.html`: one folder per game, each a single self-contained file (inline CSS and JS, no build step, no frameworks or libraries, not even from a CDN). It must also work when opened straight from disk (`file://`).
 - `<game-name>/README.md`: notes for that game (what it is, controls, how it works, saved data).
 - `gobble-grid.html` at the root is only a redirect for old links.
+- `serve.py`: local server for the repo with a Claude bridge (`POST /api/claude` runs the `claude` CLI and streams the result). Games can use it for local-only features; Wildwood's "Ask Claude" panel is the first. Run `python3 serve.py` and open http://localhost:8765/. It also works for browser tests in place of `http.server`.
 
 Existing games to learn from:
 - `gobble-grid/`: 2D grid game made with DOM elements. Math and word topics, monsters, a boss, tutorial level, music.
