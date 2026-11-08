@@ -61,6 +61,8 @@ The boss music, the dragon's roar, tail whip, air-only fire, glide, white spikes
 
 ## Backpack and crafting
 
+Gear made from common-enemy drops (fur, croc skin, shark teeth, and the goblin axe) has half the damage or protection of the original design, so it's an easy start rather than the best gear. Gear that needs a boss drop (fangs, frost crystals, dragon scales) is full strength.
+
 Open the backpack with **Y** (controller) or **I** / **Tab** (keyboard). It shows your materials, lets you choose what to hold and wear, and lists what you can craft. Crafted things are yours to keep.
 
 - **Wood:** swing at a tree (5 per tree). **Stone:** swing at a big rock (4 per rock, and sometimes iron). **Iron, gems and fur:** beat enemies (wolves usually drop 1 fur, bears 2). **Dragon scale:** one from each dragon you beat. **Giant fangs:** two from each giant snake you beat. **Frost crystals:** two from each ice ogre. **Croc skin:** one from each crocodile. **Fish scales:** one from each fish. **Golden scale:** from the rare golden fish. **Shark teeth:** two from each shark.
@@ -74,31 +76,31 @@ Open the backpack with **Y** (controller) or **I** / **Tab** (keyboard). It show
 | Stone spear | 4, reaches far | 3 wood, 2 stone |
 | Iron axe | 5, chops 3 wood per hit | 2 wood, 3 iron |
 | Iron sword | 5 | 1 wood, 4 iron |
-| Crude goblin axe | 5, fast, chops 2 wood per hit | only from goblins |
+| Crude goblin axe | 2.5, fast, chops 2 wood per hit | only from goblins |
 | Fang dagger | 5, very fast, poisons | 1 giant fang, 1 iron |
 | Iron hammer | 6, slow, knocks enemies far, breaks 3 stone | 1 wood, 5 iron |
-| Croc-tail whip | 6, reaches very far (4.6 m) | 2 croc skin, 1 wood |
-| Croc-jaw mace | 7, big knockback | 2 croc skin, 2 iron |
+| Croc-tail whip | 3, reaches very far (4.6 m) | 2 croc skin, 1 wood |
+| Croc-jaw mace | 3.5, big knockback | 2 croc skin, 2 iron |
 | Scale sword | 6, quick | 6 fish scales, 1 iron |
 | Scale spear | 6, reaches far | 5 fish scales, 2 wood |
 | Golden trident | 8, double damage to anything that swims (fish, crocodiles, sharks, snakes, the Leviathan), reaches far | 1 golden scale, 4 fish scales, 2 iron |
-| Shark-tooth sword | 5 | 4 shark teeth, 2 iron, 1 wood |
+| Shark-tooth sword | 2.5 | 4 shark teeth, 2 iron, 1 wood |
 | Crystal sword | 6 | 2 iron, 12 gems |
 | Crystal spear | 6, reaches far | 2 wood, 1 iron, 8 gems |
 | Crystal axe | 7, chops 3 wood per hit | 1 wood, 2 iron, 10 gems |
 | Venom glaive | 8, reaches far, poisons (2 damage a second for 4 seconds) | 1 giant fang, 2 wood, 3 iron |
 | Dragon sword | 10 | 1 dragon scale, 3 iron |
-| Wooden bow | 2-damage arrows | 4 wood, 1 fur |
-| Iron bow | 3-damage arrows, faster | 2 wood, 3 iron, 1 fur |
+| Wooden bow | 1-damage arrows | 4 wood, 1 fur |
+| Iron bow | 1.5-damage arrows, faster | 2 wood, 3 iron, 1 fur |
 | Venom bow | 3.5-damage poison arrows | 1 giant fang, 2 wood, 1 fur |
 | Frost bow | 3.5-damage arrows that slow enemies | 1 frost crystal, 2 wood, 1 fur |
-| Croc-tooth bow | 4-damage arrows | 2 croc skin, 2 wood, 1 fur |
+| Croc-tooth bow | 2-damage arrows | 2 croc skin, 2 wood, 1 fur |
 | Scale bow | 3.5-damage arrows, shoots quickly | 6 fish scales, 2 wood |
 | Crystal bow | 4-damage arrows | 2 wood, 1 iron, 12 gems |
 | Dragon bow | 6-damage arrows | 1 dragon scale, 2 wood, 2 iron |
 | 10 arrows | for bows (your first bow comes with 10) | 1 wood, 1 stone |
 | Wooden chest plate | blocks 15% | 8 wood |
-| Fur chest plate | blocks 20% | 6 fur |
+| Fur chest plate | blocks 10% | 6 fur |
 | Stone chest plate | blocks 25% | 10 stone, 2 wood |
 | Spiked chest plate | blocks 30%; anything that bites you takes 3 damage | 6 iron, 4 stone |
 | Scale chest plate | blocks 35% | 10 fish scales |
