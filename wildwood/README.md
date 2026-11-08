@@ -11,15 +11,19 @@ A 3D exploring game. You walk through a forest that goes on forever: pines, birc
 
 ## Two players (split screen)
 
-Plug in a second Xbox controller and press Start (or A) on it while playing, or choose **👥 Add player 2** in the menu. The screen splits: player 1 on the left (green tunic), player 2 on the right (orange tunic). Each of you sees the other walking around.
+Plug in a second Xbox controller and press Start (or A) on it while playing, or choose **👥 Add player 2** in the menu. The screen splits: player 1 on the left (green tunic), player 2 on the right (orange tunic). Each of you sees the other walking around, with their chest plate on, their sword (or other weapon) or bow in their right hand and their shield on their left arm (held up in front when they block).
 
 - **Your own:** health, knockouts (the other player keeps playing), what you're holding and wearing, your swing, your camera and controller. Player 1 also keeps the keyboard and mouse.
 - **Shared:** the world, the animals and one backpack: materials, gems, arrows and everything you've crafted. Either player can open the backpack (Y); it pauses for both and says whose it is. Things you drop fly to whoever is closest.
 - **Animals** go after whichever player is closer, and new animals and bosses show up around each of you in turn. The world is loaded around both players, so you can split up.
+- **Locator bar:** at the top right of each half, a bar shows where the other player is: the dot is in the middle when they're straight ahead and slides left or right as they move off to the side (◀ ▶ when they're behind you, ▲ ▼ when they're well above or below), with how far away they are.
+- **Boss bars:** each half shows its own stack of boss bars, for the bosses that are after that player.
 - **Menu:** either player's Start opens it. **👥 Player 2: leave** goes back to one player. If player 2's controller unplugs, the game pauses until it's back.
 - Only player 1's spot and gear are saved. Split screen draws at a slightly lower resolution (it draws the world twice).
 
 ## Animals and fighting
+
+When bosses are after you, each one gets its own health bar at the top of the screen, stacked with the closest on top (up to 4).
 
 **Friendly animals:** foxes, deer (some with antlers) and rabbits. They run away if you get close, and your swings pass right through them.
 
@@ -41,7 +45,7 @@ Plug in a second Xbox controller and press Start (or A) on it while playing, or 
 | Giant spider (mini-boss) | 350 | 14 bite; poison breath; leg stomp 16 | open fields (meadows with few trees); a big black spider with yellow spots, eight small shiny red eyes and fangs, almost twice as tall as you, with 8 long legs. **Poison breath:** from 4–12 m away it breathes a green cloud in front of it; standing in it hurts a little and poisons you (2 damage a second for a few seconds, and your health bar turns green). **Leg stomp:** when you're close it rears up and slams its front legs down: 16 damage within about 6 m, jump to dodge it. A new one comes 2 minutes after you beat one | 10 gems, 2 iron, 1 apple |
 | Ogre (mini-boss) | 300 | 20, a big club smash | wanders forests now and then (about a 1 in 3 chance per minute in a forest), comes back 2½ minutes after it's beaten; slower than you when you run | 8 gems, 2 iron, 2 fur, 1 apple |
 | Giant snake (boss) | 600 | 18 bite, 12 tail whip | marshes; it can swim (about 16 m long); opens its jaw wide and snaps, and whips its tail at you if you're near the tail | 15 gems, 3 iron, 2 apples, 2 giant fangs |
-| Dragon (boss) | 1800 | 25 bite, 22 tail swipe, 18 stomp, plus fire | two back legs, big wings and a long segmented tail; on the ground it walks on all fours using its folded wings as front legs (wing knuckles on the ground), and rears up onto its back legs with its wings spread to roar or breathe fire (red with a yellow belly, like the Leviathan's body), about 25 m long; sleeps in a volcano on a mountaintop; comes back 10 minutes after it's beaten | 25 gems, 4 iron, 3 apples, 1 dragon scale |
+| Dragon (boss) | 1800 | 25 bite, 22 tail swipe, 18 stomp, plus fire | two back legs, big wings and a long segmented tail; on the ground it walks on all fours using its folded wings as front legs: each wing knuckle stays planted while the body moves over it, then lifts in a smooth arc and steps ahead, with the elbow bending up and back (the stride matches its walking speed so nothing slides), and rears up onto its back legs with its wings spread to roar or breathe fire (red with a yellow belly, like the Leviathan's body), about 25 m long; sleeps in a volcano on a mountaintop; comes back 10 minutes after it's beaten | 25 gems, 4 iron, 3 apples, 1 dragon scale |
 
 - Enemies wander until they spot you (they see farther in front of them). Then a health bar pops up over their head, they chase you, and they bite when they're close. Bosses get a big health bar across the top of the screen instead.
 - You run faster than all of them. Wolves and bears can't swim, so jumping in water is a good escape. Snakes can swim.

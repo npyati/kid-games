@@ -60,6 +60,7 @@ nav button:focus-visible,nav a:focus-visible{outline:none;border-color:var(--sun
   border-radius:999px;padding:8px 18px;font-size:16px;opacity:0;transition:opacity .4s;pointer-events:none;white-space:nowrap;
 }
 #toast.show{opacity:1}
+body.two #toast{top:auto;bottom:84px}
 #nogl{display:none;position:fixed;inset:0;background:var(--night);color:var(--cream);place-items:center;text-align:center;padding:24px;font-size:18px}
 #nogl a{color:var(--sun)}
 #hud,#hud2{position:fixed;left:max(16px,env(safe-area-inset-left,0px));top:16px;display:none;flex-direction:column;gap:6px;pointer-events:none}
@@ -89,11 +90,25 @@ body.two #hurt2,body.two #frost2,body.two #ko2{left:50%}
 .ebar .fill{height:100%;background:#ff5a4f;border-radius:999px}
 .ebar.pop{animation:pop .35s ease-out}
 @keyframes pop{0%{opacity:0;scale:.3}70%{scale:1.25}100%{opacity:1;scale:1}}
-#boss{position:fixed;left:50%;top:58px;transform:translateX(-50%);width:min(520px,calc(100% - 32px));display:none;flex-direction:column;align-items:center;gap:4px;pointer-events:none}
-#boss.show{display:flex}
-#boss b{font-family:var(--display);font-weight:400;font-size:22px;color:var(--cream);text-shadow:0 2px 0 #15123f,0 0 6px #000}
+/* boss bars stack at the top (one stack per half in split screen, with the player locator above it) */
+.topcol{position:fixed;left:50%;top:58px;transform:translateX(-50%);width:min(520px,calc(100% - 32px));display:flex;flex-direction:column;gap:6px;pointer-events:none}
+#topcol1{display:none}
+body.two .topcol{top:14px;left:auto;transform:none;width:min(280px,calc(50% - 390px));min-width:170px}
+body.two #topcol0{right:calc(50% + 16px)}
+body.two #topcol1{display:flex;right:16px}
+.bbar{display:flex;flex-direction:column;align-items:center;gap:3px}
+.bbar b{font-family:var(--display);font-weight:400;font-size:22px;color:var(--cream);text-shadow:0 2px 0 #15123f,0 0 6px #000;white-space:nowrap}
+body.two .bbar b,.bbar.small b{font-size:16px}
+.bbar.small .btrack{height:12px}
+.locator{display:none;position:relative;height:12px;margin:2px 0 8px;background:rgba(21,18,63,.7);border:2px solid #15123f;border-radius:999px}
+body.two.playing .locator{display:block}
+.locator::after{content:"";position:absolute;left:50%;top:-4px;bottom:-4px;width:2px;margin-left:-1px;background:rgba(255,246,228,.6)}
+.locdot{position:absolute;top:50%;left:50%;width:16px;height:16px;border-radius:50%;border:2px solid #15123f;transform:translate(-50%,-50%);font-style:normal;font-size:10px;line-height:16px;text-align:center;color:#15123f;font-weight:900;z-index:1}
+#topcol0 .locdot{background:#ffb347}
+#topcol1 .locdot{background:#7ad38a}
+.locm{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:1px;font-size:11px;color:var(--cream);text-shadow:0 1px 2px #000;white-space:nowrap}
 .btrack{width:100%;height:16px;background:rgba(21,18,63,.85);border:3px solid #15123f;border-radius:999px;overflow:hidden}
-#bossFill{height:100%;width:100%;background:linear-gradient(#ff9a4f,#d6362a);border-radius:999px;transition:width .15s}
+.bfill{height:100%;width:100%;background:linear-gradient(#ff9a4f,#d6362a);border-radius:999px;transition:width .15s}
 #cross{position:fixed;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:rgba(255,255,255,.85);box-shadow:0 0 0 2px rgba(21,18,63,.5);pointer-events:none;display:none}
 #hud.show ~ #cross{display:block}
 .bp{opacity:.85}
@@ -207,7 +222,8 @@ body.two #hurt2,body.two #frost2,body.two #ko2{left:50%}
     <button class="closeb" data-close>Back (B)</button>
   </div>
 </div>
-<div id="boss"><b id="bossName"></b><div class="btrack"><div id="bossFill"></div></div></div>
+<div id="topcol0" class="topcol"><div class="locator"><i class="locdot"><span class="locm"></span></i></div></div>
+<div id="topcol1" class="topcol"><div class="locator"><i class="locdot"><span class="locm"></span></i></div></div>
 <div id="hurt"></div>
 <div id="frost"></div>
 <div id="ko"><div>You got knocked out!<small>Taking a little rest…</small></div></div>
@@ -2704,6 +2720,7 @@ function ogreModel(ice) {
   return { body: makeMesh(g), leg: makeMesh(lg), armR: arm(true), armL: arm(false) };
 }
 const DRAGON_HEAD0 = [0, 4.75, 4.3], DRAGON_NECK0 = [0, 3.2, 2.0];
+const WING_L1 = 1.6, WING_L2 = 4.45;
 function dragonModel() {
   const g = new Geo(4096), r = mulberry32(23);
   const RED = [0.66, 0.12, 0.1], DARK = [0.36, 0.06, 0.06], BELLY = [0.95, 0.68, 0.28], HORN = [0.95, 0.9, 0.75], EYE = [1.0, 0.85, 0.1];
@@ -2771,22 +2788,20 @@ function dragonModel() {
   tube(wg, E, F1, 0.1, 0.04, 4, DARK, r, false); tube(wg, E, F2, 0.1, 0.04, 4, DARK, r, false);
   const M = [0.58, 0.16, 0.13];
   for (const [p, q] of [[E, T], [T, F1], [F1, F2], [F2, BK]]) tri(wg, SH, p, q, faceN(SH, p, q), 0, M, shade(M, 1.1), shade(M, 0.9), 0, 0, 0);
-  // the wing folded down into a front leg (wing-walking): pivot at the shoulder, knuckle on the ground,
-  // the wing's fingers folded up along the arm with the skin between them like a sail along its side
-  const wlg = new Geo(1024);
-  const WS = [0, 0, 0], WE = [1.0, 0.75, -1.0], WW = [0.8, -3.3, 0.9];
-  const WT = [[1.1, 1.55, -1.45], [1.2, 1.05, -2.3], [1.1, 0.2, -2.85]], WB = [0.4, -1.05, -2.7];
-  const SAIL = [0.5, 0.13, 0.11];
-  for (const [p, q] of [[WE, WT[0]], [WT[0], WT[1]], [WT[1], WT[2]], [WT[2], WB]]) tri(wlg, WS, p, q, faceN(WS, p, q), 0, SAIL, shade(SAIL, 1.12), shade(SAIL, 0.88), 0, 0, 0);
-  tri(wlg, WW, WT[0], WE, faceN(WW, WT[0], WE), 0, shade(SAIL, 0.8), SAIL, SAIL, 0, 0, 0);
-  tube(wlg, WS, WE, 0.32, 0.24, 6, RED, r, false);                    // upper arm
-  tube(wlg, WE, WW, 0.26, 0.2, 6, shade(RED, 0.92), r, false);        // forearm down to the knuckle
-  blob(wlg, WE[0], WE[1], WE[2], 0.3, 0.3, 0.3, RED, r, 0.08, -1, 0);   // elbow
-  for (const t of WT) tube(wlg, WW, t, 0.1, 0.04, 4, DARK, r, false);   // folded fingers
-  blob(wlg, WW[0], WW[1] + 0.05, WW[2] + 0.05, 0.36, 0.26, 0.42, DARK, r, 0.08, -1, 0);   // knuckle it walks on
-  tube(wlg, [WW[0], WW[1] + 0.1, WW[2] + 0.3], [WW[0] + 0.05, WW[1] + 0.05, WW[2] + 1.0], 0.1, 0.01, 4, HORN, r, false);   // thumb claw
-  for (const sd of [-1, 0, 1]) tube(wlg, [WW[0] + sd * 0.2, WW[1] - 0.1, WW[2] + 0.3], [WW[0] + sd * 0.25, WW[1] - 0.2, WW[2] + 0.62], 0.08, 0.01, 4, HORN, r, false);
-  return { body: makeMesh(g), head: makeMesh(hg), leg: makeMesh(lg), wing: makeMesh(wg), wingLeg: makeMesh(wlg), jaw: makeMesh(jg),
+  // the wing folded down into a front leg (wing-walking), in two bones so the elbow bends while the knuckle stays planted.
+  // Each bone is built along +y from its joint; +x is out to the side, +z is backward (see drawWingLegs).
+  const wua = new Geo(512);                                             // upper arm: shoulder -> elbow
+  tube(wua, [0, 0, 0], [0, WING_L1, 0], 0.32, 0.25, 6, RED, r, false);
+  blob(wua, 0, WING_L1, 0, 0.3, 0.3, 0.3, RED, r, 0.08, -1, 0);
+  const wfa = new Geo(1024), L2 = WING_L2, SAIL = [0.5, 0.13, 0.11];   // forearm: elbow -> knuckle, with the folded wing along it
+  const WT = [[0.35, L2 - 5.0, 1.0], [0.45, L2 - 4.4, 1.8], [0.35, L2 - 3.4, 2.3]], Wk = [0, L2, 0];
+  for (const [p, q] of [[[0, 0, 0], WT[0]], [WT[0], WT[1]], [WT[1], WT[2]]]) tri(wfa, Wk, p, q, faceN(Wk, p, q), 0, SAIL, shade(SAIL, 1.12), shade(SAIL, 0.88), 0, 0, 0);
+  tube(wfa, [0, 0, 0], Wk, 0.26, 0.2, 6, shade(RED, 0.92), r, false);
+  for (const t of WT) tube(wfa, Wk, t, 0.1, 0.04, 4, DARK, r, false);     // folded fingers
+  blob(wfa, 0, L2 + 0.02, -0.05, 0.36, 0.26, 0.42, DARK, r, 0.08, -1, 0);  // the knuckle it walks on
+  tube(wfa, [0, L2 - 0.1, -0.3], [0.05, L2 - 0.05, -1.0], 0.1, 0.01, 4, HORN, r, false);   // thumb claw
+  for (const sd of [-1, 0, 1]) tube(wfa, [sd * 0.2, L2 + 0.1, -0.3], [sd * 0.25, L2 + 0.2, -0.62], 0.08, 0.01, 4, HORN, r, false);
+  return { body: makeMesh(g), head: makeMesh(hg), leg: makeMesh(lg), wing: makeMesh(wg), wingArmU: makeMesh(wua), wingArmF: makeMesh(wfa), jaw: makeMesh(jg),
     tailSeg: makeMesh(tsg), tailBand: makeMesh(tbg), tailTube: makeMesh(ttg), tailSpade: makeMesh(tspg) };
 }
 // giant spider (open fields): a round black body with yellow spots, eight small red eyes, fangs, and 8 long legs
@@ -3309,7 +3324,52 @@ function spawnCampGoblins(c, st, calm) {
 }
 const nowS = () => performance.now() / 1000;
 const barsEl = document.getElementById('bars');
-const bossEl = document.getElementById('boss'), bossName = document.getElementById('bossName'), bossFill = document.getElementById('bossFill');
+const topCols = [document.getElementById('topcol0'), document.getElementById('topcol1')];
+const BOSS_ICON = { dragon: '🐉 ', snake: '🐍 ', ogre: '👹 ', leviathan: '🌊 ', iceogre: '🧊 ', spider: '🕷️ ' };
+// one bar per boss that's after you, stacked (closest on top). In split screen each half shows the bosses after that player.
+function updateTopBars() {
+  const two = players.length > 1;
+  for (let c = 0; c < 2; c++) {
+    const col = topCols[c], want = [];
+    if (state === 'play' && (c === 0 || two)) {
+      for (const a of animals) {
+        if (!a.sp.boss || !a.alerted || a.dead) continue;
+        if (two && nearestPlayerIdx(a.x, a.z) !== c) continue;
+        const p = players[two ? c : nearestPlayerIdx(a.x, a.z)];
+        want.push([Math.hypot(a.x - p.x, a.z - p.z), a]);
+      }
+      want.sort((x, y) => x[0] - y[0]);
+      want.length = Math.min(want.length, 4);
+    }
+    const bars = [...col.querySelectorAll('.bbar')];
+    while (bars.length < want.length) { const b = document.createElement('div'); b.className = 'bbar'; b.innerHTML = '<b></b><div class="btrack"><div class="bfill"></div></div>'; col.appendChild(b); bars.push(b); }
+    bars.forEach((b, i) => {
+      const a = want[i] && want[i][1];
+      if (!a) { b.remove(); return; }
+      b.classList.toggle('small', want.length > 2);
+      const name = (BOSS_ICON[a.kind] || '') + a.sp.name;
+      if (b.firstChild.textContent !== name) b.firstChild.textContent = name;
+      const f = b.querySelector('.bfill');
+      f.style.width = Math.max(0, a.hp / a.sp.hp * 100).toFixed(1) + '%';
+      f.style.background = a.poisonT > 0 ? 'linear-gradient(#a6f07f,#3f9f2a)' : '';
+    });
+  }
+  // the locator: where the other player is, left or right of where you're looking (like a compass)
+  if (two && state === 'play') {
+    for (let c = 0; c < 2; c++) {
+      const me = players[c], other = players[1 - c], dot = topCols[c].querySelector('.locdot');
+      const dx = other.x - me.x, dz = other.z - me.z, dist = Math.hypot(dx, dz);
+      let rel = Math.atan2(dx, -dz) - me.yaw; rel = Math.atan2(Math.sin(rel), Math.cos(rel));
+      const x = Math.max(-1, Math.min(1, rel / (Math.PI / 2)));
+      dot.style.left = (50 + x * 48).toFixed(1) + '%';
+      const dy = other.feet - me.feet;
+      const arrow = Math.abs(rel) > Math.PI / 2 ? (rel > 0 ? '▶' : '◀') : dy > 4 ? '▲' : dy < -4 ? '▼' : '';
+      if (dot.firstChild.nodeType !== 3) dot.insertBefore(document.createTextNode(''), dot.firstChild);
+      dot.firstChild.textContent = arrow;
+      dot.querySelector('.locm').textContent = Math.round(dist) + ' m';
+    }
+  }
+}
 function nearbyTreesAt(x, z, fn) {
   const pcx = Math.floor(x / CH), pcz = Math.floor(z / CH);
   for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) {
@@ -3961,6 +4021,36 @@ function dragonHeadM(a, body) {
   return mChain(body, mT(h.x, h.y, h.z), mRy(h.yaw), mRx(h.pitch));
 }
 // the neck: a bendy chain from the chest to wherever the head is
+// a matrix whose columns are the given axes, placed at o
+function mBasis(o, X, Y, Z) { const m = mIdent(); m.set([X[0], X[1], X[2], 0, Y[0], Y[1], Y[2], 0, Z[0], Z[1], Z[2], 0, o[0], o[1], o[2], 1]); return m; }
+const v3 = { sub: (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], add: (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]], mul: (a, k) => [a[0] * k, a[1] * k, a[2] * k],
+  dot: (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2], len: a => Math.hypot(a[0], a[1], a[2]), norm: a => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; },
+  cross: (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]] };
+// The dragon walks on its folded wings. Each knuckle stays planted while the body moves over it, then lifts in a
+// smooth arc and sets down ahead; the elbow bends up and back to make it fit. The stride matches the walking speed.
+function drawWingLegs(a, body, wa, ww, flash) {
+  const m = a.sp.model;
+  const perCycle = 2 * Math.PI / (1.6 / a.sp.legLen) / (a.sp.scale || 1);   // body units walked in one step cycle
+  const DUTY = 0.62, stride = perCycle * DUTY, LIFT = 0.65, GROUND = -wa[1] + 0.05;
+  for (const sd of [1, -1]) {
+    let p = (a.legPhase / (2 * Math.PI) + (sd > 0 ? 0.5 : 0)) % 1; if (p < 0) p += 1;
+    let fz, fy;
+    if (p < DUTY) { fz = stride * (0.5 - p / DUTY); fy = GROUND; }                 // planted: slides back as the body goes forward
+    else { const q = (p - DUTY) / (1 - DUTY), e = q * q * (3 - 2 * q); fz = stride * (-0.5 + e); fy = GROUND + LIFT * Math.sin(Math.PI * q); }
+    const W = [0.85, fy, 0.95 + fz];                                                 // knuckle, from the shoulder (this side, not mirrored)
+    const dl = Math.min(WING_L1 + WING_L2 - 0.05, v3.len(W)), dn = v3.norm(W);
+    const along = (WING_L1 * WING_L1 + dl * dl - WING_L2 * WING_L2) / (2 * dl), h = Math.sqrt(Math.max(0, WING_L1 * WING_L1 - along * along));
+    const pole = v3.norm(v3.sub([0.55, 0.55, -0.65], v3.mul(dn, v3.dot([0.55, 0.55, -0.65], dn))));   // elbows point up, out and back
+    const E = v3.add(v3.mul(dn, along), v3.mul(pole, h)), Wp = v3.mul(dn, dl);
+    const bone = (from, to) => {                                                     // +y along the bone, +x out to the side
+      const Y = v3.norm(v3.sub(to, from)), X = v3.norm(v3.sub([1, 0, 0], v3.mul(Y, Y[0]))), Z = v3.cross(X, Y);
+      return mBasis(from, X, Y, Z);
+    };
+    const root = mChain(body, mT(sd * wa[0], wa[1], wa[2]), mS3(sd, 1, 1), mS(ww));
+    drawMesh(m.wingArmU, mChain(root, bone([0, 0, 0], E)), flash);
+    drawMesh(m.wingArmF, mChain(root, bone(E, Wp)), flash);
+  }
+}
 function drawDragonNeck(a, body, headM, flash) {
   const m = a.sp.model, h = a.head || { x: 0, y: DRAGON_HEAD0[1], z: DRAGON_HEAD0[2], yaw: 0, pitch: 0 };
   const fwd = [Math.sin(h.yaw) * Math.cos(h.pitch), -Math.sin(h.pitch), Math.cos(h.yaw) * Math.cos(h.pitch)];
@@ -4368,6 +4458,7 @@ function drawAnimals(time) {
     if (sp.hop && !a.dead) lift = Math.abs(Math.sin(a.legPhase)) * 0.22 * Math.min(1, Math.abs(a.speed) / 2);
     if (a.asleep) lift -= 1.0 + Math.sin(time * 1.2) * 0.05;
     if (a.jumpT > 0) lift += Math.sin(Math.PI * a.jumpT / 0.8) * 1.0;
+    if (a.kind === 'dragon' && a.wingW > 0.5 && !a.dead) lift += Math.sin(a.legPhase * 2) * 0.06 * Math.min(1, Math.abs(a.speed) / 2);
     if (sp.fish && a.dead) roll = Math.min(1, a.deadT / 0.4) * Math.PI * a.rollDir;   // belly up
     if (a.kind === 'dragon') {
       // on the ground it walks on its folded wings; it rears up to roar or breathe fire, and spreads them to fly or sleep
@@ -4436,13 +4527,7 @@ function drawAnimals(time) {
         drawMesh(sp.model.wing, mChain(body, mT(wa[0], wa[1], wa[2]), mRz(f), mS(ws * k)), flash);
         drawMesh(sp.model.wing, mChain(body, mT(-wa[0], wa[1], wa[2]), mS3(-1, 1, 1), mRz(f), mS(ws * k)), flash);
       }
-      if (ww > 0.03) {        // wings as front legs: each one steps with the back leg on the other side
-        const amp = Math.min(1, Math.abs(a.speed) / sp.run * 1.6) * 0.55;
-        for (const sd of [1, -1]) {
-          const ph = a.legPhase + (sd > 0 ? Math.PI : 0), sw = Math.sin(ph) * amp, up = Math.max(0, -Math.cos(ph)) * amp * 0.5;
-          drawMesh(sp.model.wingLeg, mChain(body, mT(sd * wa[0], wa[1] + up, wa[2]), mS3(sd, 1, 1), mRx(sw), mS(ww)), flash);
-        }
-      }
+      if (ww > 0.03) drawWingLegs(a, body, wa, ww, flash);     // wings as front legs
     }
   }
   for (const rg of rings) {
@@ -4518,16 +4603,6 @@ function updateBars(vx0, vw) {
     a.barFill.style.width = Math.max(0, a.hp / a.sp.hp * 100).toFixed(1) + '%';
     a.barFill.style.background = a.poisonT > 0 ? '#6fd34a' : a.slowT > 0 ? '#9fd8ff' : '';
   }
-  // the big bar at the top for a snake or dragon that's after you (either of you)
-  if (curP !== 0) return;
-  let boss = null, bd = Infinity;
-  for (const a of animals) if (a.sp.boss && a.alerted && !a.dead) for (const p of players) { const d = Math.hypot(a.x - p.x, a.z - p.z); if (d < bd) { bd = d; boss = a; } }
-  if (boss && state === 'play') {
-    bossEl.classList.add('show');
-    bossName.textContent = ({ dragon: '🐉 ', snake: '🐍 ', ogre: '👹 ', leviathan: '🌊 ', iceogre: '🧊 ', spider: '🕷️ ' }[boss.kind] || '') + boss.sp.name;
-    bossFill.style.width = Math.max(0, boss.hp / boss.sp.hp * 100).toFixed(1) + '%';
-    bossFill.style.background = boss.poisonT > 0 ? 'linear-gradient(#a6f07f,#3f9f2a)' : '';
-  } else bossEl.classList.remove('show');
 }
 
 /* ---------- drops and materials on the ground ---------- */
@@ -5058,6 +5133,8 @@ function avatarModel(tunic) {
   const body = new Geo(1024);
   blob(body, 0, 1.12, 0, 0.27, 0.36, 0.2, tunic, r, 0.04, -1, 0);
   blob(body, 0, 0.92, 0, 0.29, 0.06, 0.22, [0.45, 0.3, 0.16], r, 0.02, -1, 0);       // belt
+  for (const sd of [-1, 1]) blob(body, sd * 0.24, 1.37, 0, 0.13, 0.12, 0.13, tunic, r, 0.03, -1, 0);   // shoulders, so the arms join on
+  blob(body, 0, 1.48, 0, 0.09, 0.08, 0.09, SKIN, r, 0.02, -1, 0);                      // neck
   blob(body, 0, 1.6, 0, 0.21, 0.23, 0.21, SKIN, r, 0.03, -1, 0);                       // head
   blob(body, 0, 1.72, -0.03, 0.225, 0.14, 0.22, HAIR, r, 0.04, -1, 0);
   for (const sd of [-1, 1]) {
@@ -5068,24 +5145,56 @@ function avatarModel(tunic) {
   tube(leg, [0, 0, 0], [0, -0.78, 0], 0.1, 0.085, 6, PANTS, r, false);
   blob(leg, 0, -0.84, 0.06, 0.1, 0.08, 0.15, [0.25, 0.16, 0.1], r, 0.02, -1, 0);
   const arm = new Geo(256);            // pivot at the shoulder
-  tube(arm, [0, 0, 0], [0, -0.5, 0.04], 0.08, 0.07, 6, tunic, r, false);
+  blob(arm, 0, 0, 0, 0.1, 0.1, 0.1, tunic, r, 0.02, -1, 0);
+  tube(arm, [0, 0, 0], [0, -0.5, 0.04], 0.085, 0.07, 6, tunic, r, false);
   blob(arm, 0, -0.56, 0.05, 0.075, 0.075, 0.075, SKIN, r, 0, -1, 0);
   return { body: makeMesh(body), leg: makeMesh(leg), arm: makeMesh(arm) };
 }
 const avatarMeshes = [avatarModel([0.3, 0.62, 0.36]), avatarModel([0.95, 0.6, 0.2])];
+// chest plates the other player can see you wearing
+const ARMOR_LOOK = { woodplate: [0.55, 0.38, 0.2], furplate: [0.62, 0.47, 0.3], stoneplate: [0.56, 0.56, 0.58], spikedplate: [0.46, 0.47, 0.52],
+  scaleplate: [0.55, 0.75, 0.9], ironplate: [0.74, 0.76, 0.82], venomplate: [0.42, 0.22, 0.52], crystalplate: [0.55, 0.85, 1.0], dragonplate: [0.75, 0.15, 0.1] };
+const armorMeshes = {};
+function armorMesh(id) {
+  if (armorMeshes[id] !== undefined) return armorMeshes[id];
+  const col = ARMOR_LOOK[id] || [0.6, 0.6, 0.62], g = new Geo(512), r = mulberry32(90);
+  blob(g, 0, 1.17, 0, 0.305, 0.3, 0.24, col, r, 0.03, -1, 0);
+  for (const sd of [-1, 1]) blob(g, sd * 0.26, 1.42, 0, 0.15, 0.08, 0.15, shade(col, 0.85), r, 0.02, -1, 0);   // shoulder pads
+  if (id === 'spikedplate') for (const [x, y] of [[0, 1.3], [-0.14, 1.1], [0.14, 1.1], [0, 0.95]]) tube(g, [x, y, 0.2], [x * 1.3, y, 0.36], 0.04, 0.005, 4, [0.85, 0.85, 0.88], r, false);
+  if (id === 'dragonplate') blob(g, 0, 1.17, 0.2, 0.12, 0.16, 0.06, [1.0, 0.8, 0.2], r, 0.02, -1, 0);
+  if (id === 'venomplate') blob(g, 0, 1.2, 0.21, 0.1, 0.12, 0.05, [0.3, 0.75, 0.25], r, 0.02, -1, 0);
+  return (armorMeshes[id] = makeMesh(g));
+}
+// the other player: walking legs and arms, and what they're holding and wearing (weapon or bow in the right hand,
+// shield on the left arm, raised in front when they block, chest plate on). In the model the right side is -x.
 function drawOtherPlayers() {
   for (let j = 0; j < players.length; j++) {
     if (j === curP) continue;
-    const p = players[j], m = avatarMeshes[j], sl = pslots[j];
+    const p = players[j], m = avatarMeshes[j], sl = pslots[j], eq = sl ? sl.equip : null;
     const moving = Math.min(1, Math.hypot(p.vx, p.vz) / 4), sw = Math.sin(p.bob) * 0.6 * moving;
     const base = mChain(mT(p.x, p.feet - (p.swimming ? 0.9 : 0), p.z), mRy(Math.PI - p.yaw), p.ko ? mChain(mT(0, 0.25, 0), mRx(-Math.PI / 2)) : IDENT);
     drawMesh(m.body, base, 0);
+    if (eq && eq.armor) drawMesh(armorMesh(eq.armor), base, 0);
     drawMesh(m.leg, mChain(base, mT(-0.12, 0.86, 0), mRx(sw)), 0);
     drawMesh(m.leg, mChain(base, mT(0.12, 0.86, 0), mRx(-sw)), 0);
+    const w = eq ? ITEMS[eq.weapon] : null, isBow = w && w.type === 'bow';
     const st = sl ? sl.swingT : -1;
-    const swingArm = st >= 0 ? -2.2 * Math.sin(Math.PI * Math.min(1, st)) : -sw;
-    drawMesh(m.arm, mChain(base, mT(-0.33, 1.38, 0), mRx(sw)), 0);
-    drawMesh(m.arm, mChain(base, mT(0.33, 1.38, 0), mRx(swingArm)), 0);
+    // right arm: swings the weapon (or pulls the bow up to aim)
+    const rArm = st >= 0 ? (isBow ? -1.4 : -2.2 * Math.sin(Math.PI * Math.min(1, st))) : isBow ? -0.5 : -sw * 0.8 - 0.25;
+    const armR = mChain(base, mT(-0.3, 1.38, 0), mRx(rArm));
+    drawMesh(m.arm, armR, 0);
+    if (w && weaponMeshes[eq.weapon]) {
+      if (isBow) drawMesh(weaponMeshes[eq.weapon], mChain(armR, mT(0, -0.58, 0.08), mRx(Math.PI / 2), mRy(Math.PI / 2)), 0);
+      else drawMesh(weaponMeshes[eq.weapon], mChain(armR, mT(0, -0.58, 0.07), mRx(Math.PI / 2 - 0.35)), 0);
+    }
+    // left arm: carries the shield, holds it up in front to block
+    const blocking = p.blocking && eq && eq.shield;
+    const armL = mChain(base, mT(0.3, 1.38, 0), mRx(blocking ? -1.25 : sw * 0.8));
+    drawMesh(m.arm, armL, 0);
+    if (eq && eq.shield && shieldMeshes[eq.shield]) {
+      if (blocking) drawMesh(shieldMeshes[eq.shield], mChain(base, mT(0.12, 1.25, 0.42), mS(1.1)), 0);
+      else drawMesh(shieldMeshes[eq.shield], mChain(armL, mT(0.12, -0.32, 0.02), mRy(Math.PI / 2), mS(1.05)), 0);
+    }
   }
 }
 function hudBoxes() { return players.length > 1 ? [document.getElementById('hud'), document.getElementById('hud2')] : [document.getElementById('hud')]; }
@@ -5495,6 +5604,7 @@ function frame(now) {
     render(time, [player.x + (Math.random() - 0.5) * sk, player.feet + EYE + bobY + swimBob + koDrop + (Math.random() - 0.5) * sk, player.z], rect);
   }
   usePlayer(0);
+  updateTopBars();
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
