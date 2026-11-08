@@ -2020,7 +2020,7 @@ addEventListener('keydown', e => {
   }
 });
 addEventListener('keyup', e => keys.delete(e.code));
-addEventListener('blur', () => keys.clear());
+addEventListener('blur', () => { keys.clear(); mouseHeld = false; rightHeld = false; });
 let rightHeld = false;
 document.addEventListener('contextmenu', e => { if (state === 'play') e.preventDefault(); });
 document.addEventListener('mousedown', e => {
@@ -2074,7 +2074,8 @@ function updatePlayer(dt) {
   let speed = player.run ? 8.5 : 4.6;
   if (player.swimming) speed *= 0.5; else if (player.wet) speed *= 0.7;
   if (player.frozenT > 0) speed *= 0.4;
-  player.blocking = !!equip.shield && !player.swimming && (pad.btn[4] || keys.has('KeyQ') || rightHeld);
+  const talkCombo = pad.btn[4] && pad.btn[5];      // LB + RB together is Ask Claude's talk button, not block + swing
+  player.blocking = !!equip.shield && !player.swimming && ((pad.btn[4] && !talkCombo) || keys.has('KeyQ') || rightHeld);
   if (player.blocking) speed *= 0.5;
   const sy = Math.sin(player.yaw), cy = Math.cos(player.yaw);
   const tvx = (cy * mx + sy * my) * speed, tvz = (sy * mx - cy * my) * speed;
@@ -2089,7 +2090,7 @@ function updatePlayer(dt) {
   pushOutTrees(player, 0.35);
   pushOutCreatures();
   // attack: RT or RB on the controller (hold to keep swinging), click or F on the keyboard
-  if (pad.btn[7] || pad.btn[5] || keys.has('KeyF') || keys.has('KeyJ') || mouseHeld) startSwing();
+  if (pad.btn[7] || (pad.btn[5] && !talkCombo) || keys.has('KeyF') || keys.has('KeyJ') || mouseHeld) startSwing();
   const moved = Math.hypot(player.x - ox, player.z - oz);
 
   // up and down
@@ -5803,30 +5804,64 @@ async function askClaude(said, who) {
 // ---- talking: Chrome's built-in speech recognition (sends audio to Google; needs the mic once) ----
 const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
 let claudeRec = null, claudeHeard = '', claudeListening = false, claudeListenWho = 0;
+let claudeHolding = false, claudeGotAudio = false, claudeRetries = 0, claudeMicT = 0, claudeMicErr = '';
+// Chrome sometimes starts a session that never gets any sound (seen when macOS hands the mic to an
+// iPhone through Continuity, then takes it back). So: while the button is still held, a session that
+// ends early without hearing anything is quietly started again, and if no audio arrives at all the
+// kid is told the microphone isn't working instead of nothing happening.
 function claudeListen(who) {
   if (!claudeReady || claudeBusy || claudeListening) return;
   if (!SpeechRec) { claudeShow('This browser can’t hear you. Press <b>T</b> to type instead.', '', 5000); return; }
-  claudeListening = true; claudeListenWho = who; claudeHeard = '';
-  claudeRec = new SpeechRec();
-  claudeRec.lang = 'en-US'; claudeRec.interimResults = true; claudeRec.continuous = true;
-  claudeRec.onresult = e => {
+  claudeListening = true; claudeHolding = true; claudeListenWho = who; claudeHeard = ''; claudeRetries = 0; claudeMicErr = '';
+  mouseHeld = false; keys.clear();
+  claudeShow('🎤 Listening…', 'listen');
+  claudeStartRec();
+}
+function claudeStartRec() {
+  claudeGotAudio = false;
+  const rec = claudeRec = new SpeechRec();
+  rec.lang = 'en-US'; rec.interimResults = true; rec.continuous = true;
+  rec.onaudiostart = () => { if (rec === claudeRec) claudeGotAudio = true; };
+  rec.onresult = e => {
+    if (rec !== claudeRec) return;
     let t = '';
     for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript;
     claudeHeard = t;
     claudeShow('🎤 ' + esc(t || 'Listening…'), 'listen');
   };
-  claudeRec.onerror = e => {
-    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') claudeShow('<span class="err">I need the microphone. Allow it in the address bar, or press <b>T</b> to type.</span>', '', 7000);
+  rec.onerror = e => { if (rec === claudeRec) claudeMicErr = e.error || ''; };
+  rec.onend = () => {
+    if (rec !== claudeRec) return;
+    clearTimeout(claudeMicT);
+    const blocked = claudeMicErr === 'not-allowed' || claudeMicErr === 'service-not-allowed';
+    if (claudeHolding && !claudeHeard.trim() && !blocked && claudeRetries < 4) {   // ended on its own while still held: go again
+      claudeRetries++; claudeRec = null;
+      setTimeout(() => { if (!claudeListening) return; if (claudeHolding) claudeStartRec(); else claudeFinishListen(); }, 150);
+      return;
+    }
+    claudeFinishListen();
   };
-  claudeRec.onend = () => {
-    claudeListening = false; claudeRec = null;
-    if (claudeHeard.trim()) askClaude(claudeHeard, claudeListenWho);
-    else if (!claudeBusy && claudeBox.className === 'listen') claudeShow('I didn’t hear anything. Hold the button while you talk!', '', 4000);
-  };
-  claudeShow('🎤 Listening…', 'listen');
-  try { claudeRec.start(); } catch (e) { claudeListening = false; claudeRec = null; }
+  // no sound within 2 seconds: drop this session and try a fresh one
+  clearTimeout(claudeMicT);
+  claudeMicT = setTimeout(() => {
+    if (rec !== claudeRec || claudeGotAudio) return;
+    if (claudeHolding && claudeRetries < 4) { try { rec.abort(); } catch (e) {} }
+  }, 2000);
+  try { rec.start(); } catch (e) { claudeMicErr = 'start'; setTimeout(() => rec.onend(), 0); }
 }
-function claudeStopListening() { if (claudeRec) try { claudeRec.stop(); } catch (e) {} }
+function claudeFinishListen() {
+  const hadAudio = claudeGotAudio, err = claudeMicErr;
+  claudeListening = false; claudeHolding = false; claudeRec = null;
+  if (claudeHeard.trim()) askClaude(claudeHeard, claudeListenWho);
+  else if (err === 'not-allowed' || err === 'service-not-allowed') claudeShow('<span class="err">I need the microphone. Allow it in the address bar, or press <b>T</b> to type.</span>', '', 8000);
+  else if (!hadAudio) claudeShow('<span class="err">I can’t hear the microphone.</span> Check which mic Chrome is using (an iPhone nearby can grab it), or press <b>T</b> to type.', '', 9000);
+  else if (!claudeBusy) claudeShow('I didn’t hear anything. Hold the button while you talk!', '', 4000);
+}
+function claudeStopListening() {
+  claudeHolding = false;
+  if (claudeRec) { try { claudeRec.stop(); } catch (e) { claudeFinishListen(); } }
+  else if (claudeListening) claudeFinishListen();
+}
 
 // ---- typing: T opens a box ----
 let claudeTyping = false;
