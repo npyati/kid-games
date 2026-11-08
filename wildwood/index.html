@@ -70,6 +70,9 @@ body.two #toast{top:auto;bottom:84px}
 /* two players: the screen splits left (player 1) and right (player 2) */
 body.two .ptag{display:inline-block}
 body.two #hud2.show{display:flex;left:calc(50% + 16px)}
+body.two #hud,body.two #hud2{max-width:calc(50% - 32px)}               /* each health box stays inside its own half */
+body.two .hudbox .inv{flex-wrap:wrap}
+body.two .hudbox .inv div{white-space:nowrap}
 body.two #cross{left:25%}
 #cross2{position:fixed;left:75%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:rgba(255,255,255,.85);box-shadow:0 0 0 2px rgba(21,18,63,.5);pointer-events:none;display:none}
 body.two #hud2.show ~ #cross2{display:block}
@@ -3560,8 +3563,33 @@ const barsEl = document.getElementById('bars');
 const topCols = [document.getElementById('topcol0'), document.getElementById('topcol1')];
 const BOSS_ICON = { dragon: '🐉 ', snake: '🐍 ', ogre: '👹 ', leviathan: '🌊 ', iceogre: '🧊 ', spider: '🕷️ ' };
 // one bar per boss that's after you, stacked (closest on top). In split screen each half shows the bosses after that player.
+// two players: keep each half's locator and boss bars clear of that player's health and gear box.
+// Beside it when there's room, otherwise just below it.
+const hudBoxEls = [document.getElementById('hud'), document.getElementById('hud2')];
+let topLayoutKey = '';
+function layoutTopCols(two) {
+  if (!two) {
+    if (topLayoutKey) { for (const col of topCols) col.style.left = col.style.top = col.style.width = col.style.right = ''; topLayoutKey = ''; }
+    return;
+  }
+  const half = innerWidth / 2, styles = [];
+  for (let c = 0; c < 2; c++) {
+    const h = hudBoxEls[c].getBoundingClientRect(), x0 = c * half + 16, x1 = (c + 1) * half - 16;
+    const visible = h.width > 0;
+    const besideL = visible ? h.right + 16 : x0, room = x1 - besideL;
+    let left, top, width;
+    if (room >= 170) { width = Math.min(280, room); left = x1 - width; top = 14; }               // beside the box, at the right of the half
+    else { width = Math.min(280, x1 - x0); left = x1 - width; top = (visible ? h.bottom : 14) + 10; }   // no room: tuck it under
+    styles.push([Math.round(left), Math.round(top), Math.round(width)]);
+  }
+  const key = JSON.stringify(styles);
+  if (key === topLayoutKey) return;
+  topLayoutKey = key;
+  styles.forEach(([l, t, w], c) => Object.assign(topCols[c].style, { left: l + 'px', top: t + 'px', width: w + 'px', right: 'auto' }));
+}
 function updateTopBars() {
   const two = players.length > 1;
+  layoutTopCols(two);
   for (let c = 0; c < 2; c++) {
     const col = topCols[c], want = [];
     if (state === 'play' && (c === 0 || two)) {
