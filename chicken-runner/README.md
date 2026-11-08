@@ -1,6 +1,6 @@
 # Chicken Runner
 
-A side-scrolling race. Your chicken runs by itself; you jump and flap over things and try to beat three rival chickens to the finish flag.
+A side-scrolling race through 506 worlds. Your chicken runs by itself; you jump and flap over things and try to beat three rival chickens to the finish flag.
 
 **Play it:** https://npyati.github.io/kid-games/chicken-runner/
 
@@ -9,7 +9,7 @@ A side-scrolling race. Your chicken runs by itself; you jump and flap over thing
 - **Jump:** Space, Up arrow, W, or tap/click the screen.
 - **Flap:** press jump again while in the air (one flap per jump, unless you have Wings).
 - **Pause:** Esc, P, or the pause button in the top right.
-- **Xbox controller:** A (or B, X, Y, d-pad up) to jump and flap, Start to pause. In menus, use the stick or d-pad to move, A to choose and B to go back. The controller rumbles when you bump into something or grab a yucky item. If the controller unplugs mid-run, the game pauses. Browsers only allow sound after a mouse click or key press, so click once if the game is silent.
+- **Xbox controller:** A (or B, X, Y, d-pad up) to jump and flap, Start to pause. In menus, use the stick or d-pad to move, A to choose, B to go back, and LB/RB to flip pages in the world picker and Skin Shop. The controller rumbles when you bump into something or grab a yucky item. If the controller unplugs mid-run, the game pauses. Browsers only allow sound after a mouse click or key press, so click once if the game is silent.
 
 ## Worlds
 
@@ -23,6 +23,21 @@ Finish a world to unlock the next one.
 | Frosty Peaks | snowmen, ice blocks | rolling snowballs |
 | Gumdrop Hills | gumdrops, lollipops, cupcakes | rolling jawbreakers |
 | Moon Base | moon rocks, satellite dishes, alien plants | low gravity, rolling boulders |
+
+### 500 bonus worlds
+
+After Moon Base come 500 bonus worlds (506 in all), unlocked one at a time like the classic six. Each one is mixed from a classic world's look, obstacles and song plus:
+
+- a color mood: plain, sunset, night (stars and a moon), rosy, purple, golden, blue, minty, autumn, misty or stormy;
+- sometimes bouncy low gravity (about 1 in 6), an obstacle borrowed from another world (about 1 in 3) or a different rolling obstacle;
+- a name made from the mood and the place, like "Midnight Ridge" or "Floaty Sugar Hills";
+- three rivals with names from a big list, wearing random shop skins.
+
+Worlds get a little harder over the first 120 bonus worlds (tighter gaps, more double obstacles, the fastest rival goes from 0.97–0.98× up to 1.04×, the same as Moon Base), then stay there. Lengths are 20,000–33,000 units. Everything comes from a fixed seed in `makeMaps`, so world `x42` is always the same. Don't edit or reorder the lists it uses (`PLACE_NAMES`, `MOODS`, `RIVAL_NAMES`), or the worlds would change under players' saved progress.
+
+The world picker shows 12 worlds per page and opens on the page with your newest unlocked world. "Newest world" jumps there; LB/RB flip pages on a controller.
+
+Bot testing on every 10th bonus world (50 worlds): a careful bot won 44 and came 2nd in 6; a sloppy bot finished 1st–3rd in nearly all of them.
 
 Levels are generated from a fixed seed, so each world is the same every time you play it. Races take about 1 minute (Sunny Farm, 18,000 units) up to about 2 minutes (Moon Base, 33,000 units) at normal speed.
 
@@ -83,7 +98,9 @@ Bumping into an obstacle makes the chicken stumble for about half a second. Ther
 - Coins you grab are saved right away, even if you quit partway.
 - Finishing gives a bonus: 10 coins, plus 5 per star, plus 15 / 8 / 4 for 1st / 2nd / 3rd place, plus 20 the first time you finish a world.
 - Stars depend on time. "Par" is the world's length at normal speed: 3 stars within 95% of par, 2 stars within 110% (grabbing Speed Corn is what gets you under par).
-- The Skin Shop has 28 skins, from free (Classic) to 1000 coins (Diamond). Some have animated touches: Lava glows, Galaxy twinkles, Ghost floats and is see-through, Rainbow changes color.
+- The Skin Shop has 2,028 skins: 28 classic ones, from free (Classic) to 1000 coins (Diamond), and 2,000 mixed skins. Some classics have animated touches: Lava glows, Galaxy twinkles, Ghost floats and is see-through, Rainbow changes color.
+- The 2,000 mixed skins combine 36 colors, 10 patterns (spots, stripes, zebra, polka dots, hearts, stars, checks, galaxy, diamond, or none) and 25 hats (all the classic ones plus bows, flowers, beanies, headphones, halos and propeller caps). They're named after their parts, like "Mint Starry Wizard", and cost 35–1,090 coins (fancy colors like Golden, Pearl and Rose Gold, and fancy hats and patterns, cost more). They're made in `makeSkins` from a fixed seed, with ids `g0`–`g1999`. Don't edit or reorder `SKIN_COLORS`, `SKIN_PATTERNS` or `SKIN_HATS`, or skins players own would change.
+- The shop shows 24 skins per page, with tabs for All skins, Can buy and Mine. LB/RB flip pages on a controller.
 - The world picker shows your best place in each world as a medal.
 
 ## Secret cheat: the chicken dance

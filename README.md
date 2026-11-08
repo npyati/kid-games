@@ -8,7 +8,7 @@ Browser games for kids. No installs and no accounts: open the page and play.
 |---|---|
 | [Gobble Grid](gobble-grid/) | Gobble every square that fits the rule ("Multiples of 7", "Starts with a blend"), dodge monsters, and beat the Cyclops boss. Math for grades 2–9, plus word sorting. |
 | [Wildwood](wildwood/) | A 3D forest that goes on forever, with rivers and lakes every few minutes of walking. Friendly deer, rabbits and foxes; wolves and cave bears to fight; giant snakes in marshes and fire-breathing dragon bosses that fly; gather wood, stone and iron to craft weapons and chest plates. Made for an Xbox controller; keyboard and mouse work too. |
-| [Chicken Runner](chicken-runner/) | Race three rival chickens through six worlds. Grab power-ups like Speed Corn, dodge rotten eggs and mud, collect coins, and spend them on 28 silly skins. Works with an Xbox controller, keyboard or touch. |
+| [Chicken Runner](chicken-runner/) | Race three rival chickens through 506 worlds (6 classic ones plus 500 bonus worlds). Grab power-ups like Speed Corn, dodge rotten eggs and mud, collect coins, and spend them on 2,028 silly skins. Works with an Xbox controller, keyboard or touch. |
 
 ## How it's organized
 

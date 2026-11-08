@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Chicken Runner</title>
-<meta name="description" content="Run, jump and flap through six worlds as a chicken. Grab coins and power-ups, dodge yucky stuff, and buy silly skins.">
+<meta name="description" content="Run, jump and flap through 506 worlds as a chicken. Grab coins and power-ups, dodge yucky stuff, and pick from over 2,000 silly skins.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@700;800;900&display=swap">
@@ -90,6 +90,12 @@ button:disabled{opacity:.55;cursor:default}
 }
 #pauseBtn.show{display:block}
 .padsel{border-color:var(--sun)!important;box-shadow:0 0 0 3px var(--sun)!important}
+.pager{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+.pager button{padding:8px 14px;font-size:16px}
+.pager span{min-width:120px;text-align:center;color:var(--muted);font-size:16px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.tabs button{padding:8px 14px;font-size:16px}
+.tabs button.on{border-color:var(--sun);color:var(--sun)}
 #padStatus{margin:0;text-align:center;font-size:14px;color:var(--muted)}
 #padStatus.on{color:var(--leaf)}
 </style>
@@ -101,7 +107,7 @@ button:disabled{opacity:.55;cursor:default}
 <div id="title" class="overlay show">
   <div class="panel">
     <h1>Chicken<br>Runner</h1>
-    <p class="tagline">Race rival chickens through six worlds. Grab coins, dodge yucky stuff, and buy silly chicken skins.</p>
+    <p class="tagline">Race rival chickens through 506 worlds. Grab coins, dodge yucky stuff, and buy silly chicken skins.</p>
     <div class="coinbar"><span class="ci"></span><b class="coinTotal">0</b> coins</div>
     <div class="btns">
       <button class="primary" id="playBtn">Play</button>
@@ -121,7 +127,7 @@ button:disabled{opacity:.55;cursor:default}
     <div class="howto">
       <div><b class="h">Race</b>Your chicken runs by itself. Race three rival chickens to the finish flag and try to come 1st! Each world has its own rivals.</div>
       <div><b class="h">Jump and flap</b>Press <b>Space</b>, the <b>Up arrow</b>, or <b>tap</b> the screen to jump. Press again in the air to flap higher.</div>
-      <div><b class="h">Xbox controller</b>Press <b>A</b> (or any face button) to jump and flap. <b>Start</b> pauses. In menus, use the stick or d-pad to move, <b>A</b> to choose and <b>B</b> to go back.</div>
+      <div><b class="h">Xbox controller</b>Press <b>A</b> (or any face button) to jump and flap. <b>Start</b> pauses. In menus, use the stick or d-pad to move, <b>A</b> to choose and <b>B</b> to go back. <b>LB</b> and <b>RB</b> flip pages of worlds and skins.</div>
       <div><b class="h">Bumps</b>Bumping into something makes you stumble, which costs time. Finish fast to earn more stars, and finish 1st, 2nd or 3rd for extra bonus coins.</div>
     </div>
     <div class="howto">
@@ -130,21 +136,26 @@ button:disabled{opacity:.55;cursor:default}
       <b class="h">Yucky stuff (purple glow): jump over it or stay low</b>
       <div class="legend" id="badLegend"></div>
     </div>
-    <div class="howto"><div><b class="h">Coins and skins</b>Coins you grab are yours to keep. Spend them in the Skin Shop.</div></div>
+    <div class="howto"><div><b class="h">Coins and skins</b>Coins you grab are yours to keep. Spend them on over 2,000 skins in the Skin Shop. Finish a world to unlock the next one: after the first six come 500 bonus worlds!</div></div>
   </div>
 </div>
 
 <div id="maps" class="overlay">
   <div class="panel wide">
     <div class="top"><h2>Pick a world</h2><div class="coinbar"><span class="ci"></span><b class="coinTotal">0</b></div><button class="back" data-go="title">Back</button></div>
+    <div class="pager" id="mapPagerTop"></div>
     <div class="grid" id="mapGrid"></div>
+    <div class="pager" id="mapPager"></div>
   </div>
 </div>
 
 <div id="shop" class="overlay">
   <div class="panel wide">
     <div class="top"><h2>Skin Shop</h2><div class="coinbar"><span class="ci"></span><b class="coinTotal">0</b></div><button class="back" id="shopBack">Back</button></div>
+    <div class="tabs" id="shopTabs"><button data-f="all">All skins</button><button data-f="buy">Can buy</button><button data-f="mine">Mine</button></div>
+    <div class="pager" id="skinPagerTop"></div>
     <div class="grid" id="skinGrid"></div>
+    <div class="pager" id="skinPager"></div>
   </div>
 </div>
 
@@ -232,7 +243,62 @@ const SKINS = [
   { id:'galaxy',   name:'Galaxy',       price:600, body:'#1c1748', wing:'#2c2370', belly:'#2a2160', comb:'#b48cff', beak:'#ffd23f', legs:'#b48cff', pattern:'galaxy' },
   { id:'diamond',  name:'Diamond',      price:1000,body:'#bff3ff', wing:'#7fdcf5', belly:'#e8fdff', comb:'#7fdcf5', beak:'#ffd23f', legs:'#7fdcf5', pattern:'diamond', acc:'sparkle' },
 ].sort((a, b) => a.price - b.price);
-const skinById = id => SKINS.find(s => s.id === id) || SKINS[0];
+const CLASSIC_SKINS = SKINS.length;
+
+/* ---- 2,000 more skins, mixed from colors, patterns and hats ----
+   Built from a fixed seed, so skin 'g123' always looks the same. Don't edit or reorder
+   these three lists: that would change skins players have already bought. */
+function mixHex(a, b, t){
+  const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+  const x = p(a), y = p(b);
+  return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join('');
+}
+const luma = h => { const v = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255); return 0.3 * v[0] + 0.59 * v[1] + 0.11 * v[2]; };
+const SKIN_COLORS = [
+  ['Snowy','#ffffff',0],['Cream','#fff3d6',0],['Sunny','#ffd84a',0],['Lemon','#f6f07a',0],['Orange','#ff9a3c',0],['Peach','#ffc4a0',0],
+  ['Coral','#ff7f6e',0],['Cherry','#e8352f',0],['Ruby','#b81d3a',40],['Pink','#ff8ac4',0],['Bubblegum','#ffb3dc',0],['Magenta','#d63fae',0],
+  ['Lilac','#cdb3ff',0],['Purple','#8a5cf0',0],['Grape','#5b3a9e',0],['Navy','#2c3e7a',0],['Blue','#3d8bf0',0],['Sky','#8fd0ff',0],
+  ['Teal','#1fa6a0',0],['Aqua','#5fe3d8',0],['Mint','#a8f0c8',0],['Lime','#a6e34a',0],['Green','#4cb44c',0],['Forest','#2e6b3a',0],
+  ['Olive','#8a8f3a',0],['Sand','#e6c98f',0],['Caramel','#c88a4a',0],['Chocolate','#6b3e22',0],['Slate','#6c7a8c',0],['Silver','#c9d1dc',80],
+  ['Charcoal','#3a3a48',0],['Midnight','#1c1d3a',40],['Golden','#ffc21f',120],['Rose Gold','#f0b0a0',100],['Pearl','#f4f0ff',100],['Copper','#c8683a',80],
+];
+const SKIN_PATTERNS = [['', '', 0], ['spots', 'Spotty', 20], ['stripes', 'Stripy', 20], ['zebra', 'Zebra', 35], ['polka', 'Polka-Dot', 25],
+  ['hearts', 'Heart', 30], ['stars', 'Starry', 35], ['checker', 'Checkered', 30], ['galaxy', 'Galaxy', 120], ['diamond', 'Diamond', 160]];
+// [hat, name, cost, keeps the comb]
+const SKIN_HATS = [['', 'Hen', 0, true], ['shades', 'Cool Chick', 30, true], ['pirate', 'Pirate', 50], ['ninja', 'Ninja', 60, true], ['cowboy', 'Cowboy', 60],
+  ['cape', 'Hero', 80, true], ['dino', 'Dino', 100], ['robot', 'Robot', 120], ['astro', 'Astronaut', 150, true], ['unicorn', 'Unicorn', 180],
+  ['crown', 'King', 250], ['antennae', 'Bug', 40], ['chef', 'Chef', 40], ['wizard', 'Wizard', 90], ['viking', 'Viking', 70],
+  ['party', 'Party Hen', 20], ['tiara', 'Princess', 60], ['knight', 'Knight', 140], ['sparkle', 'Sparkler', 100, true], ['bow', 'Sweetie', 25, true],
+  ['flower', 'Blossom', 25, true], ['beanie', 'Snuggler', 30], ['headphones', 'DJ', 70, true], ['halo', 'Angel', 90, true], ['propeller', 'Whirlybird', 80]];
+const HAT_COLORS = ['#ff5c8a', '#5ec8ff', '#ffd23f', '#8fe36b', '#b48cff', '#ff9a3c', '#e8352f', '#ffffff', '#2f6fe0', '#1fa6a0'];
+const EXTRA_SKINS = 2000;
+(function makeSkins(){
+  const rng = mulberry32(20261107);
+  const nP = SKIN_PATTERNS.length, nH = SKIN_HATS.length, total = SKIN_COLORS.length * nP * nH;
+  const order = Array.from({ length: total }, (_, i) => i);
+  for (let i = total - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+  const made = [];
+  for (let n = 0; n < EXTRA_SKINS; n++) {
+    const k = order[n];
+    const [cName, body, cCost] = SKIN_COLORS[Math.floor(k / (nP * nH))];
+    const [pat, pWord, pCost] = SKIN_PATTERNS[Math.floor(k / nH) % nP];
+    const [hat, hName, hCost, comb] = SKIN_HATS[k % nH];
+    const dark = luma(body) < 0.4, warm = /Sunny|Lemon|Orange|Golden|Peach|Copper|Caramel/.test(cName);
+    made.push({
+      id: 'g' + n, name: [cName, pWord, hName].filter(Boolean).join(' '),
+      price: Math.round((20 + (pCost + hCost + cCost) * 2 + rng() * 40) / 5) * 5,
+      body, wing: mixHex(body, '#000000', 0.18), belly: mixHex(body, '#ffffff', 0.45),
+      comb: comb ? (/Cherry|Ruby|Coral/.test(cName) ? '#ffd23f' : '#e8352f') : null,
+      beak: warm ? '#ff7a1a' : '#ffb020', legs: warm ? '#e0700a' : '#f39c12',
+      pattern: pat || undefined, pc: dark ? 'rgba(255,255,255,.8)' : '#2a2238',
+      acc: hat || undefined, ac: HAT_COLORS[Math.floor(rng() * HAT_COLORS.length)],
+    });
+  }
+  made.sort((a, b) => a.price - b.price);
+  SKINS.push(...made);
+})();
+const SKIN_MAP = new Map(SKINS.map(s => [s.id, s]));
+const skinById = id => SKIN_MAP.get(id) || SKINS[0];
 
 /* ---------------- Obstacles ---------------- */
 // w,h for blocks; r for rolling balls (they roll toward you).
@@ -284,7 +350,7 @@ const MAPS = [
     puddle:{name:'Quicksand', color:'#b0803f', shine:'#d4a862'} },
   { id:'snow', name:'Frosty Peaks', blurb:'Snowmen, ice blocks and big snowballs.', length:27000, seed:404, gap:[360,560], double:0.16,
     obstacles:['snowman','ice'], roller:'snowball', g:1700, v0:620, flap:540, song:3,
-    sky:['#93bde6','#eef6ff'], sun:'sun', far:'#dde8f5', mid:'#c3d5ea', groundTop:'#ffffff', dirt:'#b7cce2', dirtDark:'#9db6d2', deco:'snow',
+    sky:['#93bde6','#eef6ff'], sun:'sun', far:'#dde8f5', mid:'#c3d5ea', groundTop:'#ffffff', dirt:'#b7cce2', dirtDark:'#9db6d2', deco:'snow', caps:true,
     puddle:{name:'Slush', color:'#7f98b6', shine:'#b5c9de'} },
   { id:'candy', name:'Gumdrop Hills', blurb:'Gumdrops, lollipops and cupcakes.', length:30000, seed:505, gap:[340,540], double:0.2,
     obstacles:['gumdrop','lolly','cupcake'], roller:'jawbreaker', g:1700, v0:620, flap:540, song:4,
@@ -295,6 +361,86 @@ const MAPS = [
     sky:['#0b0a2a','#2a2163'], sun:'earth', stars:true, far:'#3a3570', mid:'#4a4585', groundTop:'#b2afd3', dirt:'#7c78a6', dirtDark:'#66628f', deco:'moon',
     puddle:{name:'Space goo', color:'#4fbf5c', shine:'#9af7a0'} },
 ];
+const CLASSIC_MAPS = MAPS.length;
+
+/* ---- 500 bonus worlds ----
+   Each one mixes a classic world's look and obstacles with a color mood, sometimes low
+   gravity or obstacles from another world, and its own three rivals. Built from a fixed
+   seed so world 'x42' is always the same: don't edit or reorder these lists. */
+const EXTRA_MAPS = 500;
+const OBS_WORDS = { hay:'hay bales', fence:'fences', pumpkin:'pumpkins', log:'logs', stump:'stumps', thorns:'thorny bushes', cactus:'cactuses', rock:'rocks',
+  snowman:'snowmen', ice:'ice blocks', gumdrop:'gumdrops', lolly:'lollipops', cupcake:'cupcakes', moonrock:'moon rocks', dish:'satellite dishes', alien:'alien plants',
+  tumbleweed:'tumbleweeds', snowball:'snowballs', jawbreaker:'jawbreakers', boulder:'boulders' };
+const PLACE_NAMES = [
+  ['Farm', 'Meadow', 'Barnyard', 'Pasture', 'Fields', 'Orchard', 'Valley', 'Prairie', 'Haystacks', 'Duck Pond'],
+  ['Woods', 'Forest', 'Grove', 'Thicket', 'Glen', 'Hollow', 'Pines', 'Timberland', 'Fern Gully', 'Acorn Trail'],
+  ['Desert', 'Dunes', 'Canyon', 'Mesa', 'Badlands', 'Oasis', 'Sands', 'Plateau', 'Dust Bowl', 'Cactus Flats'],
+  ['Peaks', 'Tundra', 'Glacier', 'Slopes', 'Summit', 'Snowfields', 'Icefields', 'Ridge', 'Igloo Town', 'Frostbite Pass'],
+  ['Gumdrops', 'Lollipop Lane', 'Cupcake Cove', 'Sprinkle Hills', 'Fudge Falls', 'Taffy Town', 'Sugar Hills', 'Jellybean Jungle', 'Cocoa Canyon', 'Marshmallow Mounds'],
+  ['Moon', 'Crater', 'Asteroid', 'Comet Trail', 'Starbase', 'Moonbase', 'Nebula', 'Orbit', 'Space Station', 'Rocket Park'],
+];
+// color moods: [adjectives, sky (or null to tint the world's own), tint color, tint amount, night?]
+const MOODS = [
+  [['Windy', 'Giggly', 'Wobbly', 'Breezy', 'Happy', 'Lucky', 'Silly', 'Twisty', 'Hidden', 'Wild', 'Rumbly', 'Tiny', 'Giant', 'Secret', 'Bumpy', 'Zippy', 'Jolly', 'Far-Off'], null, null, 0],
+  [['Sunset', 'Evening', 'Dusky'], ['#ff8a5c', '#ffd29a'], '#c06070', 0.25],
+  [['Midnight', 'Starry', 'Moonlit', 'Sleepy'], ['#0f1440', '#2c3a7a'], '#1a2050', 0.5, true],
+  [['Rosy', 'Pink', 'Blossom'], null, '#ff8ac4', 0.35],
+  [['Purple', 'Violet', 'Magic'], null, '#a07cff', 0.35],
+  [['Golden', 'Shiny', 'Treasure'], ['#ffc94a', '#fff2b0'], '#ffc94a', 0.3],
+  [['Blue', 'Sapphire', 'Ocean'], null, '#5ab0ff', 0.3],
+  [['Minty', 'Emerald', 'Jungle'], null, '#3fd09a', 0.3],
+  [['Autumn', 'Pumpkin', 'Maple'], ['#f0a060', '#ffe0b0'], '#e0702a', 0.3],
+  [['Misty', 'Foggy', 'Cloudy'], ['#b8c4d6', '#e8edf5'], '#c8d0e0', 0.45],
+  [['Stormy', 'Thunder', 'Rainy'], ['#5a6478', '#9aa4b4'], '#506070', 0.3],
+];
+const RIVAL_NAMES = ['Clucky', 'Feathers', 'Nugget', 'Pip', 'Peep', 'Henrietta', 'Scrambles', 'Sprout', 'Pepper', 'Ginger', 'Biscuit', 'Waffles', 'Noodle', 'Pickles',
+  'Marshmallow', 'Pumpkin', 'Jellybean', 'Doodle', 'Zippy', 'Turbo', 'Rocket', 'Comet', 'Pebble', 'Maple', 'Hazel', 'Clover', 'Daisy', 'Poppy', 'Penny', 'Goldie',
+  'Ruby', 'Coco', 'Mocha', 'Bean', 'Sparky', 'Dash', 'Flash', 'Blaze', 'Bonnie', 'Twinkle', 'Muffin', 'Cupcake', 'Taffy', 'Fizz', 'Whiz', 'Breezy', 'Squawk',
+  'Beaky', 'Flapjack', 'Tumble', 'Sir Clucks', 'Lady Feathers', 'Captain Peep', 'Professor Pip', 'Duchess', 'Rascal', 'Skipper', 'Scooter', 'Jumpy', 'Zoom',
+  'Puff', 'Snowdrop', 'Cinnamon', 'Nutmeg', 'Sunflower', 'Juniper', 'Willow', 'Echo', 'Pixel', 'Bolt Jr.', 'Ziggy Jr.', 'Big Bertha', 'Little Lou', 'Speedy Sue'];
+(function makeMaps(){
+  const rng = mulberry32(5050);
+  const R = (a, b) => a + (b - a) * rng();
+  const pick = a => a[Math.floor(rng() * a.length)];
+  const used = new Set(MAPS.map(m => m.name));
+  const allBlocks = Object.keys(OBS).filter(k => !OBS[k].r), allRollers = Object.keys(OBS).filter(k => OBS[k].r);
+  for (let n = 1; n <= EXTRA_MAPS; n++) {
+    const ti = Math.floor(rng() * 6), base = MAPS[ti];
+    let mood = MOODS[rng() < 0.3 ? 0 : 1 + Math.floor(rng() * (MOODS.length - 1))];
+    if (ti === 5 && mood[4]) mood = MOODS[0];  // the moon is already night
+    const bouncy = ti !== 5 && rng() < 0.18;
+    let name = '', tries = 0;
+    do { name = (bouncy && rng() < 0.6 ? pick(['Bouncy', 'Floaty', 'Boingy']) : pick(mood[0])) + ' ' + pick(PLACE_NAMES[ti]); }
+    while (used.has(name) && ++tries < 50);
+    if (used.has(name)) name += ' ' + n;
+    used.add(name);
+    const d = Math.min(1, n / 120);  // gets a little harder over the first 120 bonus worlds
+    const obstacles = [...base.obstacles];
+    if (rng() < 0.35) { const o = pick(allBlocks.filter(k => !obstacles.includes(k))); obstacles.push(o); }
+    let roller = base.roller;
+    if (rng() < 0.3) roller = pick(allRollers);
+    const tint = c => mood[2] ? mixHex(c, mood[2], mood[3]) : c;
+    const sky = mood[1] && ti !== 5 ? mood[1] : base.sky.map(tint);
+    const fast = Math.min(1.04, 0.98 + 0.06 * d - rng() * 0.01);
+    const names = [];
+    while (names.length < 3) { const nm = pick(RIVAL_NAMES); if (!names.includes(nm)) names.push(nm); }
+    const rs = () => SKINS[Math.floor(rng() * SKINS.length)].id;
+    const words = obstacles.map(o => OBS_WORDS[o]);
+    let blurb = words.slice(0, -1).join(', ') + ' and ' + words[words.length - 1];
+    blurb = blurb[0].toUpperCase() + blurb.slice(1) + (roller ? ', plus rolling ' + OBS_WORDS[roller] : '') + '.';
+    if (bouncy || ti === 5) blurb += ' Low gravity!';
+    MAPS.push({
+      id: 'x' + n, name, blurb, length: Math.round(R(20, 33)) * 1000, seed: 9000 + n * 7,
+      gap: [Math.round(400 - 60 * d), Math.round(600 - 60 * d)], double: 0.08 + 0.12 * d,
+      obstacles, roller, g: base.g, v0: base.v0, flap: base.flap, song: base.song,
+      ...(bouncy ? { g: 1150, v0: 520, flap: 450 } : {}),
+      sky, sun: ti === 5 ? 'earth' : mood[4] ? 'moonlit' : 'sun', stars: !!(base.stars || mood[4]),
+      far: tint(base.far), mid: tint(base.mid), groundTop: tint(base.groundTop), dirt: tint(base.dirt), dirtDark: tint(base.dirtDark),
+      deco: base.deco, caps: base.caps, puddle: base.puddle,
+      rivals: [[names[0], rs(), +(fast - 0.12).toFixed(3), 0.15], [names[1], rs(), +(fast - 0.06).toFixed(3), 0.1], [names[2], rs(), +fast.toFixed(3), +(0.07 - 0.02 * d).toFixed(3)]],
+    });
+  }
+})();
 
 /* ---------------- Save data ---------------- */
 const SAVE_KEY = 'chickenrunner.save.v1';
@@ -306,7 +452,7 @@ function loadSave(){
   catch (e) { raw = null; try { localStorage.removeItem(SAVE_KEY); } catch (e2) {} }
   if (!raw || typeof raw !== 'object') return d;
   if (Number.isFinite(raw.coins) && raw.coins >= 0) d.coins = Math.min(9999999, Math.floor(raw.coins));
-  if (Array.isArray(raw.owned)) d.owned = [...new Set(['classic', ...raw.owned.filter(id => SKINS.some(s => s.id === id))])];
+  if (Array.isArray(raw.owned)) d.owned = [...new Set(['classic', ...raw.owned.filter(id => typeof id === 'string' && SKIN_MAP.has(id))])];
   if (typeof raw.skin === 'string' && d.owned.includes(raw.skin)) d.skin = raw.skin;
   if (raw.best && typeof raw.best === 'object') {
     for (const m of MAPS) {
@@ -678,7 +824,7 @@ function drawChicken(c, skin, o){
   c.fillStyle = belly; c.beginPath();
   if (skin.bigBelly) c.ellipse(5, -23, 12, 10, -0.2, 0, Math.PI * 2); else c.ellipse(4, -21, 9, 7, -0.2, 0, Math.PI * 2);
   c.fill();
-  if (skin.pattern) drawPattern(c, skin.pattern, t);
+  if (skin.pattern) drawPattern(c, skin.pattern, t, skin.pc);
 
   // dino spikes / robot bolts
   if (skin.acc === 'dino') {
@@ -814,6 +960,37 @@ function drawChicken(c, skin, o){
     c.fillStyle = '#2a2f38'; rr(c, 8, -44, 13, 3.2, 1.5); c.fill();
     c.strokeStyle = '#8995a3'; c.beginPath(); c.moveTo(10, -38); c.lineTo(10, -31); c.moveTo(14, -38); c.lineTo(14, -31); c.stroke();
   }
+  if (skin.acc === 'bow') {
+    c.fillStyle = skin.ac; c.strokeStyle = 'rgba(0,0,0,.25)'; c.lineWidth = 1;
+    c.beginPath(); c.moveTo(4, -50); c.lineTo(-5, -56); c.lineTo(-5, -44); c.closePath(); c.fill(); c.stroke();
+    c.beginPath(); c.moveTo(4, -50); c.lineTo(12, -57); c.lineTo(13, -45); c.closePath(); c.fill(); c.stroke();
+    c.beginPath(); c.arc(4, -50, 2.6, 0, 7); c.fill(); c.stroke();
+  }
+  if (skin.acc === 'flower') {
+    c.fillStyle = skin.ac;
+    for (let i = 0; i < 5; i++) { const a = i * 1.2566 + t * 0.5; c.beginPath(); c.arc(1 + Math.cos(a) * 4, -50 + Math.sin(a) * 4, 3, 0, 7); c.fill(); }
+    c.fillStyle = '#ffd23f'; c.beginPath(); c.arc(1, -50, 2.4, 0, 7); c.fill();
+  }
+  if (skin.acc === 'beanie' || skin.acc === 'propeller') {
+    c.fillStyle = skin.ac; c.beginPath(); c.arc(10, -45, 10.5, Math.PI, 0); c.closePath(); c.fill();
+    c.fillStyle = 'rgba(0,0,0,.18)'; c.fillRect(-0.5, -47, 21, 3.5);
+    if (skin.acc === 'beanie') { c.fillStyle = '#ffffff'; c.beginPath(); c.arc(10, -57, 3.6, 0, 7); c.fill(); }
+    else {
+      c.strokeStyle = '#6c7682'; c.lineWidth = 1.6; c.beginPath(); c.moveTo(10, -55); c.lineTo(10, -60); c.stroke();
+      const sw = Math.cos(t * 30) * 11;
+      c.fillStyle = '#ffd23f'; c.beginPath(); c.ellipse(10 - sw / 2, -61, Math.abs(sw / 2) + 0.5, 1.8, 0, 0, 7); c.fill();
+      c.fillStyle = '#e8352f'; c.beginPath(); c.ellipse(10 + sw / 2, -61, Math.abs(sw / 2) + 0.5, 1.8, 0, 0, 7); c.fill();
+    }
+  }
+  if (skin.acc === 'headphones') {
+    c.strokeStyle = '#2a2f38'; c.lineWidth = 2.6; c.beginPath(); c.arc(8, -42, 11, Math.PI * 1.05, Math.PI * 1.95); c.stroke();
+    c.fillStyle = skin.ac; c.strokeStyle = '#2a2f38'; c.lineWidth = 1.4; rr(c, 1, -42, 6, 9, 3); c.fill(); c.stroke();
+    if (Math.sin(t * 6) > 0) { c.fillStyle = '#ffffff'; c.font = '700 9px sans-serif'; c.fillText('♪', -9, -50 - (t * 10 % 6)); }
+  }
+  if (skin.acc === 'halo') {
+    c.strokeStyle = 'rgba(255,240,170,.5)'; c.lineWidth = 5; c.beginPath(); c.ellipse(10, -58 - Math.sin(t * 3), 9, 2.8, 0, 0, 7); c.stroke();
+    c.strokeStyle = '#ffd23f'; c.lineWidth = 2.4; c.beginPath(); c.ellipse(10, -58 - Math.sin(t * 3), 9, 2.8, 0, 0, 7); c.stroke();
+  }
   if (skin.acc === 'sparkle') {
     c.fillStyle = '#ffffff';
     for (let i = 0; i < 3; i++) { const k = (t * 1.5 + i / 3) % 1; if (k < 0.5) { const sc = Math.sin(k * Math.PI * 2) * 3.5; star(c, [-14, 4, -4][i], [-36, -18, -52][i], sc); } }
@@ -826,13 +1003,22 @@ function drawChicken(c, skin, o){
   }
   c.restore();
 }
-function drawPattern(c, pattern, t){
+function drawPattern(c, pattern, t, pc){
   c.save();
   c.beginPath(); c.ellipse(-2, -25, 17, 13, 0, 0, Math.PI * 2); c.clip();
-  if (pattern === 'stripes') { c.fillStyle = '#2a2238'; for (let x = -15; x < 16; x += 10) c.fillRect(x, -40, 5, 30); }
-  else if (pattern === 'spots') { c.fillStyle = '#1d1b2c'; c.fillRect(-2, -40, 2, 30); for (const [x, y, r] of [[-10, -31, 3.4], [-12, -20, 2.6], [-5, -22, 2.4], [5, -32, 2.8], [7, -21, 3], [-17, -27, 2]]) { c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); } }
+  if (pattern === 'polka') { c.fillStyle = pc; for (let y = -36, r = 0; y < -10; y += 7, r++) for (let x = -18 + (r % 2) * 4; x < 16; x += 8) { c.beginPath(); c.arc(x, y, 1.9, 0, 7); c.fill(); } }
+  else if (pattern === 'hearts') {
+    c.fillStyle = pc;
+    for (const [x, y] of [[-11, -31], [3, -33], [-14, -19], [-3, -21], [9, -27]]) {
+      c.beginPath(); c.moveTo(x, y + 3); c.bezierCurveTo(x - 5, y - 1, x - 2, y - 5, x, y - 2); c.bezierCurveTo(x + 2, y - 5, x + 5, y - 1, x, y + 3); c.fill();
+    }
+  }
+  else if (pattern === 'stars') { c.fillStyle = pc; for (const [x, y, r] of [[-11, -31, 3.2], [4, -34, 2.6], [-14, -19, 2.4], [-2, -22, 3], [9, -26, 2.2]]) star(c, x, y, r); }
+  else if (pattern === 'checker') { c.fillStyle = pc; c.globalAlpha *= 0.45; for (let y = -40, r = 0; y < -10; y += 6, r++) for (let x = -20 + (r % 2) * 6; x < 16; x += 12) c.fillRect(x, y, 6, 6); }
+  else if (pattern === 'stripes') { c.fillStyle = pc || '#2a2238'; for (let x = -15; x < 16; x += 10) c.fillRect(x, -40, 5, 30); }
+  else if (pattern === 'spots') { c.fillStyle = pc || '#1d1b2c'; c.fillRect(-2, -40, 2, 30); for (const [x, y, r] of [[-10, -31, 3.4], [-12, -20, 2.6], [-5, -22, 2.4], [5, -32, 2.8], [7, -21, 3], [-17, -27, 2]]) { c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); } }
   else if (pattern === 'zebra') {
-    c.strokeStyle = '#1d1b2c'; c.lineWidth = 3.2;
+    c.strokeStyle = pc || '#1d1b2c'; c.lineWidth = 3.2;
     for (let i = 0; i < 6; i++) { const x = -17 + i * 6.5; c.beginPath(); c.moveTo(x, -40); c.quadraticCurveTo(x + 5, -30, x - 1, -24); c.quadraticCurveTo(x - 5, -18, x + 2, -10); c.stroke(); }
   }
   else if (pattern === 'lava') {
@@ -1185,6 +1371,10 @@ function drawBackdrop(c, m, camX, w, h, gy, t){
     c.fillStyle = '#3a86d8'; c.beginPath(); c.arc(sunX, sunY, 30, 0, 7); c.fill();
     c.fillStyle = '#5fbf5a'; c.beginPath(); c.ellipse(sunX - 8, sunY - 6, 12, 8, 0.6, 0, 7); c.ellipse(sunX + 12, sunY + 10, 8, 6, -0.3, 0, 7); c.fill();
     c.fillStyle = 'rgba(255,255,255,.6)'; c.beginPath(); c.ellipse(sunX + 4, sunY - 18, 12, 3, 0, 0, 7); c.fill();
+  } else if (m.sun === 'moonlit') {
+    c.fillStyle = 'rgba(230,236,255,.18)'; c.beginPath(); c.arc(sunX, sunY, 42, 0, 7); c.fill();
+    c.fillStyle = '#eef1ff'; c.beginPath(); c.arc(sunX, sunY, 26, 0, 7); c.fill();
+    c.fillStyle = '#d3d8ee'; c.beginPath(); c.arc(sunX - 8, sunY - 5, 6, 0, 7); c.arc(sunX + 9, sunY + 7, 4, 0, 7); c.arc(sunX + 4, sunY - 11, 3, 0, 7); c.fill();
   } else {
     c.fillStyle = 'rgba(255,240,170,.35)'; c.beginPath(); c.arc(sunX, sunY, 44, 0, 7); c.fill();
     c.fillStyle = '#fff3a6'; c.beginPath(); c.arc(sunX, sunY, 30, 0, 7); c.fill();
@@ -1205,7 +1395,7 @@ function drawBackdrop(c, m, camX, w, h, gy, t){
   c.beginPath(); c.moveTo(0, gy);
   for (let x = 0; x <= w + 16; x += 16) c.lineTo(x, gy - 95 - hill(x + camX * 0.2, 1));
   c.lineTo(w, gy); c.closePath(); c.fill();
-  if (m.id === 'snow') { // snowy caps
+  if (m.caps) { // snowy caps
     c.fillStyle = '#ffffff';
     c.beginPath(); c.moveTo(0, gy);
     for (let x = 0; x <= w + 16; x += 16) c.lineTo(x, gy - 95 - hill(x + camX * 0.2, 1));
@@ -1342,7 +1532,7 @@ function startRun(mi){
     time: 0, countdown: 2.4, lastBeep: 4, coinsGot: 0, bumps: 0,
     particles: [], popups: [], finished: false, finishT: 0, banked: false,
     raceT: 0, place: 1,
-    rivals: RIVALS[m.id].map(([name, skin, mult, trip], i) => ({
+    rivals: (m.rivals || RIVALS[m.id]).map(([name, skin, mult, trip], i) => ({
       name, skin, mult, trip, lane: 3 - i, x: START_X, y: 0, vy: 0, onGround: true, speed: 0, phase: i, flap: 0,
       stun: 0, boost: 0, slow: 0, nextBoost: 4 + Math.random() * 6, plan: new Map(), hits: new Set(),
       finished: false, finishT: 0, ahead: false, lastMsg: -9, rng: mulberry32((Math.random() * 1e9) | 0),
@@ -1973,10 +2163,11 @@ function show(id){
     if (f && matchMedia('(hover:hover)').matches) setTimeout(() => f.focus({ preventScroll: true }), 0);
   }
 }
+document.querySelectorAll('#shopTabs button').forEach(b => b.onclick = () => { sfx('click'); shopFilter = b.dataset.f; shopPage = 0; buildShop(); });
 function goMenu(id){
   if (run && (state === 'pause' || state === 'play')) bankCoins();
   if (['title', 'how', 'maps', 'shop'].includes(id)) { $('pauseBtn').classList.remove('show'); playSong(MENU_SONG); if (state !== 'results') run = null; }
-  if (id === 'maps') buildMapGrid();
+  if (id === 'maps') { mapPage = Math.floor(newestMap() / MAP_PAGE); buildMapGrid(); }
   if (id === 'shop') buildShop();
   state = id;
   show(id);
@@ -1992,9 +2183,34 @@ function thumb(cv, m, skin){
   drawObstacle(c, Object.assign({ type: m.obstacles[0], x: 0, v: 0 }, OBS[m.obstacles[0]]), vw * 0.62, g, 0);
   c.save(); c.translate(vw * 0.32, g); c.scale(1.3, 1.3); drawChicken(c, skin, { t: 0, phase: 1 }); c.restore();
 }
+const MAP_PAGE = 12, SKIN_PAGE = 24;
+let mapPage = 0, shopPage = 0, shopFilter = 'all';
+function newestMap(){ let n = 0; while (n + 1 < MAPS.length && mapUnlocked(n + 1)) n++; return n; }
+function buildPager(ids, page, pages, go, extra){
+  for (const id of ids) {
+    const el = $(id); el.innerHTML = '';
+    if (pages <= 1) continue;
+    const mk = (txt, p, cls) => { const b = document.createElement('button'); b.textContent = txt; if (cls) b.className = cls; b.disabled = p < 0 || p >= pages || p === page; b.onclick = () => { sfx('click'); go(p); }; el.appendChild(b); };
+    mk('◀ Back a page', page - 1, 'pgPrev');
+    const lab = document.createElement('span'); lab.textContent = `Page ${page + 1} of ${pages}`; el.appendChild(lab);
+    mk('Next page ▶', page + 1, 'pgNext');
+    if (extra && id === ids[0]) mk(extra[0], extra[1]);
+  }
+}
+function turnPage(d){
+  if (state === 'maps') { const pages = Math.ceil(MAPS.length / MAP_PAGE), p = clamp(mapPage + d, 0, pages - 1); if (p !== mapPage) { sfx('click'); mapPage = p; buildMapGrid(); } }
+  else if (state === 'shop') { const p = clamp(shopPage + d, 0, Math.ceil(shopList().length / SKIN_PAGE) - 1); if (p !== shopPage) { sfx('click'); shopPage = p; buildShop(); } }
+  else return;
+  if (pad.connected) { const g = $(state === 'maps' ? 'mapGrid' : 'skinGrid').querySelector('button:not(:disabled)') || (pg => pg.querySelector('.pgNext:not(:disabled)') || pg.querySelector('button:not(:disabled)'))($(state === 'maps' ? 'mapPagerTop' : 'skinPagerTop')); if (g) setPadSel(g); else ensureSel(); }
+}
 function buildMapGrid(){
   const grid = $('mapGrid'); grid.innerHTML = '';
+  const pages = Math.ceil(MAPS.length / MAP_PAGE), newest = newestMap();
+  mapPage = clamp(mapPage, 0, pages - 1);
+  const go = p => { mapPage = p; buildMapGrid(); $('maps').scrollTop = 0; };
+  buildPager(['mapPagerTop', 'mapPager'], mapPage, pages, go, ['Newest world', Math.floor(newest / MAP_PAGE)]);
   MAPS.forEach((m, i) => {
+    if (i < mapPage * MAP_PAGE || i >= (mapPage + 1) * MAP_PAGE) return;
     const open = mapUnlocked(i), b = save.best[m.id];
     const btn = document.createElement('button');
     btn.className = 'card mapcard' + (open ? '' : ' locked');
@@ -2011,9 +2227,19 @@ function buildMapGrid(){
     grid.appendChild(btn);
   });
 }
+function shopList(){
+  if (shopFilter === 'mine') return SKINS.filter(s => save.owned.includes(s.id));
+  if (shopFilter === 'buy') return SKINS.filter(s => !save.owned.includes(s.id) && s.price <= save.coins);
+  return SKINS;
+}
 function buildShop(){
   const grid = $('skinGrid'); grid.innerHTML = '';
-  SKINS.forEach(s => {
+  const list = shopList(), pages = Math.max(1, Math.ceil(list.length / SKIN_PAGE));
+  shopPage = clamp(shopPage, 0, pages - 1);
+  document.querySelectorAll('#shopTabs button').forEach(b => b.classList.toggle('on', b.dataset.f === shopFilter));
+  buildPager(['skinPagerTop', 'skinPager'], shopPage, pages, p => { shopPage = p; buildShop(); $('shop').scrollTop = 0; });
+  if (!list.length) grid.innerHTML = `<p class="tagline">${shopFilter === 'buy' ? 'Not enough coins for a new skin yet. Go race and grab some coins!' : 'Nothing here yet.'}</p>`;
+  list.slice(shopPage * SKIN_PAGE, (shopPage + 1) * SKIN_PAGE).forEach(s => {
     const owned = save.owned.includes(s.id), wearing = save.skin === s.id;
     const card = document.createElement('div');
     card.className = 'card' + (wearing ? ' wearing' : '');
@@ -2157,6 +2383,7 @@ function handlePad(dt){
   }
   if (performance.now() - shownAt < 600) return;  // ignore mashing right after a menu opens
   if (state === 'pause' && (padPressed(9) || padPressed(1))) { resumeGame(); return; }
+  if (padPressed(4)) turnPage(-1); else if (padPressed(5)) turnPage(1);
   // stick / d-pad direction with key-repeat
   const ax = pad.gp.axes[0] || 0, ay = pad.gp.axes[1] || 0;
   let dir = null;
