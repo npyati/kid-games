@@ -2247,6 +2247,7 @@ function render(time, eye, rect) {
     if (ch.detail) { gl.bindVertexArray(ch.detail.vao); gl.drawArrays(gl.TRIANGLES, 0, ch.detail.count); }
   }
   drawAnimals(time);
+  drawThings();
   if (players.length > 1) drawOtherPlayers();
   drawShadows();
   drawPickups(time);
@@ -3395,6 +3396,7 @@ function nearbyTreesAt(x, z, fn) {
     const t = ch.trees;
     for (let i = 0; i < t.length; i += 4) fn(t[i], t[i + 1], t[i + 2], t[i + 3]);
   }
+  solidThingsNear(x, z, fn);            // things built with Ask Claude are solid too
 }
 function pushOutTrees(o, radius) {
   nearbyTreesAt(o.x, o.z, (tx, tz, r) => {
@@ -3442,9 +3444,10 @@ function bodyCircles(a) {
   if (a.sp.serpent) return [[a.x, a.z, (a.sp.bodyR || 0.8) * 1.1, a.y]].concat(a.segs.map((s, i) => { const o = tailOffset(a, i); return [s.x + (o ? o[0] : 0), s.z + (o ? o[1] : 0), snakeR(a.sp, i), s.y]; }));
   return [[a.x, a.z, a.sp.radius, a.y]];
 }
+let animalSeq = 0;                      // every creature gets a number, so Ask Claude can talk about "#12"
 function spawnAnimal(kind, x, z, opts) {
   const sp = SPECIES[kind];
-  const a = { kind, sp, x, z, y: groundAt(x, z), yaw: Math.random() * 6.28, speed: 0, hp: sp.hp || 1,
+  const a = { id: ++animalSeq, kind, sp, x, z, y: groundAt(x, z), yaw: Math.random() * 6.28, speed: 0, hp: sp.hp || 1,
     alerted: false, wanderT: 0, wanderYaw: Math.random() * 6.28, wanderSpeed: 0, legPhase: Math.random() * 6,
     atkCd: 0, windup: 0, lunge: 0, flash: 0, dead: false, deadT: 0, rollDir: Math.random() < 0.5 ? 1 : -1,
     kx: 0, kz: 0, bar: null, barFill: null, waterT: 0, fleeT: 0, remove: false, goneWhy: 'gone',
@@ -5592,29 +5595,44 @@ setSel(0);
    ===================================================================== */
 const claudeEl = document.getElementById('claude'), claudeBox = document.getElementById('claudeBox'), claudeType = document.getElementById('claudeType');
 let claudeReady = false, claudeBusy = false, claudeSpeaker = 0, claudeHideT = 0;
+let claudeSession = null;             // one conversation per page load: every request resumes it, whichever model answers
+let claudeTurns = 0;
 let claudeHooks = [];                 // [{ name, fn(dt) }], run every frame while playing
 let claudeTimers = [];                // [{ t, fn }], game-time delays from later()
-const claudeLog = [];                 // the last few requests, so "do it again" and "now make them pink" work
 
 const CLAUDE_SYSTEM = `You are the magic helper inside Wildwood, a 3D open-world browser game for kids (ages 7 to 11).
-A kid just asked for something out loud. It came through speech-to-text, so expect odd spellings and misheard words; go with the most likely meaning.
-You make it happen by writing JavaScript that runs immediately inside the live game page.
+Kids talk to you out loud while they play. Their words come through speech-to-text, so expect odd spellings and misheard words; go with the most likely meaning.
+This is one ongoing conversation for the whole play session: earlier turns are above. Follow-ups like "make it bigger", "now the other one", "do that again", "no, red" refer back to what you just did.
+You make things happen by writing JavaScript that runs immediately inside the live game page.
 
 ALWAYS reply in exactly this shape:
 1. One short, cheerful sentence for the kid (15 words at most, no code words).
 2. One \`\`\`js code block. It runs in the page's global scope inside an async function, so you may use await.
-Do it right away. Never ask questions. Be generous and fun: if they say "a hundred dragons", cap it at something the game can handle (about 40 animals total, 6 bosses) and say so cheerfully.
-Kid-safe: silly, magical and adventurous are great. No gore, nothing scary-mean. If a request isn't okay for kids, reply kindly and send an empty code block.
+Just do it; don't check in first. Only if you truly cannot tell what they mean, ask ONE short question instead (no code block) and do it when they answer.
+Be generous and fun. If they say "a hundred dragons", cap it at what the game can handle (about 40 animals total, 6 bosses) and say so cheerfully.
+Kid-safe: silly, magical and adventurous are great. No gore, nothing scary-mean. If a request isn't okay for kids, reply kindly with an empty code block.
 %ESCALATE%
+KNOWING WHAT "IT" IS
+Every message starts with a fresh snapshot: what the speaker is looking at, nearby creatures (each has a #id), and THINGS: everything you have made, by name.
+- Things you make get a name, so later turns can find them: thing('red tower'). spawn() names its group for you (e.g. "wolves 1"); pass a name to choose one.
+- "it", "that", "them" usually means the thing you last made or changed, or what the speaker is LOOKING AT. Use the snapshot to decide, and change that thing rather than making a new one.
+- creature(id) gets any creature by its #id. remember(name, valueOrAnimals, about) names anything else (e.g. a creature the kid is looking at: remember('Sparky', creature(12), 'the dragon the kid named')).
+- rename(old, new) and forget(name) when asked.
+
 COORDINATES: x and z are the ground plane in metres, y is up. groundAt(x, z) is the ground height there; water surface is y = 0 (ground below 0 is underwater).
 For a player p, forward is (Math.sin(p.yaw), -Math.cos(p.yaw)) and right is (Math.cos(p.yaw), Math.sin(p.yaw)).
 
-HELPERS (made for you, prefer these):
+HELPERS (prefer these):
 - me() -> the player who spoke. players[] has every player (1 or 2). Player fields: x, z, feet (y of feet), yaw, pitch, vx, vz, vy (set vy = 15 to launch them up), hp (0-100), onGround, swimming.
 - ahead(dist = 10, side = 0, p = me()) -> {x, z}: a point dist metres in front of p (side = metres to the right).
-- spawn(kind, count = 1, dist = 12, opts) -> array of the new animals, spread out in front of me(). opts is merged onto each animal.
+- spawn(kind, count = 1, dist = 12, opts, name) -> array of new animals spread out in front of me(), remembered as a group. opts is merged onto each animal.
+- build(name, make, cfg) -> makes a solid 3D object and remembers it. make(g, o) draws its shape into g around the origin (y = 0 is its base; its front is the -z side, which faces the speaker by default). cfg: { about, x, z (default 12 m ahead), y (null = sits on the ground), yaw, scale (number, or [sx, sy, sz]), solid (collision radius in the shape's own units, grows with scale; 0 = walk through), o: {...} any settings make() reads, e.g. colours and heights }.
+  Shapes for make(g, o) (col = [r, g, b] 0-1):
+    box(g, x, y, z, w, h, d, col) (y = bottom), ball(g, x, y, z, r, col), egg(g, x, y, z, rx, ry, rz, col),
+    pole(g, [x0, y0, z0], [x1, y1, z1], r0, r1, col, sides = 8), spike(g, x, y, z, r, h, col, sides = 8) (a cone).
+  Later: t = thing(name); t.x / t.z / t.y / t.yaw / t.scale / t.solid / t.hidden change it instantly; rebuild(name, { ...new o settings }) remakes the shape with merged settings (e.g. rebuild('tower', { col: [1, 0, 0] })). Always put colours and sizes in o so they can be changed later.
 - say(text) -> a little message for the kid in the corner of the screen.
-- addHook(name, fn) -> fn(dt) runs every frame while the game is playing (dt in seconds). Use it for anything ongoing ("make it snow", "make wolves bounce"). Same name replaces. removeHook(name). clearHooks() stops them all (do that for "stop", "undo", "back to normal").
+- addHook(name, fn) -> fn(dt) runs every frame while the game is playing (dt in seconds). Use it for anything ongoing ("make it snow", "make the wolves bounce"). Same name replaces. removeHook(name). clearHooks() stops them all ("stop", "back to normal").
 - later(seconds, fn) -> run fn once after that much play time. await wait(seconds) also works.
 - give(mat, n) -> add n of a material. giveItem(id) -> own and equip an item.
 - teleport(x, z, p = me()) -> move a player, standing on the ground.
@@ -5622,40 +5640,54 @@ HELPERS (made for you, prefer these):
 - heal(p = me()) -> full health.
 
 GAME STATE you can read and change directly:
-- animals[] - every creature. Fields: kind, sp (its SPECIES entry), x, z, y, yaw, hp, dead, alerted (true = chasing the nearest player), speed.
+- animals[] - every creature. Fields: id, kind, sp (its SPECIES entry), x, z, y, yaw, hp, dead, alerted (true = chasing the nearest player), speed.
   To change ONE animal's size, speed or strength, give it its own species copy: a.sp = Object.assign({}, a.sp, { scale: 3, run: 12, hp: 200, dmg: 2 }); a.hp = 200;
   SPECIES[kind] fields: scale (size, default 1), walk, run (speeds m/s), hp, dmg, sight (metres it notices you from), peaceful, boss.
   Peaceful animals run away and can't be hurt. alertAnimal(a) makes an enemy chase. calmAnimal(a) calms it.
 - Kinds: friendly fox, rabbit, deer; enemies wolf, bear, goblin, croc (water), shark (deep water only), goat (neutral), dragonling (neutral);
   bosses dragon, ogre, iceogre, spider (giant spider), snake (giant snake), leviathan (lakes only, water); fish trout, sunfish, bluegill, goldfish (water only).
   Water-only kinds need water: check groundAt(x, z) < -1.5 first, and say so if there's no water nearby.
+- Trees and rocks are baked into the world and can't be changed one by one; to "change" one, build a new thing in its place.
 - settings.animals (false = enemies off; then enemies won't chase). settings.music, settings.sfx.
 - mats - materials the players share: wood, stone, iron, gems, scale (dragon scale), arrows, fang, fur, frost, skin, fishscale, goldscale, tooth.
-- ITEMS[id] - gear. owned (a Set of ids) and equip = { weapon, armor, shield } are player 1's; each player has their own gear (use giveItem for the speaker).
+- ITEMS[id] - gear. owned (a Set of ids). You can change gear stats, e.g. ITEMS.dragonsword.dmg = 50.
   Weapons: stick axe club stonespear ironaxe ironsword fangdagger hammer goblinaxe crocwhip scalesword scalespear trident sharksword crocmace crystal crystalspear crystalaxe venomglaive dragonsword
   Bows: woodbow ironbow venombow frostbow crocbow scalebow crystalbow dragonbow. Armor: woodplate furplate stoneplate spikedplate scaleplate ironplate venomplate crystalplate dragonplate.
   Shields: woodshield ironshield scaleshield spikedshield venomshield frostshield crystalshield dragonshield.
-  You can change gear stats too, e.g. ITEMS.dragonsword.dmg = 50.
 - addPickup(kind, x, y, z) drops a collectible: kind is a material name, 'gem', or 'apple' (heals).
 - Sounds: thump(vol), tone(type, f0, f1, dur, vol, delay) e.g. tone('sine', 600, 1200, 0.3, 0.1).
-- updatePlayer(dt) moves players (walk 4.6 m/s, run 8.5 m/s). To make a player faster, a hook can add extra movement along p.vx/p.vz each frame: p.x += p.vx * dt * (k - 1).
-Everything else in the game is plain top-level JavaScript too (WebGL 2, no libraries), so you may also replace or wrap a top-level function: e.g. const old = updateAnimals; updateAnimals = dt => { old(dt); ... }.
+- Players walk 4.6 m/s and run 8.5 m/s. To make a player faster, a hook can add extra movement: p.x += p.vx * dt * (k - 1); p.z += p.vz * dt * (k - 1).
+Everything else in the game is plain top-level JavaScript too (WebGL 2, no libraries), so you may also wrap a top-level function: const old = updateAnimals; updateAnimals = dt => { old(dt); ... }.
 
-EXAMPLE
+EXAMPLES
 Kid: "spawn ten wolves in front of me"
-Reply:
 Ten wolves, coming right up! Get ready!
 \`\`\`js
 spawn('wolf', 10, 14);
+\`\`\`
+Kid: "build a little house"
+A cosy little house, just for you!
+\`\`\`js
+build('little house', (g, o) => {
+  box(g, 0, 0, 0, 4, 2.6, 4, o.wall);
+  spike(g, 0, 2.6, 0, 3.4, 2, o.roof, 4);
+  box(g, 0, 0, -2.05, 0.9, 1.6, 0.1, o.door);
+}, { about: 'small house with a pointy roof', solid: 2.2, o: { wall: [0.85, 0.75, 0.6], roof: [0.7, 0.2, 0.15], door: [0.4, 0.25, 0.1] } });
+\`\`\`
+Kid: "make it blue and twice as big"
+Big and blue, ta-da!
+\`\`\`js
+const t = thing('little house'); t.scale = 2;
+rebuild('little house', { wall: [0.3, 0.5, 0.95] });
 \`\`\``;
 
 const CLAUDE_ESC_HAIKU = `
-IF IT'S BIG: when the request needs something the helpers and state above don't cover well (brand-new 3D shapes or creatures, building structures like castles or towers, new creature behaviours, changing how the game works), reply with exactly the single word ESCALATE and nothing else. A smarter helper will take over. Simple things (spawning, sizes, speeds, giving stuff, teleporting, healing, jumping) you do yourself.
+IF IT'S BIG: when the request needs something the helpers and state above don't cover well (complicated buildings or creatures with many parts, new creature behaviours, changing how the game works), reply with exactly the single word ESCALATE and nothing else. A smarter helper will take over in this same conversation. Simple things (spawning, sizes, speeds, colours, moving things, simple builds like the house example, giving stuff, teleporting, healing, jumping) you do yourself.
 `;
 const CLAUDE_ESC_SONNET = `
-You are the smarter helper: a quicker helper handed this one to you, or its code broke. You may Read and Grep index.html (this game's whole source, about 5,700 lines) to find what you need, but kids are waiting, so look up only what you must and keep it quick.
-Useful in the source: the Geo vertex builder and blob/tube/cone shapes, makeMesh(geo), drawMesh(mesh, modelMatrix), mT/mRy/mS/mChain matrix helpers, the render() function, buildChunk() for terrain, nearbyTreesAt/pushOutTrees for collisions.
-To draw new things every frame, wrap render or drawAnimals, e.g. const old = drawAnimals; drawAnimals = t => { old(t); drawMesh(myMesh, mT(x, y, z)); };
+You are the smarter helper. You may Read and Grep index.html (this game's whole source, about 6,000 lines) to find what you need, but kids are waiting, so look up only what you must and keep it quick.
+Useful in the source: the Geo vertex builder and blob/tube/cone shapes, makeMesh(geo), drawMesh(mesh, modelMatrix), mT/mRy/mS/mChain matrix helpers, render(), drawAnimals(), the SPECIES models.
+Prefer build() for new objects so they're remembered and can be changed later.
 `;
 
 function me() { return players[claudeSpeaker] || players[0]; }
@@ -5663,7 +5695,49 @@ function ahead(dist = 10, side = 0, p = me()) {
   const sy = Math.sin(p.yaw), cy = Math.cos(p.yaw);
   return { x: p.x + sy * dist + cy * side, z: p.z - cy * dist + sy * side };
 }
-function spawn(kind, count = 1, dist = 12, opts) {
+
+// ---- things Claude made or named, so "it" and "the tower" mean something next turn ----
+const things = new Map();            // lower-case name -> thing
+let thingSeq = 0;
+const groupNames = {};
+function thing(name) {
+  const k = String(name).toLowerCase().trim();
+  if (things.has(k)) return things.get(k);
+  for (const [n, t] of things) if (n.includes(k) || k.includes(n)) return t;   // "the tower" finds "big stone tower"
+  throw new Error('Nothing called "' + name + '". Things: ' + ([...things.values()].map(t => t.name).join(', ') || 'none'));
+}
+function remember(name, value, about = '') {
+  name = String(name).trim();
+  const k = name.toLowerCase();
+  const old = things.get(k);
+  if (old && old.mesh && old.mesh !== (value && value.mesh)) freeMesh(old.mesh);
+  let t;
+  if (Array.isArray(value) || (value && value.sp)) t = { name, about, animals: [].concat(value) };
+  else t = Object.assign(value && typeof value === 'object' ? value : {}, { name, about: about || (value && value.about) || '' });
+  t.seq = ++thingSeq; t.turn = claudeTurns;
+  for (const a of t.animals || []) a.group = name;
+  things.set(k, t);
+  return t;
+}
+function rename(oldName, newName) {
+  const t = thing(oldName);
+  things.delete(t.name.toLowerCase());
+  t.name = String(newName).trim();
+  for (const a of t.animals || []) a.group = t.name;
+  things.set(t.name.toLowerCase(), t);
+  return t;
+}
+function forget(name) {
+  const t = thing(name);
+  if (t.mesh) freeMesh(t.mesh);
+  things.delete(t.name.toLowerCase());
+}
+function creature(id) {
+  const a = animals.find(a => a.id === +id);
+  if (!a) throw new Error('No creature #' + id + ' (it may have wandered off or been defeated)');
+  return a;
+}
+function spawn(kind, count = 1, dist = 12, opts, name) {
   if (!SPECIES[kind]) throw new Error('No animal called ' + kind + '. Kinds: ' + Object.keys(SPECIES).join(', '));
   count = Math.max(1, Math.min(40, count | 0));
   const out = [], p = me(), cols = Math.ceil(Math.sqrt(count)), gap = Math.max(2, (SPECIES[kind].radius || 0.6) * 3 * (SPECIES[kind].scale || 1));
@@ -5671,11 +5745,72 @@ function spawn(kind, count = 1, dist = 12, opts) {
     const row = Math.floor(i / cols), col = i % cols;
     const pt = ahead(dist + row * gap, (col - (cols - 1) / 2) * gap + (Math.random() - 0.5) * gap * 0.4, p);
     const a = spawnAnimal(kind, pt.x, pt.z, opts);
-    a.yaw = Math.atan2(p.x - a.x, -(p.z - a.z)) + Math.PI;   // facing the player
+    a.yaw = Math.atan2(p.x - a.x, p.z - a.z);              // facing the player (animals face (sin yaw, cos yaw))
     out.push(a);
   }
+  if (!name) { const plural = count > 1 ? (kind.endsWith('f') ? kind.slice(0, -1) + 'ves' : kind + 's') : kind; groupNames[plural] = (groupNames[plural] || 0) + 1; name = plural + ' ' + groupNames[plural]; }
+  remember(name, out, count + ' ' + kind + (count > 1 ? 's' : '') + ' spawned');
   return out;
 }
+
+// shapes for build(): thin wrappers over the game's own builders, with plain arguments
+const SHAPE_RNG = mulberry32(777);
+function box(g, x, y, z, w, h, d, col) {
+  const x0 = x - w / 2, x1 = x + w / 2, y1 = y + h, z0 = z - d / 2, z1 = z + d / 2;
+  const P = [[x0, y, z0], [x1, y, z0], [x1, y1, z0], [x0, y1, z0], [x0, y, z1], [x1, y, z1], [x1, y1, z1], [x0, y1, z1]];
+  const F = [[0, 3, 2, 1, [0, 0, -1]], [4, 5, 6, 7, [0, 0, 1]], [0, 4, 7, 3, [-1, 0, 0]], [1, 2, 6, 5, [1, 0, 0]], [3, 7, 6, 2, [0, 1, 0]], [0, 1, 5, 4, [0, -1, 0]]];
+  for (const [a, b, c, e, n] of F) {
+    const k = n[1] > 0 ? 1.05 : n[1] < 0 ? 0.6 : n[0] ? 0.92 : 0.98, cc = shade(col, k);
+    tri(g, P[a], P[b], P[c], n, -1, cc, cc, cc, 0, 0, 0);
+    tri(g, P[a], P[c], P[e], n, -1, cc, cc, cc, 0, 0, 0);
+  }
+}
+function egg(g, x, y, z, rx, ry, rz, col) { hiDetail(() => blob(g, x, y, z, rx, ry, rz, col, SHAPE_RNG, 0.05, -1, 0)); }
+function ball(g, x, y, z, r, col) { egg(g, x, y, z, r, r, r, col); }
+function pole(g, p0, p1, r0, r1, col, sides = 8) { tube(g, p0, p1, r0, r1 == null ? r0 : r1, sides, col, SHAPE_RNG, true, 0, 0); }
+function spike(g, x, y, z, r, h, col, sides = 8) {      // a cone; a 4-sided one lines up with box() as a roof
+  let first = true;
+  cone(g, x, y, z, r, y + h, sides, col, () => { if (first) { first = false; return 0.125; } return 0.5; });
+}
+
+function build(name, make, cfg = {}) {
+  const at = cfg.x == null || cfg.z == null ? ahead(12) : null;
+  const t = remember(name, {
+    kind: 'build', make, o: Object.assign({}, cfg.o),
+    x: cfg.x != null ? cfg.x : at.x, z: cfg.z != null ? cfg.z : at.z, y: cfg.y != null ? cfg.y : null,
+    yaw: cfg.yaw != null ? cfg.yaw : Math.PI - me().yaw, scale: cfg.scale != null ? cfg.scale : 1,
+    solid: cfg.solid || 0, hidden: false, mesh: null }, cfg.about || '');
+  thingMesh(t);
+  return t;
+}
+function thingMesh(t) {
+  const g = new Geo(1024);
+  t.make(g, t.o);
+  if (t.mesh) freeMesh(t.mesh);
+  t.mesh = makeMesh(g);
+}
+function rebuild(name, changes) {
+  const t = thing(name);
+  if (!t.make) throw new Error(t.name + ' was not made with build(), so it has no shape to remake');
+  Object.assign(t.o, changes);
+  thingMesh(t);
+  return t;
+}
+function drawThings() {
+  for (const t of things.values()) {
+    if (!t.mesh || t.hidden || Math.hypot(t.x - player.x, t.z - player.z) > FOG_END + 40) continue;
+    const s = t.scale, y = t.y != null ? t.y : groundAt(t.x, t.z);
+    drawMesh(t.mesh, mChain(mT(t.x, y, t.z), mRy(t.yaw), Array.isArray(s) ? mS3(s[0], s[1], s[2]) : mS(s)));
+  }
+}
+// solid things join the trees in nearbyTreesAt, so players, animals and arrows all bump into them
+function solidThingsNear(x, z, fn) {
+  for (const t of things.values()) if (t.solid > 0 && !t.hidden && t.mesh && Math.abs(t.x - x) < 100 && Math.abs(t.z - z) < 100) {
+    const k = Array.isArray(t.scale) ? Math.max(t.scale[0], t.scale[2]) : t.scale;
+    fn(t.x, t.z, t.solid * k, 3);
+  }
+}
+
 function say(text) { feed(String(text)); }
 function addHook(name, fn) { removeHook(name); claudeHooks.push({ name: String(name), fn }); }
 function removeHook(name) { claudeHooks = claudeHooks.filter(h => h.name !== String(name)); }
@@ -5691,8 +5826,7 @@ function giveItem(id) {
   const it = ITEMS[id];
   if (!it) throw new Error('No item called ' + id);
   if (it.type === 'ammo') { for (const k in it.give) give(k, it.give[k]); return; }
-  const i = claudeSpeaker;
-  usePlayer(i);
+  usePlayer(claudeSpeaker);
   owned.add(id);
   if (it.type === 'weapon' || it.type === 'bow') equip.weapon = id;
   else if (it.type === 'armor') equip.armor = id;
@@ -5710,21 +5844,66 @@ function vanish(filter) {
 }
 function heal(p = me()) { p.hp = 100; p.ko = 0; usePlayer(players.indexOf(p)); updateHud(); usePlayer(0); }
 
-// a picture of the moment, so "in front of me", "these wolves" and "more" make sense
-function claudeContext() {
-  const p = me(), near = {};
-  for (const a of animals) {
-    if (a.dead || Math.hypot(a.x - p.x, a.z - p.z) > 80) continue;
-    near[a.kind] = (near[a.kind] || 0) + 1;
+// ---- the snapshot sent with every request ----
+function claudeWhere(p, x, z) {          // "14 m ahead-left"
+  const dx = x - p.x, dz = z - p.z, d = Math.hypot(dx, dz);
+  if (d < 1.5) return 'right here';
+  let rel = Math.atan2(dx, -dz) - p.yaw;
+  rel = Math.atan2(Math.sin(rel), Math.cos(rel)) * 180 / Math.PI;           // 0 = ahead, + = right
+  const a = Math.abs(rel), side = rel > 0 ? 'right' : 'left';
+  const dir = a < 20 ? 'ahead' : a < 65 ? 'ahead-' + side : a < 115 ? 'to the ' + side : a < 160 ? 'behind-' + side : 'behind';
+  return Math.round(d) + ' m ' + dir;
+}
+function claudeLookingAt(p) {
+  // the closest thing to the middle of the speaker's view, within 70 m
+  const cp = Math.cos(p.pitch), fx = Math.sin(p.yaw) * cp, fy = Math.sin(p.pitch), fz = -Math.cos(p.yaw) * cp;
+  const ey = p.feet + EYE;
+  let best = null, bestScore = 0.2;
+  const consider = (x, y, z, r, label) => {
+    const dx = x - p.x, dy = y - ey, dz = z - p.z, d = Math.hypot(dx, dy, dz);
+    if (d > 70 || d < 0.5) return;
+    const along = dx * fx + dy * fy + dz * fz;
+    if (along <= 0) return;
+    const off = Math.sqrt(Math.max(0, d * d - along * along)) - (r * 1.3 + 0.4);   // how far the aim line passes it by
+    const score = off <= 0 ? along * 0.0005 : 0.04 + off / along;               // the nearest thing the line goes through wins; then near misses
+    if (score < bestScore) { bestScore = score; best = label + ', ' + claudeWhere(p, x, z); }
+  };
+  for (const a of animals) if (!a.dead) {
+    const sc = a.sp.scale || 1;
+    consider(a.x, a.y + (a.sp.hitH || 1) * sc * 0.5, a.z, (a.sp.radius || 0.5) * sc, `creature #${a.id} (${a.kind}${a.group ? ', in "' + a.group + '"' : ''})`);
   }
+  for (const t of things.values()) if (t.mesh && !t.hidden) {
+    const s = Array.isArray(t.scale) ? t.scale[1] : t.scale;
+    consider(t.x, (t.y != null ? t.y : groundAt(t.x, t.z)) + 2 * s, t.z, Math.max(1, t.solid || 1) * (Array.isArray(t.scale) ? t.scale[0] : t.scale), `thing "${t.name}"`);
+  }
+  nearbyTreesAt(p.x, p.z, (x, z, r, type) => {
+    if (type === 0 || type === 1) consider(x, groundAt(x, z) + (type ? 0.8 : 3), z, type ? r : r * 4, `${type ? 'a big rock' : 'a tree'} at x ${x.toFixed(0)}, z ${z.toFixed(0)}`);
+  });
+  return best || 'nothing in particular (sky or ground)';
+}
+function claudeContext() {
+  const p = me();
   const s = sample(p.x, p.z);
   const where = p.swimming ? 'swimming' : s.snow > 0.25 ? 'snowy mountains' : s.marsh > 0.3 ? 'marsh' : s.forest > 0.55 ? 'forest' : s.coast > 0.5 ? 'beach' : 'open fields';
+  const near = animals.filter(a => !a.dead && Math.hypot(a.x - p.x, a.z - p.z) < 80)
+    .sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z)).slice(0, 12)
+    .map(a => `#${a.id} ${a.kind} ${claudeWhere(p, a.x, a.z)}${a.group ? ' (' + a.group + ')' : ''}${a.sp !== SPECIES[a.kind] ? ' [changed]' : ''}`);
+  const list = [...things.values()].sort((a, b) => b.seq - a.seq).slice(0, 25).map(t => {
+    if (t.animals) {
+      const alive = t.animals.filter(a => !a.dead && animals.includes(a));
+      const c = alive[0];
+      return `- "${t.name}": ${t.about}; ${alive.length} of ${t.animals.length} still here${c ? ', nearest ' + claudeWhere(p, c.x, c.z) + ', ids ' + alive.slice(0, 8).map(a => '#' + a.id).join(' ') : ''}`;
+    }
+    if (t.mesh !== undefined) return `- "${t.name}": ${t.about || 'a build'}; ${claudeWhere(p, t.x, t.z)}; scale ${JSON.stringify(t.scale)}${t.hidden ? '; hidden' : ''}; o = ${JSON.stringify(t.o).slice(0, 300)}`;
+    return `- "${t.name}": ${t.about}`;
+  });
   const haveMats = Object.keys(mats).filter(k => mats[k] > 0).map(k => k + ' ' + mats[k]).join(', ') || 'none';
   return [
-    `Speaker: player ${claudeSpeaker + 1} of ${players.length}. At x ${p.x.toFixed(1)}, z ${p.z.toFixed(1)}, feet y ${p.feet.toFixed(1)}, yaw ${p.yaw.toFixed(2)}, health ${Math.round(p.hp)}. In: ${where}.`,
-    `Creatures within 80 m: ${Object.keys(near).map(k => near[k] + ' ' + k).join(', ') || 'none'}. Total creatures loaded: ${animals.length}.`,
-    `Enemies setting: ${settings.animals ? 'on' : 'off'}. Materials: ${haveMats}.`,
-    `Running hooks: ${claudeHooks.map(h => h.name).join(', ') || 'none'}.`,
+    `Speaker: player ${claudeSpeaker + 1} of ${players.length}, at x ${p.x.toFixed(1)}, z ${p.z.toFixed(1)}, feet y ${p.feet.toFixed(1)}, yaw ${p.yaw.toFixed(2)}, health ${Math.round(p.hp)}, in ${where}.`,
+    `LOOKING AT: ${claudeLookingAt(p)}.`,
+    `THINGS (newest first):\n${list.join('\n') || '- none yet'}`,
+    `Nearby creatures: ${near.join('; ') || 'none'}.`,
+    `Enemies setting: ${settings.animals ? 'on' : 'off'}. Materials: ${haveMats}. Running hooks: ${claudeHooks.map(h => h.name).join(', ') || 'none'}.`,
   ].join('\n');
 }
 
@@ -5736,11 +5915,11 @@ function claudeShow(html, cls, ms) {
   if (ms) claudeHideT = setTimeout(() => { claudeBox.hidden = true; }, ms);
 }
 
-// One turn through serve.py. onText gets the reply as it streams in; resolves to the final text.
+// One turn of the conversation through serve.py. onText gets the reply as it streams in; resolves to the final text.
 async function claudeCall(model, message, onText) {
   const system = CLAUDE_SYSTEM.replace('%ESCALATE%', model === 'haiku' ? CLAUDE_ESC_HAIKU : CLAUDE_ESC_SONNET);
   const resp = await fetch('/api/claude', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ system, message, model, read: model !== 'haiku' }) });
+    body: JSON.stringify({ system, message, model, read: model !== 'haiku', session_id: claudeSession }) });
   if (!resp.ok || !resp.body) throw new Error('Claude server said ' + resp.status);
   const reader = resp.body.getReader(), dec = new TextDecoder();
   let buf = '', text = '', final = null, err = null;
@@ -5753,11 +5932,12 @@ async function claudeCall(model, message, onText) {
       const line = buf.slice(0, nl).trim(); buf = buf.slice(nl + 1);
       if (!line) continue;
       let ev; try { ev = JSON.parse(line); } catch (e) { continue; }
+      if (ev.session_id && !ev.is_error) claudeSession = ev.session_id;
       if (ev.type === 'stream_event' && ev.event) {
         const e = ev.event;
         if (e.type === 'content_block_delta' && e.delta && e.delta.type === 'text_delta') { text += e.delta.text; onText && onText(text, null); }
         else if (e.type === 'content_block_start' && e.content_block && e.content_block.type === 'tool_use') { text = ''; onText && onText('', e.content_block.name); }
-      } else if (ev.type === 'result') { if (ev.is_error) err = ev.result || 'Claude had a problem'; else final = ev.result; }
+      } else if (ev.type === 'result') { if (ev.is_error) err = ev.result || (ev.errors || []).join(' ') || 'Claude had a problem'; else final = ev.result; }
       else if (ev.type === 'server_error') err = ev.error;
     }
   }
@@ -5767,8 +5947,8 @@ async function claudeCall(model, message, onText) {
 
 function claudeParse(reply) {
   const codes = [];
-  const say = reply.replace(/```(?:js|javascript)?\s*\n?([\s\S]*?)```/gi, (m, c) => { codes.push(c); return ''; }).trim();
-  return { say: say.split('\n').filter(Boolean)[0] || '', code: codes.join('\n') };
+  const words = reply.replace(/```(?:js|javascript)?\s*\n?([\s\S]*?)```/gi, (m, c) => { codes.push(c); return ''; }).trim();
+  return { say: words.split('\n').filter(Boolean)[0] || '', code: codes.join('\n'), hasCode: codes.length > 0 };
 }
 const claudeSpoken = t => esc(claudeParse(t.replace(/```[\s\S]*$/, '')).say);   // the kid-facing sentence, hiding half-written code
 
@@ -5783,34 +5963,40 @@ async function askClaude(said, who) {
   if (!said || claudeBusy) return;
   claudeBusy = true;
   claudeSpeaker = who | 0;
+  claudeTurns++;
   claudeEl.classList.add('busy');
   const heard = `<span class="heard">“${esc(said)}”</span><br>`;
-  const history = claudeLog.slice(-5).map(h => `Kid said: "${h.said}"\nYou did:\n${h.code.slice(0, 1200)}`).join('\n\n');
-  const prompt = (history ? 'EARLIER THIS GAME (oldest first):\n' + history + '\n\n' : '') + 'RIGHT NOW:\n' + claudeContext() + '\n\nKid says: "' + said + '"';
-  let model = 'haiku', reply = '', note = '';
+  const prompt = 'RIGHT NOW:\n' + claudeContext() + '\n\nKid says: "' + said + '"';
+  let reply = '', note = '';
   const live = (t, tool) => claudeShow(heard + (tool ? '🔎 Looking through the game…' : t ? claudeSpoken(t) || '✨ …' : note || '🤔 Thinking…'));
+  const call = async (model, msg) => {
+    try { return await claudeCall(model, msg, live); }
+    catch (e) {
+      if (!claudeSession || !/session|conversation|resume/i.test(e.message)) throw e;
+      claudeSession = null;                    // the thread is gone (server restarted?): start a fresh one
+      return claudeCall(model, msg, live);
+    }
+  };
   try {
     live('');
-    reply = await claudeCall(model, prompt, live);
+    reply = await call('haiku', prompt);
     if (/^\s*ESCALATE\b/.test(reply)) {
-      model = 'sonnet'; note = '🧠 That’s a big one. Thinking harder…'; live('');
-      reply = await claudeCall(model, prompt, live);
+      note = '🧠 That’s a big one. Thinking harder…'; live('');
+      reply = await call('sonnet', 'You are the smarter helper now; the quick helper handed you the kid\'s request above. Do it.');
     }
-    let { say: line, code } = claudeParse(reply);
+    let { say: line, code, hasCode } = claudeParse(reply);
     try {
       await claudeRun(code);
     } catch (e) {
       note = '🔧 Fixing a little mistake…'; live('');
-      model = 'sonnet';
-      reply = await claudeCall(model, prompt + '\n\nYour first try was:\n```js\n' + code + '\n```\nIt failed with: ' + (e && e.message || e) +
-        '\nAnything that already ran has happened (it may have partly worked). Write code that finishes the job correctly.', live);
-      ({ say: line, code } = claudeParse(reply));
+      reply = await call('sonnet', 'You are the smarter helper now. That code failed with: ' + (e && e.message || e) +
+        '\nAnything before the error already ran (it may have partly worked). Write code that finishes the job correctly.');
+      ({ say: line, code, hasCode } = claudeParse(reply));
       await claudeRun(code);
     }
-    claudeLog.push({ said, code });
-    if (claudeLog.length > 8) claudeLog.shift();
-    claudeShow(heard + esc(line || 'Done!'), '', 7000);
-    tone('sine', 660, 990, 0.18, 0.06); tone('sine', 990, 1320, 0.2, 0.05, 0.1);
+    claudeShow(heard + esc(line || 'Done!'), '', hasCode ? 7000 : 15000);   // a question stays up longer
+    if (hasCode) { tone('sine', 660, 990, 0.18, 0.06); tone('sine', 990, 1320, 0.2, 0.05, 0.1); }
+    else tone('sine', 520, 700, 0.2, 0.05);
   } catch (e) {
     console.warn('Claude:', e, '\nreply was:', reply);
     claudeShow(heard + '<span class="err">Oops, that didn’t work. Try saying it another way?</span>', '', 7000);

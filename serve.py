@@ -5,14 +5,18 @@
 
 Serves the repo like `python3 -m http.server`, plus one extra endpoint:
 
-    POST /api/claude   {"system": str, "message": str, "model": "haiku"|"sonnet", "read": bool}
+    POST /api/claude   {"system": str, "message": str, "model": "haiku"|"sonnet", "read": bool,
+                        "session_id": str|null}
 
 It runs one turn through the local `claude` CLI (your Claude Code login, no API
 key) and streams the CLI's stream-json output back as NDJSON, one event per
 line. The game supplies its own system prompt, so this server knows nothing
 about any one game. `read: true` lets Claude Read/Grep files inside the game's
 folder (the folder named by the request's Referer), nothing else; otherwise it
-gets no tools at all.
+gets no tools at all. Pass back the session_id from the last turn's events to
+continue the same conversation (one thread, any model); leave it out to start
+a new one. The system prompt is sent fresh on every turn, so each model in the
+thread gets its own instructions.
 
     GET /api/claude/ping  -> {"ok": true}   (games use it to show their Claude panel)
 
@@ -117,7 +121,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                "--model", model,
                "--strict-mcp-config",            # none of your MCP servers: faster start, nothing to reach
                "--setting-sources", "",          # no hooks, no CLAUDE.md, no memory
-               "--no-session-persistence"]
+               "--system-prompt-snapshot", "off"]   # each turn's own system prompt, even on resume
+        session_id = (payload.get("session_id") or "").strip()
+        if session_id:
+            if not all(c.isalnum() or c == "-" for c in session_id):
+                self.send_error(400, "bad session_id")
+                return
+            cmd += ["--resume", session_id]
         if system:
             cmd += ["--system-prompt", system]
         if payload.get("read"):
