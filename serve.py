@@ -137,7 +137,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
         try:
             proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE, cwd=str(cwd), start_new_session=True)
+                                    stderr=subprocess.PIPE, cwd=str(cwd),
+                                    **({"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}
+                                       if os.name == "nt" else {"start_new_session": True}))
         except OSError as e:
             self.send_error(500, "could not start claude: %s" % e)
             return
@@ -148,8 +150,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         def kill():
             if proc.poll() is None:
                 try:
-                    os.killpg(proc.pid, signal.SIGTERM)
-                except (ProcessLookupError, PermissionError):
+                    if os.name == "nt":
+                        # Windows has no process groups to signal: end claude and its children.
+                        subprocess.run(["taskkill", "/T", "/F", "/PID", str(proc.pid)],
+                                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    else:
+                        os.killpg(proc.pid, signal.SIGTERM)
+                except (ProcessLookupError, PermissionError, OSError):
                     pass
 
         self.send_response(200)
