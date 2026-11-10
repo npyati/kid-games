@@ -125,7 +125,7 @@ button:disabled{opacity:.55;cursor:default}
   <div class="panel wide">
     <div class="top"><h2>How to play</h2><button class="back" data-go="title">Back</button></div>
     <div class="howto">
-      <div><b class="h">Race</b>Your chicken runs by itself. Race three rival chickens to the finish flag and try to come 1st! Each world has its own rivals.</div>
+      <div><b class="h">Race</b>Your chicken runs by itself. Race three rival chickens to the finish flag and try to come 1st! Each world has its own rivals. They trip on things and grab eggs too, so watch them zoom, stink or get soggy!</div>
       <div><b class="h">Jump and flap</b>Press <b>Space</b>, the <b>Up arrow</b>, or <b>tap</b> the screen to jump. Press again in the air to flap higher.</div>
       <div><b class="h">Xbox controller</b>Press <b>A</b> (or any face button) to jump and flap. <b>Start</b> pauses. In menus, use the stick or d-pad to move, <b>A</b> to choose and <b>B</b> to go back. <b>LB</b> and <b>RB</b> flip pages of worlds and skins.</div>
       <div><b class="h">Bumps</b>Bumping into something makes you stumble, which costs time. Finish fast to earn more stars, and finish 1st, 2nd or 3rd for extra bonus coins.</div>
@@ -316,7 +316,7 @@ const ITEMS = {
   corn:   { good:true,  name:'Speed Corn',  dur:5, desc:'Run super fast for 5 seconds' },
   wings:  { good:true,  name:'Wings',       dur:6, desc:'Flap as much as you want for 6 seconds' },
   magnet: { good:true,  name:'Coin Magnet', dur:8, desc:'Pulls coins to you for 8 seconds' },
-  shield: { good:true,  name:'Shield Egg',  dur:0, desc:'Blocks your next bump' },
+  shield: { good:true,  name:'Shield Egg',  dur:0, desc:'Blocks your next bump or bad egg' },
   rotten: { good:false, name:'Rotten Egg',  dur:5, desc:'Makes you slow for 5 seconds' },
   cloud:  { good:false, name:'Rain Cloud',  dur:5, desc:'No flapping for 5 seconds' },
 };
@@ -1534,7 +1534,7 @@ function startRun(mi){
     raceT: 0, place: 1,
     rivals: (m.rivals || RIVALS[m.id]).map(([name, skin, mult, trip], i) => ({
       name, skin, mult, trip, lane: 3 - i, x: START_X, y: 0, vy: 0, onGround: true, speed: 0, phase: i, flap: 0,
-      stun: 0, boost: 0, slow: 0, nextBoost: 4 + Math.random() * 6, plan: new Map(), hits: new Set(),
+      stun: 0, boost: 0, slow: 0, stink: 0, wings: 0, cloud: 0, magnet: 0, shield: false, got: new Set(), nextBoost: 4 + Math.random() * 6, plan: new Map(), hits: new Set(),
       finished: false, finishT: 0, ahead: false, lastMsg: -9, rng: mulberry32((Math.random() * 1e9) | 0),
     })),
   };
@@ -1548,6 +1548,7 @@ function startRun(mi){
 function updateRival(v, dt, r){
   const m = r.m, c = r.c;
   v.stun = Math.max(0, v.stun - dt); v.boost = Math.max(0, v.boost - dt); v.slow = Math.max(0, v.slow - dt); v.flap = Math.max(0, v.flap - dt);
+  v.stink = Math.max(0, v.stink - dt); v.wings = Math.max(0, v.wings - dt); v.cloud = Math.max(0, v.cloud - dt); v.magnet = Math.max(0, v.magnet - dt);
   // now and then a rival finds a burst of speed
   v.nextBoost -= dt;
   if (v.nextBoost <= 0 && !v.finished) { v.boost = 2; v.nextBoost = 9 + v.rng() * 7; }
@@ -1565,8 +1566,9 @@ function updateRival(v, dt, r){
     const look = (key, front, back, closing) => {
       if (back < v.x - 12 || front - (v.x + 12) > 160) return false;
       let p = v.plan.get(key);
-      if (!p) { p = { miss: v.rng() < v.trip, lead: 0.11 + v.rng() * 0.09 }; v.plan.set(key, p); }
-      return !p.miss && front - (v.x + 12) < closing * p.lead;
+      // a soggy rain cloud makes rivals clumsy; magic wings mean they never miss
+      if (!p) { p = { miss: v.rng() < v.trip + (v.cloud > 0 ? 0.35 : 0), lead: 0.11 + v.rng() * 0.09 }; v.plan.set(key, p); }
+      return (!p.miss || v.wings > 0) && front - (v.x + 12) < closing * p.lead;
     };
     let jump = false;
     for (const o of r.obstacles) {
@@ -1575,6 +1577,8 @@ function updateRival(v, dt, r){
       if (look(o, front, back, v.speed + (o.roll && o.active ? 95 : 0))) { jump = true; break; }
     }
     if (!jump) for (const p of r.puddles) if (!v.hits.has(p) && look(p, p.x, p.x + p.w, v.speed)) { jump = true; break; }
+    // bad eggs on the ground: jump over them (or trip into them)
+    if (!jump) for (const it of r.items) if (!ITEMS[it.type].good && it.y < 60 && !v.got.has(it) && look(it, it.x - 16, it.x + 16, v.speed)) { jump = true; break; }
     if (jump) { v.vy = m.v0; v.onGround = false; }
   }
   if (!v.onGround) {
@@ -1589,9 +1593,29 @@ function updateRival(v, dt, r){
       let hit = false;
       if (o.roll) { if (Math.abs(o.x - v.x) < 60) { const oy = o.r + (o.bounce || 0); hit = Math.hypot(o.x - clamp(o.x, cl, cr), oy - clamp(oy, cb, ct)) < o.r - 4; } }
       else if (cr > o.x + 6 && cl < o.x + o.w - 6 && cb < o.h - 5) hit = true;
-      if (hit) { v.hits.add(o); v.stun = 0.55; v.speed = -60; v.vy = 250; v.onGround = false; v.boost = 0; }
+      if (hit) {
+        v.hits.add(o);
+        if (v.shield) { v.shield = false; rivalSay(v, 'Shield!', '#7fd4ff', true); rivalBurst(v, 12, { color: ['#7fd4ff', '#ffffff'], speed: 200, spread: Math.PI * 2, life: 0.5, g: 0 }); continue; }
+        v.stun = 0.55; v.speed = -60; v.vy = 250; v.onGround = false; v.boost = 0;
+        rivalSay(v, pick1(['Bawk!', 'Oof!', 'Bonk!', 'Ouch!']), '#ffd23f', true);
+        const sk = skinById(v.skin);
+        rivalBurst(v, 8, { color: [sk.body, sk.wing], kind: 'feather', speed: 160, spread: Math.PI * 2, life: 1, size: 4, g: 80 });
+      }
     }
-    for (const p of r.puddles) if (!v.hits.has(p) && v.onGround && v.x > p.x + 10 && v.x < p.x + p.w - 10) { v.hits.add(p); v.slow = 3; v.boost = 0; }
+    for (const p of r.puddles) if (!v.hits.has(p) && v.onGround && v.x > p.x + 10 && v.x < p.x + p.w - 10) {
+      v.hits.add(p); v.slow = 3; v.boost = 0;
+      rivalSay(v, pick1(['Sticky!', 'Splat!', 'Eww!']), '#ffe9b0');
+      if (rivalOnScreen(v)) burst(v.x, 4, 8, { color: [m.puddle.color, m.puddle.shine], speed: 140, spread: 1.6, life: 0.5, size: 4, g: 600 });
+    }
+    // eggs: rivals grab them too (the egg stays there for you)
+    for (const it of r.items) {
+      if (v.got.has(it) || Math.abs(it.x - v.x) > 40) continue;
+      if (it.x + 14 > cl - 4 && it.x - 14 < cr + 4 && it.y + 14 > cb - 2 && it.y - 14 < ct + 4) {
+        v.got.add(it);
+        // rivals run in the back lanes, so they only grab about half the good eggs (keeps races fair)
+        if (!ITEMS[it.type].good || v.rng() < 0.5) rivalItem(v, it);
+      }
+    }
     if (v.x >= r.L) { v.finished = true; v.finishT = r.raceT; }
   }
   // "You passed ...!" messages
@@ -1599,6 +1623,31 @@ function updateRival(v, dt, r){
     const d = v.x - c.x;
     if (v.ahead && d < -20) { v.ahead = false; if (clock - v.lastMsg > 1.5) { v.lastMsg = clock; popup('You passed ' + v.name + '!', c.x, c.y + 84, '#8fe36b', 16); } }
     else if (!v.ahead && d > 20) { v.ahead = true; if (clock - v.lastMsg > 1.5 && r.raceT > 1) { v.lastMsg = clock; popup(v.name + ' passed you!', c.x, c.y + 84, '#ffb3b3', 14); } }
+  }
+}
+// rivals' reactions only show (and only make noise) when you can see them
+function rivalOnScreen(v){ const d = v.x - run.c.x; return d > -viewW * 0.26 - 40 && d < viewW * 0.74 + 40; }
+function rivalSay(v, text, color, loud){
+  if (!rivalOnScreen(v)) return;
+  popup(text, v.x + 4, v.y + v.lane * 8 + 92, color, 15);
+  if (loud) sfx(text === 'Shield!' || text === 'Blocked!' ? 'shield' : 'bawk');
+}
+function rivalBurst(v, n, opts){ if (rivalOnScreen(v)) burst(v.x, v.y + v.lane * 8 + 24, n, opts); }
+function rivalItem(v, it){
+  const info = ITEMS[it.type];
+  if (info.good) {
+    if (it.type === 'corn') { v.boost = 3; v.slow = 0; v.stink = 0; rivalSay(v, 'Zoom!', '#ffd23f'); }
+    if (it.type === 'wings') { v.wings = 6; v.cloud = 0; rivalSay(v, 'Wings!', '#ffffff'); }
+    if (it.type === 'magnet') { v.magnet = 8; rivalSay(v, 'Magnet!', '#ff8a8a'); }
+    if (it.type === 'shield') { v.shield = true; rivalSay(v, 'Shield on!', '#7fd4ff'); }
+    rivalBurst(v, 10, { color: ['#ffd23f', '#fff3a6', '#ffffff'], speed: 180, spread: Math.PI * 2, life: 0.5, g: 0, kind: 'star', size: 3 });
+  } else if (v.shield) {
+    v.shield = false; rivalSay(v, 'Blocked!', '#7fd4ff', true);
+    rivalBurst(v, 12, { color: ['#7fd4ff', '#ffffff'], speed: 200, spread: Math.PI * 2, life: 0.5, g: 0, kind: 'star', size: 3 });
+  } else {
+    if (it.type === 'rotten') { v.slow = 5; v.stink = 5; v.boost = 0; rivalSay(v, 'Pee-yew!', '#b9f08a', true); }
+    if (it.type === 'cloud') { v.cloud = 5; v.wings = 0; rivalSay(v, 'Soggy!', '#c9b6ff', true); }
+    rivalBurst(v, 10, { color: ['#9aa36b', '#7fd36b', '#b48cff'], speed: 140, spread: Math.PI * 2, life: 0.6, g: 200 });
   }
 }
 /* ---------------- Secret cheat: "the chicken dance" ----------------
@@ -1704,6 +1753,11 @@ function collectItem(it){
     if (it.type === 'magnet') { e.magnet = 8; popup('Coin magnet!', it.x, it.y + 40, '#ff8a8a'); }
     if (it.type === 'shield') { e.shield = true; popup('Shield on!', it.x, it.y + 40, '#7fd4ff'); }
     burst(it.x, it.y, 14, { color: ['#ffd23f', '#fff3a6', '#ffffff'], speed: 200, spread: Math.PI * 2, life: 0.6, g: 0, kind: 'star', size: 4 });
+  } else if (e.shield) {
+    // the shield blocks a bad egg just like it blocks a bump
+    e.shield = false; c.inv = Math.max(c.inv || 0, 0.5); sfx('shield'); rumble(0.3, 0.3, 90);
+    popup('Shield! Blocked the ' + info.name + '!', it.x, it.y + 40, '#7fd4ff');
+    burst(it.x, it.y, 14, { color: ['#7fd4ff', '#ffffff'], speed: 200, spread: Math.PI * 2, life: 0.6, g: 0, kind: 'star', size: 4 });
   } else {
     sfx('bad');
     rumble(0.15, 0.6, 160);
@@ -1943,7 +1997,19 @@ function render(){
     ctx.fillStyle = 'rgba(0,0,0,.14)'; ctx.beginPath(); ctx.ellipse(x, lg + 1, 14 * k, 3.5, 0, 0, 7); ctx.fill();
     ctx.save(); ctx.translate(x, lg - v.y * k); ctx.scale(k, k);
     if (v.boost > 0) { ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 2; for (let i = 0; i < 3; i++) { const ly = -12 - i * 10, lx = -28 - ((t * 400 + i * 37) % 30); ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx - 16, ly); ctx.stroke(); } }
+    if (v.wings > 0) {
+      const f = Math.sin(t * 20 + v.lane) * 0.5;
+      ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.strokeStyle = '#9fb7e0'; ctx.lineWidth = 1.5;
+      ctx.save(); ctx.translate(-6, -34); ctx.rotate(-0.6 + f); ctx.beginPath(); ctx.ellipse(-14, 0, 16, 7, 0, 0, 7); ctx.fill(); ctx.stroke(); ctx.restore();
+    }
     drawChicken(ctx, skinById(v.skin), { t: t + v.lane, phase: v.phase, air: !v.onGround, stun: v.stun, stand: r.countdown > 0 || (v.finished && v.speed < 20) });
+    if (v.shield) { ctx.strokeStyle = `rgba(127,212,255,${0.6 + Math.sin(t * 6) * 0.25})`; ctx.fillStyle = 'rgba(127,212,255,.15)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(2, -28, 34, 0, 7); ctx.fill(); ctx.stroke(); }
+    if (v.magnet > 0) { ctx.strokeStyle = `rgba(255,120,120,${0.25 + 0.2 * Math.sin(t * 8)})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, -24, 44 + (t * 60) % 26, 0, 7); ctx.stroke(); }
+    if (v.stink > 0) { // green stink wiggles from the rotten egg
+      ctx.strokeStyle = 'rgba(150,220,90,.75)'; ctx.lineWidth = 2.5;
+      for (let i = 0; i < 3; i++) { const sx = -30 + i * 9, rise = (t * 20 + i * 7) % 14; ctx.beginPath(); for (let j = 0; j <= 4; j++) { const yy = -30 - rise - j * 4; const xx = sx + Math.sin(j * 1.3 + t * 6 + i) * 3; j ? ctx.lineTo(xx, yy) : ctx.moveTo(xx, yy); } ctx.stroke(); }
+    }
+    if (v.cloud > 0) { ctx.save(); ctx.translate(40, -60); drawItem(ctx, 'cloud', t, false); ctx.restore(); }
     ctx.font = '800 12px Nunito, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(21,18,63,.8)'; ctx.strokeText(v.name, 4, -74); ctx.fillStyle = '#fff5dc'; ctx.fillText(v.name, 4, -74);
     ctx.restore();

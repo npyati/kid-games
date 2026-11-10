@@ -74,7 +74,8 @@ How they race (all in `RIVALS` and `updateRival`):
 - Each rival has a speed (0.88–1.04× normal) and a chance to trip on each obstacle or puddle. Tripping costs them the same stumble or slow-down you get.
 - Every 9–16 seconds a rival gets a 2-second burst at 1.3× speed.
 - To keep the race close, a rival more than 40 m ahead eases off to 0.9×, and one more than 90 m behind speeds up to 1.04×.
-- Rivals don't take coins or power-ups, and they run through obstacles you've already knocked over.
+- Rivals react to everything they run into: they say "Bonk!" and lose feathers on a bump, splash in puddles, and grab eggs too. Effects on rivals (`rivalItem`): Speed Corn is a 3 s burst at 1.3×, Wings mean they never trip for 6 s, Shield Egg blocks their next bump or bad egg, Rotten Egg slows them to 0.6× for 5 s with green stink, Rain Cloud makes them much more likely to trip for 5 s, and Coin Magnet just shows its ring. Effects show on the rival (wings, bubble, ring, stink, cloud). Popups and sounds only happen when the rival is on screen.
+- Rivals only grab about half of the good eggs they run past, and jump over bad eggs on the ground (with their usual chance to trip). Eggs they grab stay there for you. They don't take coins, and they run through obstacles you've already knocked over.
 - Bot testing (8 races per world): good play wins every world. Middling play wins the early worlds and comes 2nd or 3rd on the Moon. Sloppy play finishes 1st or 2nd early on and lower in later worlds.
 
 ## Power-ups
@@ -86,7 +87,7 @@ Good ones glow gold; yucky ones glow purple.
 | Speed Corn | 1.6× speed for 5 s (also cures Rotten Egg) |
 | Wings | unlimited flaps and a gentle glide for 6 s |
 | Coin Magnet | pulls nearby coins in for 8 s |
-| Shield Egg | blocks the next bump |
+| Shield Egg | blocks the next bump or bad egg (Rotten Egg or Rain Cloud) |
 | Rotten Egg (bad) | 0.6× speed for 5 s |
 | Rain Cloud (bad) | no flapping for 5 s |
 | Puddles (bad) | mud, swamp, quicksand, slush, syrup or goo: slow for 3 s |
