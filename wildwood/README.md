@@ -1,14 +1,14 @@
 # Wildwood
 
-A 3D exploring game. You walk through a forest that goes on forever: pines, birches, leafy trees, ferns, tall grass, flowers, mushrooms and rocks. Every few minutes of walking you reach a river or a lake, and you can wade in and swim. There are also icy mountains, the ocean with sandy beaches, muddy marshes, rocky caves, and very rarely, a dragon's lair.
+A 3D exploring game. You walk through a forest that goes on forever: pines, birches, leafy trees, ferns, tall grass, flowers, mushrooms and rocks. Every few minutes of walking you reach a river or a lake, and you can wade in, swim, and dive down under the water. There are also icy mountains, the ocean with sandy beaches, muddy marshes, rocky caves, and very rarely, a dragon's lair.
 
 **Play it:** https://npyati.github.io/kid-games/wildwood/
 
 ## Controls
 
-- **Xbox controller:** left stick to walk, right stick to look, RT (or RB) to swing or shoot, LB to block with a shield (you can keep swinging or shooting while you block), D-pad right to swap between your sword and your bow, D-pad left to take your shield out or put it away, A to jump, LT (or click the left stick) to run, X to feed or ride a horse, Start to open the menu. Hold RT to keep swinging. In the menu, use the stick or d-pad and press A to choose, or B to go back.
+- **Xbox controller:** left stick to walk, right stick to look, RT (or RB) to swing or shoot, LB to block with a shield (you can keep swinging or shooting while you block), D-pad right to swap between your sword and your bow, D-pad left to take your shield out or put it away, A to jump (in deep water: hold A to swim up, B to swim down), LT (or click the left stick) to run, X to feed or ride a horse, Start to open the menu. Hold RT to keep swinging. In the menu, use the stick or d-pad and press A to choose, or B to go back.
 - **Nintendo Switch Pro Controller** (or both Joy-Cons joined together): the same controls, with Nintendo's names: ZR to swing or shoot, L to block, ZL to run, + for the menu. The game matches buttons by letter, so A (on the right on Nintendo controllers) jumps and chooses, B goes back, Y opens the backpack, just like on Xbox. The hints and menu help switch to Nintendo names when one is plugged in. A single Joy-Con has only one stick, so the game asks for both or a Pro Controller. Tested in Chrome with a pretend controller.
-- **Keyboard and mouse:** WASD to walk, mouse to look (click the game to grab the mouse), click or F to swing or shoot, right-click or Q to block (you can still swing while blocking), 1 / 2 / 3 for sword / bow / shield on-off, Space to jump, Shift to run, R to feed or ride a horse, Esc for the menu. Arrow keys work too.
+- **Keyboard and mouse:** WASD to walk, mouse to look (click the game to grab the mouse), click or F to swing or shoot, right-click or Q to block (you can still swing while blocking), 1 / 2 / 3 for sword / bow / shield on-off, Space to jump (in deep water: hold Space to swim up, C to swim down), Shift to run, R to feed or ride a horse, Esc for the menu. Arrow keys work too.
 
 ## Two players (split screen)
 
@@ -42,7 +42,7 @@ The boss music, the dragon's roar, tail whip, air-only fire, glide, white spikes
 
 **Dragonlings** are neutral too: part goblin, part dragon (red scales, little horns and wings, a spear, and a green tunic with a rope belt and a yellow scarf). They live in camps in forests (the nearest is usually about 450 m away when you're in a forest): nest huts, a campfire, a dragon-head totem and a little gold. Camp creatures (goblins and dragonlings) walk around their campfire, not through it. Leave them alone and they leave you alone; hit one and the whole camp fights back with spears (7) and little puffs of fire (2 every ⅕ second). 20 health; when you beat one it doesn't fall over: it drops 2 gems (and sometimes iron) and runs away into the forest. New ones move in 4 minutes after a camp is beaten.
 
-**Fish** swim in rivers and lakes, just under the surface, and now and then one jumps out with a splash: silver trout with a pink stripe, orange sunfish, blue striped bluegills, and (rarely, about 1 in 16) a golden fish. They dart away if you get very close, but they don't fight back. One hit (two with fists) catches one: it flips belly up and leaves fish scales floating on the water (a golden fish leaves a golden scale, a fish scale and 2 gems). Up to 8 are around you at a time when you're near water. Fish stay even with **Enemies: off**.
+**Fish** swim in rivers, lakes and the ocean, some near the top and some down deep (dive to find them), and now and then one near the top jumps out with a splash. In rivers and lakes: silver trout with a pink stripe, orange sunfish, blue striped bluegills, and (rarely, about 1 in 16) a golden fish. They dart away if you get very close, but they don't fight back. One hit (two with fists) catches one: it flips belly up and leaves fish scales floating on the water (a golden fish leaves a golden scale, a fish scale and 2 gems). In the ocean there are orange stripefish with white stripes and dark-blue bluefins with yellow fins (and golden fish there too). Up to 8 are around you at a time when you're near water, 12 when you're under the water. Fish stay even with **Enemies: off**.
 
 **Goats** live in the mountains and are neutral: they leave you alone unless you hit one, then that one and its herd headbutt you (12 health, 6 damage, a big knockback; they drop fur).
 
@@ -51,9 +51,9 @@ The boss music, the dragon's roar, tail whip, air-only fire, glide, white spikes
 | Wolf | 15 | 9 | packs of 2 or 3, mostly in forests | 1 gem, usually 1 fur, sometimes 1 iron |
 | Bear | 20 | 16 | lives by a cave and comes back 2 minutes after it's beaten | 3 gems, 2 iron, 2 fur |
 | Crocodile | 30 | 12 bite, 10 tail whip | in rivers (up to 3 at a time, they spawn in the water near you); they float with just their back showing and come out onto land; the tail whip hits you if you're behind it | 1 croc skin, 1 gem |
-| Shark | 45 | 9 | the ocean (up to 2 at a time); you see its fin sticking out of the water. It only comes after you when you're in the water, and it can't come into the shallows | 2 shark teeth, 2 gems |
+| Shark | 45 | 9 | the ocean (up to 2 at a time); you see its fin sticking out of the water. It only comes after you when you're in the water, and it can't come into the shallows. If you dive, it dives down after you | 2 shark teeth, 2 gems |
 | Goblin | 18 | 8 axe chop | in camps out in open fields (3 to 5 per camp, they come as a gang); camps come back 4 minutes after they're cleared | 3 gems, sometimes iron or wood; 1 in 4 drop their crude goblin axe; clearing a camp leaves 6 gems, 2 iron and an apple by the fire |
-| Leviathan (boss) | 1700 | 30 bite, 20 tail whip, water spray | big lakes only (never the ocean); a huge purple sea serpent (about 40 m long) with a blue belly, two pairs of big curved horns and two pairs of wings on its back; rears up out of the water to fight, lunges its head out to bite from up to 11 m, and sprays water from its open mouth from up to 48 m away; comes back 5 minutes after it's beaten | 30 gems, 4 iron, 3 apples |
+| Leviathan (boss) | 1700 | 30 bite, 20 tail whip, water spray | big lakes only (never the ocean); a huge purple sea serpent (about 40 m long) with a blue belly, two pairs of big curved horns and two pairs of wings on its back; rears up out of the water to fight, if you dive, it follows you down and swims 1.6 times as fast under the water (9.6 m/s, faster than you can sprint swim), with all the same attacks; lunges its head out to bite from up to 11 m, and sprays water from its open mouth from up to 48 m away; comes back 5 minutes after it's beaten | 30 gems, 4 iron, 3 apples |
 | Ice ogre (mini-boss) | 400 | 22 club smash; frost slam | snowy mountains, and easy to find: a few seconds after you reach the snow, one shows up 22–40 m away where you can see it (usually right in front of you), with a "🧊 An ice ogre is nearby!" message, and walks toward you. A new one comes 1 minute after you beat one; same as an ogre but with bluish-white skin and an ice club. Its frost slam sends a line of ice spikes racing along the ground at you: 15 damage and you're frozen (slow) for 3 seconds | 10 gems, 2 iron, 2 frost crystals, 1 apple |
 | Ogre (mini-boss) | 300 | 20, a big club smash | wanders forests now and then (about a 1 in 3 chance per minute in a forest), comes back 2½ minutes after it's beaten; slower than you when you run | 8 gems, 2 iron, 2 fur, 1 apple |
 | Giant snake (boss) | 600 | 18 bite, 12 tail whip | marshes; it can swim (about 16 m long); opens its jaw wide and snaps, and whips its tail at you if you're near the tail | 15 gems, 3 iron, 2 apples, 2 giant fangs |
@@ -62,7 +62,7 @@ The boss music, the dragon's roar, tail whip, air-only fire, glide, white spikes
 - Enemies wander until they spot you (they see farther in front of them). Then a health bar pops up over their head, they chase you, and they bite when they're close. Bosses get a big health bar across the top of the screen instead.
 - **One boss at a time:** an ogre, ice ogre, giant snake or Leviathan only shows up when no other boss is within 200 m, and not until 30 seconds after the last boss was beaten or left. While one boss is after you, other bosses (sleeping dragons too) don't notice you, unless you hit them.
 - Wolf packs are a bit less common than they used to be: about 1 in 5 animal groups in forests, 1 in 10 in open country and about 1 in 8 up in the mountains.
-- You run faster than all of them. Wolves and bears can't swim, so jumping in water is a good escape. Snakes can swim.
+- You run faster than all of them. Wolves and bears can't swim, so jumping in water is a good escape. Snakes and crocodiles can swim, but they stay at the top: dive under and they can't bite you.
 - The dragon wakes up when you come within about 40 m. Up close it opens its jaws wide and bites. From farther away it breathes fire (step sideways out of the flames). If you're beside or behind it, it swings its tail around at you. If you're close in front, it rears up and stomps: a dust shockwave hits everyone on the ground within 9 m, so jump to dodge it. Every so often it takes off, circles above you for about 14 seconds breathing fire down, then lands. You can only hit it when it's on the ground. Within about 300 m of a lair you'll hear a roar now and then, coming from the lair's side.
 - Beaten animals fall over, sink into the ground and drop their things. Regular enemies also drop an apple (+30 health) 35% of the time.
 - Your health refills slowly when you haven't been hit for a few seconds. If it runs out you're knocked out for a few seconds, then wake up with full health. Nearby enemies leave, and if you were at a dragon's lair you wake up 100 m away from it. You keep everything.
@@ -164,7 +164,8 @@ Bows go in your hand like a weapon: RT shoots an arrow where your crosshair poin
 - The ocean is where a fourth, very slow noise is high. The land around it comes down to a sandy beach about 100 m wide, then the sea floor drops to about 14 m deep. Mountains and marshes fade out before the coast. It covers about 1/6 of the world; walking in a straight line you reach it about every 6 to 7 minutes (sometimes 3, sometimes 12).
 - The terrain code sits between `TERRAIN-BEGIN` and `TERRAIN-END` so a checker script can run it in Node. On four seeds: water about once per km (around 1 minute of walking), a marsh about every 1.4 km (around 5 minutes), a cave about every 550 m, and the nearest dragon lair is usually about 550 to 620 m away.
 - Creatures, your hand and items use rounder shapes (each ball has 80 faces instead of 20) than trees and rocks, which there are thousands of.
-- Every saved game has its own seed. **💾 Saved games → New game** picks a new one.
+- Every saved game has its own seed. **💾 Saved games → New game** picks a new one, and **🌍 New world** gives the game you're playing a new one.
+- Lakes slope down to about 8-10 m deep in the middle (rivers are about 3 m deep, the ocean about 14 m), so there's room to dive.
 
 ## Ask Claude (local only)
 
@@ -180,9 +181,18 @@ When the game is served by `serve.py` at the repo root (`python3 serve.py`, then
 - **Nothing Claude does is saved.** Built things, names and hooks last until the page reloads; materials and items it gives are saved like any others.
 - Claude's code runs with full access to the page on purpose (any idea can work). It can break the game until a reload.
 
+## Swimming and diving
+
+- Walk into deep water to swim. You swim at 3.4 m/s, and sprint swim (LT / Shift, or click the left stick) at 7.2 m/s, a little slower than running (8.5 m/s).
+- **Dive:** look down and swim forward, or hold **B** (controller) / **C** (keyboard) to go straight down. Hold **A** / **Space** to swim up. Underwater you can swim the way you look, all the way to the bottom. Let go and you stay at that depth. There's no air meter: you can stay down as long as you like.
+- Under the water everything turns blue-green (you can see about 40 m), wobbly lines of sunlight move over the bottom, the surface shimmers above you, and bubbles drift up from you.
+- You can swing weapons under the water, but bows don't work there (a message tells you to switch to your sword). Shields work the same as at the top.
+- Sharks and the Leviathan dive down to your depth when they come after you. Crocodiles and giant snakes stay at the top and can't bite you while you're under.
+- `player.under` is true while the player's eyes are under the water.
+
 ## Saved data
 
-You can have as many saved games as you like. **💾 Saved games** in the menu lists them (name, gems, things made, when it was last played) with Play, Rename and Delete. Rename asks for the name in a typing box, so it needs a keyboard. Delete asks twice, and you can't delete the game you're playing. **➕ New game** starts from scratch: a new world, fists only, an empty backpack. Opening another game saves this one and reloads the page into it.
+You can have as many saved games as you like. **💾 Saved games** in the menu lists them (name, gems, things made, when it was last played) with Play, Rename and Delete. Rename asks for the name in a typing box, so it needs a keyboard. Delete asks twice, and you can't delete the game you're playing. **🌍 New world (keep your stuff)** in the menu gives the game you're playing a brand new map and puts you somewhere new in it: you keep your backpack, gear and materials, buildings can't come along so you get back what they cost, and tame horses stay behind. It asks twice too. **➕ New game** starts from scratch: a new world, fists only, an empty backpack. Opening another game saves this one and reloads the page into it.
 
 `localStorage` keys:
 

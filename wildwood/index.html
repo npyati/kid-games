@@ -199,19 +199,21 @@ body.two.playing .locator{display:block}
       <button data-act="sfx">Sounds: on</button>
       <button data-act="invert">Look: normal</button>
       <button data-act="saves">💾 Saved games</button>
+      <button data-act="newworld">🌍 New world (keep your stuff)</button>
       <button data-act="animals">Enemies: on</button>
       <button data-act="fullscreen">Full screen</button>
       <button data-act="p2">👥 Add player 2</button>
       <a data-act="home" href="../">All games</a>
     </nav>
     <div class="howto">
-      <div id="howPad"><b>Xbox controller</b>Left stick: walk · Right stick: look · A: jump · RT: swing or shoot · LB: block with a shield (you can still swing) · D-pad right: sword ↔ bow · D-pad left: shield on/off · LT or click left stick: run · X: feed or ride a horse · Y: backpack · Start: menu</div>
-      <div><b>Keyboard and mouse</b>WASD: walk · Mouse: look · Click or F: swing or shoot · Right-click or Q: block (you can still swing) · 1: sword · 2: bow · 3: shield on/off · Space: jump · Shift: run · R: feed or ride a horse · I or Tab: backpack · Esc: menu</div>
+      <div id="howPad"><b>Xbox controller</b>Left stick: walk · Right stick: look · A: jump (in deep water: hold A to swim up, B to swim down) · RT: swing or shoot · LB: block with a shield (you can still swing) · D-pad right: sword ↔ bow · D-pad left: shield on/off · LT or click left stick: run · X: feed or ride a horse · Y: backpack · Start: menu</div>
+      <div><b>Keyboard and mouse</b>WASD: walk · Mouse: look · Click or F: swing or shoot · Right-click or Q: block (you can still swing) · 1: sword · 2: bow · 3: shield on/off · Space: jump (in deep water: hold Space to swim up, C to swim down) · Shift: run · R: feed or ride a horse · I or Tab: backpack · Esc: menu</div>
       <div><b>Animals</b>Foxes, deer and rabbits are friendly. Wolves, and bears from caves, chase you once they spot you. Beat them for gems, iron and apples. They can't swim!</div>
       <div><b>Wheat and horses</b>Golden wheat fields grow in open grassy land: swing at the wheat to pick it. Wild horses run around big open fields. Bring wheat and they'll come over: walk up and press X (R on the keyboard) to feed one. After a few bites it's yours, with a saddle! Press X next to it to ride (super fast, big jumps), and X again to get off.</div>
       <div><b>Crafting</b>Swing at trees for wood and at big rocks for stone. Catch fish in rivers for their scales (golden fish are rare!). Open your backpack to make axes, swords, bows, shields, chest plates and buildings.</div>
       <div><b>Two players</b>Plug in a second controller (Xbox or Nintendo) and press Start (+ on Nintendo) on it (or choose 👥 Add player 2). The screen splits in two. Each of you has your own health, gear and materials. Your backpack (Y) and menu (Start) open on your own side, and the other player keeps playing.</div>
-      <div><b>Saved games</b>Make as many games as you like with 💾 Saved games. Each one has its own world and its own things. New game starts from scratch.</div>
+      <div><b>Swimming</b>Walk into deep water to swim (hold run to sprint swim). Look down and swim forward to dive, or hold B / C to go down and A / Space to come up. Under the water you'll find fish (the ocean has its own), sharks in the sea, and maybe the Leviathan, which is much faster down there! You can swing your sword under water, but bows don't work.</div>
+      <div><b>Saved games</b>Make as many games as you like with 💾 Saved games. Each one has its own world and its own things. New game starts from scratch. 🌍 New world gives this game a brand new map and you keep your stuff (buildings give back what they cost).</div>
       <div id="howClaude" hidden><b>🎤 Ask Claude (at home only)</b>Hold V, or LB + RB together on a controller (L + R on Nintendo), and say what should happen: "spawn ten wolves in front of me", "build a tower", "make me giant". Let go and Claude makes it happen. Press T to type instead. Big ideas take a little longer.</div>
       <div><b>Bosses</b>Dragonlings live in forest camps: leave them alone and they'll leave you alone. Crocodiles lurk in rivers. Sharks swim in the ocean, but only bother you in the water. Goats (leave them alone!) and ice ogres live in the icy mountains. Goblins camp in open fields. Ogres roam the forests. Giant snakes hide in marshes. The Leviathan lives in big lakes. Dragons sleep in volcanoes on mountaintops, ringed by tall black spikes. They walk on their folded wings, and they can fly!</div>
     </div>
@@ -486,6 +488,9 @@ function sampleBase(x, z) {
   if (h > flatH) h += (flatH - h) * flat;
   const carve = Math.max(1 - smooth(rw - 8, rw + 5, rd), smooth(LAKE_T - 0.01, LAKE_T + 0.05, lake)) * (1 - mtn);
   h += (-3.2 + perlin(x * 0.04 + 3, z * 0.04) * 0.8 - h) * carve;
+  // the middle of a lake slopes down deeper (about 8-10 m), so there's room to dive and swim around
+  const deepLake = smooth(LAKE_T + 0.03, LAKE_T + 0.14, lake) * (1 - mtn);
+  if (deepLake > 0) h -= deepLake * (5.5 + perlin(x * 0.05 - 7, z * 0.05 + 2) * 1.5);
 
   if (coast > 0) {
     const beachH = 0.9 + perlin(x * 0.02 + 4.4, z * 0.02 - 1.1) * 0.3;
@@ -662,10 +667,15 @@ vec3 fogCol(vec3 d){
 }
 `;
 const FOG_GLSL = `
-uniform vec3 uCam; uniform float uFogD; uniform float uFogEnd;
+uniform vec3 uCam; uniform float uFogD; uniform float uFogEnd; uniform float uUnder;
+vec3 underCol(float y){ return mix(vec3(0.02, 0.13, 0.19), vec3(0.09, 0.4, 0.46), clamp((y + 14.0) / 14.0, 0.0, 1.0)); }
 vec3 applyFog(vec3 c, vec3 world){
   vec3 dv = world - uCam;
   float dist = length(dv);
+  if (uUnder > 0.5) {            // under water: thick blue-green, you see about 40 m
+    float fu = max(1.0 - exp(-dist / 15.0), smoothstep(30.0, 45.0, dist));
+    return mix(c, underCol(uCam.y), clamp(fu, 0.0, 1.0));
+  }
   float f = 1.0 - exp(-pow(dist / uFogD, 2.0));
   f = max(f, smoothstep(uFogEnd - 50.0, uFogEnd, dist));
   return mix(c, fogCol(dv), clamp(f, 0.0, 1.0));
@@ -694,7 +704,7 @@ void main(){
 const WORLD_FS = `#version 300 es
 precision highp float;
 in vec4 vNor; in vec3 vCol; in vec3 vWorld;
-uniform float uFlash; uniform float uWaterTint; uniform float uEmit; uniform float uShadow;
+uniform float uFlash; uniform float uWaterTint; uniform float uEmit; uniform float uShadow; uniform float uTime;
 out vec4 o;
 ${SKY_GLSL}
 ${FOG_GLSL}
@@ -718,7 +728,15 @@ void main(){
     vec3 v = normalize(uCam - vWorld);
     c += vCol * sunC * pow(max(dot(-v, uSun), 0.0), 3.0) * 0.4;
   }
-  if (vWorld.y < 0.0) { float k = clamp(-vWorld.y * 0.35, 0.0, 0.8) * uWaterTint; c = mix(c, vec3(0.07,0.25,0.27), k); }
+  if (vWorld.y < 0.0) {
+    float k = clamp(-vWorld.y * 0.35, 0.0, 0.8) * uWaterTint * (uUnder > 0.5 ? 0.35 : 1.0);
+    c = mix(c, vec3(0.07,0.25,0.27), k);
+    if (uUnder > 0.5 && uWaterTint > 0.5) {      // wobbly bright lines of sunlight on things under the water
+      vec2 q = vWorld.xz * 0.9;
+      float w = sin(q.x * 1.7 + uTime * 1.3 + sin(q.y * 1.1 + uTime * 0.7) * 1.6) * sin(q.y * 1.9 - uTime * 1.1 + sin(q.x * 1.3 - uTime * 0.5) * 1.6);
+      c *= 0.88 + 0.5 * pow(abs(w), 3.0) * clamp(1.0 + vWorld.y * 0.08, 0.2, 1.0);
+    }
+  }
   c = mix(c, vCol * 1.15, uEmit);
   c = mix(c, vec3(1.0, 0.96, 0.9), uFlash);
   o = vec4(applyFog(c, vWorld), 1.0);
@@ -777,6 +795,12 @@ void main(){
          + wave(p, normalize(vec2(0.2, -1.0)), 2.6, 0.012, 2.9)
          + wave(p, normalize(vec2(-0.9, -0.3)), 4.1, 0.007, 3.7);
   vec3 n = normalize(vec3(-g.x, 1.0, -g.y));
+  if (uUnder > 0.5) {            // the surface seen from under the water: bright and wobbly
+    float sh = pow(max(0.0, 1.0 - length(g) * 9.0), 3.0);
+    vec3 uc = vec3(0.32, 0.68, 0.72) + vec3(0.5, 0.55, 0.45) * (1.0 - sh) * 0.6;
+    o = vec4(applyFog(uc, vWorld), 0.92);
+    return;
+  }
   vec3 v = normalize(uCam - vWorld);
   float fres = 0.06 + 0.94 * pow(1.0 - max(dot(n, v), 0.0), 4.0);
   vec3 r = reflect(-v, n);
@@ -1686,6 +1710,7 @@ function updateChunks(px, pz, budgetMs) {
    Player
    ===================================================================== */
 const EYE = 1.65, SWIM_FEET = -1.25;
+const SWIM_SPEED = 3.4, SWIM_SPRINT = 7.2;   // swimming, and sprint swimming (a little slower than running at 8.5)
 let player = { x: 0, z: 0, feet: 3, vy: 0, vx: 0, vz: 0, yaw: 0, pitch: 0, onGround: true, swimming: false, stepDist: 0, bob: 0, wasDeep: false, run: false, wet: false, hp: 100, hurtT: 99, ko: 0, kx: 0, kz: 0 };
 
 // split screen: player 1 always; player 2 joins with a second controller. Each player has a "slot" holding
@@ -1767,7 +1792,7 @@ const NINTENDO_NAMES = { RT: 'ZR', LT: 'ZL', RB: 'R', LB: 'L', Start: '+', View:
 const btnName = (k, pd = pad) => (pd && pd.nintendo && NINTENDO_NAMES[k]) || k;
 function controllerHelp(pd) {
   const n = k => btnName(k, pd);
-  return `<b>${pd && pd.nintendo ? 'Nintendo Switch controller' : 'Xbox controller'}</b>Left stick: walk · Right stick: look · A: jump · ${n('RT')}: swing or shoot · ${n('LB')}: block with a shield (you can still swing) · D-pad right: sword ↔ bow · D-pad left: shield on/off · ${n('LT')} or click left stick: run · Y: backpack · ${n('Start')}: menu`;
+  return `<b>${pd && pd.nintendo ? 'Nintendo Switch controller' : 'Xbox controller'}</b>Left stick: walk · Right stick: look · A: jump (in deep water: hold A to swim up, B to swim down) · ${n('RT')}: swing or shoot · ${n('LB')}: block with a shield (you can still swing) · D-pad right: sword ↔ bow · D-pad left: shield on/off · ${n('LT')} or click left stick: run · Y: backpack · ${n('Start')}: menu`;
 }
 function pad2Changed(gp) {
   if (gp && isSingleJoyCon(gp)) toast('🎮 One Joy-Con has only one stick. Use both Joy-Cons together, or a Pro Controller');
@@ -2107,6 +2132,31 @@ function setSel(i) {
   sel = (i + btns.length) % btns.length;
   btns.forEach((b, k) => b.classList.toggle('sel', k === sel));
 }
+// New world: this saved game gets a brand new map. You keep your backpack, gear and materials.
+// Buildings can't come along, so you get back what they cost. Tame horses stay behind in the old world.
+let newWorldAsked = false, newWorldTimer = 0;
+function newWorld() {
+  writeSave();
+  const g = readJSON(SLOT_PREFIX + currentSlot) || {};
+  const back = {};
+  for (const b of placed) { const c = ITEMS[b.id] && ITEMS[b.id].cost; if (c) for (const k in c) back[k] = (back[k] || 0) + c[k]; }
+  g.seed = randomSeed(); g.builds = []; g.horses = []; delete g.pos;
+  g.mats = Object.assign({}, g.mats);
+  for (const k in back) g.mats[k] = (Number.isFinite(g.mats[k]) ? g.mats[k] : 0) + back[k];
+  try { localStorage.setItem(SLOT_PREFIX + currentSlot, JSON.stringify(g)); }
+  catch (e) { toast('Could not save the new world'); return; }
+  const m = curMeta(); if (m) { m.seed = g.seed; writeSlots(); }
+  try { sessionStorage.setItem('wildwood.newworld', placed.length ? 'built' : '1'); } catch (e) {}
+  switchingSlot = true;
+  location.replace(location.pathname);
+}
+try {
+  const nw = sessionStorage.getItem('wildwood.newworld');
+  if (nw) {
+    sessionStorage.removeItem('wildwood.newworld');
+    setTimeout(() => toast(nw === 'built' ? '🌍 A brand new world! You got back what your buildings cost.' : '🌍 A brand new world!'), 600);
+  }
+} catch (e) {}
 function refreshLabels() {
   btns.find(b => b.dataset.act === 'play').textContent = started ? 'Keep exploring' : 'Start exploring';
   btns.find(b => b.dataset.act === 'music').textContent = 'Music: ' + (settings.music ? 'on' : 'off');
@@ -2190,6 +2240,15 @@ function doAction(act, fromMouse) {
     refreshLabels(); writeSave();
   }
   else if (act === 'saves') { openSaves(); }
+  else if (act === 'newworld') {
+    // choose it twice to be sure: the first time just asks
+    const b = btns.find(x => x.dataset.act === 'newworld');
+    if (!newWorldAsked) {
+      newWorldAsked = true; b.textContent = '🌍 Sure? Choose again for a new world';
+      clearTimeout(newWorldTimer);
+      newWorldTimer = setTimeout(() => { newWorldAsked = false; b.textContent = '🌍 New world (keep your stuff)'; }, 5000);
+    } else newWorld();
+  }
   else if (act === 'p2') {
     if (players.length > 1) removePlayer2();
     else if (!pad2.connected) toast('Plug in a second controller (Xbox or Nintendo) first, then press any button on it');
@@ -2403,15 +2462,18 @@ function updatePlayer(dt) {
   const ground0 = groundAt(player.x, player.z);
   player.swimming = ground0 < SWIM_FEET - 0.05;
   player.wet = ground0 < 0.05;
+  player.under = player.swimming && !player.riding && player.feet + EYE < WATER_Y - 0.05;   // eyes under the water
   let speed = player.riding ? (player.run ? 15 : 8.5) : player.run ? 8.5 : 4.6;     // a horse is fast
   if (player.riding) player.swimming = false;
-  else if (player.swimming) speed *= 0.5; else if (player.wet) speed *= 0.7;
+  else if (player.swimming) speed = player.run ? SWIM_SPRINT : SWIM_SPEED; else if (player.wet) speed *= 0.7;
   if (player.frozenT > 0) speed *= 0.4;
   const talkCombo = pad.btn[4] && pad.btn[5];      // LB + RB together is Ask Claude's talk button, not block + swing
   player.blocking = !!equip.shield && !player.swimming && ((pad.btn[4] && !talkCombo) || keys.has('KeyQ') || rightHeld);
   if (player.blocking) speed *= 0.5;
   const sy = Math.sin(player.yaw), cy = Math.cos(player.yaw);
-  const tvx = (cy * mx + sy * my) * speed, tvz = (sy * mx - cy * my) * speed;
+  // swimming while looking down (or anywhere underwater) goes partly down or up, so less of it goes forward
+  const tilt = player.swimming && !player.riding && (player.under || player.pitch < -0.25) && Math.abs(player.pitch) > 0.25 ? Math.cos(player.pitch) : 1;
+  const tvx = (cy * mx + sy * my) * speed * tilt, tvz = (sy * mx - cy * my) * speed * tilt;
   const acc = Math.min(1, dt * (player.onGround || player.swimming ? 10 : 2.5));
   player.vx += (tvx - player.vx) * acc;
   player.vz += (tvz - player.vz) * acc;
@@ -2440,6 +2502,7 @@ function updatePlayer(dt) {
   if (climb && climb.climbing) { player.onGround = true; player.vy = 0; }      // on a ladder: no jumping or falling
   else if (player.onGround && player.feet - floor > 0.6) player.onGround = false;   // stepped off something high: fall
   if (climb && climb.climbing) {}
+  else if (player.onGround && deep && floor <= SWIM_FEET + 0.05) swimUpDown(dt, ground, my);
   else if (player.onGround) {
     if (wantJump && !deep) {
       player.vy = player.riding ? 7.5 : 5.4; player.onGround = false; keys.delete('Space');
@@ -2462,6 +2525,21 @@ function updatePlayer(dt) {
   }
   if (deep && !player.wasDeep && player.onGround) { noiseHit('bandpass', 900, 0.6, 0.7, 0.35, 250); rumble(0.3, 0.5, 200); }
   player.wasDeep = deep;
+  player.under = deep && player.feet + EYE < WATER_Y - 0.05;
+  if (player.under !== !!player.wasUnder) {           // going under, or coming up for air
+    if (player.under) { noiseHit('lowpass', 500, 0.8, 0.5, 0.3); tone('sine', 300, 140, 0.4, 0.05); }
+    else noiseHit('bandpass', 1200, 0.7, 0.35, 0.22, 400);
+  }
+  player.wasUnder = player.under;
+  if (player.under) {                                 // little bubbles drift up from you
+    player.bubbleT = (player.bubbleT || 0) - dt;
+    if (player.bubbleT <= 0) {
+      player.bubbleT = 0.6 + Math.random() * 1.1;
+      for (let i = 0, n = 2 + (Math.random() * 3 | 0); i < n; i++)
+        flames.push({ x: player.x + sy * 0.55 + (Math.random() - 0.5) * 0.3, y: player.feet + EYE - 0.3 - i * 0.12, z: player.z - cy * 0.55 + (Math.random() - 0.5) * 0.3,
+          vx: 0, vy: 0, vz: 0, t: 0, life: 8, m: Math.random() * 2 | 0, water: true, bubble: true, small: 0.035 + Math.random() * 0.04 });
+    }
+  }
 
   // steps and head bob
   if (player.onGround && moved > 0.001) {
@@ -2472,6 +2550,21 @@ function updatePlayer(dt) {
   }
 }
 
+// swimming up and down in deep water: hold Space / A to go up, C / B to go down, or swim the way you look
+function swimUpDown(dt, ground, fwd) {
+  const up = pad.btn[0] || keys.has('Space'), down = pad.btn[1] || keys.has('KeyC');
+  let want = up && !down ? 3.4 : down && !up ? -3.4 : 0;
+  if (fwd && (player.under || player.pitch < -0.25) && Math.abs(player.pitch) > 0.25)
+    want += Math.sin(player.pitch) * fwd * (player.run ? SWIM_SPRINT : SWIM_SPEED);
+  player.vy += (want - player.vy) * Math.min(1, dt * 5);
+  player.feet += player.vy * dt;
+  if (player.feet > SWIM_FEET) {                      // float at the top with your head out
+    player.feet += (SWIM_FEET - player.feet) * Math.min(1, dt * 6);
+    if (player.vy > 0) player.vy = 0;
+  }
+  const bottom = ground + 0.1;
+  if (player.feet < bottom) { player.feet = bottom; if (player.vy < 0) player.vy = 0; }
+}
 function updateWorldSounds(dt) {
   waterTimer -= dt;
   if (waterTimer <= 0) {
@@ -2553,10 +2646,15 @@ function render(time, eye, rect) {
   gl.disable(gl.CULL_FACE);
   gl.enable(gl.DEPTH_TEST);
   gl.depthFunc(gl.LEQUAL);
-  gl.clearColor(0.8, 0.87, 0.93, 1);
+  const under = eye[1] < WATER_Y - 0.02 && groundAt(eye[0], eye[2]) < eye[1];   // the camera is under the water
+  if (under) {
+    const k = Math.min(1, Math.max(0, (eye[1] + 14) / 14));     // same colour as the fog (underCol in the shader)
+    gl.clearColor(0.02 + 0.07 * k, 0.13 + 0.27 * k, 0.19 + 0.27 * k, 1);
+  } else gl.clearColor(0.8, 0.87, 0.93, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  // sky
+  // sky (not under the water)
+  if (!under) {
   gl.depthMask(false);
   gl.useProgram(progSky.p);
   gl.uniform3fv(progSky.u.uFwd, f); gl.uniform3fv(progSky.u.uRight, r); gl.uniform3fv(progSky.u.uUp, u);
@@ -2565,6 +2663,7 @@ function render(time, eye, rect) {
   gl.bindVertexArray(emptyVao);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
   gl.depthMask(true);
+  }
 
   // ground and plants
   gl.useProgram(progWorld.p);
@@ -2578,6 +2677,7 @@ function render(time, eye, rect) {
   gl.uniform1f(progWorld.u.uFlash, 0);
   gl.uniform1f(progWorld.u.uWaterTint, 1);
   gl.uniform1f(progWorld.u.uEmit, 0);
+  gl.uniform1f(progWorld.u.uUnder, under ? 1 : 0);
   const pcx = Math.floor(eye[0] / CH), pcz = Math.floor(eye[2] / CH);
   for (const ch of chunks.values()) {
     const dx = ch.cx - pcx, dz = ch.cz - pcz;
@@ -2605,6 +2705,7 @@ function render(time, eye, rect) {
   gl.uniform3fv(progWater.u.uCam, eye);
   gl.uniform1f(progWater.u.uFogD, FOG_END * 0.58);
   gl.uniform1f(progWater.u.uFogEnd, FOG_END);
+  gl.uniform1f(progWater.u.uUnder, under ? 1 : 0);
   gl.bindVertexArray(waterVao);
   gl.bindBuffer(gl.ARRAY_BUFFER, waterVbo);
   gl.bufferSubData(gl.ARRAY_BUFFER, 0, waterVerts);
@@ -2619,6 +2720,7 @@ function render(time, eye, rect) {
   if (state === 'play' && !player.ko) drawHand(time);
   gl.bindVertexArray(null);
   gl.disable(gl.SCISSOR_TEST);
+  gl.useProgram(progWorld.p); gl.uniform1f(progWorld.u.uUnder, 0);
   updateBars(vx0, vw);
 }
 
@@ -3256,6 +3358,8 @@ const SPECIES = {
   trout: { name: 'Trout', fish: true, waterOnly: true, scale: 1.5, swimY: 0.16, hp: 3, walk: 0.9, run: 3.2, flee: 1.8, sight: 0, turn: 5, radius: 0.4, hitH: 0.6, sinkH: 0.5, legLen: 0.3, drops: { fishscale: 1, apples: 0 } },
   sunfish: { name: 'Sunfish', fish: true, waterOnly: true, scale: 1.5, swimY: 0.16, hp: 3, walk: 0.8, run: 3.0, flee: 1.8, sight: 0, turn: 6, radius: 0.4, hitH: 0.6, sinkH: 0.5, legLen: 0.3, drops: { fishscale: 1, apples: 0 } },
   bluegill: { name: 'Bluegill', fish: true, waterOnly: true, scale: 1.5, swimY: 0.16, hp: 3, walk: 0.9, run: 3.2, flee: 1.8, sight: 0, turn: 6, radius: 0.4, hitH: 0.6, sinkH: 0.5, legLen: 0.3, drops: { fishscale: 1, apples: 0 } },
+  stripefish: { name: 'Stripefish', fish: true, waterOnly: true, scale: 1.5, swimY: 0.16, hp: 3, walk: 0.9, run: 3.4, flee: 1.8, sight: 0, turn: 6, radius: 0.4, hitH: 0.6, sinkH: 0.5, legLen: 0.3, drops: { fishscale: 1, apples: 0 } },
+  bluefin: { name: 'Bluefin', fish: true, waterOnly: true, scale: 1.5, swimY: 0.16, hp: 3, walk: 1.0, run: 3.6, flee: 1.8, sight: 0, turn: 5, radius: 0.4, hitH: 0.6, sinkH: 0.5, legLen: 0.3, drops: { fishscale: 1, apples: 0 } },
   goldfish: { name: 'Golden fish', fish: true, waterOnly: true, scale: 1.5, swimY: 0.16, hp: 4, walk: 1.0, run: 3.6, flee: 2.2, sight: 0, turn: 5, radius: 0.4, hitH: 0.6, sinkH: 0.5, legLen: 0.3, drops: { goldscale: 1, fishscale: 1, gems: 2, apples: 0 } },
   // sharks live in the ocean, and only come after you when you're in the water
   shark: { name: 'Shark', swims: true, waterOnly: true, wetOnly: true, long: true, swimY: 0.45, minDepth: 1.2, hp: 45, dmg: 9, reach: 2.8, windup: 0.6, cd: 2.2,
@@ -3288,6 +3392,9 @@ SPECIES.sunfish.model = fishModel({ seed: 72, L: 0.22, H: 0.17, W: 0.065, body: 
 SPECIES.bluegill.model = fishModel({ seed: 73, L: 0.24, H: 0.15, W: 0.06, body: [0.28, 0.48, 0.85], belly: [0.98, 0.82, 0.4], fin: [0.2, 0.35, 0.7],
   mark: (g, r) => { for (let i = 0; i < 4; i++) for (const sd of [-1, 1]) blob(g, sd * 0.05, 0.03, -0.12 + i * 0.08, 0.016, 0.11, 0.02, [0.16, 0.3, 0.6], r, 0, -1, 0); } });
 SPECIES.goldfish.model = fishModel({ seed: 74, L: 0.3, H: 0.12, W: 0.08, tail: 1.5, body: [1.0, 0.78, 0.15], belly: [1.0, 0.93, 0.55], fin: [1.0, 0.62, 0.12] });
+SPECIES.stripefish.model = fishModel({ seed: 75, L: 0.2, H: 0.13, W: 0.06, body: [1.0, 0.5, 0.12], belly: [1.0, 0.66, 0.3], fin: [1.0, 0.45, 0.1],   // ocean fish
+  mark: (g, r) => { for (const z of [0.1, -0.06]) for (const sd of [-1, 1]) blob(g, sd * 0.045, 0.0, z, 0.02, 0.13, 0.025, [1, 1, 1], r, 0, -1, 0); } });
+SPECIES.bluefin.model = fishModel({ seed: 76, L: 0.28, H: 0.12, W: 0.07, tail: 1.3, body: [0.15, 0.32, 0.8], belly: [0.75, 0.85, 0.95], fin: [1.0, 0.85, 0.15] });
 SPECIES.shark.model = sharkModel();
 });
 const waterMeshes = [[0.55, 0.82, 1.0], [0.88, 0.96, 1.0]].map((c, i) => { const g = new Geo(64); blob(g, 0, 0, 0, 1, 1, 1, c, mulberry32(50 + i), 0.3, -1, 0); return makeMesh(g); });
@@ -4066,16 +4173,17 @@ function updateWaterLife(dt) {
   fishTimer -= dt;
   if (fishTimer <= 0) {
     fishTimer = 1.5 + Math.random();
-    if (envWater > 0.25 && animals.filter(a => a.sp.fish && !a.dead).length < 8) {
+    if ((envWater > 0.25 || envOcean > 0.3) && animals.filter(a => a.sp.fish && !a.dead).length < (player.under ? 12 : 8)) {
       for (let t = 0; t < 8; t++) {
         const ang = Math.random() * Math.PI * 2, d = 10 + Math.random() * 30;
         const x = player.x + Math.sin(ang) * d, z = player.z - Math.cos(ang) * d;
         const s = sample(x, z);
-        if (s.h > -1.2 || s.coast > 0.3) continue;
-        const roll = Math.random();
-        const kind = roll < 0.06 ? 'goldfish' : roll < 0.4 ? 'trout' : roll < 0.7 ? 'sunfish' : 'bluegill';
+        if (s.h > -1.2) continue;
+        const roll = Math.random(), sea = s.ocean > 0.25 || s.coast > 0.3;
+        const kind = roll < 0.06 ? 'goldfish' : sea ? (roll < 0.55 ? 'stripefish' : 'bluefin') : roll < 0.4 ? 'trout' : roll < 0.7 ? 'sunfish' : 'bluegill';
         const n = kind === 'goldfish' ? 1 : 1 + (Math.random() * 3 | 0);
-        for (let k = 0; k < n; k++) spawnAnimal(kind, x + (Math.random() - 0.5) * 2, z + (Math.random() - 0.5) * 2);
+        const depth = Math.random() * Math.max(0, Math.min(6, -s.h - 1.2));   // some near the top, some down deep
+        for (let k = 0; k < n; k++) spawnAnimal(kind, x + (Math.random() - 0.5) * 2, z + (Math.random() - 0.5) * 2, { swimDepth: depth + Math.random() * 0.4 });
         break;
       }
     }
@@ -4325,7 +4433,7 @@ function wander(a, dx, dz, dt) {
 // what an angry animal does this frame; returns how fast it wants to move
 function fight(a, dt, dist, dx, dz, playerWet) {
   const sp = a.sp;
-  const canBite = sp.wetOnly ? playerWet : !playerWet || sp.swims;
+  const canBite = (sp.wetOnly ? playerWet : !playerWet || sp.swims) && (!player.under || sp.waterOnly);   // crocs and snakes can't reach you once you dive
   if (a.kind === 'dragon') {
     a.fireCd -= dt; a.flyCd -= dt;
     if (a.flying) a.flyT -= dt;
@@ -4757,7 +4865,7 @@ function emitSpray(a, dt) {
     a.sprayAcc -= 1;
     const spd = 46 + Math.random() * 6, j = () => (Math.random() - 0.5) * 0.12;
     flames.push({ x: m[0], y: m[1], z: m[2], vx: (d[0] + j()) * spd, vy: (d[1] + j()) * spd + 2, vz: (d[2] + j()) * spd,
-      t: 0, life: 0.9 + Math.random() * 0.25, m: Math.random() * 2 | 0, water: true, spray: true });
+      t: 0, life: 0.9 + Math.random() * 0.25, m: Math.random() * 2 | 0, water: true, spray: true, under: m[1] < WATER_Y - 0.3 });
   }
 }
 // fire goes the way the dragon faces, tipped up or down to reach your height
@@ -4828,11 +4936,16 @@ function updateFlames(dt) {
   rings = rings.filter(rg => rg.t < 0.7);
   for (const f of flames) {
     f.t += dt;
+    if (f.bubble) {                                   // bubbles wobble up and pop at the surface
+      f.y += (1.1 + f.small * 8) * dt; f.x += Math.sin(f.t * 6 + f.m * 2) * 0.25 * dt;
+      if (f.y > WATER_Y - 0.06) f.t = f.life;
+      continue;
+    }
     const k = f.spray ? 1 : Math.exp(-dt * 0.9);     // the leviathan's spray flies straight and far
     f.vx *= k; f.vz *= k; f.vy = f.spray ? f.vy - dt * 2.5 : f.water ? f.vy * k - dt * 9 : f.poison ? f.vy * k + dt * 0.6 : f.vy * k + dt * 2;
     f.x += f.vx * dt; f.y += f.vy * dt; f.z += f.vz * dt;
     const g = groundAt(f.x, f.z) + 0.3;
-    if (f.y < g || (f.water && f.y < WATER_Y)) { if (f.water) f.t = f.life; else { f.y = g; f.vy = Math.abs(f.vy) * 0.2; } }
+    if (f.y < g || (f.water && (f.under ? f.y > WATER_Y : f.y < WATER_Y))) { if (f.water) f.t = f.life; else { f.y = g; f.vy = Math.abs(f.vy) * 0.2; } }
   }
   flames = flames.filter(f => f.t < f.life);
 }
@@ -4909,6 +5022,7 @@ function updateAnimals(dt) {
     } else {
       targetYaw = Math.atan2(dx, dz);
       speed = fight(a, dt, dist, dx, dz, playerWet);
+      if (sp.rearH && (a.dive || 0) > 1) speed *= 1.6;   // the Leviathan is much faster under the water
       if (a.flying && a.fireT <= 0 && isFinite(a.flyYaw)) targetYaw = a.flyYaw;
     }
     a.lunge = Math.max(0, a.lunge - dt * (a.kind === 'dragon' ? 1.8 : 3));
@@ -4934,12 +5048,19 @@ function updateAnimals(dt) {
     }
     if (sp.fish) {                             // now and then a fish jumps out of the water
       if (a.jumpT > 0) { a.jumpT += dt; if (a.jumpT > 0.8) { a.jumpT = 0; splash(a.x, a.z, 6); } }
-      else if (!a.dead && Math.random() < dt * 0.04) { a.jumpT = 1e-4; splash(a.x, a.z, 5); }
+      else if (!a.dead && (a.dive || 0) < 0.3 && Math.random() < dt * 0.04) { a.jumpT = 1e-4; splash(a.x, a.z, 5); }
     }
-    a.y = sp.waterOnly ? WATER_Y - (sp.swimY !== undefined ? sp.swimY : (sp.bodyR || 0.8) * 0.45) : sp.swims ? Math.max(groundAt(a.x, a.z), -0.25) : groundAt(a.x, a.z) + (a.flyAlt || 0);
+    if (sp.waterOnly) {
+      // fish keep to their own depth; sharks and the Leviathan dive down to you when they're after you
+      const top = WATER_Y - (sp.swimY !== undefined ? sp.swimY : (sp.bodyR || 0.8) * 0.45);
+      const low = groundAt(a.x, a.z) + (sp.bodyR ? sp.bodyR * 1.1 : (sp.hitH || 0.6) * 0.6);
+      const want = a.alerted && player.under && !sp.fish ? top - (player.feet + 0.9) : sp.fish ? (a.swimDepth || 0) : 0;
+      a.dive = (a.dive || 0) + (Math.max(0, want) - (a.dive || 0)) * Math.min(1, dt * (sp.boss ? 1.4 : 2));
+      a.y = Math.min(top, Math.max(top - a.dive, low));
+    } else a.y = sp.swims ? Math.max(groundAt(a.x, a.z), -0.25) : groundAt(a.x, a.z) + (a.flyAlt || 0);
     a.legPhase += Math.abs(a.speed) * dt * (sp.hop ? 7 : sp.serpent ? 1.4 / ((sp.bodyR || 0.8) / 0.8) : 1.6 / sp.legLen);
     if (sp.rearH) {                            // the leviathan rears up out of the water to fight
-      const want = a.dead ? 0 : !a.alerted ? 0 : (a.windup > 0 || a.sprayT > 0 || dist < 16) ? 1 : 0.35;
+      const want = a.dead || !a.alerted || (a.dive || 0) > 1 ? 0 : (a.windup > 0 || a.sprayT > 0 || dist < 16) ? 1 : 0.35;   // under the water it stays low and lunges
       a.rearV = (a.rearV || 0) + (want - (a.rearV || 0)) * Math.min(1, dt * 1.8);
     }
     if (sp.serpent) {
@@ -4947,7 +5068,11 @@ function updateAnimals(dt) {
       a.segs.forEach((s, i) => {
         const ex = s.x - px, ez = s.z - pz, d = Math.hypot(ex, ez) || 1e-4;
         if (d > sp.spacing) { s.x = px + ex / d * sp.spacing; s.z = pz + ez / d * sp.spacing; }
-        s.y = sp.waterOnly ? WATER_Y - snakeR(sp, i) * 0.4 : Math.max(groundAt(s.x, s.z), -0.25) + snakeR(sp, i) * 0.95;
+        if (sp.waterOnly) {                    // each part of the body follows the one in front of it down and up
+          s.dive = (s.dive || 0) + ((i ? a.segs[i - 1].dive || 0 : a.dive || 0) - (s.dive || 0)) * Math.min(1, dt * 3);
+          const top = WATER_Y - snakeR(sp, i) * 0.4;
+          s.y = Math.min(top, Math.max(top - s.dive, groundAt(s.x, s.z) + snakeR(sp, i)));
+        } else s.y = Math.max(groundAt(s.x, s.z), -0.25) + snakeR(sp, i) * 0.95;
         px = s.x; pz = s.z;
       });
     }
@@ -5085,10 +5210,11 @@ function drawAnimals(time) {
   const eyeY = player.feet + EYE;
   gl.uniform1f(progWorld.u.uEmit, 1);
   for (const f of flames) {
-    if (Math.hypot(f.x - player.x, f.y - eyeY, f.z - player.z) < 2.2) continue;   // don't fill the screen
+    if (Math.hypot(f.x - player.x, f.y - eyeY, f.z - player.z) < (f.bubble ? 0.3 : 2.2)) continue;   // don't fill the screen
+    if (f.bubble) { drawMesh(waterMeshes[f.m], mChain(mT(f.x, f.y, f.z), mS(f.small)), 0.3); continue; }
     const s = f.small ? 0.12 + Math.sin(Math.min(1, f.t / f.life) * Math.PI) * 0.22 : 0.25 + Math.sin(Math.min(1, f.t / f.life) * Math.PI) * 0.9 + f.t * 0.3;
     const pz = f.poison ? 0.25 + f.t * 0.9 : 0;
-    drawMesh(f.water ? waterMeshes[f.m] : f.poison ? poisonMeshes[f.m] : flameMeshes[f.m], mChain(mT(f.x, f.y, f.z), mS(f.water ? 0.1 + f.t * 0.22 : f.poison ? pz : s)), f.t < 0.12 ? 0.5 : 0);
+    drawMesh(f.water ? waterMeshes[f.m] : f.poison ? poisonMeshes[f.m] : flameMeshes[f.m], mChain(mT(f.x, f.y, f.z), mS(f.water ? (f.under ? 0.035 + f.t * 0.09 : 0.1 + f.t * 0.22) : f.poison ? pz : s)), f.t < 0.12 ? 0.5 : 0);
   }
   gl.uniform1f(progWorld.u.uEmit, 0);
   gl.uniform1f(progWorld.u.uFlash, 0);
@@ -5562,7 +5688,13 @@ function updateHud() {
 function startSwing() {
   if (swingT >= 0 || player.ko) return;            // you can swing or shoot with your shield up
   const w = curWeapon();
-  if (w.type === 'bow') { if (!shootArrow(w)) return; swingT = 0; swingHit = true; return; }
+  if (w.type === 'bow') {
+    if (player.under) {                               // arrows don't fly under water
+      if (performance.now() > (player.bowMsgT || 0)) { feed("🏹 Bows don't work underwater. Press " + (pad.connected ? 'D-pad right' : '1') + ' for your sword'); player.bowMsgT = performance.now() + 3000; }
+      return;
+    }
+    if (!shootArrow(w)) return; swingT = 0; swingHit = true; return;
+  }
   swingT = 0; swingHit = false;
   noiseHit('bandpass', equip.weapon !== 'fists' ? 1800 : 2600, 1.2, 0.16, 0.1, 600);
 }
@@ -5581,7 +5713,7 @@ function landHit() {
     for (const [x, z, r, y] of bodyCircles(a)) {
       const dx = x - player.x, dz = z - player.z, d = Math.hypot(dx, dz) || 0.001;
       if (d - r > w.reach) continue;
-      if (Math.abs(y - player.feet) > (a.kind === 'dragon' ? 5 : a.kind === 'leviathan' ? 4 : 2.5)) continue;
+      if (Math.abs(y - player.feet - (player.swimming ? 0.9 : 0)) > (a.kind === 'dragon' ? 5 : a.kind === 'leviathan' ? 4 : 2.5)) continue;
       const facing = (dx * fx + dz * fz) / d;
       if (facing < 0.45 && d > r + 0.7) continue;
       if (d - r < bestD) { bestD = d - r; best = a; }
@@ -6232,7 +6364,7 @@ GAME STATE you can read and change directly:
   SPECIES[kind] fields: scale (size, default 1), walk, run (speeds m/s), hp, dmg, sight (metres it notices you from), peaceful, boss.
   Peaceful animals run away and can't be hurt. alertAnimal(a) makes an enemy chase. calmAnimal(a) calms it.
 - Kinds: friendly fox, rabbit, deer; enemies wolf, bear, goblin, croc (water), shark (deep water only), goat (neutral), dragonling (neutral);
-  bosses dragon, ogre, iceogre, snake (giant snake), leviathan (lakes only, water); fish trout, sunfish, bluegill, goldfish (water only).
+  bosses dragon, ogre, iceogre, snake (giant snake), leviathan (lakes only, water); fish trout, sunfish, bluegill, goldfish, stripefish, bluefin (water only; stripefish and bluefin are ocean fish; spawn options can include swimDepth: metres below the surface). Players can dive: player.under is true when their eyes are under water.
   Water-only kinds need water: check groundAt(x, z) < -1.5 first, and say so if there's no water nearby.
 - Trees and rocks are baked into the world and can't be changed one by one; to "change" one, build a new thing in its place.
 - settings.animals (false = enemies off; then enemies won't chase). settings.music, settings.sfx.
@@ -7207,8 +7339,8 @@ function frame(now) {
   resize();
   for (let i = 0; i < players.length; i++) {        // one view, or two side by side
     usePlayer(i);
-    const bobY = player.onGround ? Math.sin(player.bob) * (player.swimming ? 0.05 : 0.045) : 0;
-    const swimBob = player.swimming ? Math.sin(time * 2.2) * 0.05 : 0;
+    const bobY = player.onGround && !player.under ? Math.sin(player.bob) * (player.swimming ? 0.05 : 0.045) : 0;
+    const swimBob = player.swimming && !player.under && player.feet > SWIM_FEET - 0.1 ? Math.sin(time * 2.2) * 0.05 : 0;
     const sk = shake > 0 ? shake * 0.25 : 0;
     const koDrop = player.ko ? -1.1 : 0;
     const rect = players.length > 1 ? [i * Math.floor(width / 2), 0, Math.floor(width / 2), height] : [0, 0, width, height];
