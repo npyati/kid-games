@@ -4569,13 +4569,15 @@ function fight(a, dt, dist, dx, dz, playerWet) {
   }
   if (a.kind === 'leviathan') {
     a.sprayCd = (a.sprayCd === undefined ? 3 : a.sprayCd) - dt;
+    const underwater = (a.dive || 0) > 0.5;          // no water spray while it's under the water
+    if (underwater) a.sprayT = 0;
     if (a.sprayT > 0) {
       a.sprayT -= dt; emitSpray(a, dt);
       a.sprayTick = (a.sprayTick || 0) - dt;
       if (a.sprayTick <= 0) { a.sprayTick = 0.2; if (inSpray(a)) hurtPlayer(3, dx / dist, dz / dist, 3, a); }
       return 0;
     }
-    if (a.windup <= 0 && a.whipT <= 0 && dist > sp.reach && dist < LEV_SPRAY && a.sprayCd <= 0) {
+    if (!underwater && a.windup <= 0 && a.whipT <= 0 && dist > sp.reach && dist < LEV_SPRAY && a.sprayCd <= 0) {
       a.sprayT = 2.0; a.sprayCd = 5 + Math.random() * 2;
       noiseHit('bandpass', 1500, 0.4, 2.0, 0.3, 700); noiseHit('highpass', 4000, 0.5, 1.8, 0.12);
       return 0;
