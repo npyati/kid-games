@@ -208,6 +208,8 @@ body.two.playing .locator{display:block}
     <div class="howto">
       <div id="howPad"><b>Xbox controller</b>Left stick: walk · Right stick: look · A: jump (in deep water: hold A to swim up, B to swim down) · RT: swing or shoot · LB: block with a shield (you can still swing) · D-pad right: sword ↔ bow · D-pad left: shield on/off · LT or click left stick: run · X: feed or ride a horse · Y: backpack · Start: menu</div>
       <div><b>Keyboard and mouse</b>WASD: walk · Mouse: look · Click or F: swing or shoot · Right-click or Q: block (you can still swing) · 1: sword · 2: bow · 3: shield on/off · Space: jump (in deep water: hold Space to swim up, C to swim down) · Shift: run · R: feed or ride a horse · I or Tab: backpack · Esc: menu</div>
+      <div><b>Caves</b>Walk into a cave's dark doorway to go inside: glowing crystals, a pool, and a treasure chest to open (once per cave). Walk back out the tunnel to leave. Nothing can hurt you in a cave.</div>
+      <div><b>Safe places</b>Nothing can hurt you inside your hut, house or castle, or up on a lookout tower. Enemies can't come in, and they give up after a few seconds.</div>
       <div><b>Animals</b>Foxes, deer and rabbits are friendly. Wolves, and bears from caves, chase you once they spot you. Beat them for gems, iron and apples. They can't swim!</div>
       <div><b>Wheat and horses</b>Golden wheat fields grow in open grassy land: swing at the wheat to pick it. Wild horses run around big open fields. Bring wheat and they'll come over: walk up and press X (R on the keyboard) to feed one. After a few bites it's yours, with a saddle! Press X next to it to ride (super fast, big jumps), and X again to get off.</div>
       <div><b>Crafting</b>Swing at trees for wood and at big rocks for stone. Catch fish in rivers for their scales (golden fish are rare!). Open your backpack to make axes, swords, bows, shields, chest plates and buildings.</div>
@@ -367,7 +369,7 @@ function writeSave() {
   writeSettings();
   try {
     localStorage.setItem(SLOT_PREFIX + currentSlot, JSON.stringify({
-      seed: worldSeed, mats: pslots[0] ? pslots[0].mats : mats, owned: [...(pslots[0] ? pslots[0].owned : owned)], equip: pslots[0] ? pslots[0].equip : equip, p2: p2Gear(), builds: placed, horses: horsesRestored ? tameHorses() : G0.horses,
+      seed: worldSeed, mats: pslots[0] ? pslots[0].mats : mats, owned: [...(pslots[0] ? pslots[0].owned : owned)], equip: pslots[0] ? pslots[0].equip : equip, p2: p2Gear(), builds: placed, horses: horsesRestored ? tameHorses() : G0.horses, caves: [...caveLooted],
       pos: { x: +players[0].x.toFixed(2), z: +players[0].z.toFixed(2), yaw: +players[0].yaw.toFixed(3), seed: worldSeed },
     }));
   } catch (e) {}
@@ -704,7 +706,7 @@ void main(){
 const WORLD_FS = `#version 300 es
 precision highp float;
 in vec4 vNor; in vec3 vCol; in vec3 vWorld;
-uniform float uFlash; uniform float uWaterTint; uniform float uEmit; uniform float uShadow; uniform float uTime;
+uniform float uFlash; uniform float uWaterTint; uniform float uEmit; uniform float uShadow; uniform float uTime; uniform float uCave;
 out vec4 o;
 ${SKY_GLSL}
 ${FOG_GLSL}
@@ -736,6 +738,15 @@ void main(){
       float w = sin(q.x * 1.7 + uTime * 1.3 + sin(q.y * 1.1 + uTime * 0.7) * 1.6) * sin(q.y * 1.9 - uTime * 1.1 + sin(q.x * 1.3 - uTime * 0.5) * 1.6);
       c *= 0.88 + 0.5 * pow(abs(w), 3.0) * clamp(1.0 + vWorld.y * 0.08, 0.2, 1.0);
     }
+  }
+  if (uCave > 0.5) {             // inside a cave: dark, lit by a warm glow around you like a lantern
+    vec3 v = uCam - vWorld; float dl = length(v);
+    float face = 0.55 + 0.45 * abs(dot(n, v / max(dl, 1e-3)));
+    c = vCol * vec3(1.0, 0.9, 0.75) * face * (0.13 + 1.35 * exp(-dl / 6.5));
+    c = mix(c, vCol * 1.15, uEmit);
+    c = mix(c, vec3(1.0, 0.96, 0.9), uFlash);
+    o = vec4(mix(c, vec3(0.01, 0.01, 0.015), smoothstep(14.0, 32.0, dl) * (1.0 - uEmit)), 1.0);
+    return;
   }
   c = mix(c, vCol * 1.15, uEmit);
   c = mix(c, vec3(1.0, 0.96, 0.9), uFlash);
@@ -1137,6 +1148,7 @@ function buildCave(g, ch, c) {
     const u = p[0] * s, yy = my - 0.3 + p[1] * s, t = surfaceT(u, yy - hy0) + 0.18 + out;
     return [hx0 + rx * u + fx * t, yy, hz0 + rz * u + fz * t];
   };
+  c.mouth = { x: mx, z: mz, y: my, fx, fz };       // where you walk in (see "Inside the caves")
   const center = at([0, 1.7], 1, 0);
   const BLACK = [0.02, 0.02, 0.02], DIM = [0.06, 0.055, 0.05], EDGE = [0.15, 0.14, 0.13];
   for (let i = 0; i < arch.length; i++) {         // two rings: dark rock at the edge fading to black inside
@@ -2459,7 +2471,8 @@ function updatePlayer(dt) {
   if (pressed(10)) pad.runToggle = !pad.runToggle;
   if (ml < 0.2) pad.runToggle = false;
   player.run = pad.lt > 0.3 || pad.runToggle || keys.has('ShiftLeft') || keys.has('ShiftRight');
-  const ground0 = groundAt(player.x, player.z);
+  const inCave = !!player.cave;
+  const ground0 = inCave ? 10 : groundAt(player.x, player.z);
   player.swimming = ground0 < SWIM_FEET - 0.05;
   player.wet = ground0 < 0.05;
   player.under = player.swimming && !player.riding && player.feet + EYE < WATER_Y - 0.05;   // eyes under the water
@@ -2481,23 +2494,23 @@ function updatePlayer(dt) {
   player.x += (player.vx + player.kx) * dt;
   player.z += (player.vz + player.kz) * dt;
   const kd = Math.exp(-dt * 7); player.kx *= kd; player.kz *= kd;
-  // bump into trunks and rocks
-  pushOutTrees(player, player.riding ? 0.7 : 0.35);
-  pushOutCreatures();
-  if (player.riding && groundAt(player.x, player.z) < 0.3) {     // horses stay out of the water
+  // bump into trunks and rocks (in a cave: its walls)
+  if (inCave) caveConfine(player);
+  else { pushOutTrees(player, player.riding ? 0.7 : 0.35); pushOutCreatures(); }
+  if (!inCave && player.riding && groundAt(player.x, player.z) < 0.3) {     // horses stay out of the water
     player.x = ox; player.z = oz; player.vx *= -0.2; player.vz *= -0.2;
     if (performance.now() > horseMsgT) { feed("🐴 Your horse won't go in the water. Press " + (pad.connected ? btnName('X') : 'R') + ' to get off'); horseMsgT = performance.now() + 4000; }
   }
   if (pressed(2) || keys.has('KeyR')) { keys.delete('KeyR'); horseAction(); }
-  const climb = player.riding ? null : climbAndDecks(dt);
+  const climb = player.riding || inCave ? null : climbAndDecks(dt);
   // attack: RT or RB on the controller (hold to keep swinging), click or F on the keyboard
   if (pad.btn[7] || (pad.btn[5] && !talkCombo) || keys.has('KeyF') || keys.has('KeyJ') || mouseHeld) startSwing();
   const moved = Math.hypot(player.x - ox, player.z - oz);
 
   // up and down
-  const ground = groundAt(player.x, player.z);
-  const floor = Math.max(ground, SWIM_FEET, roomFloorAt(player.x, player.z), climb ? climb.floor : -Infinity) + (player.riding ? RIDE_H : 0);
-  const deep = !player.riding && ground < SWIM_FEET - 0.05;
+  const ground = player.cave ? CAVE_Y : groundAt(player.x, player.z);
+  const floor = player.cave ? CAVE_Y : Math.max(ground, SWIM_FEET, roomFloorAt(player.x, player.z), climb ? climb.floor : -Infinity) + (player.riding ? RIDE_H : 0);
+  const deep = !player.cave && !player.riding && ground < SWIM_FEET - 0.05;
   const wantJump = pressed(0) || keys.has('Space');
   if (climb && climb.climbing) { player.onGround = true; player.vy = 0; }      // on a ladder: no jumping or falling
   else if (player.onGround && player.feet - floor > 0.6) player.onGround = false;   // stepped off something high: fall
@@ -2540,6 +2553,10 @@ function updatePlayer(dt) {
           vx: 0, vy: 0, vz: 0, t: 0, life: 8, m: Math.random() * 2 | 0, water: true, bubble: true, small: 0.035 + Math.random() * 0.04 });
     }
   }
+
+  if (!player.cave && !player.riding && !inCave) tryEnterCave();
+  else if (player.cave) caveThings(dt);
+  player.safe = safeSpot(climb);
 
   // steps and head bob
   if (player.onGround && moved > 0.001) {
@@ -2646,6 +2663,7 @@ function render(time, eye, rect) {
   gl.disable(gl.CULL_FACE);
   gl.enable(gl.DEPTH_TEST);
   gl.depthFunc(gl.LEQUAL);
+  if (player.cave) { renderCave(time, eye); gl.disable(gl.SCISSOR_TEST); updateBars(vx0, vw); return; }
   const under = eye[1] < WATER_Y - 0.02 && groundAt(eye[0], eye[2]) < eye[1];   // the camera is under the water
   if (under) {
     const k = Math.min(1, Math.max(0, (eye[1] + 14) / 14));     // same colour as the fog (underCol in the shader)
@@ -2780,7 +2798,7 @@ function drawShadows() {
     const r = Math.max(0.3, sp.radius || 0.5) * (1 + alt * 0.03);
     one(a.x, a.z, r * 1.15, r * (sp.long ? 2.0 : 1.45), a.yaw, 0.48 * k, alt + (sp.hitH || 1.5) * 0.25);
   }
-  for (let j = 0; j < players.length; j++) if (j !== curP) { const p = players[j]; one(p.x, p.z, 0.4, 0.4, 0, 0.45, 0.6); }
+  for (let j = 0; j < players.length; j++) if (j !== curP && !players[j].cave) { const p = players[j]; one(p.x, p.z, 0.4, 0.4, 0, 0.45, 0.6); }
   gl.uniform1f(progWorld.u.uShadow, 0);
   gl.disable(gl.POLYGON_OFFSET_FILL); gl.depthMask(true); gl.disable(gl.BLEND);
 }
@@ -3448,6 +3466,7 @@ function roomPlan(W, D, dw, doorCol) {
     solid: [...wallCircles(-hw, -hd, -g, -hd), ...wallCircles(g, -hd, hw, -hd), ...wallCircles(-hw, hd, hw, hd), ...wallCircles(-hw, -hd, -hw, hd), ...wallCircles(hw, -hd, hw, hd)],
     doors: [{ x: 0, z: -hd, w: dw, h: 2.15, c: doorCol, near: 3 }],
     room: [-hw, -hd, hw, hd],
+    keepOut: [-hw, -hd, hw, hd],       // enemies can't come in (not even through the open door), and they can't hurt you in here
   };
 }
 // the castle: 26 m square of walls with towers on the corners, a gatehouse in the front wall and a keep at the back
@@ -3461,6 +3480,7 @@ function castlePlan() {
       ...wallCircles(-kx, k0, -kg, k0), ...wallCircles(kg, k0, kx, k0), ...wallCircles(-kx, k1, kx, k1), ...wallCircles(-kx, k0, -kx, k1), ...wallCircles(kx, k0, kx, k1)],
     doors: [{ x: 0, z: -S, w: GW, h: GH, c: [0.42, 0.27, 0.14], two: true, near: 8, bands: true }, { x: 0, z: k0, w: KDW, h: 2.8, c: [0.42, 0.27, 0.14], two: true, near: 3.5 }],
     room: [-kx, k0, kx, k1],
+    keepOut: [-S, -S, S, S],           // the whole castle, courtyard and all
   };
 }
 // gear made from common-enemy drops (fur, croc skin, shark teeth, the goblin axe) hits or protects half as hard as it used to
@@ -4950,13 +4970,13 @@ function updateFlames(dt) {
   flames = flames.filter(f => f.t < f.life);
 }
 function updateAnimals(dt) {
-  let canSpot = settings.animals && !player.ko;
+  let canSpot = settings.animals && !player.ko && !player.safe;
   let playerWet = groundAt(player.x, player.z) < 0.25;
   for (const a of animals) {
     const sp = a.sp;
     if (players.length > 1 && !a.dead) {           // each animal deals with whichever player is closer
       const i = nearestPlayerIdx(a.x, a.z);
-      if (i !== curP) { usePlayer(i); canSpot = settings.animals && !player.ko; playerWet = groundAt(player.x, player.z) < 0.25; }
+      if (i !== curP) { usePlayer(i); canSpot = settings.animals && !player.ko && !player.safe; playerWet = groundAt(player.x, player.z) < 0.25; }
     }
     if (a.dead) {
       a.deadT += dt;
@@ -5019,7 +5039,12 @@ function updateAnimals(dt) {
       if (dist > (sp.boss ? 220 : 110)) a.remove = true;
     } else if (player.ko || dist > (sp.giveUp || 48)) {
       calmAnimal(a);
+    } else if (player.safe) {                     // you're somewhere safe: it can't get you, and soon gives up
+      a.safeT = (a.safeT || 0) + dt;
+      wander(a, dx, dz, dt); targetYaw = a.wanderYaw; speed = a.wanderSpeed;
+      if (a.safeT > 6) { a.safeT = 0; calmAnimal(a); }
     } else {
+      a.safeT = 0;
       targetYaw = Math.atan2(dx, dz);
       speed = fight(a, dt, dist, dx, dz, playerWet);
       if (sp.rearH && (a.dive || 0) > 1) speed *= 1.6;   // the Leviathan is much faster under the water
@@ -5040,6 +5065,7 @@ function updateAnimals(dt) {
     else if (a.fleeT > 0) a.yaw += 1.2;           // running into water: turn aside
     else if (!a.alerted) a.wanderT = 0;
     if (!sp.boss || a.kind === 'ogre' || a.kind === 'iceogre') pushOutTrees(a, sp.radius * 0.6);
+    if (!sp.waterOnly && !(a.flyAlt > 2)) pushOutOfBuildings(a, sp.radius || 0.5);
     if (a.kind === 'dragon') {
       updateDragonHead(a, dt);
       const want = a.flying && a.flyT > 0 ? 12 : 0;
@@ -5110,6 +5136,7 @@ function clearEnemies() {
 function pushOutCreatures() {
   for (const a of animals) {
     if (a.dead || a.sp.peaceful || a.retreating || a.flyAlt > 2) continue;
+    if (player.feet > (a.y || 0) + (a.sp.hitH || 1.6)) continue;     // you're above it (up on a lookout deck): it can't shove you
     for (const [x, z, r] of bodyCircles(a)) {
       const dx = player.x - x, dz = player.z - z, rr = r * 0.85 + 0.35, d2 = dx * dx + dz * dz;
       if (d2 < rr * rr && d2 > 1e-6) { const d = Math.sqrt(d2); player.x = x + dx / d * rr; player.z = z + dz / d * rr; }
@@ -5736,6 +5763,7 @@ function landHit() {
 }
 function hurtPlayer(dmg, dirx, dirz, knock, src) {
   if (player.ko || ui !== 'play') return;          // in their backpack or menu (two players): safe
+  if (player.safe && src) return;                  // inside a building, up on a lookout deck, or in a cave: safe
   let kb = knock === undefined ? 6 : knock;
   // a raised shield blocks hits from in front of you
   const sh = equip.shield && ITEMS[equip.shield];
@@ -6932,6 +6960,230 @@ function climbAndDecks(dt) {
   }
   player.x = b.x + lx * c + lz * s; player.z = b.z - lx * s + lz * c;
   return out;
+}
+// enemies (and other animals) stay out of houses, huts and the castle, even when the door is open
+function pushOutOfBuildings(o, rad) {
+  for (const b of roomsNear(o.x - 1, o.z - 1, 2, 'keepOut')) {
+    const [r0, q0, r1, q1] = ITEMS[b.id].keepOut, c = Math.cos(b.yaw), s = Math.sin(b.yaw), dx = o.x - b.x, dz = o.z - b.z;
+    let lx = c * dx - s * dz, lz = s * dx + c * dz;
+    const e0 = lx - (r0 - rad), e1 = (r1 + rad) - lx, e2 = lz - (q0 - rad), e3 = (q1 + rad) - lz;
+    if (e0 <= 0 || e1 <= 0 || e2 <= 0 || e3 <= 0) continue;          // not inside
+    const m = Math.min(e0, e1, e2, e3);                              // push out through the nearest side
+    if (m === e0) lx = r0 - rad; else if (m === e1) lx = r1 + rad; else if (m === e2) lz = q0 - rad; else lz = q1 + rad;
+    o.x = b.x + lx * c + lz * s; o.z = b.z - lx * s + lz * c;
+  }
+}
+// safe spots: inside a house, hut or the castle, up on a lookout deck, or in a cave. Nothing can hurt you there.
+function safeSpot(climb) {
+  if (player.cave) return true;
+  if (climb && climb.floor > -Infinity && player.feet >= climb.floor - 0.3) return true;
+  return !!insideRooms(roomsNear(player.x - 1, player.z - 1, 2, 'keepOut'), player.x, player.z, 'keepOut', -0.15);
+}
+/* ---------- Inside the caves ----------
+   Walk into a cave's dark doorway to go in. Inside is a big round room under the hill, reached by a
+   short tunnel: glowing crystals, stalactites and stalagmites, a still pool, glowing mushrooms, old
+   bones and a treasure chest (gems and iron, once per cave in each saved game). It's drawn on its own,
+   far below the world (CAVE_Y), but at the same x/z as the hill, so everything else keeps working.
+   Walk back out through the tunnel to leave. Nothing can hurt you in a cave.
+   Cave-local coordinates: u to the right (looking in), w deeper in; the doorway is at w = 0. */
+const CAVE_Y = -400, CAVE_TUN = 6, CAVE_HW = 1.5, CAVE_CW = 13, CAVE_R = 8.8;
+const caveLooted = new Set(Array.isArray(G0.caves) ? G0.caves.filter(k => typeof k === 'string' && k.length < 60).slice(0, 5000) : []);
+const caveGfx = new Map();
+let caveHintShown = false;
+const caveLootKey = c => worldSeed + ':' + c.key;
+function caveLocal(c, x, z) { const m = c.mouth, dx = x - m.x, dz = z - m.z; return [dx * m.fz - dz * m.fx, -(dx * m.fx + dz * m.fz)]; }
+function caveWorld(c, u, w) { const m = c.mouth; return [m.x + m.fz * u - m.fx * w, m.z - m.fx * u - m.fz * w]; }
+function caveLayout(c) {
+  if (c.layout) return c.layout;
+  const rng = mulberry32(hashInt(Math.round(c.x), Math.round(c.z), 23));
+  const at = (a, r) => [Math.sin(a) * r, CAVE_CW + Math.cos(a) * r];    // angle 0 is the far wall, PI is the way in
+  const L = { crystals: [], mites: [], shrooms: [], solids: [] };
+  const [pu, pw] = at(1.9 + rng() * 0.3, 4.8); L.pool = { u: pu, w: pw, r: 2.1 + rng() * 0.4 };
+  const [cu, cw] = at(-0.55 - rng() * 0.3, 6.4); L.chest = { u: cu, w: cw };
+  const COLS = [[0.62, 0.36, 1.0], [0.3, 0.85, 1.0], [0.35, 1.0, 0.6], [1.0, 0.45, 0.8], [0.55, 0.6, 1.0]];
+  for (let i = 0; i < 7; i++) {
+    const a = -2.3 + i / 6 * 4.6 + (rng() - 0.5) * 0.3, [u, w] = at(a, 7.7 + rng() * 0.7);
+    L.crystals.push({ u, w, col: COLS[Math.floor(rng() * COLS.length)], n: 4 + Math.floor(rng() * 4), a });
+  }
+  for (let i = 0; i < 5; i++) { const [u, w] = at(-2.6 + i * 1.3 + rng() * 0.4, 2.8 + rng() * 3.2); L.mites.push({ u, w, h: 0.8 + rng() * 1.4 }); }
+  for (let i = 0; i < 9; i++) { const [u, w] = at(rng() * 6.28, 6 + rng() * 2.2); L.shrooms.push({ u, w }); }
+  L.solids.push([L.pool.u, L.pool.w, L.pool.r + 0.1], [L.chest.u, L.chest.w, 0.7]);
+  for (const k of L.crystals) L.solids.push([k.u, k.w, 0.75]);
+  for (const m of L.mites) L.solids.push([m.u, m.w, 0.45]);
+  // keep the way in clear
+  L.mites = L.mites.filter(m => !(Math.abs(m.u) < 2.4 && m.w < 8)); L.solids = L.solids.filter(s => !(Math.abs(s[0]) < 2.4 && s[1] < 8));
+  return (c.layout = L);
+}
+function caveNearMouth(x, z, r) {
+  const ix = Math.floor(x / CAVE_CELL), iz = Math.floor(z / CAVE_CELL);
+  for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) {
+    const c = caveInCell(ix + dx, iz + dz);
+    if (c && c.mouth && Math.hypot(c.mouth.x - x, c.mouth.z - z) < r) return c;
+  }
+  return null;
+}
+const caveFadeEl = document.createElement('div');
+caveFadeEl.style.cssText = 'position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:5';
+document.body.appendChild(caveFadeEl);
+function fadeBlack() {
+  caveFadeEl.style.transition = 'none'; caveFadeEl.style.opacity = '1';
+  void caveFadeEl.offsetWidth;
+  caveFadeEl.style.transition = 'opacity 0.6s'; caveFadeEl.style.opacity = '0';
+}
+// walking into the doorway takes you in
+function tryEnterCave() {
+  const c = caveNearMouth(player.x, player.z, 2.4);
+  if (!c) return;
+  const [u] = caveLocal(c, player.x, player.z), inward = -(player.vx * c.mouth.fx + player.vz * c.mouth.fz);
+  if (inward < 0.8 || Math.abs(u) > 2.2) return;
+  if (player.riding) { if (performance.now() > horseMsgT) { feed('🐴 Get off your horse to go into the cave'); horseMsgT = performance.now() + 4000; } return; }
+  player.cave = c;
+  const [x, z] = caveWorld(c, 0, 0.8);
+  player.x = x; player.z = z; player.feet = CAVE_Y; player.vy = 0; player.onGround = true; player.kx = player.kz = 0;
+  fadeBlack();
+  tone('sine', 220, 150, 0.7, 0.06); noiseHit('lowpass', 300, 0.7, 0.6, 0.12);
+  if (!caveHintShown) { caveHintShown = true; feed('🕳️ You went into the cave! Walk back out through the tunnel to leave.'); }
+}
+function leaveCave(p) {
+  const c = p.cave; p.cave = null;
+  const [x, z] = caveWorld(c, 0, -2.6);
+  p.x = x; p.z = z; p.feet = Math.max(groundAt(x, z), SWIM_FEET); p.vy = 0; p.onGround = true;
+  if (p === player) { fadeBlack(); noiseHit('bandpass', 900, 0.6, 0.3, 0.1); }
+  if (!players.some(q => q.cave === c)) { const G = caveGfx.get(c.key); if (G) { for (const k in G) if (G[k] && G[k].vao) freeMesh(G[k]); caveGfx.delete(c.key); } }
+}
+// keep you inside the tunnel and the round room, and out of the crystals, pool and rocks
+function caveConfine(p) {
+  const c = p.cave;
+  let [u, w] = caveLocal(c, p.x, p.z);
+  if (Math.abs(u) > 40 || Math.abs(w - CAVE_CW) > 40) { p.cave = null; p.feet = Math.max(groundAt(p.x, p.z), SWIM_FEET); return; }   // moved far away (Ask Claude)
+  if (w < -0.3) { leaveCave(p); return; }
+  const du = u, dw = w - CAVE_CW, dc = Math.hypot(du, dw);
+  if (dc > CAVE_R) {
+    if (w < CAVE_TUN) u = Math.max(-CAVE_HW, Math.min(CAVE_HW, u));
+    else { u = du / dc * CAVE_R; w = CAVE_CW + dw / dc * CAVE_R; }
+  }
+  for (const [su, sw, sr] of caveLayout(c).solids) {
+    const eu = u - su, ew = w - sw, d = Math.hypot(eu, ew), rr = sr + 0.35;
+    if (d < rr && d > 1e-4) { u = su + eu / d * rr; w = sw + ew / d * rr; }
+  }
+  const d2 = Math.hypot(u, w - CAVE_CW);                        // (crystals by the wall can't push you through it)
+  if (d2 > CAVE_R && w >= CAVE_TUN) { u = u / d2 * CAVE_R; w = CAVE_CW + (w - CAVE_CW) / d2 * CAVE_R; }
+  [p.x, p.z] = caveWorld(c, u, w);
+}
+// the treasure chest, and drips echoing in the dark
+function caveThings(dt) {
+  const c = player.cave, L = caveLayout(c), [u, w] = caveLocal(c, player.x, player.z);
+  if (!caveLooted.has(caveLootKey(c)) && Math.hypot(u - L.chest.u, w - L.chest.w) < 1.9) {
+    caveLooted.add(caveLootKey(c));
+    const r = mulberry32(hashInt(Math.round(c.x), Math.round(c.z), 31));
+    const gems = 6 + Math.floor(r() * 5), iron = 2 + Math.floor(r() * 3);
+    giveNow('gems', gems); giveNow('iron', iron);
+    feed(`🧰 Treasure! +${gems} 💎 gems and +${iron} ⚙️ iron`);
+    [523, 659, 784, 1047].forEach((f, i) => tone('triangle', f, f, 0.25, 0.08, i * 0.09));
+    noiseHit('lowpass', 400, 0.8, 0.3, 0.12);
+  }
+  player.dripT = (player.dripT || 0) - dt;
+  if (player.dripT <= 0) { player.dripT = 1.5 + Math.random() * 3.5; const f = 1500 + Math.random() * 900; tone('sine', f, f * 0.55, 0.18, 0.035); }
+}
+// the cave's meshes, made the first time someone goes in
+function buildCaveGfx(c) {
+  const L = caveLayout(c), rng = mulberry32(hashInt(Math.round(c.x), Math.round(c.z), 13));
+  const P = (u, h, w) => { const [x, z] = caveWorld(c, u, w); return [x, CAVE_Y + h, z]; };
+  const rock = new Geo(16384), glow = new Geo(4096), chest = new Geo(512), chestOpen = new Geo(1024);
+  const ROCK = [0.4, 0.37, 0.34], FLOOR = [0.33, 0.29, 0.25], UP = [0, 1, 0];
+  // floor: a disc under the room and a strip under the tunnel
+  const N = 40, mid = P(0, 0, CAVE_CW);
+  for (let i = 0; i < N; i++) {
+    const a0 = i / N * 6.283, a1 = (i + 1) / N * 6.283, R = CAVE_R + 3;
+    const fc = shade(FLOOR, 0.85 + rng() * 0.2);
+    tri(rock, mid, P(Math.sin(a0) * R, 0, CAVE_CW + Math.cos(a0) * R), P(Math.sin(a1) * R, 0, CAVE_CW + Math.cos(a1) * R), UP, -1, FLOOR, fc, fc, 0, 0, 0);
+  }
+  tri(rock, P(-2.6, 0, -1.5), P(2.6, 0, -1.5), P(2.6, 0, CAVE_CW), UP, -1, FLOOR, FLOOR, FLOOR, 0, 0, 0);
+  tri(rock, P(-2.6, 0, -1.5), P(2.6, 0, CAVE_CW), P(-2.6, 0, CAVE_CW), UP, -1, FLOOR, FLOOR, FLOOR, 0, 0, 0);
+  // the dome: a lumpy ball of rock around the room, with a hole where the tunnel comes in
+  const hw = rockWaves(rng), DR = 11.5, DH = 7.5;
+  const pts = ICO2_V.map(v => { const k = rockBump(hw, v); return [v[0] * DR * k, Math.max(-0.2, 0.6 + v[1] * DH * k), CAVE_CW + v[2] * DR * k, k]; });
+  for (const f of ICO2_F) {
+    const a = pts[f[0]], b = pts[f[1]], d = pts[f[2]];
+    const cu = (a[0] + b[0] + d[0]) / 3, ch = (a[1] + b[1] + d[1]) / 3, cw = (a[2] + b[2] + d[2]) / 3;
+    if (cw < 5 && Math.abs(cu) < 3 && ch < 4) continue;                 // the tunnel's hole
+    const A = P(a[0], a[1], a[2]), B = P(b[0], b[1], b[2]), D = P(d[0], d[1], d[2]);
+    const k = (a[3] + b[3] + d[3]) / 3, fc = shade(ROCK, 0.85 + (k - 1) * 1.6 + rng() * 0.1);
+    tri(rock, A, B, D, faceN(A, B, D), -1, fc, fc, fc, 0, 0, 0);
+  }
+  // the tunnel: rocky sides and roof, from the doorway into the room
+  for (let w = -1.2; w <= 5.2; w += 1.6) {
+    for (const s of [-1, 1]) { const [x, y, z] = P(s * (2.5 + rng() * 0.3), 1.3, w); caveRock(rock, x, y, z, 1.3, 1.9, 1.3, shade(ROCK, 0.8 + rng() * 0.2), rng, 1); }
+    const [x, y, z] = P(0, 4.1 + rng() * 0.3, w); caveRock(rock, x, y, z, 2.7, 1.0, 1.4, shade(ROCK, 0.75 + rng() * 0.2), rng, 1);
+  }
+  // daylight at the end of the tunnel: the way out
+  const SKY = [0.78, 0.86, 0.95];
+  tri(glow, P(-7, -0.1, -2.2), P(7, -0.1, -2.2), P(7, 8, -2.2), [0, 0, 1], -1, SKY, SKY, SKY, 0, 0, 0);
+  tri(glow, P(-7, -0.1, -2.2), P(7, 8, -2.2), P(-7, 8, -2.2), [0, 0, 1], -1, SKY, SKY, SKY, 0, 0, 0);
+  // stalactites hanging from the ceiling, stalagmites standing on the floor
+  for (let i = 0; i < 30; i++) {
+    const a = rng() * 6.283, d = rng() * 8.5, u = Math.sin(a) * d, w = CAVE_CW + Math.cos(a) * d;
+    const top = 0.6 + DH * Math.sqrt(Math.max(0, 1 - (d / DR) ** 2)) * 0.88, len = 0.6 + rng() * 1.6;
+    tube(rock, P(u, top + 0.3, w), P(u + (rng() - 0.5) * 0.2, top - len, w + (rng() - 0.5) * 0.2), 0.18 + rng() * 0.14, 0.015, 6, shade(ROCK, 0.7 + rng() * 0.25), rng, false);
+  }
+  for (const m of L.mites) tube(rock, P(m.u, -0.1, m.w), P(m.u + (rng() - 0.5) * 0.15, m.h, m.w), 0.45, 0.04, 7, shade(ROCK, 0.8 + rng() * 0.2), rng, false);
+  // glowing crystals
+  for (const k of L.crystals) {
+    for (let j = 0; j < k.n; j++) {
+      const ou = (rng() - 0.5) * 0.9, ow = (rng() - 0.5) * 0.9, len = 0.7 + rng() * 1.3;
+      const lean = 0.35 + rng() * 0.4, dirU = -Math.sin(k.a) * lean + (rng() - 0.5) * 0.4, dirW = -Math.cos(k.a) * lean + (rng() - 0.5) * 0.4;
+      const col = shade(k.col, 0.75 + rng() * 0.35);
+      tube(glow, P(k.u + ou, -0.05, k.w + ow), P(k.u + ou + dirU * len, len, k.w + ow + dirW * len), 0.12 + rng() * 0.1, 0.01, 5, col, rng, false);
+    }
+  }
+  // a still, dark pool with a faint blue shine, ringed by stones
+  const pl = L.pool, WATER = [0.05, 0.17, 0.24], EDGE = [0.02, 0.06, 0.09];
+  for (let i = 0; i < 24; i++) { const a0 = i / 24 * 6.283, a1 = (i + 1) / 24 * 6.283;
+    tri(glow, P(pl.u, 0.03, pl.w), P(pl.u + Math.sin(a0) * pl.r, 0.03, pl.w + Math.cos(a0) * pl.r), P(pl.u + Math.sin(a1) * pl.r, 0.03, pl.w + Math.cos(a1) * pl.r), UP, -1, WATER, EDGE, EDGE, 0, 0, 0); }
+  for (let i = 0; i < 14; i++) { const a = i / 14 * 6.283 + rng() * 0.2, s = 0.25 + rng() * 0.2, [x, y, z] = P(pl.u + Math.sin(a) * (pl.r + 0.15), s * 0.3, pl.w + Math.cos(a) * (pl.r + 0.15));
+    caveRock(rock, x, y, z, s, s * 0.6, s, shade(ROCK, 0.7 + rng() * 0.3), rng, 1); }
+  // glowing mushrooms
+  for (const m of L.shrooms) for (let j = 0; j < 3; j++) {
+    const su = m.u + (rng() - 0.5) * 0.7, sw = m.w + (rng() - 0.5) * 0.7, h = 0.15 + rng() * 0.25;
+    tube(rock, P(su, 0, sw), P(su, h, sw), 0.03, 0.025, 5, [0.75, 0.75, 0.7], rng, false);
+    const [x, y, z] = P(su, h, sw); blob(glow, x, y, z, 0.12, 0.06, 0.12, [0.35, 0.95, 0.85], rng, 0.1, -1, 0, y - 0.01);
+  }
+  // old bones (the bear's?)
+  for (let i = 0; i < 6; i++) {
+    const u = L.chest.u + (rng() - 0.5) * 3, w = L.chest.w - 1 - rng() * 2, a = rng() * 6.28;
+    tube(rock, P(u - Math.cos(a) * 0.3, 0.05, w - Math.sin(a) * 0.3), P(u + Math.cos(a) * 0.3, 0.05, w + Math.sin(a) * 0.3), 0.05, 0.05, 8, [0.92, 0.9, 0.82], rng, true);
+  }
+  // the treasure chest: closed, and open with gold inside
+  const [qx, , qz] = P(L.chest.u, 0, L.chest.w), WOOD = [0.5, 0.32, 0.16], IRON = [0.32, 0.32, 0.34], GOLD = [1.0, 0.8, 0.25];
+  for (const g of [chest, chestOpen]) {
+    box(g, qx, CAVE_Y, qz, 1.1, 0.55, 0.72, WOOD);
+    box(g, qx - 0.4, CAVE_Y, qz, 0.08, 0.57, 0.74, IRON); box(g, qx + 0.4, CAVE_Y, qz, 0.08, 0.57, 0.74, IRON);
+  }
+  box(chest, qx, CAVE_Y + 0.55, qz, 1.14, 0.26, 0.76, shade(WOOD, 1.1));
+  box(chest, qx, CAVE_Y + 0.38, qz - 0.38, 0.16, 0.18, 0.04, GOLD);
+  box(chestOpen, qx, CAVE_Y + 0.55, qz + 0.4, 1.14, 0.7, 0.1, shade(WOOD, 1.1));
+  for (let i = 0; i < 5; i++) blob(chestOpen, qx + (rng() - 0.5) * 0.7, CAVE_Y + 0.5, qz + (rng() - 0.5) * 0.4, 0.14, 0.06, 0.14, GOLD, rng, 0.2, -1, 0);
+  return { rock: makeMesh(rock), glow: makeMesh(glow), chest: makeMesh(chest), chestOpen: makeMesh(chestOpen) };
+}
+function renderCave(time, eye) {
+  const c = player.cave;
+  let G = caveGfx.get(c.key);
+  if (!G) { G = buildCaveGfx(c); caveGfx.set(c.key, G); }
+  gl.clearColor(0.01, 0.01, 0.015, 1);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  const u = progWorld.u;
+  gl.useProgram(progWorld.p);
+  gl.uniformMatrix4fv(u.uVP, false, vp);
+  gl.uniform1f(u.uTime, time); gl.uniform3fv(u.uSun, SUN); gl.uniform3fv(u.uCam, eye);
+  gl.uniform1f(u.uFogD, FOG_END * 0.58); gl.uniform1f(u.uFogEnd, FOG_END);
+  gl.uniform1f(u.uWaterTint, 0); gl.uniform1f(u.uUnder, 0); gl.uniform1f(u.uShadow, 0); gl.uniform1f(u.uEmit, 0);
+  gl.uniform1f(u.uCave, 1);
+  drawMesh(G.rock, IDENT);
+  drawMesh(caveLooted.has(caveLootKey(c)) ? G.chestOpen : G.chest, IDENT);
+  gl.uniform1f(u.uEmit, 1); drawMesh(G.glow, IDENT); gl.uniform1f(u.uEmit, 0);
+  if (state === 'play' && !player.ko) drawHand(time);
+  gl.uniform1f(u.uCave, 0); gl.uniform1f(u.uWaterTint, 1);
+  gl.bindVertexArray(null);
 }
 // inside a room you stand on its floor
 function roomFloorAt(x, z) {

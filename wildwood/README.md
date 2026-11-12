@@ -1,6 +1,6 @@
 # Wildwood
 
-A 3D exploring game. You walk through a forest that goes on forever: pines, birches, leafy trees, ferns, tall grass, flowers, mushrooms and rocks. Every few minutes of walking you reach a river or a lake, and you can wade in, swim, and dive down under the water. There are also icy mountains, the ocean with sandy beaches, muddy marshes, rocky caves, and very rarely, a dragon's lair.
+A 3D exploring game. You walk through a forest that goes on forever: pines, birches, leafy trees, ferns, tall grass, flowers, mushrooms and rocks. Every few minutes of walking you reach a river or a lake, and you can wade in, swim, and dive down under the water. There are also icy mountains, the ocean with sandy beaches, muddy marshes, rocky caves you can walk into (with glowing crystals and a treasure chest), and very rarely, a dragon's lair.
 
 **Play it:** https://npyati.github.io/kid-games/wildwood/
 
@@ -190,6 +190,19 @@ When the game is served by `serve.py` at the repo root (`python3 serve.py`, then
 - Sharks and the Leviathan dive down to your depth when they come after you. Crocodiles and giant snakes stay at the top and can't bite you while you're under.
 - `player.under` is true while the player's eyes are under the water.
 
+## Going inside caves
+
+- Walk into a cave's dark doorway to go in (the screen fades to black for a moment). Get off your horse first.
+- Inside, a short rocky tunnel leads to a big round room under the hill: stalactites hanging from the ceiling, stalagmites, glowing crystals (purple, blue, green, pink), glowing mushrooms, a still dark pool, old bones and a **treasure chest**. Walk up to the chest to open it: 6–10 gems and 2–4 iron. Each cave's chest opens once per saved game (they're saved as `caves` in the game's save, as `seed:cell`).
+- It's dark in there: things close to you are lit by a warm glow, like a lantern, and the crystals, mushrooms and the daylight at the end of the tunnel glow on their own. Water drips echo now and then.
+- Walk back out through the tunnel toward the daylight to leave. You come out just in front of the doorway.
+- Nothing can hurt you in a cave, and enemies outside lose interest.
+- How it works: the room is built the first time someone goes in (`buildCaveGfx`) and drawn on its own, far below the world (`CAVE_Y`, -400 m), at the same x/z as the hill, so the world around keeps loading and animals keep working. `player.cave` is the cave you're in. `caveConfine` keeps you inside the tunnel and the room and out of the crystals, pool, chest and stalagmites. The doorway's spot is worked out when the cave is built (`c.mouth`).
+
+## Safe places
+
+You can't be hurt (by animals, bosses, fire, arrows or sprays) inside a hut, a house, a stone house, the castle (the courtyard too), up on a lookout tower's deck, or in a cave. Enemies can't get into those buildings, even through an open door, and they can't see you there; ones already after you hang around for a few seconds, then give up. Animals under a lookout tower can't shove you off the deck. Each building's `keepOut` area is the room (the whole walled square for the castle); `safeSpot` decides if you're safe, and `pushOutOfBuildings` keeps animals out.
+
 ## Saved data
 
 You can have as many saved games as you like. **💾 Saved games** in the menu lists them (name, gems, things made, when it was last played) with Play, Rename and Delete. Rename asks for the name in a typing box, so it needs a keyboard. Delete asks twice, and you can't delete the game you're playing. **🌍 New world (keep your stuff)** in the menu gives the game you're playing a brand new map and puts you somewhere new in it: you keep your backpack, gear and materials, buildings can't come along so you get back what they cost, and tame horses stay behind. It asks twice too. **➕ New game** starts from scratch: a new world, fists only, an empty backpack. Opening another game saves this one and reloads the page into it.
@@ -198,7 +211,7 @@ You can have as many saved games as you like. **💾 Saved games** in the menu l
 
 - `wildwood.v1`: settings shared by every game (music, sound, look direction, enemies) and the id of the open game.
 - `wildwood.slots`: the list of saved games: `{ id, name, seed, last, gems, things }`. Broken entries are dropped on load.
-- `wildwood.slot.<id>`: one game's world seed, where you were standing, your materials, the things you've crafted, what you're holding and wearing, the buildings in this world, and its tame horses.
+- `wildwood.slot.<id>`: one game's world seed, where you were standing, your materials, the things you've crafted, what you're holding and wearing, the buildings in this world, its tame horses, and which caves' treasure chests you've opened.
 
 The first time this version loads, an older single save (everything was in `wildwood.v1`) becomes "Game 1", so nothing is lost. Older saves are upgraded too: gems carry over and any weapons you'd found are kept. If the place you saved is now out in the ocean, you wake up on the nearest beach.
 
