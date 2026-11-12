@@ -1,6 +1,6 @@
 # Chicken Runner
 
-A side-scrolling race through 506 worlds. Your chicken runs by itself; you jump and flap over things and try to beat three rival chickens to the finish flag.
+A side-scrolling race through 506 worlds, plus a final world, Lava Castle, where the King Chicken boss blocks the way. Your chicken runs by itself; you jump and flap over things and try to beat three rival chickens to the finish flag.
 
 **Play it:** https://npyati.github.io/kid-games/chicken-runner/
 
@@ -35,6 +35,22 @@ After Moon Base come 500 bonus worlds (506 in all), unlocked one at a time like 
 
 Worlds get a little harder over the first 120 bonus worlds (tighter gaps, more double obstacles, the fastest rival goes from 0.97–0.98× up to 1.04×, the same as Moon Base), then stay there. Lengths are 20,000–33,000 units. Everything comes from a fixed seed in `makeMaps`, so world `x42` is always the same. Don't edit or reorder the lists it uses (`PLACE_NAMES`, `MOODS`, `RIVAL_NAMES`), or the worlds would change under players' saved progress.
 
+### The final world: Lava Castle and the King Chicken
+
+Lava Castle is the last entry in `MAPS` (`FINAL_MAP`, id `lava`). It opens when you finish **Moon Base**, not after the bonus worlds, so it's reachable early. It has its own orange card at the top of the world picker, above the pages.
+
+- **The race:** volcanoes and lava (`volcano` deco), rocks, stumps, thorns, rolling boulders and puddles of "Cooling lava". It has its own song. The rivals are extra hard: Ember (1.03×), Blaze (1.06×) and Scorch (1.09×), who trip only 2–4% of the time, and a rival far ahead only eases off to 0.95× here (0.9× elsewhere).
+- **The gate:** at 18,000 units (`m.gate`) a castle gate with a crown stands on the track, with clear ground around it, and the progress bar marks it. When you reach it, the race freezes (race clock and rivals) and the boss fight starts. Rivals can run past the gate; the King only blocks you.
+- **The fight** (`enterKing`, `updateBoss`, `renderBoss`): an arena 1,100 units wide with castle walls. You don't run on your own here. Move with ←/→ or A/D (stick or d-pad on a controller; on touch screens hold the left 22% of the screen to go left, 22–44% to go right, and tap the right half to jump) and jump/flap as usual. You have 10 health. The King Chicken has **40 health** and a big "KING CHICKEN" health bar at the top.
+  - **Bonk him** by running into him (or landing on him): 1 damage, or a **double bonk** (2) if he's resting right after an attack. He's protected for 0.5 s after each bonk, and you bounce back.
+  - **Peck** (3 damage): a "!" shows and he leans back for 0.8 s, then lunges. Jump over it or back away.
+  - **Stomp** (3 damage): a "!" shows, he crouches and jumps to where you are, and a red ring shows where he'll land. Run out from under him. He attacks sooner if you stand close.
+  - **Mad:** at half health he roars, the music changes to a faster song, he turns really red and steams, he gets faster, and his stomps send shockwaves along the ground (1 damage, jump them). He also gets a bit redder as he gets hurt before that. He has an angry eyebrow and a red eye the whole time.
+  - Shield Eggs drop in every 13–18 s; one blocks a hit.
+  - **Win:** his crown flies off and he falls over dizzy, then you go back to the race just past the gate, which is now open. **Knocked out:** a gentle "Knocked out!" screen, and you start the level over.
+- **Winning the world:** after the fight you must finish the race **1st**. Anything else shows "start over" and saves nothing (coins you grabbed are kept). Winning 1st shows "You beat Chicken Runner!" and gives a first-win bonus of 120 coins.
+- **Bot testing:** a careful fighting bot (backs away from pecks, runs from stomps, jumps shockwaves) beat the King in 7 of 8 fights in about 40 s, often with 1 health left. Sloppy and standing-still bots got knocked out. In the race, a bot that never bumps came 1st in about 70% of runs. A bot that misses 1 in 8 jumps came 2nd–4th on Lava Castle but still mostly won Moon Base.
+
 The world picker shows 12 worlds per page and opens on the page with your newest unlocked world. "Newest world" jumps there; LB/RB flip pages on a controller.
 
 Bot testing on every 10th bonus world (50 worlds): a careful bot won 44 and came 2nd in 6; a sloppy bot finished 1st–3rd in nearly all of them.
@@ -53,6 +69,8 @@ Each world has its own song, written as note names in `SONG_SRC` and played by a
 | Frosty Peaks | icy music-box bells with a frozen echo, sparkly arpeggios, sleigh bells |
 | Gumdrop Hills | fast bubblegum pop with claps and bouncing bass |
 | Moon Base | slow, floaty space synths with long echoes |
+| Lava Castle | driving minor-key race tune |
+| King Chicken fight | "danger" music: growly sawtooth melody and heavy drums, then a faster, higher version when he gets mad |
 
 The menu has its own gentle tune. Each song loops every 24 to 44 seconds.
 
@@ -68,6 +86,7 @@ Each world has three rival chickens. They run in the back lanes with their names
 | Frosty Peaks | Waddles, Boo, Sir Peckalot |
 | Gumdrop Hills | Sprinkles, Buzz, Bubbles |
 | Moon Base | Bolt, Cosmo, Nova |
+| Lava Castle | Ember, Blaze, Scorch (extra hard) |
 
 How they race (all in `RIVALS` and `updateRival`):
 
@@ -104,6 +123,8 @@ Bumping into an obstacle makes the chicken stumble for about half a second. Ther
 - The shop shows 24 skins per page, with tabs for All skins, Can buy and Mine. LB/RB flip pages on a controller.
 - The world picker shows your best place in each world as a medal.
 
+In the King Chicken fight you lose health instead, and losing all of it means starting Lava Castle over (you wake up with full health; nothing is lost).
+
 ## Secret cheat: the chicken dance
 
 During a race, enter **down, down, left, right, left, right**:
@@ -114,11 +135,11 @@ During a race, enter **down, down, left, right, left, right**:
 
 The chicken flashes rainbow with a star trail, runs at 2.1× speed, and smashes through obstacles, puddles and yucky items all the way to the finish. A "CHICKEN DANCE!" banner shows and a power-up song plays.
 
-A cheat run is just for fun. Coins you grab still count (there's no coin magnet, so it earns less than playing normally), but you get no finish bonus, stars, best time or medal, and it doesn't unlock the next world. The code lives in `CHEAT_CODE`, `cheatInput` and `activateCheat`.
+A cheat run is just for fun. Coins you grab still count (there's no coin magnet, so it earns less than playing normally), but you get no finish bonus, stars, best time or medal, and it doesn't unlock the next world. In Lava Castle the King Chicken runs away instead of fighting. The code lives in `CHEAT_CODE`, `cheatInput` and `activateCheat`.
 
 ## Saved data
 
-One `localStorage` key, `chickenrunner.save.v1`: coins, owned skins, the current skin, best time, stars and race place per world, and the music and sound toggles. Bad values are cleaned up on load.
+One `localStorage` key, `chickenrunner.save.v1`: coins, owned skins, the current skin, best time, stars and race place per world, the music and sound toggles, and `king` (`wins`: how many times you've beaten the King Chicken; `best`: reserved, 0 for now). Bad values are cleaned up on load.
 
 ## Testing notes
 
