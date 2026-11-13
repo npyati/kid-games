@@ -26,7 +26,7 @@ Plug in a second Xbox controller and press Start (or A) on it while playing, or 
 
 ## Wheat and horses
 
-- **Wheat fields** are golden patches in open, dry, grassy country (not in forests, marshes, snow or on beaches), about one every 2 minutes of walking. The ground under them is golden too, so you can spot them from far away, and no trees grow in them. Swing at the wheat to pick it: each swing picks a patch about 4 m across and gives 1 wheat (2 from a full patch; an axe doubles it). Picked wheat turns to stubble and grows back the next time the game loads.
+- **Wheat fields** are golden patches in open, dry, grassy country (not in forests, marshes, snow or on beaches). They're rare: about one every 9 minutes of walking (`WHEAT_T`), covering about 1% of the land. The ground under them is golden too, so you can spot them from far away, and no trees grow in them. Swing at the wheat to pick it: each swing picks a patch about 4 m across and gives 1 wheat (2 from a full patch; an axe doubles it). Picked wheat turns to stubble and grows back the next time the game loads.
 - **Wild horses** come in herds of 2 or 3, in big open fields with no forest nearby: about one herd every 3–4 minutes of walking (more often out in open country). There are five coats: brown with a white stripe, black, white, chestnut with a pale mane, and grey. They're shy: they run if you get within 7 m, or within 12 m if you run at them. If you have wheat, they come over to you instead.
 - **Taming:** walk up to a horse (within about 3 m) and press **X** (controller) or **R** (keyboard) to feed it one wheat. Each horse needs 3 to 5 bites; hearts show how close you are. Then it's yours and wears a saddle. Tame horses never run away and wait near where you left them.
 - **Riding:** press X / R next to your horse to get on, and again to get off (you step off to the right). On a horse you walk at 8.5 m/s and gallop at 15 m/s (LT / Shift), jump higher, and see over the grass. Horses won't go into water. Getting knocked out drops you off your horse.
@@ -116,9 +116,9 @@ Building one puts it right in front of you, facing you (not in water). You can b
 | Iron hammer | 6, slow, knocks enemies far, breaks 3 stone | 1 wood, 5 iron |
 | Croc-tail whip | 3, reaches very far (4.6 m) | 2 croc skin, 1 wood |
 | Croc-jaw mace | 3.5, big knockback | 2 croc skin, 2 iron |
-| Scale sword | 6, quick | 6 fish scales, 1 iron |
-| Scale spear | 6, reaches far | 5 fish scales, 2 wood |
-| Golden trident | 8, double damage to anything that swims (fish, crocodiles, sharks, snakes, the Leviathan), reaches far | 1 golden scale, 4 fish scales, 2 iron |
+| Scale sword | 6, quick | 20 fish scales, 1 iron |
+| Scale spear | 6, reaches far | 20 fish scales, 2 wood |
+| Golden trident | 8, double damage to anything that swims (fish, crocodiles, sharks, snakes, the Leviathan), reaches far | 10 golden scales, 4 fish scales, 2 iron |
 | Shark-tooth sword | 2.5 | 4 shark teeth, 2 iron, 1 wood |
 | Crystal sword | 6 | 2 iron, 12 gems |
 | Crystal spear | 6, reaches far | 2 wood, 1 iron, 8 gems |
@@ -130,7 +130,7 @@ Building one puts it right in front of you, facing you (not in water). You can b
 | Venom bow | 3.5-damage poison arrows | 5 giant fangs, 2 wood, 1 fur |
 | Frost bow | 3.5-damage arrows that slow enemies | 1 frost crystal, 2 wood, 1 fur |
 | Croc-tooth bow | 2-damage arrows | 2 croc skin, 2 wood, 1 fur |
-| Scale bow | 3.5-damage arrows, shoots quickly | 6 fish scales, 2 wood |
+| Scale bow | 3.5-damage arrows, shoots quickly | 20 fish scales, 2 wood |
 | Crystal bow | 4-damage arrows | 2 wood, 1 iron, 12 gems |
 | Dragon bow | 6-damage arrows | 1 dragon scale, 2 wood, 2 iron |
 | 10 arrows | for bows (your first bow comes with 10) | 1 wood, 1 stone |

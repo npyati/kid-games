@@ -632,7 +632,7 @@ function featureNear(x, z) {
   return !!(l && (x - l.x) ** 2 + (z - l.z) ** 2 < 36 * 36);
 }
 // Wheat fields: golden patches out in open, dry, grassy country (not in forests, marshes, snow or on beaches)
-const WHEAT_F = 0.011, WHEAT_T = 0.12;
+const WHEAT_F = 0.011, WHEAT_T = 0.38;   // a field about every 9 minutes of walking, about 1% of the land
 function wheatMask(x, z) { return perlin(x * WHEAT_F + 57.3, z * WHEAT_F - 19.9) + 0.22 * perlin(x * 0.05 + 3.3, z * 0.05 + 1.9); }
 function wheatOK(forest, marsh, h) { return forest < 0.3 && marsh < 0.1 && h > 1.3 && h < 24; }
 function isWheat(x, z) {
@@ -3496,9 +3496,9 @@ const ITEMS = {
   hammer:      { name: 'Iron hammer', icon: '🔨', type: 'weapon', dmg: 6, reach: 2.8, time: 0.55, knock: 2.5, mine: 3, cost: { wood: 1, iron: 5 }, note: 'slow, knocks enemies far, breaks 3 stone' },
   goblinaxe:   { name: 'Crude goblin axe', icon: '🪓', type: 'weapon', dmg: 2.5, reach: 2.6, time: 0.3, chop: 2, note: 'fast, chops 2 wood; only goblins drop it' },
   crocwhip:    { name: 'Croc-tail whip', icon: '🐊', type: 'weapon', dmg: 3, reach: 4.6, time: 0.34, cost: { skin: 2, wood: 1 }, note: 'reaches very far' },
-  scalesword:  { name: 'Scale sword', icon: '🐟', type: 'weapon', dmg: 6, reach: 3.1, time: 0.3, cost: { fishscale: 6, iron: 1 }, note: 'light and quick' },
-  scalespear:  { name: 'Scale spear', icon: '🐟', type: 'weapon', dmg: 6, reach: 4.3, time: 0.38, cost: { fishscale: 5, wood: 2 }, note: 'reaches far' },
-  trident:     { name: 'Golden trident', icon: '🔱', type: 'weapon', dmg: 8, reach: 4.0, time: 0.4, water: 2, cost: { goldscale: 1, fishscale: 4, iron: 2 }, note: 'double damage to anything that swims' },
+  scalesword:  { name: 'Scale sword', icon: '🐟', type: 'weapon', dmg: 6, reach: 3.1, time: 0.3, cost: { fishscale: 20, iron: 1 }, note: 'light and quick' },
+  scalespear:  { name: 'Scale spear', icon: '🐟', type: 'weapon', dmg: 6, reach: 4.3, time: 0.38, cost: { fishscale: 20, wood: 2 }, note: 'reaches far' },
+  trident:     { name: 'Golden trident', icon: '🔱', type: 'weapon', dmg: 8, reach: 4.0, time: 0.4, water: 2, cost: { goldscale: 10, fishscale: 4, iron: 2 }, note: 'double damage to anything that swims' },
   sharksword:  { name: 'Shark-tooth sword', icon: '🦈', type: 'weapon', dmg: 2.5, reach: 3.2, time: 0.38, cost: { tooth: 4, iron: 2, wood: 1 }, note: 'a jagged, toothy blade' },
   crocmace:    { name: 'Croc-jaw mace', icon: '🐊', type: 'weapon', dmg: 3.5, reach: 2.9, time: 0.45, knock: 2.5, cost: { skin: 2, iron: 2 }, note: 'big toothy knockback' },
   crystal:     { name: 'Crystal sword', icon: '🗡️', type: 'weapon', dmg: 6, reach: 3.2, time: 0.38, cost: { iron: 2, gems: 12 } },
@@ -3511,7 +3511,7 @@ const ITEMS = {
   venombow:    { name: 'Venom bow', icon: '🏹', type: 'bow', dmg: 3.5, speed: 50, time: 0.5, poison: 2, cost: { fang: 5, wood: 2, fur: 1 }, note: 'poison arrows' },
   frostbow:    { name: 'Frost bow', icon: '🏹', type: 'bow', dmg: 3.5, speed: 50, time: 0.5, slow: 3, cost: { frost: 1, wood: 2, fur: 1 }, note: 'arrows slow enemies down' },
   crocbow:     { name: 'Croc-tooth bow', icon: '🏹', type: 'bow', dmg: 2, speed: 52, time: 0.5, cost: { skin: 2, wood: 2, fur: 1 }, note: 'shoots arrows' },
-  scalebow:    { name: 'Scale bow', icon: '🏹', type: 'bow', dmg: 3.5, speed: 54, time: 0.42, cost: { fishscale: 6, wood: 2 }, note: 'shoots quickly' },
+  scalebow:    { name: 'Scale bow', icon: '🏹', type: 'bow', dmg: 3.5, speed: 54, time: 0.42, cost: { fishscale: 20, wood: 2 }, note: 'shoots quickly' },
   crystalbow:  { name: 'Crystal bow', icon: '🏹', type: 'bow', dmg: 4, speed: 56, time: 0.5, cost: { wood: 2, iron: 1, gems: 12 }, note: 'shoots arrows' },
   dragonbow:   { name: 'Dragon bow', icon: '🏹', type: 'bow', dmg: 6, speed: 62, time: 0.45, cost: { scale: 1, wood: 2, iron: 2 }, note: 'shoots arrows' },
   arrows:      { name: '10 arrows', icon: '➶', type: 'ammo', give: { arrows: 10 }, cost: { wood: 1, stone: 1 }, note: 'for bows' },
