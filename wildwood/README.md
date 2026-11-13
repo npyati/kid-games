@@ -201,7 +201,7 @@ When the game is served by `serve.py` at the repo root (`python3 serve.py`, then
 
 ## Safe places
 
-You can't be hurt (by animals, bosses, fire, arrows or sprays) inside a hut, a house, a stone house, the castle (the courtyard too), up on a lookout tower's deck, or in a cave. Enemies can't get into those buildings, even through an open door, and they can't see you there; ones already after you hang around for a few seconds, then give up. Animals under a lookout tower can't shove you off the deck. Each building's `keepOut` area is the room (the whole walled square for the castle); `safeSpot` decides if you're safe, and `pushOutOfBuildings` keeps animals out.
+You can't be hurt (by animals, bosses, fire, arrows or sprays) inside a hut, a house, a stone house, the castle (the courtyard too), up on a lookout tower (on the deck, or on the ladder once you're off the ground), or in a cave. Poison and freezing can't get you there either, and a safe place cures poison. Enemies can't get into those buildings, even through an open door, and they can't see you there; ones already after you hang around for a few seconds, then give up. Animals under a lookout tower can't shove you off the deck. Each building's `keepOut` area is the room (the whole walled square for the castle); `safeSpot` decides if you're safe, and `pushOutOfBuildings` keeps animals out.
 
 ## Saved data
 

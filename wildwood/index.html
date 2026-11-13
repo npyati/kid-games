@@ -4855,12 +4855,12 @@ function updateIceSpikes(dt) {
   iceSpikes = iceSpikes.filter(s => s.t < s.delay + 1.3);
 }
 function poisonPlayer(sec) {
-  if (player.ko) return;
+  if (player.ko || player.safe) return;
   if (!(player.poisonT > 0)) feed('🤢 Poisoned! Get out of the green cloud');
   player.poisonT = Math.max(player.poisonT || 0, sec); player.poisonTick = player.poisonTick || 1;
 }
 function freezePlayer(sec) {
-  if (player.ko) return;
+  if (player.ko || player.safe) return;
   player.frozenT = Math.max(player.frozenT || 0, sec);
   feed('❄️ Frozen!'); tone('sine', 1800, 900, 0.4, 0.06);
 }
@@ -5830,6 +5830,7 @@ function updateHealth(dt) {
   }
   hurtFlash = Math.max(0, hurtFlash - dt * 2.5);
   player.frozenT = Math.max(0, (player.frozenT || 0) - dt);
+  if (player.safe && player.poisonT > 0) player.poisonT = 0;   // a safe place cures poison
   if (player.poisonT > 0 && !player.ko) {            // poison: 2 damage a second for a few seconds
     player.poisonT -= dt; player.poisonTick -= dt;
     if (player.poisonTick <= 0) {
@@ -6978,7 +6979,8 @@ function pushOutOfBuildings(o, rad) {
 // safe spots: inside a house, hut or the castle, up on a lookout deck, or in a cave. Nothing can hurt you there.
 function safeSpot(climb) {
   if (player.cave) return true;
-  if (climb && climb.floor > -Infinity && player.feet >= climb.floor - 0.3) return true;
+  if (climb && climb.floor > -Infinity && player.feet >= climb.floor - 0.3) return true;     // up on the deck
+  if (climb && climb.climbing && player.feet > groundAt(player.x, player.z) + 1) return true; // on the ladder, off the ground
   return !!insideRooms(roomsNear(player.x - 1, player.z - 1, 2, 'keepOut'), player.x, player.z, 'keepOut', -0.15);
 }
 /* ---------- Inside the caves ----------
