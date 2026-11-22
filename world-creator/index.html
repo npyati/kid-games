@@ -191,7 +191,7 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,38px);lin
       <div><b class="h">Maps</b>Ten islands, plus four big maps: <b>Island Set</b> (seven islands, each a different land), <b>Pangea</b> (one giant supercontinent), <b>Sky Islands</b> (floating in the sky) and <b>Endless Ocean</b>. Or pick <b>🎲 Random</b>. New islands are much bigger than the first ones, and people and animals are smaller, so everything is more to scale.</div>
       <div><b class="h">Disasters</b>The <b>Disasters</b> group has a <b>tornado</b> (picks things up and throws them), a <b>tsunami</b> (a wave rolls in from the nearest sea), a <b>bomb</b>, a <b>sprinkle bomb</b> (lots of little bombs) and an <b>earthquake</b> (cracks the ground and knocks buildings down). The size buttons make them bigger. <b>Undo</b> puts things back.</div>
       <div><b class="h">Kings, queens and battles</b>Once a town starts to grow it crowns a <b>king</b>, a <b>queen</b> or both. They train soldiers who guard the town and send them to battle. Tap the <b>🪄 Battle wand</b> (in People) on one town, then on another, and they go to war. The <b>🕊️ Peace wand</b> does the opposite: the two towns become friends and never fight (even orcs). Bears, polar bears, foxes, crocodiles, sharks and dinosaurs are hungry: they hunt people and other animals. When a town has nobody left, its town hall explodes and it has fallen.</div>
-      <div><b class="h">Inspect</b>Press <b>🔍 Inspect</b> (I on the keyboard, or press X twice on the controller) and tap a person, an animal, a monster or a town. People and animals have a name, an age, a personality, a job and a story of what's happened to them. Towns show how rich they are, their rulers, whether they're at war, at peace or neutral, and their history. One year goes by every 2 minutes.</div>
+      <div><b class="h">Inspect</b>Press <b>🔍 Inspect</b> (I on the keyboard, or press X twice on the controller) and tap a person, an animal, a monster or a town. People and animals have a name, an age, a personality, a job and a story of what's happened to them. Towns show how much money they have, their rulers, whether they're at war, at peace or neutral, and their history. One year goes by every 2 minutes.</div>
       <div><b class="h">Big monsters</b>Dragons, hydras and sea serpents are huge, and each island can have up to <b>3</b> of each.</div>
       <div><b class="h">Saving</b>Every island saves by itself. Find it again under <b>My islands</b>.</div>
     </div>
@@ -2436,7 +2436,7 @@ birdDef('phoenix', 'Phoenix', '🔥', g => {
 const SIZES = [0.5, 1, 1.75, 3], SIZE_NAMES = ['Small', 'Medium', 'Big', 'Giant'], SIZE_SHORT = ['S', 'M', 'L', 'XL'];
 // the brush on the left: how many things go down at once, and how wide the land tools reach
 // some things are bigger (or smaller) than their size button says, and the biggest monsters are limited to 3 of each per island
-const GROW = { dragon: 2.2, hydra: 1.6, seaserpent: 2.2, troll: 0.62 }, ONLY3 = new Set(['dragon', 'hydra', 'seaserpent']);
+const GROW = { dragon: 2.6, hydra: 1.6, seaserpent: 2.2, troll: 0.62 }, ONLY3 = new Set(['dragon', 'hydra', 'seaserpent']);
 // people, animals and monsters are 0.7 times the size they used to be (so the islands are more to scale), except the big monsters
 const SHRINK = 0.7, growOf = id => GROW[id] || (['people', 'creatures', 'mythical'].includes(CAT[id].cat) ? SHRINK : 1);
 const sizeOf = d => SIZES[tool.size] * growOf(d.id);
@@ -2596,13 +2596,13 @@ function loadThings(data, fresh) {
   loadTowns(data && data.towns);
   if (fresh) { scatterStart(); return; }
   if (!data || !Array.isArray(data.objs)) return;
-  const shrinkOld = data.sz !== 2;                // islands saved before people and animals got smaller: shrink them to match
+  const shrinkOld = !(data.sz >= 2), oldDragons = !(data.sz >= 3);   // (dragons got a bit bigger in sz 3)                // islands saved before people and animals got smaller: shrink them to match
   for (const a of data.objs.slice(0, 3000)) {
     if (!Array.isArray(a) || !CAT[a[0]]) continue;
     const [t, x, z, r, s] = a;
     if (![x, z, r, s].every(Number.isFinite) || Math.abs(x) > 3000 || Math.abs(z) > 3000) continue;
     if (ONLY3.has(t) && countOf(t) >= 3) continue;
-    const o = makeObj(t, x, z, r, clamp(s * (shrinkOld && !GROW[t] ? growOf(t) : 1), 0.2, 4 * Math.max(1, GROW[t] || 1))); settle(o); objs.push(o);
+    const o = makeObj(t, x, z, r, clamp(s * (shrinkOld && !GROW[t] ? growOf(t) : 1) * (oldDragons && t === 'dragon' && s >= 1.1 ? 2.6 / 2.2 : 1), 0.2, 4 * Math.max(1, GROW[t] || 1))); settle(o); objs.push(o);
     if (typeof a[5] === 'string' && TOWN[a[5]]) o.town = a[5];
     const ex = a[6];
     if (o.town && ex && typeof ex === 'object') {
@@ -3569,10 +3569,6 @@ function townGold(t, folk, homes, dt) {          // towns get richer as they gro
   if (towns.some(o => atWar(t.id, o.id))) t.gold -= folk.length * 0.15 * dt;
   t.gold = clamp(t.gold, 0, 99999);
 }
-function wealthOf(t) {
-  const g = t.gold || 0;
-  return g < 120 ? ['Poor', '🪙'] : g < 450 ? ['Getting by', '🪙🪙'] : g < 1300 ? ['Comfortable', '💰'] : g < 3500 ? ['Rich', '💰💰'] : ['Very rich', '💎💰💰'];
-}
 const yearsTxt = y => y < 1 ? 'less than a year' : Math.floor(y) === 1 ? '1 year' : Math.floor(y) + ' years';
 let inspected = null, inspectT = 0;
 function inspectAt(hit) {
@@ -3607,11 +3603,11 @@ function fillInspect() {
   if (inspected.town) {
     const t = inspected.town, R = RACES[t.race], folk = townFolk(t), homes = townBuildings(t);
     const rulers = folk.filter(o => o.ruler), sol = folk.filter(o => o.soldier).length, foes = towns.filter(o => atWar(t.id, o.id)).map(o => o.name);
-    const pals = [...t.friends].map(id => TOWN[id] && TOWN[id].name).filter(Boolean), [wl, wi] = wealthOf(t);
+    const pals = [...t.friends].map(id => TOWN[id] && TOWN[id].name).filter(Boolean);
     const status = t.build < 1 ? `🔨 Still being built (${Math.floor(t.build * 100)}%)` : foes.length ? '⚔️ At war with ' + foes.map(esc).join(', ') : t.mode === 'peace' ? '🕊️ Keeping the peace' : pals.length ? '🤝 At peace' : '😐 Neutral';
     head = `${R.icon} ${esc(t.name)}`;
     body = row('People', `${R.name}`) + row('Population', folk.length) + row('Soldiers', sol) + row('Buildings', homes.length)
-      + row('Wealth', `${wi} ${wl} <small>(${Math.floor(t.gold || 0)} gold)</small>`)
+      + row('Money', `🪙 ${Math.floor(t.gold || 0).toLocaleString()} gold`)
       + row('Rulers', rulers.length ? rulers.map(o => '👑 ' + esc(rulerTitle(o))).join('<br>') : 'Nobody yet')
       + row('Status', status) + (pals.length ? row('Friends', pals.map(esc).join(', ')) : '')
       + row('Founded', yearsTxt((t.age || 0) / YEAR) + ' ago');
@@ -4062,7 +4058,7 @@ function saveObj(o) {
 }
 function saveIsland() {
   if (!cur) return;
-  writeJSON(ISLE_PREFIX + cur.id, { type: cur.type, seed: cur.seed, sz: 2, land: landEdits, towns: saveTowns(), objs: objs.map(saveObj),
+  writeJSON(ISLE_PREFIX + cur.id, { type: cur.type, seed: cur.seed, sz: 3, land: landEdits, towns: saveTowns(), objs: objs.map(saveObj),
     cam: { tx: +cam.tx.toFixed(1), tz: +cam.tz.toFixed(1), yaw: +cam.yaw.toFixed(3), pitch: +cam.pitch.toFixed(3), dist: +cam.dist.toFixed(1) } });
   const m = islands.find(s => s.id === cur.id);
   if (m) { m.count = objs.length; m.last = Date.now(); writeList(); }
