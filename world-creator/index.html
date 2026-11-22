@@ -1070,6 +1070,7 @@ const CATS = [
   { id: 'build', name: 'Buildings', icon: '🏠', items: [] },
   { id: 'people', name: 'People', icon: '🧑', items: [] },
   { id: 'creatures', name: 'Creatures', icon: '🐾', items: [] },
+  { id: 'mythical', name: 'Mythical', icon: '🐉', items: [] },
   { id: 'weapons', name: 'Weapons', icon: '⚔️', items: [] },
 ];
 const CAT = {};
@@ -1355,7 +1356,7 @@ function personBody(g, o) {
   if (o.dress) cyl(g, [0, y + 0.3 * k, 0], [0, y + 1.15 * k, 0], 0.42 * k, 0.2 * k, o.dress, 20);
   const handY = o.raise ? 2.1 : 0.98;
   for (const s of [-1, 1]) {
-    const hand = s > 0 && o.raise ? [0.42 * k, y + handY * k, 0.05 * k] : [s * 0.34 * k, y + 0.95 * k, 0.06 * k];
+    const hand = o.armsOut ? [s * 0.22 * k, y + 1.42 * k, 0.55 * k] : s > 0 && o.raise ? [0.42 * k, y + handY * k, 0.05 * k] : [s * 0.34 * k, y + 0.95 * k, 0.06 * k];
     cyl(g, [s * 0.27 * k, y + 1.47 * k, 0], hand, 0.075 * k, 0.065 * k, o.sleeve || sh, 10);
     orb(g, hand[0], hand[1], hand[2], 0.07 * k, 0.07 * k, 0.07 * k, sk, { lo: true });
   }
@@ -1369,7 +1370,7 @@ function personBody(g, o) {
 }
 function personDef(id, name, icon, o) {
   const k = o.k || 1;
-  return def(id, 'people', name, icon, { r: 0.5 * k, h: 1.9 * k, move: 'walk', speed: o.speed || 1.3, body: g => personBody(g, o),
+  return def(id, o.cat || 'people', name, icon, { r: 0.5 * k, h: 1.9 * k, move: 'walk', speed: o.speed || 1.3, body: g => personBody(g, o), wings: o.wings,
     legs: { at: [[-0.1 * k, 0.86 * k, 0], [0.1 * k, 0.86 * k, 0]], amp: 0.6, gait: 'biped', len: 0.86 * k,
       make: g => { cyl(g, [0, 0.02, 0], [0, -0.78 * k, 0], 0.085 * k, 0.07 * k, o.legCol || o.pants, 10); orb(g, 0, -0.81 * k, 0.05 * k, 0.08 * k, 0.06 * k, 0.13 * k, o.shoes || COL.darkwood, { lo: true }); } },
     glow: o.glow });
@@ -1417,7 +1418,7 @@ personDef('builder', 'Builder', '👷', { shirt: [1, 0.6, 0.12], pants: [0.3, 0.
 // four legs: body along z, head at +z
 function quadDef(id, name, icon, o) {
   const H = o.H, L = o.L, W = o.W, legLen = o.legLen || H * 0.85;
-  return def(id, 'creatures', name, icon, { r: Math.max(L, W) * 0.7, h: H + (o.headY || 0.4), move: o.move || 'walk', speed: o.speed || 1.6, place: o.place || 'land', amph: o.amph, hop: o.hop,
+  return def(id, o.cat || 'creatures', name, icon, { r: Math.max(L, W) * 0.7, h: H + (o.headY || 0.4), move: o.move || 'walk', speed: o.speed || 1.6, place: o.place || 'land', amph: o.amph, hop: o.hop,
     body: g => { orb(g, 0, H, 0, W, o.bodyH || W * 0.95, L / 2, o.col, { bump: o.fluffy ? 0.05 : 0 }); if (o.belly) orb(g, 0, H - W * 0.3, 0.05, W * 0.85, W * 0.6, L * 0.4, o.belly); o.head(g); if (o.tail) o.tail(g); if (o.extra) o.extra(g); },
     legs: { at: [[-W * 0.55, H - W * 0.3, L * 0.3], [W * 0.55, H - W * 0.3, L * 0.3], [-W * 0.55, H - W * 0.3, -L * 0.3], [W * 0.55, H - W * 0.3, -L * 0.3]], amp: o.hop ? 0.25 : 0.5, gait: o.hop ? 'hop' : 'quad', len: legLen,
       make: g => { cyl(g, [0, 0.05, 0], [0, -(H - W * 0.3) + 0.06, 0], o.legR || W * 0.22, (o.legR || W * 0.22) * 0.8, o.legCol || o.col, 10); orb(g, 0, -(H - W * 0.3) + 0.05, 0.02, (o.legR || W * 0.22) * 1.05, 0.06, (o.legR || W * 0.22) * 1.25, o.hoof || shade(o.legCol || o.col, 0.6), { lo: true }); } } });
@@ -1451,7 +1452,7 @@ function horseHead(g, col, mane) {
 quadDef('horse', 'Horse', '🐎', { L: 1.7, H: 1.25, W: 0.44, bodyH: 0.5, col: [0.55, 0.33, 0.18], legR: 0.09, hoof: COL.dark, speed: 2.6, head: g => horseHead(g, [0.55, 0.33, 0.18], [0.18, 0.12, 0.08]),
   tail: g => cyl(g, [0, 1.35, -0.8], [0, 0.7, -1.0], 0.08, 0.04, [0.18, 0.12, 0.08], 8) });
 const RAINBOW = [[1, 0.35, 0.35], [1, 0.7, 0.2], [1, 0.95, 0.3], [0.4, 0.85, 0.4], [0.35, 0.6, 1], [0.7, 0.45, 1]];
-quadDef('unicorn', 'Unicorn', '🦄', { L: 1.7, H: 1.25, W: 0.44, bodyH: 0.5, col: [0.98, 0.96, 1], legR: 0.09, hoof: COL.gold, speed: 2.6, head: g => { horseHead(g, [0.98, 0.96, 1], RAINBOW); cyl(g, [0, 2.1, 1.12], [0, 2.55, 1.28], 0.05, 0.005, COL.gold, 10); },
+quadDef('unicorn', 'Unicorn', '🦄', { cat: 'mythical', L: 1.7, H: 1.25, W: 0.44, bodyH: 0.5, col: [0.98, 0.96, 1], legR: 0.09, hoof: COL.gold, speed: 2.6, head: g => { horseHead(g, [0.98, 0.96, 1], RAINBOW); cyl(g, [0, 2.1, 1.12], [0, 2.55, 1.28], 0.05, 0.005, COL.gold, 10); },
   tail: g => { for (let i = 0; i < 5; i++) cyl(g, [(i - 2) * 0.03, 1.35, -0.8], [(i - 2) * 0.06, 0.7, -1.0], 0.04, 0.02, RAINBOW[i], 6); } });
 quadDef('deer', 'Deer', '🦌', { L: 1.3, H: 1.0, W: 0.32, bodyH: 0.4, col: [0.68, 0.46, 0.28], legR: 0.065, speed: 2.4, head: g => {
   cyl(g, [0, 1.1, 0.5], [0, 1.5, 0.7], 0.12, 0.1, [0.68, 0.46, 0.28]); orb(g, 0, 1.55, 0.82, 0.12, 0.12, 0.2, [0.68, 0.46, 0.28]);
@@ -1491,10 +1492,7 @@ quadDef('squirrel', 'Squirrel', '🐿️', { L: 0.3, H: 0.17, W: 0.09, col: [0.6
 quadDef('lizard', 'Lizard', '🦎', { L: 0.5, H: 0.1, W: 0.08, col: [0.35, 0.7, 0.3], legR: 0.02, speed: 1.5, head: g => { orb(g, 0, 0.12, 0.3, 0.06, 0.05, 0.09, [0.35, 0.7, 0.3]); eyes(g, 0.04, 0.15, 0.33, 0.015); },
   tail: g => cyl(g, [0, 0.1, -0.25], [0, 0.05, -0.65], 0.05, 0.005, [0.35, 0.7, 0.3], 8) });
 quadDef('frog', 'Frog', '🐸', { L: 0.3, H: 0.12, W: 0.13, col: [0.3, 0.72, 0.25], hop: true, amph: true, speed: 1.2, head: g => { orb(g, 0, 0.2, 0.1, 0.13, 0.08, 0.1, [0.3, 0.72, 0.25]); for (const s of [-1, 1]) { orb(g, s * 0.07, 0.27, 0.12, 0.04, 0.04, 0.04, COL.white, { lo: true }); orb(g, s * 0.07, 0.28, 0.15, 0.02, 0.02, 0.02, COL.dark, { lo: true }); } } });
-quadDef('croc', 'Crocodile', '🐊', { L: 2.6, H: 0.32, W: 0.36, bodyH: 0.22, col: [0.3, 0.45, 0.22], legR: 0.07, amph: true, speed: 0.9, head: g => {
-  orb(g, 0, 0.32, 1.5, 0.24, 0.15, 0.45, [0.3, 0.45, 0.22]); for (const s of [-1, 1]) { orb(g, s * 0.13, 0.46, 1.25, 0.06, 0.06, 0.06, [0.9, 0.85, 0.3], { lo: true }); }
-  for (let i = 0; i < 6; i++) for (const s of [-1, 1]) coneS(g, s * 0.2, 0.25, 1.25 + i * 0.12, 0.02, -0.06, COL.white, 5);
-}, tail: g => cyl(g, [0, 0.3, -1.2], [0, 0.25, -2.6], 0.25, 0.04, [0.3, 0.45, 0.22], 12), extra: g => { for (let i = 0; i < 8; i++) coneS(g, 0, 0.5, -1 + i * 0.28, 0.06, 0.1, [0.25, 0.38, 0.18], 6); } });
+def('croc', 'creatures', 'Crocodile', '🐊', { r: 1.4, h: 0.8, move: 'walk', amph: true, speed: 0.9, draw: (o, b, t, f) => crocDraw(o, b, t, f), legs: { len: 0.3 } });   // Wildwood's crocodile (see crocDraw)
 quadDef('crab', 'Crab', '🦀', { L: 0.4, H: 0.15, W: 0.26, bodyH: 0.1, col: [0.9, 0.3, 0.2], legR: 0.02, speed: 0.8, head: g => {
   for (const s of [-1, 1]) { orb(g, s * 0.3, 0.2, 0.25, 0.1, 0.07, 0.08, [0.9, 0.3, 0.2]); cyl(g, [s * 0.06, 0.22, 0.12], [s * 0.07, 0.32, 0.14], 0.015, 0.015, [0.9, 0.3, 0.2], 5); orb(g, s * 0.07, 0.33, 0.14, 0.03, 0.03, 0.03, COL.dark, { lo: true }); }
 } });
@@ -1522,7 +1520,7 @@ bipedDef('dino', 'Dinosaur', '🦖', { r: 2.5, h: 4.5, speed: 2.0, amp: 0.5, leg
   leg: g => { const C = [0.35, 0.58, 0.28]; orb(g, 0, -0.3, 0, 0.42, 0.7, 0.5, C); cyl(g, [0, -0.7, 0], [0, -2.05, 0.15], 0.25, 0.18, C, 12); orb(g, 0, -2.08, 0.35, 0.22, 0.08, 0.4, shade(C, 0.8)); } });
 // flyers: wings flap; the right wing is built along +x (the left one is a mirror)
 function birdDef(id, name, icon, body, wing, o = {}) {
-  return def(id, 'creatures', name, icon, { r: o.r || 0.4, h: o.h || 0.4, move: 'fly', place: 'any', speed: o.speed || 6, alt: o.alt || 14, body,
+  return def(id, o.cat || 'creatures', name, icon, { r: o.r || 0.4, h: o.h || 0.4, move: 'fly', place: 'any', speed: o.speed || 6, alt: o.alt || 14, body, glowAll: o.glowAll,
     wings: { at: o.wingAt || [0.08, 0.05, 0], amp: o.amp || 0.8, rate: o.rate || 9, make: wing } });
 }
 function featherWing(col, tip, len = 0.45, w = 0.2) {
@@ -1533,20 +1531,6 @@ birdDef('parrot', 'Parrot', '🦜', g => { orb(g, 0, 0, 0, 0.11, 0.11, 0.2, [0.9
   featherWing([0.9, 0.15, 0.15], [0.2, 0.45, 0.95], 0.55, 0.24), { speed: 5, alt: 12 });
 birdDef('seagull', 'Seagull', '🕊️', g => { orb(g, 0, 0, 0, 0.1, 0.1, 0.22, COL.white); orb(g, 0, 0.07, 0.2, 0.07, 0.07, 0.08, COL.white); cyl(g, [0, 0.06, 0.26], [0, 0.04, 0.34], 0.025, 0.004, [1, 0.8, 0.2], 6); eyes(g, 0.045, 0.09, 0.24, 0.014); },
   featherWing([0.92, 0.92, 0.92], [0.35, 0.35, 0.38], 0.7, 0.22), { speed: 7, alt: 18, amp: 0.5, rate: 5 });
-birdDef('dragon', 'Dragon', '🐉', g => {
-  const C = [0.78, 0.16, 0.12], B = [0.98, 0.78, 0.3];
-  orb(g, 0, 0, 0, 1.1, 1.0, 2.2, C); orb(g, 0, -0.35, 0.2, 0.85, 0.7, 1.8, B);
-  cyl(g, [0, 0.4, 1.8], [0, 1.6, 3.4], 0.55, 0.38, C, 16); orb(g, 0, 1.8, 3.9, 0.55, 0.5, 0.85, C); orb(g, 0, 1.5, 4.25, 0.42, 0.25, 0.6, shade(C, 0.9));
-  for (const s of [-1, 1]) { cyl(g, [s * 0.3, 2.15, 3.6], [s * 0.55, 2.9, 3.0], 0.1, 0.02, COL.cream, 8); eyes(g, 0.3, 2.0, 4.25, 0.1); }
-  cyl(g, [0, 0.1, -1.9], [0, -0.3, -5.5], 0.7, 0.08, C, 16); coneS(g, 0, -0.4, -5.6, 0.4, 0.6, C, 4);
-  for (let i = 0; i < 10; i++) coneS(g, 0, 0.85 - i * 0.05, 1.9 - i * 0.7, 0.18, 0.4, [0.5, 0.08, 0.06], 6);
-  for (const s of [-1, 1]) for (const z of [1.2, -1.2]) { cyl(g, [s * 0.7, -0.6, z], [s * 0.8, -1.4, z + 0.3], 0.22, 0.16, C, 10); }
-}, g => {
-  const C = [0.6, 0.1, 0.1], M = [0.9, 0.35, 0.2];
-  cyl(g, [0, 0, 0], [3, 0.6, -0.5], 0.14, 0.08, C, 8); cyl(g, [3, 0.6, -0.5], [6.2, 0.2, -1.8], 0.08, 0.04, C, 8);
-  tri(g, [0, 0, 1], [3, 0.6, -0.5], [0, 0, -1.4], [0, 1, 0], 0, M, M, M, 0, 0, 0); tri(g, [3, 0.6, -0.5], [6.2, 0.2, -1.8], [2.6, 0.1, -2.4], [0, 1, 0], 0, M, M, M, 0, 0, 0);
-  tri(g, [3, 0.6, -0.5], [2.6, 0.1, -2.4], [0, 0, -1.4], [0, 1, 0], 0, M, M, M, 0, 0, 0);
-}, { r: 4, h: 3, speed: 9, alt: 32, amp: 0.6, rate: 3, wingAt: [0.9, 0.6, 0.2] });
 // swimmers
 function swimDef(id, name, icon, body, o) { return def(id, 'creatures', name, icon, Object.assign({ move: 'swim', place: 'water', body }, o)); }
 swimDef('dolphin', 'Dolphin', '🐬', g => {
@@ -1621,6 +1605,509 @@ def('chest', 'weapons', 'Treasure chest', '💰', { r: 0.8, h: 1.2, body: g => {
   box(g, 0, 0.55, -0.32, 1.12, 0.65, 0.1, shade(COL.wood, 1.1));
 }, glow: { flicker: 'pulse', make: g => { for (let i = 0; i < 9; i++) orb(g, -0.35 + (i % 3) * 0.35, 0.58 + Math.floor(i / 3) * 0.05, -0.2 + Math.floor(i / 3) * 0.2, 0.13, 0.06, 0.13, COL.gold, { lo: true }); orb(g, 0.1, 0.7, 0.1, 0.07, 0.07, 0.07, [0.4, 0.9, 1], { lo: true }); } } });
 
+/* =====================================================================
+   From Wildwood, exactly: the dragon (bendy neck and tail, jaw with teeth, wings it walks on
+   and flaps), the Leviathan (the sea serpent) and the crocodile, with Wildwood's shape
+   helpers blob() and tube(). World Creator just draws them smaller.
+   ===================================================================== */
+let blobDetail = 0;
+function hiDetail(fn) { blobDetail = 1; try { return fn(); } finally { blobDetail = 0; } }
+
+// lumpy low-poly ball (tree tops, bushes, rocks)
+function blob(g, cx, cy, cz, rx, ry, rz, col, rng, jit, mode, sway, cutBelow, cutAbove) {
+  const VV = blobDetail ? ICO1_V : ICO_V, FF = blobDetail ? ICO1_F : ICO_F;
+  const pts = VV.map(v => {
+    const k = 1 + (rng() - 0.5) * jit;
+    return [cx + v[0] * rx * k, cy + v[1] * ry * k, cz + v[2] * rz * k];
+  });
+  if (cutBelow !== undefined) for (const p of pts) if (p[1] < cutBelow) p[1] = cutBelow;
+  if (cutAbove !== undefined) for (const p of pts) if (p[1] > cutAbove) p[1] = cutAbove;
+  for (const f of FF) {
+    const a = pts[f[0]], b = pts[f[1]], c = pts[f[2]];
+    let n = faceN(a, b, c);
+    const mx = (a[0] + b[0] + c[0]) / 3 - cx, my = (a[1] + b[1] + c[1]) / 3 - cy, mz = (a[2] + b[2] + c[2]) / 3 - cz;
+    if (n[0] * mx + n[1] * my + n[2] * mz < 0) n = [-n[0], -n[1], -n[2]];
+    const fc = shade(col, 0.88 + rng() * 0.24);
+    const s = sway * Math.max(0, (my / ry) * 0.5 + 0.5);
+    tri(g, a, b, c, n, mode, fc, fc, fc, s, s, s);
+  }
+}
+// tube between two points (trunks, branches, logs, stems)
+function tube(g, p0, p1, r0, r1, sides, col, rng, caps, sway0, sway1) {
+  if (blobDetail) sides *= 2;
+  const ax = norm3(p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]);
+  let u = Math.abs(ax[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
+  // u = normalize(u x ax), w = ax x u
+  let ux = u[1] * ax[2] - u[2] * ax[1], uy = u[2] * ax[0] - u[0] * ax[2], uz = u[0] * ax[1] - u[1] * ax[0];
+  [ux, uy, uz] = norm3(ux, uy, uz);
+  const wx = ax[1] * uz - ax[2] * uy, wy = ax[2] * ux - ax[0] * uz, wz = ax[0] * uy - ax[1] * ux;
+  const rot = rng() * Math.PI * 2;
+  const ring = [];
+  for (let i = 0; i <= sides; i++) {
+    const a = rot + i / sides * Math.PI * 2, c = Math.cos(a), s = Math.sin(a);
+    ring.push([ux * c + wx * s, uy * c + wy * s, uz * c + wz * s]);
+  }
+  const s0 = sway0 || 0, s1 = sway1 || 0;
+  const c0 = shade(col, 0.85), c1 = col;
+  for (let i = 0; i < sides; i++) {
+    const d0 = ring[i], d1 = ring[i + 1];
+    const a0 = [p0[0] + d0[0] * r0, p0[1] + d0[1] * r0, p0[2] + d0[2] * r0];
+    const a1 = [p0[0] + d1[0] * r0, p0[1] + d1[1] * r0, p0[2] + d1[2] * r0];
+    const b0 = [p1[0] + d0[0] * r1, p1[1] + d0[1] * r1, p1[2] + d0[2] * r1];
+    const b1 = [p1[0] + d1[0] * r1, p1[1] + d1[1] * r1, p1[2] + d1[2] * r1];
+    g.v(a0[0], a0[1], a0[2], d0[0], d0[1], d0[2], -1, c0[0], c0[1], c0[2], s0);
+    g.v(a1[0], a1[1], a1[2], d1[0], d1[1], d1[2], -1, c0[0], c0[1], c0[2], s0);
+    g.v(b1[0], b1[1], b1[2], d1[0], d1[1], d1[2], -1, c1[0], c1[1], c1[2], s1);
+    g.v(a0[0], a0[1], a0[2], d0[0], d0[1], d0[2], -1, c0[0], c0[1], c0[2], s0);
+    g.v(b1[0], b1[1], b1[2], d1[0], d1[1], d1[2], -1, c1[0], c1[1], c1[2], s1);
+    g.v(b0[0], b0[1], b0[2], d0[0], d0[1], d0[2], -1, c1[0], c1[1], c1[2], s1);
+    if (caps) {
+      const cc = [0.72, 0.58, 0.40];
+      tri(g, p0, a1, a0, [-ax[0], -ax[1], -ax[2]], -1, cc, cc, cc, 0, 0, 0);
+      tri(g, p1, b0, b1, ax, -1, cc, cc, cc, 0, 0, 0);
+    }
+  }
+}
+function leviathanModel() {
+  const r = mulberry32(37);
+  const PURPLE = [0.46, 0.22, 0.62], RIDGE = [0.32, 0.14, 0.46], BELLY = [0.36, 0.62, 0.98], DK = [0.08, 0.05, 0.12];
+  const HORN = [0.92, 0.88, 0.78], EYE = [0.4, 1.0, 0.95];
+  const sg = new Geo(512); blob(sg, 0, 0.08, 0, 1, 0.8, 1.15, PURPLE, r, 0.06, -1, 0); blob(sg, 0, -0.28, 0, 0.92, 0.56, 1.08, BELLY, r, 0.03, 1, 0);
+  const bg = new Geo(768); blob(bg, 0, 0.08, 0, 1, 0.8, 1.15, RIDGE, r, 0.06, -1, 0); blob(bg, 0, -0.28, 0, 0.92, 0.56, 1.08, BELLY, r, 0.03, 1, 0);
+  tube(bg, [0, 0.75, 0.2], [0, 1.45, -0.35], 0.28, 0.02, 5, RIDGE, r, false);            // spike down the back
+  const hg = new Geo(1024);
+  blob(hg, 0, 0.08, 0.25, 0.44, 0.32, 0.88, shade(PURPLE, 0.9), r, 0.05, -1, 0, -0.1);   // slim head
+  blob(hg, 0, -0.105, 0.52, 0.3, 0.01, 0.56, [0.35, 0.05, 0.25], r, 0, -1, 0);
+  for (const sd of [-1, 1]) {
+    blob(hg, sd * 0.25, 0.22, 0.58, 0.11, 0.1, 0.11, EYE, r, 0, -1, 0);                 // glowing eyes
+    blob(hg, sd * 0.3, 0.24, 0.63, 0.04, 0.08, 0.04, DK, r, 0, -1, 0);
+    tube(hg, [sd * 0.13, -0.1, 0.86], [sd * 0.12, -0.26, 0.9], 0.045, 0.01, 4, HORN, r, false);   // fangs
+    // big curved horns that sweep up and back, with a smaller pair behind them
+    const h0 = [sd * 0.2, 0.34, 0.2], h1 = [sd * 0.4, 0.82, -0.05], h2 = [sd * 0.5, 1.15, -0.5], h3 = [sd * 0.46, 1.3, -1.0];
+    tube(hg, h0, h1, 0.15, 0.11, 7, HORN, r, false);
+    tube(hg, h1, h2, 0.11, 0.065, 7, HORN, r, false);
+    tube(hg, h2, h3, 0.065, 0.008, 6, HORN, r, false);
+    tube(hg, [sd * 0.33, 0.28, -0.1], [sd * 0.62, 0.62, -0.45], 0.09, 0.05, 6, HORN, r, false);
+    tube(hg, [sd * 0.62, 0.62, -0.45], [sd * 0.7, 0.7, -0.85], 0.05, 0.008, 5, HORN, r, false);
+    blob(hg, sd * 0.09, 0.22, 1.0, 0.035, 0.022, 0.03, DK, r, 0, -1, 0);                  // nostrils
+  }
+  const jg = new Geo(512);
+  blob(jg, 0, -0.07, 0.58, 0.33, 0.13, 0.56, BELLY, r, 0.03, -1, 0, undefined, 0);
+  blob(jg, 0, -0.004, 0.62, 0.24, 0.008, 0.42, [0.45, 0.08, 0.3], r, 0, -1, 0);
+  for (const sd of [-1, 1]) tube(jg, [sd * 0.13, 0, 0.92], [sd * 0.12, 0.14, 0.95], 0.032, 0.008, 4, HORN, r, false);
+  const tg = new Geo(512), N = 14;
+  for (let i = 0; i < N; i++) {
+    const a0 = i / N * Math.PI * 2, a1 = (i + 1) / N * Math.PI * 2;
+    const p0 = [Math.cos(a0), Math.sin(a0)], p1 = [Math.cos(a1), Math.sin(a1)];
+    const col = ((p0[1] + p1[1]) / 2 < -0.45) ? BELLY : PURPLE;
+    const v = (p, z) => tg.v(p[0], p[1], z, p[0], p[1], 0, -1, col[0], col[1], col[2], 0);
+    v(p0, 0); v(p1, 0); v(p1, 1); v(p0, 0); v(p1, 1); v(p0, 1);
+  }
+  const wg = new Geo(256);                                   // small wings, pivot at the base
+  const SH = [0, 0, 0], E = [0.55, 0.35, -0.15], T = [1.0, 0.1, -0.5], F = [0.6, -0.15, -0.6];
+  tube(wg, SH, E, 0.05, 0.035, 4, RIDGE, r, false); tube(wg, E, T, 0.035, 0.01, 4, RIDGE, r, false);
+  const M = [0.55, 0.35, 0.85];
+  tri(wg, SH, E, T, faceN(SH, E, T), 0, M, M, shade(M, 0.85), 0, 0, 0);
+  tri(wg, SH, T, F, faceN(SH, T, F), 0, M, shade(M, 0.85), shade(M, 0.9), 0, 0, 0);
+  return { seg: makeMesh(sg), band: makeMesh(bg), head: makeMesh(hg), jaw: makeMesh(jg), tube: makeMesh(tg), wing: makeMesh(wg) };
+}
+function crocModel() {
+  const g = new Geo(4096), r = mulberry32(43);
+  const SK = [0.27, 0.38, 0.17], DSK = [0.19, 0.27, 0.12], BELLY = [0.66, 0.62, 0.42], DK = [0.06, 0.05, 0.04], TOOTH = [0.96, 0.94, 0.85];
+  blob(g, 0, 0.36, 0.1, 0.5, 0.26, 1.0, SK, r, 0.12, -1, 0);                 // body
+  blob(g, 0, 0.27, 0.1, 0.44, 0.13, 0.9, BELLY, r, 0.05, -1, 0);             // belly
+  for (let z = -0.7; z <= 0.95; z += 0.3) for (const sd of [-1, 1]) blob(g, sd * 0.16, 0.58, z, 0.07, 0.06, 0.09, DSK, r, 0.2, -1, 0);   // bumps
+  blob(g, 0, 0.42, 1.15, 0.32, 0.18, 0.35, SK, r, 0.1, -1, 0);               // back of the head
+  blob(g, 0, 0.42, 1.75, 0.2, 0.1, 0.52, SK, r, 0.08, -1, 0, 0.34);          // long flat upper snout
+  for (const sd of [-1, 1]) {
+    blob(g, sd * 0.14, 0.58, 1.2, 0.06, 0.07, 0.06, [0.9, 0.78, 0.2], r, 0, -1, 0);   // eyes on top
+    blob(g, sd * 0.155, 0.6, 1.25, 0.02, 0.05, 0.02, DK, r, 0, -1, 0);
+    blob(g, sd * 0.05, 0.5, 2.22, 0.025, 0.02, 0.02, DK, r, 0, -1, 0);               // nostrils
+    for (let i = 0; i < 6; i++) tube(g, [sd * 0.16, 0.36, 1.4 + i * 0.14], [sd * 0.16, 0.27, 1.42 + i * 0.14], 0.025, 0.004, 4, TOOTH, r, false);
+  }
+  const jg = new Geo(1024);                                                    // lower jaw, hinged at (0, 0.33, 1.0)
+  blob(jg, 0, -0.05, 0.72, 0.19, 0.07, 0.52, SK, r, 0.06, -1, 0);
+  blob(jg, 0, -0.09, 0.68, 0.16, 0.04, 0.45, BELLY, r, 0.04, -1, 0);
+  blob(jg, 0, 0.015, 0.7, 0.13, 0.01, 0.42, [0.75, 0.3, 0.3], r, 0, -1, 0);
+  for (const sd of [-1, 1]) for (let i = 0; i < 6; i++) tube(jg, [sd * 0.14, 0.0, 0.42 + i * 0.14], [sd * 0.14, 0.09, 0.44 + i * 0.14], 0.025, 0.004, 4, TOOTH, r, false);
+  const tg = new Geo(1024);                                                    // tail, pivot at (0, 0.35, -0.85)
+  const T = [[0, 0, 0], [0, -0.05, -0.9], [0, -0.12, -1.8], [0, -0.18, -2.6]], TR = [0.32, 0.24, 0.14, 0.03];
+  for (let i = 0; i < 3; i++) tube(tg, T[i], T[i + 1], TR[i], TR[i + 1], 7, SK, r, false);
+  for (let z = -0.3; z > -2.3; z -= 0.3) tube(tg, [0, 0.12 - (-z) * 0.06 + (-z < 1 ? 0.1 : 0), z], [0, 0.26 - (-z) * 0.08, z - 0.1], 0.06, 0.005, 4, DSK, r, false);   // ridge
+  const lg = new Geo(256);
+  tube(lg, [0, 0.03, 0], [0, -0.24, 0.05], 0.09, 0.07, 5, SK, r, false);
+  blob(lg, 0, -0.26, 0.12, 0.1, 0.04, 0.13, DSK, r, 0.1, -1, 0);
+  return { body: makeMesh(g), jaw: makeMesh(jg), tail: makeMesh(tg), leg: makeMesh(lg) };
+}
+const DRAGON_HEAD0 = [0, 4.75, 4.3], DRAGON_NECK0 = [0, 3.2, 2.0];
+const WING_L1 = 1.6, WING_L2 = 4.45;
+function dragonModel() {
+  const g = new Geo(4096), r = mulberry32(23);
+  const RED = [0.66, 0.12, 0.1], DARK = [0.36, 0.06, 0.06], BELLY = [0.95, 0.68, 0.28], HORN = [0.95, 0.9, 0.75], EYE = [1.0, 0.85, 0.1];
+  const B = (x, y, z, rx, ry, rz, c, j) => blob(g, x, y, z, rx, ry, rz, c, r, j === undefined ? 0.12 : j, -1, 0);
+  B(0, 2.6, 0, 1.15, 1.2, 2.8, RED);                 // slimmer body
+  B(0, 2.2, 0.3, 0.92, 0.8, 2.2, BELLY);
+  B(0, 3.0, 1.6, 0.98, 1.0, 1.4, RED);
+  // the head is its own piece so the neck can move it (built where it sits, then shifted so (0, 4.75, 4.3) is its pivot)
+  const hg = new Geo(2048);
+  const HB = (x, y, z, rx, ry, rz, c, j) => blob(hg, x, y, z, rx, ry, rz, c, r, j === undefined ? 0.12 : j, -1, 0);
+  HB(0, 4.9, 4.6, 0.75, 0.6, 0.95, RED);
+  HB(0, 4.7, 5.4, 0.5, 0.42, 0.65, RED);
+  HB(0, 4.55, 5.2, 0.4, 0.14, 0.55, [0.55, 0.05, 0.08], 0.05);          // inside of the mouth
+  for (const sd of [-1, 1]) {
+    HB(sd * 0.42, 5.12, 4.95, 0.14, 0.12, 0.12, EYE, 0);
+    HB(sd * 0.47, 5.13, 5.0, 0.05, 0.1, 0.06, [0.05, 0.02, 0.02], 0);
+    tube(hg, [sd * 0.35, 5.3, 4.4], [sd * 0.65, 6.25, 3.7], 0.15, 0.03, 5, HORN, r, false);
+    HB(sd * 0.17, 4.98, 5.8, 0.11, 0.07, 0.12, shade(RED, 0.85), 0.05);     // nostril bump on the snout
+    HB(sd * 0.17, 4.99, 5.91, 0.045, 0.035, 0.03, [0.12, 0.02, 0.02], 0);   // nostril hole
+    tube(hg, [sd * 0.3, 4.45, 5.6], [sd * 0.3, 4.15, 5.65], 0.06, 0.01, 4, HORN, r, false);
+  }
+  HB(0, 4.75, 4.15, 0.5, 0.5, 0.45, RED);                                 // back of the head, where the neck joins
+  for (let i = 0; i < hg.n; i++) { hg.f[i * 5] -= DRAGON_HEAD0[0]; hg.f[i * 5 + 1] -= DRAGON_HEAD0[1]; hg.f[i * 5 + 2] -= DRAGON_HEAD0[2]; }
+  for (let z = -2.2; z <= 2.6; z += 0.8) {
+    const top = 2.6 + 1.15 * Math.sqrt(Math.max(0, 1 - (z / 2.8) ** 2));
+    tube(g, [0, top - 0.2, z], [0, top + 0.75, z - 0.25], 0.22, 0.02, 4, DARK, r, false);
+  }
+  for (const z of [-2.0, -1.2, -0.4, 0.4, 1.2, 2.0]) tube(g, [0, 3.4, z], [0, 3.95, z], 0.2, 0.01, 5, [0.95, 0.95, 0.95], r, false);   // white spikes down the back
+  // the tail is drawn in moving pieces (see drawDragonTail): red on top, yellow underneath, spikes on top
+  const tsg = new Geo(512); blob(tsg, 0, 0.08, 0, 1, 0.8, 1.15, RED, r, 0.06, -1, 0); blob(tsg, 0, -0.28, 0, 0.92, 0.56, 1.08, BELLY, r, 0.03, 1, 0);
+  const tbg = new Geo(768); blob(tbg, 0, 0.08, 0, 1, 0.8, 1.15, shade(RED, 0.82), r, 0.06, -1, 0); blob(tbg, 0, -0.28, 0, 0.92, 0.56, 1.08, BELLY, r, 0.03, 1, 0);
+  tube(tbg, [0, 0.75, 0.2], [0, 1.45, -0.35], 0.28, 0.02, 4, DARK, r, false);
+  const ttg = new Geo(512), TN = 14;
+  for (let i = 0; i < TN; i++) {
+    const a0 = i / TN * Math.PI * 2, a1 = (i + 1) / TN * Math.PI * 2;
+    const p0 = [Math.cos(a0), Math.sin(a0)], p1 = [Math.cos(a1), Math.sin(a1)];
+    const col = ((p0[1] + p1[1]) / 2 < -0.45) ? BELLY : RED;
+    const v = (pp, zz) => ttg.v(pp[0], pp[1], zz, pp[0], pp[1], 0, -1, col[0], col[1], col[2], 0);
+    v(p0, 0); v(p1, 0); v(p1, 1); v(p0, 0); v(p1, 1); v(p0, 1);
+  }
+  // an arrowhead at the tip (points away from the tail): tip, two barbs and a notch, with a little thickness
+  const tspg = new Geo(256), AH = [[0, 1.15], [0.65, -0.05], [0, 0.28], [-0.65, -0.05]], th = 0.08;
+  const top = AH.map(([x, z]) => [x, th, z]), bot = AH.map(([x, z]) => [x, -th, z]);
+  for (const [i, j, k] of [[0, 1, 2], [0, 2, 3]]) {
+    tri(tspg, top[i], top[j], top[k], [0, 1, 0], -1, DARK, DARK, DARK, 0, 0, 0);
+    tri(tspg, bot[i], bot[k], bot[j], [0, -1, 0], -1, shade(DARK, 0.8), shade(DARK, 0.8), shade(DARK, 0.8), 0, 0, 0);
+  }
+  for (let i = 0; i < 4; i++) {                      // the edges
+    const j = (i + 1) % 4, n = faceN(top[i], bot[i], top[j]);
+    tri(tspg, top[i], bot[i], top[j], n, 0, DARK, DARK, DARK, 0, 0, 0);
+    tri(tspg, top[j], bot[i], bot[j], n, 0, DARK, DARK, DARK, 0, 0, 0);
+  }
+  const jg = new Geo(512);                            // lower jaw, hinged at (0, 4.45, 4.6)
+  blob(jg, 0, -0.12, 0.6, 0.45, 0.18, 0.66, DARK, r, 0.1, -1, 0);
+  blob(jg, 0, 0.0, 0.55, 0.3, 0.05, 0.45, [0.85, 0.25, 0.3], r, 0.05, -1, 0);
+  for (const sd of [-1, 1]) for (const zz of [0.75, 1.05]) tube(jg, [sd * 0.27, -0.02, zz], [sd * 0.27, 0.22, zz + 0.03], 0.05, 0.01, 4, HORN, r, false);
+  const lg = new Geo(256);
+  blob(lg, 0, -0.1, -0.1, 0.62, 0.75, 0.75, RED, r, 0.1, -1, 0);                       // big thigh
+  tube(lg, [0, -0.3, -0.1], [0, -1.05, -0.5], 0.52, 0.36, 7, RED, r, false);
+  tube(lg, [0, -1.05, -0.5], [0, -1.85, 0.05], 0.36, 0.26, 7, shade(RED, 0.9), r, false);
+  blob(lg, 0, -1.9, 0.35, 0.5, 0.2, 0.68, DARK, r, 0.1, -1, 0);
+  for (const sd of [-1, 0, 1]) tube(lg, [sd * 0.25, -1.92, 0.9], [sd * 0.3, -2.02, 1.25], 0.09, 0.01, 4, HORN, r, false);
+  const wg = new Geo(512);
+  const SH = [0, 0, 0], E = [2.5, 1.3, 0.3], T = [5.6, 0.7, -0.6], F1 = [4.3, -0.4, -2.4], F2 = [2.6, -0.7, -3.1], BK = [0.4, -0.3, -2.3];
+  tube(wg, SH, E, 0.22, 0.16, 5, DARK, r, false); tube(wg, E, T, 0.16, 0.05, 5, DARK, r, false);
+  tube(wg, E, F1, 0.1, 0.04, 4, DARK, r, false); tube(wg, E, F2, 0.1, 0.04, 4, DARK, r, false);
+  const M = [0.58, 0.16, 0.13];
+  for (const [p, q] of [[E, T], [T, F1], [F1, F2], [F2, BK]]) tri(wg, SH, p, q, faceN(SH, p, q), 0, M, shade(M, 1.1), shade(M, 0.9), 0, 0, 0);
+  // the wing folded down into a front leg (wing-walking), in two bones so the elbow bends while the knuckle stays planted.
+  // Each bone is built along +y from its joint; +x is out to the side, +z is backward (see drawWingLegs).
+  const wua = new Geo(512);                                             // upper arm: shoulder -> elbow
+  tube(wua, [0, 0, 0], [0, WING_L1, 0], 0.32, 0.25, 6, RED, r, false);
+  blob(wua, 0, WING_L1, 0, 0.3, 0.3, 0.3, RED, r, 0.08, -1, 0);
+  const wfa = new Geo(1024), L2 = WING_L2, SAIL = [0.5, 0.13, 0.11];   // forearm: elbow -> knuckle, with the folded wing along it
+  const WT = [[0.35, L2 - 5.0, 1.0], [0.45, L2 - 4.4, 1.8], [0.35, L2 - 3.4, 2.3]], Wk = [0, L2, 0];
+  for (const [p, q] of [[[0, 0, 0], WT[0]], [WT[0], WT[1]], [WT[1], WT[2]]]) tri(wfa, Wk, p, q, faceN(Wk, p, q), 0, SAIL, shade(SAIL, 1.12), shade(SAIL, 0.88), 0, 0, 0);
+  tube(wfa, [0, 0, 0], Wk, 0.26, 0.2, 6, shade(RED, 0.92), r, false);
+  for (const t of WT) tube(wfa, Wk, t, 0.1, 0.04, 4, DARK, r, false);     // folded fingers
+  blob(wfa, 0, L2 + 0.02, -0.05, 0.36, 0.26, 0.42, DARK, r, 0.08, -1, 0);  // the knuckle it walks on
+  tube(wfa, [0, L2 - 0.1, -0.3], [0.05, L2 - 0.05, -1.0], 0.1, 0.01, 4, HORN, r, false);   // thumb claw
+  for (const sd of [-1, 0, 1]) tube(wfa, [sd * 0.2, L2 + 0.1, -0.3], [sd * 0.25, L2 + 0.2, -0.62], 0.08, 0.01, 4, HORN, r, false);
+  // the wing skin stretched out to the side of the forearm, so you can see it from the front (two-sided)
+  const wsl = new Geo(256), SK = [0.58, 0.16, 0.13];
+  const SP = [[0, 0, 0], [1.0, L2 * 0.25, 0.05], [1.35, L2 * 0.6, 0.05], [0.7, L2 * 0.95, 0.05]];
+  const two = (p, q, w) => { const n = faceN(p, q, w); tri(wsl, p, q, w, n, 0, SK, shade(SK, 1.12), shade(SK, 0.88), 0, 0, 0); tri(wsl, p, w, q, [-n[0], -n[1], -n[2]], 0, SK, shade(SK, 0.88), shade(SK, 1.12), 0, 0, 0); };
+  two(SP[0], SP[1], SP[2]); two(SP[0], SP[2], Wk); two(SP[2], SP[3], Wk);
+  for (let i = 0; i < 3; i++) tube(wsl, SP[0], SP[i + 1], 0.07, 0.03, 4, [0.2, 0.05, 0.05], r, false);
+  return { body: makeMesh(g), head: makeMesh(hg), leg: makeMesh(lg), wing: makeMesh(wg), wingArmU: makeMesh(wua), wingArmF: makeMesh(wfa), wingSail: makeMesh(wsl), jaw: makeMesh(jg),
+    tailSeg: makeMesh(tsg), tailBand: makeMesh(tbg), tailTube: makeMesh(ttg), tailSpade: makeMesh(tspg) };
+}
+const WHIP_T = 0.9;
+function whipCurve(t) {               // coil back, lash through, settle
+  if (t < 0.35) return -0.8 * smooth(0, 1, t / 0.35);
+  if (t < 0.55) return -0.8 + 2.3 * ((t - 0.35) / 0.2);
+  return 1.5 * (1 - (t - 0.55) / 0.35);
+}
+function mBasis(o, X, Y, Z) { const m = mIdent(); m.set([X[0], X[1], X[2], 0, Y[0], Y[1], Y[2], 0, Z[0], Z[1], Z[2], 0, o[0], o[1], o[2], 1]); return m; }
+const v3 = { sub: (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], add: (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]], mul: (a, k) => [a[0] * k, a[1] * k, a[2] * k],
+  dot: (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2], len: a => Math.hypot(a[0], a[1], a[2]), norm: a => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; },
+  cross: (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]] };
+function drawWingLegs(a, body, wa, ww, flash) {
+  const m = a.sp.model;
+  const perCycle = 2 * Math.PI / (1.6 / a.sp.legLen) / (a.sp.scale || 1);   // body units walked in one step cycle
+  const DUTY = 0.66, stride = perCycle * DUTY * 0.85, LIFT = 0.28, GROUND = -wa[1] + 0.05;
+  for (const sd of [1, -1]) {
+    let p = (a.legPhase / (2 * Math.PI) + (sd > 0 ? 0.5 : 0)) % 1; if (p < 0) p += 1;
+    let fz, fy;
+    if (p < DUTY) { fz = stride * (0.5 - p / DUTY); fy = GROUND; }                 // planted: slides back as the body goes forward
+    else { const q = (p - DUTY) / (1 - DUTY), e = q * q * (3 - 2 * q); fz = stride * (-0.5 + e); fy = GROUND + LIFT * Math.pow(Math.sin(Math.PI * q), 1.3); }
+    const W = [0.95, fy, 0.95 + fz];                                                 // knuckle, from the shoulder (this side, not mirrored)
+    const dl = Math.min(WING_L1 + WING_L2 - 0.05, v3.len(W)), dn = v3.norm(W);
+    const along = (WING_L1 * WING_L1 + dl * dl - WING_L2 * WING_L2) / (2 * dl), h = Math.sqrt(Math.max(0, WING_L1 * WING_L1 - along * along));
+    const hint = [0.9, -0.5, -0.25];                                                 // relaxed elbows: out to the side and a little down
+    const pole = v3.norm(v3.sub(hint, v3.mul(dn, v3.dot(hint, dn))));
+    const E = v3.add(v3.mul(dn, along), v3.mul(pole, h)), Wp = v3.mul(dn, dl);
+    const bone = (from, to) => {                                                     // +y along the bone, +x out to the side
+      const Y = v3.norm(v3.sub(to, from)), X = v3.norm(v3.sub([1, 0, 0], v3.mul(Y, Y[0]))), Z = v3.cross(X, Y);
+      return mBasis(from, X, Y, Z);
+    };
+    const root = mChain(body, mT(sd * wa[0], wa[1], wa[2]), mS3(sd, 1, 1), mS(ww));
+    drawMesh(m.wingArmU, mChain(root, bone([0, 0, 0], E)), flash);
+    drawMesh(m.wingArmF, mChain(root, bone(E, Wp)), flash);
+    drawMesh(m.wingSail, mChain(root, bone(E, Wp), mS3(1, Math.min(1.1, Math.max(0.6, v3.len(v3.sub(Wp, E)) / WING_L2)), 1)), flash);
+  }
+}
+function drawDragonNeck(a, body, headM, flash) {
+  const m = a.sp.model, h = a.head || { x: 0, y: DRAGON_HEAD0[1], z: DRAGON_HEAD0[2], yaw: 0, pitch: 0 };
+  const fwd = [Math.sin(h.yaw) * Math.cos(h.pitch), -Math.sin(h.pitch), Math.cos(h.yaw) * Math.cos(h.pitch)];
+  const P0 = DRAGON_NECK0, P1 = [P0[0], P0[1] + 1.1, P0[2] + 0.6], P3 = [h.x, h.y - 0.1, h.z - 0.2];
+  const P2 = [P3[0] - fwd[0] * 1.0, P3[1] - fwd[1] * 1.0, P3[2] - fwd[2] * 1.0];
+  const bez = t => [0, 1, 2].map(i => (1 - t) ** 3 * P0[i] + 3 * (1 - t) ** 2 * t * P1[i] + 3 * (1 - t) * t * t * P2[i] + t ** 3 * P3[i]);
+  let prev = P0, prevR = 0.66;
+  for (let k = 1; k <= 7; k++) {
+    const p = bez(k / 7), r = 0.66 - 0.2 * (k / 7);
+    const dx = prev[0] - p[0], dy = prev[1] - p[1], dz = prev[2] - p[2], Lh = Math.hypot(dx, dz), L = Math.hypot(dx, dy, dz);
+    const yaw = Math.atan2(dx, dz), pit = -Math.atan2(dy, Lh), tr = (r + prevR) / 2 * 0.95;
+    drawMesh(m.tailTube, mChain(body, mT(p[0], p[1], p[2]), mRy(yaw), mRx(pit), mS3(tr, tr * 0.9, L)), flash);
+    drawMesh(k % 2 ? m.tailSeg : m.tailBand, mChain(body, mT(p[0], p[1], p[2]), mRy(yaw + Math.PI), mS(r)), flash);
+    prev = p; prevR = r;
+  }
+}
+function dragonTail(a) {
+  const N = 10, L = 0.95, t = performance.now() / 1000;
+  const sway = a.dead ? 0 : a.asleep ? 0.03 : 0.08;
+  const swipe = a.swipeT > 0 ? whipCurve(Math.min(0.9, a.swipeT * 0.9)) * a.swipeSide : 0;
+  const pts = [];
+  let x = 0, y = 2.5, z = -2.3, ang = 0;
+  for (let i = 0; i < N; i++) {
+    ang += Math.sin(t * 1.4 - i * 0.6) * sway + swipe * 0.3;
+    const nx = x + Math.sin(ang) * L, nz = z - Math.cos(ang) * L, ny = y - (a.asleep ? 0.12 : 0.02);
+    pts.push({ x: nx, y: ny, z: nz, px: x, py: y, pz: z, r: 0.6 * (1 - (i / (N - 1)) * 0.82) });
+    x = nx; y = ny; z = nz;
+  }
+  return pts;
+}
+function drawDragonTail(a, body, flash) {
+  const m = a.sp.model, pts = dragonTail(a);
+  pts.forEach((p, i) => {
+    const dx = p.px - p.x, dy = p.py - p.y, dz = p.pz - p.z, Lh = Math.hypot(dx, dz), L = Math.hypot(dx, dy, dz);
+    const yaw = Math.atan2(dx, dz), pit = -Math.atan2(dy, Lh), prevR = i ? pts[i - 1].r : 0.7, tr = (p.r + prevR) / 2 * 0.92;
+    drawMesh(m.tailTube, mChain(body, mT(p.x, p.y, p.z), mRy(yaw), mRx(pit), mS3(tr, tr * 0.9, L)), flash);
+    drawMesh(i % 2 ? m.tailBand : m.tailSeg, mChain(body, mT(p.x, p.y, p.z), mRy(yaw), mS(p.r)), flash);
+    if (i === pts.length - 1) drawMesh(m.tailSpade, mChain(body, mT(p.x, p.y, p.z), mRy(yaw + Math.PI)), flash);
+  });
+}
+function dragonHeadM(a, body) {
+  const h = a.head || { x: 0, y: DRAGON_HEAD0[1], z: DRAGON_HEAD0[2], yaw: 0, pitch: 0 };
+  return mChain(body, mT(h.x, h.y, h.z), mRy(h.yaw), mRx(h.pitch));
+}
+
+/* ---------------- Mythical creatures ---------------- */
+// Wildwood's creatures, drawn smaller. WW_SCALE is how big they are at "Medium" (Giant is 3x that).
+const WW = {};
+function wwModels() {
+  if (WW.ready) return;
+  WW.ready = true;
+  hiDetail(() => {
+    WW.dragon = { model: dragonModel(), legLen: 1.8, scale: 1, hipY: 1.95, hips: [[0.95, -0.4], [-0.95, -0.4]], wingScale: 1.25, tilt: -0.2, windup: 0.8 };
+    WW.levi = { model: leviathanModel(), bodyR: 1.6, headScale: 3.2, segs: 20, spacing: 2.2, windup: 0.6 };
+    WW.croc = { model: crocModel(), hipY: 0.28, hips: [[0.42, 0.55], [-0.42, 0.55], [0.42, -0.45], [-0.42, -0.45]], windup: 0.45 };
+  });
+}
+const DRAGON_SCALE = 0.45, SERPENT_SCALE = 0.4, CROC_SCALE = 1.1;
+// the dragon: walks on its folded wings, and every so often takes off and circles, flapping
+function dragonUpdate(o, dt, time) {
+  o.flyT = (o.flyT === undefined ? 6 + Math.random() * 10 : o.flyT) - dt;
+  if (o.flyT <= 0) { o.flying = !o.flying; o.flyT = o.flying ? 14 + Math.random() * 12 : 10 + Math.random() * 14; }
+  const g = Math.max(groundAt(o.x, o.z), 0), sc = o.s * DRAGON_SCALE;
+  o.flyAlt = o.flyAlt || 0;
+  if (o.flying) {
+    const rad = 35 * Math.max(1, o.s);
+    o.ang += dt * 9 * Math.sqrt(o.s) / rad;
+    const tx = o.hx + Math.cos(o.ang) * rad, tz = o.hz + Math.sin(o.ang) * rad;
+    const want = Math.atan2(tx - o.x, tz - o.z);
+    let dy = want - o.r; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); o.r += clamp(dy, -1.5 * dt, 1.5 * dt);
+    const sp = 9 * Math.sqrt(o.s); o.x += Math.sin(o.r) * sp * dt; o.z += Math.cos(o.r) * sp * dt;
+    o.flyAlt += ((16 + 8 * sc) - o.flyAlt) * Math.min(1, dt * 0.7);
+    o.moving = true; o.phase += dt * 2;
+  } else {
+    o.flyAlt = Math.max(0, o.flyAlt - dt * 6);
+    if (o.flyAlt > 0.5) { o.moving = false; o.y = g + o.flyAlt; return true; }   // landing
+    return false;                                                                  // walk like any other creature
+  }
+  o.y = Math.max(groundAt(o.x, o.z), 0) + o.flyAlt;
+  return true;
+}
+function dragonDraw(o, base0, time, flash) {
+  wwModels();
+  const sp = WW.dragon, m = sp.model;
+  const a = o.ww || (o.ww = { sp, head: null, legPhase: 0, swipeT: 0, swipeSide: 1, wingW: 1, lastT: time });
+  const dt = Math.min(0.1, Math.max(0, time - a.lastT)); a.lastT = time;
+  a.legPhase = o.phase; a.dead = false; a.asleep = false; a.alerted = !!o.foe; a.windup = o.windup || 0; a.lunge = o.lunge || 0; a.fireT = 0; a.roarT = o.roarT || 0;
+  a.flyAlt = o.flyAlt || 0; a.speed = o.moving ? 2 : 0;
+  const wantW = a.flyAlt > 0.3 || a.roarT > 0 ? 0 : 1;
+  a.wingW += (wantW - a.wingW) * Math.min(1, dt * 5);
+  // the head looks around, leans toward what it's after, rears back, then lunges
+  const want = { x: 0, y: DRAGON_HEAD0[1], z: DRAGON_HEAD0[2], yaw: Math.sin(time * 0.4 + o.phase) * 0.25, pitch: 0.05 };
+  if (a.windup > 0) { want.y += 0.5; want.z -= 0.9; }
+  if (a.lunge > 0) { want.y -= 1.2 * Math.min(1, a.lunge * 1.6); want.z += 1.6 * Math.min(1, a.lunge * 1.6); want.pitch = 0.5; }
+  const h = a.head || (a.head = { ...want }), k = 1 - Math.exp(-dt * (a.lunge > 0 ? 14 : 6));
+  for (const key of ['x', 'y', 'z', 'yaw', 'pitch']) h[key] += (want[key] - h[key]) * k;
+  const base = mChain(base0, mS(DRAGON_SCALE));
+  let tilt = a.flyAlt > 1 ? -0.05 : sp.tilt; tilt += (0.06 - tilt) * a.wingW;
+  const body = mChain(base, mT(0, sp.hipY, sp.hips[0][1]), mRx(tilt), mT(0, -sp.hipY, -sp.hips[0][1]));
+  drawMesh(m.body, body, flash);
+  const headM = dragonHeadM(a, body);
+  drawDragonNeck(a, body, headM, flash);
+  drawMesh(m.head, headM, flash);
+  const open = a.windup > 0 ? 0.15 + 0.65 * (1 - a.windup / sp.windup) : a.lunge > 0.25 ? 0.45 * (a.lunge - 0.25) : a.lunge > 0 ? 0 : a.roarT > 0 ? 0.6 * Math.min(1, a.roarT * 2) : 0.06 + Math.max(0, Math.sin(time * 0.7 + o.phase)) * 0.12;
+  drawMesh(m.jaw, mChain(headM, mT(0, -0.3, 0.3), mRx(open)), flash);
+  const amp = o.moving ? 0.7 : 0;
+  sp.hips.forEach((hp, i) => { const swing = a.flyAlt > 1 ? 0.9 : Math.sin(a.legPhase + (i === 0 ? 0 : Math.PI)) * amp; drawMesh(m.leg, mChain(base, mT(hp[0], sp.hipY, hp[1]), mRx(swing)), flash); });
+  drawDragonTail(a, body, flash);
+  const flap = a.flyAlt > 0.5 ? 0.25 + Math.sin(time * 5.5) * 0.85 : (a.windup > 0) ? 0.45 + Math.sin(time * 9) * 0.45 : a.alerted ? 0.15 + Math.sin(time * 4) * 0.35 : 0.05 + Math.sin(time * 1.3) * 0.08;
+  const ws = sp.wingScale, wa = [0.85, 3.4, 1.0], ww = a.wingW;
+  if (ww < 0.97) {
+    const kk = 1 - ww, f = flap * kk - 0.9 * ww;
+    drawMesh(m.wing, mChain(body, mT(wa[0], wa[1], wa[2]), mRz(f), mS(ws * kk)), flash);
+    drawMesh(m.wing, mChain(body, mT(-wa[0], wa[1], wa[2]), mS3(-1, 1, 1), mRz(f), mS(ws * kk)), flash);
+  }
+  if (ww > 0.03) drawWingLegs(a, body, wa, ww, flash);
+}
+def('dragon', 'mythical', 'Dragon', '🐉', { r: 2.2, h: 3.2, move: 'walk', speed: 2.2, update: dragonUpdate, draw: dragonDraw, legs: { len: 0.8 } });
+
+// the sea serpent: Wildwood's Leviathan, smaller. Its body follows its head in pieces.
+function serpentUpdate(o, dt, time) {
+  const sp = WW.levi || (wwModels(), WW.levi), sc = o.s * SERPENT_SCALE, gap = sp.spacing * sc;
+  if (!o.segs) { o.segs = []; for (let i = 1; i <= sp.segs; i++) o.segs.push({ x: o.x - Math.sin(o.r) * i * gap, z: o.z - Math.cos(o.r) * i * gap }); }
+  let px = o.x, pz = o.z;
+  o.segs.forEach(s => { const ex = s.x - px, ez = s.z - pz, d = Math.hypot(ex, ez) || 1e-4; if (d > gap) { s.x = px + ex / d * gap; s.z = pz + ez / d * gap; } px = s.x; pz = s.z; });
+  o.rear = (o.rear || 0) + (((o.windup || 0) > 0 || (o.lunge || 0) > 0 ? 1 : 0.25 + 0.15 * Math.sin(time * 0.6 + o.phase)) - (o.rear || 0)) * Math.min(1, dt * 1.8);
+  return false;
+}
+function serpentDraw(o, base0, time, flash) {
+  wwModels();
+  const sp = WW.levi, m = sp.model, sc = o.s * SERPENT_SCALE, R = sp.bodyR * sc, wy = -R * 0.35;
+  if (!o.segs) serpentUpdate(o, 0, time);
+  const snR = i => (i < 3 ? R : R * (1 - (i - 3) / (sp.segs - 3) * 0.75));
+  const lift = (o.rear || 0) * 7 * sc, sway = i => Math.sin(time * 1.4 - i * 0.5 + o.phase) * 0.12 * R;
+  const pitch = ((o.windup || 0) > 0 ? -0.3 : (o.lunge || 0) * 0.3) + 0.3 * (o.rear || 0);
+  const fwd = (o.lunge || 0) * 4.5 * sc;
+  const head = [o.x + Math.sin(o.r) * fwd, wy + R * 1.15 + lift, o.z + Math.cos(o.r) * fwd];
+  const headM = mChain(mT(head[0], head[1], head[2]), mRy(o.r), mRx(pitch), mS(sp.headScale * sc));
+  let prev = head, prevR = R * 0.85;
+  o.segs.forEach((s, i) => {
+    const r = snR(i), rise = lift * Math.pow(Math.max(0, 1 - (i + 1) / 7), 1.6);
+    const cur = [s.x + sway(i), wy + rise + Math.sin(time * 1.1 - i * 0.6) * 0.15 * R, s.z];
+    const dx = prev[0] - cur[0], dy = prev[1] - cur[1], dz = prev[2] - cur[2], L = Math.hypot(dx, dy, dz);
+    if (L > 0.01) { const tr = (r + prevR) / 2 * 0.92; drawMesh(m.tube, mChain(mT(cur[0], cur[1], cur[2]), mRy(Math.atan2(dx, dz)), mRx(-Math.atan2(dy, Math.hypot(dx, dz))), mS3(tr, tr * 0.9, L)), flash); }
+    drawMesh(i % 3 === 1 ? m.band : m.seg, mChain(mT(cur[0], cur[1], cur[2]), mRy(Math.atan2(dx, dz)), mS(r)), flash);
+    if (i === 2 || i === 4) {                         // two pairs of wings on its back
+      const t = time * (o.foe ? 6 : 2) + (i === 4 ? 0.8 : 0), flap = 0.25 + Math.sin(t) * (o.foe ? 0.5 : 0.2), wsz = r * (i === 2 ? 2.75 : 2.1);
+      const bm = mChain(mT(cur[0], cur[1], cur[2]), mRy(Math.atan2(dx, dz)));
+      drawMesh(m.wing, mChain(bm, mT(r * 0.55, r * 0.62, 0), mRz(flap), mS(wsz)), flash);
+      drawMesh(m.wing, mChain(bm, mT(-r * 0.55, r * 0.62, 0), mS3(-1, 1, 1), mRz(flap), mS(wsz)), flash);
+    }
+    prev = cur; prevR = r;
+  });
+  drawMesh(m.head, headM, flash);
+  const open = (o.windup || 0) > 0 ? 0.15 + 0.85 * (1 - o.windup / sp.windup) : (o.lunge || 0) > 0.6 ? 0 : 0.04 + Math.max(0, Math.sin(time * 0.5 + o.phase)) * 0.3;
+  drawMesh(m.jaw, mChain(headM, mT(0, -0.11, -0.15), mRx(open)), flash);
+}
+def('seaserpent', 'mythical', 'Sea serpent', '🐍', { r: 6, h: 3, move: 'swim', place: 'water', speed: 3.2, update: serpentUpdate, draw: serpentDraw, big: true });
+
+// the crocodile: Wildwood's, with its jaw and swishing tail
+function crocDraw(o, base0, time, flash) {
+  wwModels();
+  const sp = WW.croc, m = sp.model, base = mChain(base0, mS(CROC_SCALE));
+  drawMesh(m.body, base, flash);
+  const sw = o.moving ? Math.sin(o.phase) : 0;
+  const tailA = o.whip > 0 ? whipCurve(Math.min(0.9, o.whip)) * 1.1 : sw * 0.25 + Math.sin(time * 0.8 + o.phase) * 0.06;
+  drawMesh(m.tail, mChain(base, mT(0, 0.35, -0.85), mRy(tailA)), flash);
+  const open = (o.windup || 0) > 0 ? 0.1 + 0.6 * (1 - o.windup / sp.windup) : (o.lunge || 0) > 0.6 ? 0 : 0.03 + Math.max(0, Math.sin(time * 0.4 + o.phase) - 0.7) * 1.2;
+  drawMesh(m.jaw, mChain(base, mT(0, 0.33, 1.0), mRx(open)), flash);
+  sp.hips.forEach((h, i) => drawMesh(m.leg, mChain(base, mT(h[0], sp.hipY, h[1]), mRx(o.moving ? Math.sin(o.phase + (i === 0 || i === 3 ? 0 : Math.PI)) * 0.5 : 0)), flash));
+}
+
+// people-shaped monsters (and goblins)
+function mythPerson(id, name, icon, o) { return personDef(id, name, icon, Object.assign({ cat: 'mythical' }, o)); }
+mythPerson('goblin', 'Goblin', '👺', { k: 0.72, skin: [0.45, 0.66, 0.26], shirt: [0.45, 0.32, 0.18], pants: [0.32, 0.24, 0.14], hair: null, speed: 1.9, extra: (g, k, y) => {
+  for (const s of [-1, 1]) cyl(g, [s * 0.16 * k, y + 1.82 * k, 0], [s * 0.36 * k, y + 1.92 * k, -0.04 * k], 0.06 * k, 0.005, [0.45, 0.66, 0.26], 8);
+  orb(g, 0, y + 1.77 * k, 0.2 * k, 0.05 * k, 0.05 * k, 0.07 * k, [0.4, 0.6, 0.22], { lo: true });
+  box(g, 0.34 * k, y + 0.95 * k, 0.3 * k, 0.04 * k, 0.04 * k, 0.4 * k, [0.7, 0.72, 0.75]);
+} });
+mythPerson('skeleton', 'Skeleton', '💀', { skin: [0.93, 0.91, 0.84], shirt: [0.93, 0.91, 0.84], sleeve: [0.93, 0.91, 0.84], pants: [0.85, 0.83, 0.76], shoes: [0.85, 0.83, 0.76], hair: null, speed: 1.3, extra: (g, k, y) => {
+  for (const s of [-1, 1]) orb(g, s * 0.07 * k, y + 1.83 * k, 0.15 * k, 0.05 * k, 0.05 * k, 0.04 * k, COL.dark, { lo: true });
+  for (let i = 0; i < 4; i++) cyl(g, [-0.24 * k, y + (1.05 + i * 0.12) * k, 0.12 * k], [0.24 * k, y + (1.05 + i * 0.12) * k, 0.12 * k], 0.025 * k, 0.025 * k, [0.3, 0.28, 0.25], 6);
+  box(g, 0.34 * k, y + 0.95 * k, 0.32 * k, 0.05 * k, 0.04 * k, 0.6 * k, [0.65, 0.66, 0.7]);
+}, legCol: [0.93, 0.91, 0.84] });
+mythPerson('zombie', 'Zombie', '🧟', { skin: [0.5, 0.66, 0.42], shirt: [0.3, 0.4, 0.55], pants: [0.35, 0.28, 0.22], hair: [0.2, 0.22, 0.15], speed: 0.8, armsOut: true, extra: (g, k, y) => {
+  for (const s of [-1, 1]) orb(g, s * 0.07 * k, y + 1.84 * k, 0.17 * k, 0.04 * k, 0.03 * k, 0.02 * k, [0.85, 0.85, 0.3], { lo: true });
+  orb(g, 0.12 * k, y + 1.3 * k, 0.16 * k, 0.06 * k, 0.08 * k, 0.02 * k, [0.5, 0.66, 0.42], { lo: true });   // a hole in the shirt
+} });
+mythPerson('demon', 'Demon', '😈', { k: 1.25, skin: [0.78, 0.14, 0.12], shirt: [0.62, 0.1, 0.1], pants: [0.2, 0.08, 0.08], shoes: [0.12, 0.06, 0.06], hair: null, speed: 1.6, extra: (g, k, y) => {
+  for (const s of [-1, 1]) { cyl(g, [s * 0.1 * k, y + 1.95 * k, 0], [s * 0.22 * k, y + 2.25 * k, -0.06 * k], 0.05 * k, 0.005, COL.dark, 8); }
+  cyl(g, [0, y + 0.95 * k, -0.15 * k], [0, y + 0.5 * k, -0.7 * k], 0.04 * k, 0.02 * k, [0.62, 0.1, 0.1], 8); coneS(g, 0, y + 0.44 * k, -0.72 * k, 0.07 * k, 0.12 * k, COL.dark, 4);
+}, glow: { flicker: 'pulse', make: g => { for (const s of [-1, 1]) orb(g, s * 0.07 * 1.25, 1.84 * 1.25, 0.17 * 1.25, 0.04, 0.03, 0.02, [1, 0.85, 0.2], { lo: true }); } },
+  wings: { at: [0.18, 1.5, -0.12], amp: 0.3, rate: 3, make: g => { const M = [0.35, 0.08, 0.08]; tri(g, [0, 0, 0], [1.1, 0.7, -0.3], [0.9, -0.2, -0.4], [0, 0, 1], 0, M, M, M, 0, 0, 0); tri(g, [0, 0, 0], [0.9, -0.2, -0.4], [0.3, -0.5, -0.3], [0, 0, 1], 0, M, M, M, 0, 0, 0); cyl(g, [0, 0, 0], [1.1, 0.7, -0.3], 0.03, 0.01, COL.dark, 5); } } });
+mythPerson('troll', 'Troll', '🧌', { k: 2.1, skin: [0.5, 0.58, 0.45], shirt: [0.5, 0.58, 0.45], sleeve: [0.5, 0.58, 0.45], pants: [0.4, 0.32, 0.22], shoes: [0.45, 0.52, 0.4], hair: [0.3, 0.3, 0.25], speed: 1.0, extra: (g, k, y) => {
+  orb(g, 0, y + 1.1 * k, 0.08 * k, 0.3 * k, 0.28 * k, 0.24 * k, [0.55, 0.62, 0.48]);       // big belly
+  orb(g, 0, y + 1.78 * k, 0.2 * k, 0.07 * k, 0.06 * k, 0.07 * k, [0.45, 0.52, 0.4], { lo: true });   // big nose
+  for (const s of [-1, 1]) coneS(g, s * 0.06 * k, y + 1.7 * k, 0.15 * k, 0.02 * k, 0.07 * k, COL.cream, 6);
+  cyl(g, [0.36 * k, y + 0.6 * k, 0.15 * k], [0.36 * k, y + 1.3 * k, 0.25 * k], 0.05 * k, 0.12 * k, COL.bark, 10);
+} });
+mythPerson('minotaur', 'Minotaur', '🐂', { k: 1.45, skin: [0.45, 0.3, 0.2], shirt: [0.45, 0.3, 0.2], sleeve: [0.45, 0.3, 0.2], pants: [0.25, 0.18, 0.12], shoes: COL.dark, hair: null, speed: 1.4, extra: (g, k, y) => {
+  orb(g, 0, y + 1.76 * k, 0.17 * k, 0.12 * k, 0.1 * k, 0.12 * k, [0.55, 0.4, 0.3]);   // snout
+  for (const s of [-1, 1]) { orb(g, s * 0.05 * k, y + 1.77 * k, 0.28 * k, 0.02 * k, 0.02 * k, 0.01 * k, COL.dark, { lo: true }); cyl(g, [s * 0.15 * k, y + 1.95 * k, 0], [s * 0.38 * k, y + 2.05 * k, 0.05 * k], 0.05 * k, 0.03 * k, COL.cream, 8); cyl(g, [s * 0.38 * k, y + 2.05 * k, 0.05 * k], [s * 0.42 * k, y + 2.25 * k, 0.1 * k], 0.03 * k, 0.005, COL.cream, 8); }
+  cyl(g, [0.36 * k, y + 0.2 * k, 0.1 * k], [0.36 * k, y + 1.9 * k, 0.1 * k], 0.03 * k, 0.03 * k, COL.wood, 8);
+  for (const s of [-1, 1]) tri(g, [0.36 * k, y + 1.85 * k, 0.1 * k], [0.36 * k + s * 0.3 * k, y + 2.0 * k, 0.1 * k], [0.36 * k + s * 0.3 * k, y + 1.6 * k, 0.1 * k], [0, 0, 1], 0, COL.iron, COL.iron, COL.iron, 0, 0, 0);
+} });
+// the ghost floats and is see-through; anything that comes near runs away screaming
+def('ghost', 'mythical', 'Ghost', '👻', { r: 0.6, h: 2, move: 'fly', place: 'any', speed: 1.5, alt: 0.6, ghost: true, body: g => {
+  orb(g, 0, 1.3, 0, 0.55, 0.75, 0.5, [0.95, 0.96, 1.0]);
+  for (let i = 0; i < 8; i++) { const a = i / 8 * 6.283; coneS(g, Math.cos(a) * 0.42, 0.7, Math.sin(a) * 0.38, 0.16, -0.4, [0.95, 0.96, 1.0], 8); }
+  for (const s of [-1, 1]) orb(g, s * 0.17, 1.55, 0.45, 0.08, 0.12, 0.04, COL.dark, { lo: true });
+  orb(g, 0, 1.25, 0.47, 0.09, 0.12, 0.04, COL.dark, { lo: true });
+  for (const s of [-1, 1]) cyl(g, [s * 0.45, 1.4, 0.1], [s * 0.85, 1.25, 0.35], 0.12, 0.08, [0.95, 0.96, 1.0], 10);
+} });
+// the hydra: a big body on four legs with three swaying heads
+function hydraDraw(o, base, time, flash) {
+  const M = meshesFor(CAT.hydra);
+  drawMesh(M.body, base, flash);
+  for (let i = 0; i < 3; i++) {
+    const sx = (i - 1) * 0.55, yaw = (i - 1) * 0.45 + Math.sin(time * 1.3 + i * 2.1 + o.phase) * 0.25, pit = Math.sin(time * 1.7 + i * 1.3) * 0.15 - (o.lunge || 0) * 0.6;
+    drawMesh(M.spin, mChain(base, mT(sx, 1.9, 1.3), mRy(yaw), mRx(pit)), flash);
+  }
+  if (M.leg) CAT.hydra.legs.at.forEach((p, i) => drawMesh(M.leg, mChain(base, mT(p[0], p[1], p[2]), mRx(o.moving ? Math.sin(o.phase + (i === 0 || i === 3 ? 0 : Math.PI)) * 0.4 : 0)), flash));
+}
+def('hydra', 'mythical', 'Hydra', '🐲', { r: 2.2, h: 4.5, move: 'walk', speed: 1.1, amph: true, big: true, draw: hydraDraw, body: g => {
+  const C = [0.25, 0.5, 0.35], B = [0.75, 0.75, 0.45];
+  orb(g, 0, 1.6, 0, 1.1, 0.9, 1.7, C); orb(g, 0, 1.3, 0.1, 0.95, 0.6, 1.4, B);
+  cyl(g, [0, 1.6, -1.5], [0, 1.0, -4.0], 0.6, 0.05, C, 14);
+  for (let i = 0; i < 6; i++) coneS(g, 0, 2.35 - i * 0.05, 1.1 - i * 0.55, 0.15, 0.35, [0.15, 0.35, 0.25], 6);
+}, spin: { at: [0, 0, 0], speed: 0, make: g => {          // (used as one neck and head, drawn three times)
+  const C = [0.25, 0.5, 0.35];
+  cyl(g, [0, 0, 0], [0, 1.6, 0.6], 0.32, 0.22, C, 12); cyl(g, [0, 1.6, 0.6], [0, 2.4, 1.3], 0.22, 0.18, C, 12);
+  orb(g, 0, 2.5, 1.55, 0.3, 0.25, 0.45, C); orb(g, 0, 2.35, 1.75, 0.22, 0.1, 0.35, [0.55, 0.1, 0.12]);
+  for (const s of [-1, 1]) { orb(g, s * 0.16, 2.62, 1.7, 0.06, 0.06, 0.05, [1, 0.85, 0.1], { lo: true }); cyl(g, [s * 0.12, 2.32, 1.95], [s * 0.12, 2.2, 1.97], 0.03, 0.004, COL.white, 5); cyl(g, [s * 0.1, 2.7, 1.3], [s * 0.18, 2.95, 1.05], 0.05, 0.005, COL.cream, 6); }
+} }, legs: { at: [[-0.8, 1.2, 0.9], [0.8, 1.2, 0.9], [-0.8, 1.2, -0.9], [0.8, 1.2, -0.9]], amp: 0.4, gait: 'quad', len: 1.2,
+  make: g => { cyl(g, [0, 0, 0], [0, -1.1, 0.1], 0.3, 0.22, [0.25, 0.5, 0.35], 10); orb(g, 0, -1.15, 0.25, 0.28, 0.12, 0.38, [0.18, 0.35, 0.25]); } } });
+// the phoenix: a fiery bird that glows
+birdDef('phoenix', 'Phoenix', '🔥', g => {
+  orb(g, 0, 0, 0, 0.3, 0.3, 0.6, [1, 0.45, 0.1]); orb(g, 0, 0.18, 0.55, 0.22, 0.22, 0.22, [1, 0.55, 0.12]);
+  cyl(g, [0, 0.14, 0.72], [0, 0.08, 0.95], 0.07, 0.01, [1, 0.85, 0.3], 8); eyes(g, 0.12, 0.25, 0.66, 0.04);
+  for (let i = 0; i < 5; i++) cyl(g, [0, 0, -0.5], [(i - 2) * 0.25, -0.2 - Math.abs(i - 2) * 0.1, -1.8], 0.08, 0.01, i % 2 ? [1, 0.85, 0.25] : [1, 0.3, 0.08], 8);
+  for (let i = 0; i < 3; i++) cyl(g, [0, 0.35, 0.5], [(i - 1) * 0.12, 0.7, 0.35 - i * 0.05], 0.03, 0.005, [1, 0.85, 0.25], 6);
+}, featherWing([1, 0.4, 0.1], [1, 0.85, 0.25], 1.6, 0.6), { r: 1.2, h: 1, speed: 8, alt: 22, amp: 0.7, rate: 4, wingAt: [0.25, 0.1, 0.1], cat: 'mythical', glowAll: true });
 /* =====================================================================
    Placing, erasing and undo
    ===================================================================== */
@@ -1823,6 +2310,7 @@ function updateLife(dt, time) {
   for (const o of objs) {
     const d = CAT[o.t];
     if (!d.move) continue;
+    if (d.update && d.update(o, dt, time)) continue;     // the dragon flying, the sea serpent's body
     if (d.move === 'float') { o.bob = Math.sin(time * 1.3 + o.phase) * 0.15 * o.s; o.tilt = Math.sin(time * 0.9 + o.phase) * 0.05; continue; }
     if (d.move === 'fly') {
       const rad = (d.alt > 20 ? 45 : 14) * Math.max(1, o.s);
@@ -1890,7 +2378,9 @@ function drawOne(o, time, shadow, flash) {
   if (o.pitch) base = mChain(base, mRx(o.pitch));
   if (o.bank) base = mChain(base, mRz(o.bank * 0.4));
   const far = !shadow && Math.hypot(o.x - camEye[0], o.y - camEye[1], o.z - camEye[2]) > 260 + 40 * o.s;
+  if (d.draw) { d.draw(o, base, time, flash, shadow); return; }        // Wildwood's dragon, sea serpent and crocodile, and the hydra
   if (d.move === 'walk' && o.moving && !d.hop) base = mChain(base, mT(0, Math.abs(Math.sin(o.phase)) * 0.03, 0));
+  if (d.glowAll && !shadow) gl.uniform1f(progWorld.u.uEmit, 0.55 + Math.sin(time * 9 + o.phase) * 0.15);   // the phoenix glows all over
   drawMesh(M.body, base, flash);
   if (M.leg && !far) {
     const L = d.legs, sw = o.moving ? Math.sin(o.phase) * L.amp : 0;
@@ -1904,6 +2394,7 @@ function drawOne(o, time, shadow, flash) {
     drawMesh(M.wing, mChain(base, mT(W.at[0], W.at[1], W.at[2]), mRz(a)), flash);
     drawMesh(M.wing, mChain(base, mT(-W.at[0], W.at[1], W.at[2]), mS3(-1, 1, 1), mRz(a)), flash);
   }
+  if (d.glowAll && !shadow) gl.uniform1f(progWorld.u.uEmit, 0);
   if (M.spin) drawMesh(M.spin, mChain(base, mT(d.spin.at[0], d.spin.at[1], d.spin.at[2]), mRz(time * d.spin.speed + o.phase)), flash);
   if (M.glow) {
     if (!shadow) {
@@ -1921,8 +2412,19 @@ function drawThings(time, shadow) {
     if (shadow) { if (Math.abs(o.x - cam.tx) > shadowHalf + r || Math.abs(o.z - cam.tz) > shadowHalf + r) continue; }
     else if (!sphereVisible(o.x, cy, o.z, r)) continue;
     if (!shadow && Math.hypot(o.x - camEye[0], o.z - camEye[2]) > 2600) continue;
+    if (d.ghost) continue;                       // ghosts are drawn see-through later, and have no shadow
     drawOne(o, time, shadow, o === hot ? 0.45 + Math.sin(time * 12) * 0.25 : 0);
   }
+}
+function drawGhosts(time) {
+  const hot = tool.erase && cursor ? eraseTarget(cursor) : null;
+  gl.uniform1f(progWorld.u.uAlpha, 0.5 + Math.sin(time * 2) * 0.08);
+  for (const o of objs) {
+    const d = CAT[o.t];
+    if (!d.ghost || !sphereVisible(o.x, o.y + d.h * o.s * 0.5, o.z, d.h * o.s * 2)) continue;
+    drawOne(o, time, false, o === hot ? 0.5 : 0.08);
+  }
+  gl.uniform1f(progWorld.u.uAlpha, 1);
 }
 // the circle where the next thing will go, and a see-through preview of it
 function drawCursor(time) {
@@ -2165,6 +2667,7 @@ function render(time) {
   gl.depthMask(false); gl.drawArrays(gl.TRIANGLES, 0, 6); gl.depthMask(true);
   // the preview of what you're about to place (see-through), drawn over the water
   gl.useProgram(progWorld.p);
+  drawGhosts(time);
   drawCursor(time);
   gl.disable(gl.BLEND);
   gl.bindVertexArray(null);
