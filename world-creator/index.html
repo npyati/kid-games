@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>World Creator</title>
-<meta name="description" content="Fly around a giant 3D island and fill it with trees, buildings, people, creatures and weapons. Ten islands to pick from.">
+<meta name="description" content="Fly around a giant 3D island and fill it with trees, buildings, people, creatures and mythical monsters, then unleash tornadoes, tsunamis and bombs.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@700;800;900&display=swap">
@@ -169,11 +169,13 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,38px);lin
       <div><b class="h">Fly the camera</b><b>Controller:</b> left stick moves, right stick turns and tilts, LT zooms out, RT zooms in. <b>Keyboard and mouse:</b> WASD or the arrow keys move, hold the right mouse button and drag to turn, mouse wheel zooms, Q / E turn.</div>
       <div><b class="h">Build</b>Pick a group and a thing at the bottom, then press <b>A</b> or <b>click</b> to put it down where the circle is. Hold the button and move to keep going. <b>Controller:</b> LB / RB change group, d-pad left / right pick a thing, click the right stick to change its size, Y turns it. <b>Keyboard:</b> number keys or Tab change group, [ and ] pick a thing, R turns it, - and + change its size.</div>
       <div><b class="h">Brush</b>The brush on the left side puts down <b>1, 2, 3, 6 or 10</b> things at a time, and makes the circle bigger for painting land. <b>Controller:</b> d-pad up / down. <b>Keyboard:</b> C (Shift+C for smaller).</div>
-      <div><b class="h">Nature</b>Paint land types: <b>forest, taiga, jungle, savanna, desert, swamp, mountain, path, cobblestone path</b> and <b>corrupted land</b>. Each one colours the ground and grows its own plants. Hold the button to keep painting. The land tools <b>raise</b> and <b>lower</b> the land, <b>flatten</b> it, or dig <b>shallow</b> or <b>deep water</b>. Single trees, rocks and flowers are in <b>Plants</b>.</div>
+      <div><b class="h">Nature</b>Paint land types: <b>forest, taiga, jungle, savanna, desert, swamp, mountain, path, cobblestone path, corrupted land</b> and glowing <b>lava</b> (it burns what's on it, and nobody walks onto it). Each one colours the ground and grows its own plants. Hold the button to keep painting. The land tools <b>raise</b> and <b>lower</b> the land, <b>flatten</b> it, or dig <b>shallow</b> or <b>deep water</b>. Single trees, rocks and flowers are in <b>Plants</b>.</div>
       <div><b class="h">Oops!</b>The <b>eraser</b> (X on the controller or keyboard) takes things away. <b>Undo</b> (B, or Z on the keyboard) takes back the last thing you did.</div>
       <div><b class="h">It's alive</b>People and creatures walk around by themselves. Birds and dragons fly, and dolphins swim in the sea. Monsters, zombies and the dragon attack; zombies turn what they bite into zombies; anything near a ghost runs away screaming. Turn <b>Fighting</b> off in the menu for calm building.</div>
       <div><b class="h">Towns</b>Put down <b>humans, elves, dwarves</b> or <b>orcs</b> (in People). With <b>Towns: People build</b> (in the menu), once <b>10</b> of a kind are together they start building a town: the town hall takes about 2 minutes, then they build their own houses one at a time. With <b>Towns: Quick</b>, one person founds a whole town at once. Orcs fight everyone else; humans sometimes start wars; elves are archers. Open <b>🏰 Towns</b> (T, or View on the controller) to make a town keep the peace or go to war with everyone.</div>
       <div><b class="h">Maps</b>Ten islands, plus four big maps: <b>Island Set</b> (seven islands, each a different land), <b>Pangea</b> (one giant supercontinent), <b>Sky Islands</b> (floating in the sky) and <b>Endless Ocean</b>. Or pick <b>🎲 Random</b>. New islands are much bigger than the first ones, and people and animals are smaller, so everything is more to scale.</div>
+      <div><b class="h">Disasters</b>The <b>Disasters</b> group has a <b>tornado</b> (picks things up and throws them), a <b>tsunami</b> (a wave rolls in from the nearest sea), a <b>bomb</b>, a <b>sprinkle bomb</b> (lots of little bombs) and an <b>earthquake</b> (cracks the ground and knocks buildings down). The size buttons make them bigger. <b>Undo</b> puts things back.</div>
+      <div><b class="h">Kings, queens and battles</b>Once a town starts to grow it crowns a <b>king</b>, a <b>queen</b> or both. They train soldiers who guard the town and send them to battle. Tap the <b>🪄 Battle wand</b> (in People) on one town, then on another, and they go to war. When a town has nobody left, its town hall explodes and it has fallen.</div>
       <div><b class="h">Big monsters</b>Dragons, hydras and sea serpents are huge, and each island can have up to <b>3</b> of each.</div>
       <div><b class="h">Saving</b>Every island saves by itself. Find it again under <b>My islands</b>.</div>
     </div>
@@ -210,7 +212,7 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,38px);lin
 /* =====================================================================
    World Creator
    Fly a camera around a big 3D island (ten kinds to pick from) and fill it
-   with nature, buildings, people, creatures and weapons. People and animals
+   with nature, buildings, people, creatures and mythical monsters, and disasters. People and animals
    wander around on their own. Plain WebGL 2, no libraries. The noise,
    shapes, shaders, matrices, controller and sound code come from Wildwood,
    with higher detail: up to 2x pixels, smooth shading, a finer island and
@@ -533,14 +535,16 @@ function slopeAt(x, z) {        // 1 = flat, lower = steeper
   return NYGRID ? NYGRID[fz * (TN + 1) + fx] : 1;
 }
 // land types you can paint on (Nature): the ground colour for each, by its number in BGRID (0 = the island's own)
-const BIOME_IDS = ['forest', 'taiga', 'jungle', 'savanna', 'desert', 'swamp', 'mountain', 'path', 'cobble', 'corrupt'];
+const BIOME_IDS = ['forest', 'taiga', 'jungle', 'savanna', 'desert', 'swamp', 'mountain', 'path', 'cobble', 'corrupt', 'lava'];
 const BIOME_GROUND = {
   forest: [[0.27, 0.54, 0.2], [0.19, 0.42, 0.15]], taiga: [[0.88, 0.91, 0.95], [0.62, 0.7, 0.62]], jungle: [[0.16, 0.44, 0.13], [0.1, 0.32, 0.1]],
   savanna: [[0.8, 0.7, 0.38], [0.66, 0.58, 0.3]], desert: [[0.95, 0.82, 0.54], [0.88, 0.72, 0.45]], swamp: [[0.32, 0.4, 0.18], [0.24, 0.3, 0.15]],
   mountain: [[0.55, 0.53, 0.5], [0.44, 0.42, 0.4]], path: [[0.6, 0.46, 0.3], [0.5, 0.38, 0.25]], cobble: [[0.62, 0.61, 0.6], [0.46, 0.45, 0.45]],
-  corrupt: [[0.3, 0.1, 0.36], [0.12, 0.05, 0.15]],
+  corrupt: [[0.3, 0.1, 0.36], [0.12, 0.05, 0.15]], lava: [[1.0, 0.42, 0.06], [1.0, 0.78, 0.18]],
 };
 let BGRID = null;
+const LAVA_B = BIOME_IDS.indexOf('lava') + 1;
+function lavaAt(x, z) { if (!BGRID) return false; const i = clamp(Math.round((x + TS) / TSTEP), 0, TN), j = clamp(Math.round((z + TS) / TSTEP), 0, TN); return BGRID[j * (TN + 1) + i] === LAVA_B && groundAt(x, z) > -0.5; }
 function groundColor(x, z, h, ny, b) {
   const I = ISL;
   const n = perlin(x * 0.045 + 3, z * 0.045 - 1) * 0.55 + perlin(x * 0.18, z * 0.18) * 0.25;
@@ -549,6 +553,7 @@ function groundColor(x, z, h, ny, b) {
   const bid = b ? BIOME_IDS[b - 1] : null;
   if (bid) {
     const [g1, g2] = BIOME_GROUND[bid];
+    if (bid === 'lava') { const f = perlin(x * 0.12 + 3, z * 0.12) + perlin(x * 0.5, z * 0.5) * 0.3; c = mixc(g1, g2, clamp(0.5 + f * 1.4, 0, 1)); if (f < -0.28) c = mixc(c, [0.18, 0.06, 0.04], smooth(-0.28, -0.4, f)); return c; }
     if (bid === 'cobble') c = shade(g1, 0.72 + (perlin(x * 1.3, z * 1.3) * 0.5 + 0.5) * 0.45);
     else if (bid === 'corrupt') c = mixc(g1, g2, clamp(0.5 + perlin(x * 0.09, z * 0.09) * 1.8, 0, 1));
     else c = mixc(g1, g2, clamp(0.5 + n * 1.3, 0, 1));
@@ -645,6 +650,7 @@ void main(){
   vec3 v = normalize(uCam - vWorld);
   c += sunC * pow(max(dot(reflect(-uSun, n), v), 0.0), 24.0) * 0.12 * diff;   // a little shine
   if (vWorld.y < 0.0) { float k = clamp(-vWorld.y * 0.11, 0.0, 0.8); c = mix(c, uWater * 0.9, k); }
+  if (vNor.w < -0.6 && vNor.w > -0.9) c = mix(c, vCol * (1.05 + 0.15 * sin(uTime * 2.0 + vWorld.x * 0.21 + vWorld.z * 0.17)), 0.88);   // lava glows
   c = mix(c, vCol * 1.15, uEmit);
   c = mix(c, vec3(1.0, 0.96, 0.9), uFlash);
   o = vec4(applyFog(c, vWorld), uAlpha);
@@ -964,7 +970,7 @@ function terrainVert(i, j) {
   NYGRID[k] = n[1];
   const c = groundColor(x, z, h, n[1], BGRID[k]), g = terrainGeo, o = k * 5, bo = k * 20;
   g.f[o] = x; g.f[o + 1] = h; g.f[o + 2] = z;
-  g.i8[bo + 12] = n[0] * 127; g.i8[bo + 13] = n[1] * 127; g.i8[bo + 14] = n[2] * 127; g.i8[bo + 15] = -127;
+  g.i8[bo + 12] = n[0] * 127; g.i8[bo + 13] = n[1] * 127; g.i8[bo + 14] = n[2] * 127; g.i8[bo + 15] = BGRID[k] === LAVA_B ? -95 : -127;   // (lava glows)
   g.u8[bo + 16] = cl01(c[0]) * 255; g.u8[bo + 17] = cl01(c[1]) * 255; g.u8[bo + 18] = cl01(c[2]) * 255; g.u8[bo + 19] = 0;
 }
 // send changed rows of the island to the graphics card
@@ -1263,13 +1269,14 @@ const CATS = [
   { id: 'people', name: 'People', icon: '🧑', items: [] },
   { id: 'creatures', name: 'Creatures', icon: '🐾', items: [] },
   { id: 'mythical', name: 'Mythical', icon: '🐉', items: [] },
-  { id: 'weapons', name: 'Weapons', icon: '⚔️', items: [] },
+  { id: 'disasters', name: 'Disasters', icon: '🌪️', items: [] },
 ];
 const CAT = {};
 function def(id, cat, name, icon, o) {
   const d = Object.assign({ id, cat, name, icon, r: 1, h: 2, place: 'land', speed: 1.4 }, o);
   CAT[id] = d;
-  if (!o.hidden) CATS.find(c => c.id === cat).items.push(id);
+  const c = CATS.find(c => c.id === cat);
+  if (!o.hidden && c) c.items.push(id);              // (the old Weapons things have no group any more, but old islands can still have them)
   return d;
 }
 const meshCache = {};
@@ -1417,6 +1424,7 @@ const BIOMES = {
   mountain: { name: 'Mountain', icon: '⛰️', plants: [['rock', 2], ['pine', 1]], per: 160 },
   path:     { name: 'Path', icon: '🟫', plants: [], clear: true },
   cobble:   { name: 'Cobblestone path', icon: '🧱', plants: [], clear: true },
+  lava:     { name: 'Lava', icon: '🌋', plants: [], clear: true, lava: true },
   corrupt:  { name: 'Corrupted land', icon: '💀', plants: [['deadtree', 2], ['crystal', 1.5]], per: 160, note: 'monsters come from here' },
 };
 for (const id of BIOME_IDS) { const B = BIOMES[id]; def('b_' + id, 'nature', B.name, B.icon, { tool: 'biome', biome: id, r: 1, h: 1 }); }
@@ -2429,7 +2437,7 @@ function canPlace(d, hit, s) {
   if (d.place === 'water') return hit.water && hit.depth > Math.max(1.2, d.h * s * 0.5);
   if (d.place === 'any') return true;
   if (d.amph) return true;
-  return !hit.water && groundAt(hit.x, hit.z) > 0.15;
+  return !hit.water && groundAt(hit.x, hit.z) > 0.15 && !lavaAt(hit.x, hit.z);
 }
 // everything done in one press (or one hold of the button) undoes together
 function group(withLand) {
@@ -2456,6 +2464,8 @@ function brushRadius(d, s) { return BRUSH_R[tool.brush] * Math.max(1, d.r * s * 
 function landRadius() { return LAND_RADIUS[tool.brush]; }
 function placeAt(hit) {
   const d = selectedDef(), s = sizeOf(d);
+  if (d.tool === 'disaster') return disasterAt(hit, d);
+  if (d.tool === 'wand') return wandAt(hit);
   if (d.tool === 'land') return landAt(hit, d);
   if (d.tool === 'biome') return biomeAt(hit, d);
   if (d.race) return foundAt(hit, d);                 // humans, elves, dwarves and orcs found a town
@@ -2509,6 +2519,7 @@ function biomeAt(hit, d) {
   if (id === 'swamp' && Math.random() < 0.4) { const a = Math.random() * 6.283, q = Math.random() * r * 0.6; edit('shallow', hit.x + Math.cos(a) * q, hit.z + Math.sin(a) * q, Math.max(2.5, r * 0.3), 1, -0.9); }
   paintBiome(id, hit.x, hit.z, r);
   if (landEdits.length < 8000) landEdits.push(['biome', +hit.x.toFixed(1), +hit.z.toFixed(1), r, 0, BIOME_IDS.indexOf(id)]);
+  if (B.lava) for (const o of objs.slice()) { const dd = CAT[o.t]; if (dd.move !== 'fly' && dd.move !== 'swim' && !o.gone && lavaAt(o.x, o.z)) { if (dd.cat !== 'plants') { grp.dels.push(o); poof(o.x, o.y, o.z, 1.2, [1, 0.45, 0.1]); defeat(o, null); } } }   // lava burns what's on it
   if (B.clear) {                                   // paths clear the plants out of the way
     for (let i = objs.length - 1; i >= 0; i--) { const o = objs[i]; if (CAT[o.t].cat === 'plants' && Math.hypot(o.x - hit.x, o.z - hit.z) < r) { objs.splice(i, 1); grp.dels.push(o); } }
   } else if (B.plants.length) {                    // grow the land type's plants, not too close together
@@ -2554,7 +2565,7 @@ function undo() {
   while (u && !u.adds.length && !u.dels.length && !u.land) u = undoStack.pop();
   if (!u) { sfx('nope'); toast('Nothing to undo', 1200); return; }
   for (const o of u.adds) { const i = objs.indexOf(o); if (i >= 0) objs.splice(i, 1); }
-  for (const o of u.dels) objs.push(o);
+  for (const o of u.dels) { o.gone = false; o.held = null; if (o.maxHp) o.hp = o.maxHp; objs.push(o); }
   if (u.land) { HGRID.set(u.land.h); BGRID.set(u.land.b); landEdits.length = u.land.n; refreshAllTerrain(); }
   dirty = true; sfx('undo'); updateCount();
 }
@@ -2577,6 +2588,11 @@ function loadThings(data, fresh) {
     if (ONLY3.has(t) && countOf(t) >= 3) continue;
     const o = makeObj(t, x, z, r, clamp(s * (shrinkOld && !GROW[t] ? growOf(t) : 1), 0.2, 4 * Math.max(1, GROW[t] || 1))); settle(o); objs.push(o);
     if (typeof a[5] === 'string' && TOWN[a[5]]) o.town = a[5];
+    const ex = a[6];
+    if (o.town && ex && typeof ex === 'object') {
+      if ((ex.k === 'king' || ex.k === 'queen') && typeof ex.n === 'string') { o.ruler = ex.k; o.rname = ex.n.slice(0, 20); }
+      else if (ex.s === 1) o.soldier = true;
+    }
     if (CAT[t].race) o.race = CAT[t].race;
   }
   updateCount();
@@ -2608,7 +2624,7 @@ function scatterStart() {
 function landOK(d, x, z) {
   const h = groundAt(x, z);
   if (d.amph) return h > -3;
-  return h > 0.2 && slopeAt(x, z) > 0.55;
+  return h > 0.2 && slopeAt(x, z) > 0.55 && !lavaAt(x, z);
 }
 function pickTarget(o, d) {
   const roam = (d.cat === 'people' ? 22 : 30) * Math.max(1, o.s);
@@ -2619,9 +2635,9 @@ function pickTarget(o, d) {
   o.tx = o.hx; o.tz = o.hz;
 }
 function updateLife(dt, time) {
-  updateSettlers(dt); updateTowns(dt); buildGrid(); ghostScares(dt); corruptSpawns(dt); updateFx(dt); updateArrows(dt);
+  updateSettlers(dt); updateTowns(dt); buildGrid(); ghostScares(dt); corruptSpawns(dt); updateFx(dt); updateArrows(dt); updateDisasters(dt, time);
   for (const o of objs.slice()) {                        // (a copy: things can be beaten while we go)
-    if (o.gone) continue;
+    if (o.gone || o.held) continue;                      // (caught in a tornado or a wave)
     const d = CAT[o.t];
     if (!d.move) continue;
     if (d.update && d.update(o, dt, time)) continue;     // the dragon flying, the sea serpent's body
@@ -2999,9 +3015,12 @@ function hammer(t, b, dt) {
 // growing: new houses every few seconds, and more townsfolk as houses go up
 function growTown(t, dt) {
   const folk = townFolk(t), homes = townBuildings(t);
+  if (folk.length) t.hadFolk = true;
+  else if (t.hadFolk && homes.length) { fallTown(t, homes); return; }
   if (!homes.length && !folk.length) { removeTown(t); return; }
   if (buildWork(t, dt)) return;                     // (still building the town centre)
   const slow = settings.build, done = homes.filter(b => b.build === undefined).length;
+  townRule(t, folk, homes, done, dt);
   t.growT -= dt;
   if (t.growT <= 0 && homes.length < 26 && objs.length < 2900) {
     t.growT = (slow ? 12 + homes.length * 0.9 : 5 + homes.length * 0.6) + Math.random() * 3;
@@ -3054,9 +3073,12 @@ function updateTowns(dt) {
       const enemies = towns.filter(o => atWar(t.id, o.id)).sort((a, b) => Math.hypot(a.x - t.x, a.z - t.z) - Math.hypot(b.x - t.x, b.z - t.z));
       const e = enemies[0];
       if (e && Math.hypot(e.x - t.x, e.z - t.z) < 1200) {
-        const folk = townFolk(t).filter(o => !o.march), n = Math.max(2, Math.floor(folk.length / 2));
-        folk.slice(0, n).forEach(o => { o.march = e.id; o.marchT = 0; });
-        if (n && near3({ x: t.x, z: t.z })) say({ x: t.x, z: t.z, y: groundAt(t.x, t.z) + 8, t: RACES[t.race].center, s: 0 }, t.race === 'orc' ? 'Waaagh! Attack!' : 'March!', '#ffd23f');
+        const free = townFolk(t).filter(o => !o.march && !o.ruler), army = free.filter(o => o.soldier);
+        const go = army.length >= 2 ? army : free.slice(0, Math.max(2, Math.floor(free.length / 2))), n = go.length;   // kings and queens send their army; without one, half the town goes
+        go.forEach(o => { o.march = e.id; o.marchT = 0; });
+        const boss = townFolk(t).find(o => o.ruler);
+        if (n && boss && near3(boss)) say(boss, `${rulerTitle(boss)}: Attack ${e.name}!`, '#ffd23f');
+        else if (n && near3({ x: t.x, z: t.z })) say({ x: t.x, z: t.z, y: groundAt(t.x, t.z) + 8, t: RACES[t.race].center, s: 0 }, t.race === 'orc' ? 'Waaagh! Attack!' : 'March!', '#ffd23f');
       }
     }
   }
@@ -3124,6 +3146,329 @@ function loadTowns(list) {
     makeTown(s.race, s.x, s.z, { id: s.id, name: typeof s.name === 'string' ? s.name.slice(0, 30) : townName(s.race), mode: ['normal', 'peace', 'everyone'].includes(s.mode) ? s.mode : 'normal', built: Number.isFinite(s.built) ? s.built : 0, build: Number.isFinite(s.build) ? clamp(s.build, 0, 1) : 1 });
   }
 }
+// Disasters, and the battle wand (in People)
+for (const [k, name, icon] of [['tornado', 'Tornado', '🌪️'], ['tsunami', 'Tsunami', '🌊'], ['bomb', 'Bomb', '💣'], ['sprinkle', 'Sprinkle bomb', '🎆'], ['quake', 'Earthquake', '🏚️']])
+  def('d_' + k, 'disasters', name, icon, { tool: 'disaster', kind: k, r: 1, h: 1 });
+def('wand', 'people', 'Battle wand', '🪄', { tool: 'wand', r: 1, h: 1 });
+/* =====================================================================
+   Kings and queens, their armies, and towns that fall
+   ===================================================================== */
+const RULER_NAMES = {
+  human: [['Aldric', 'Edmund', 'Roland', 'Harold', 'Leopold', 'Cedric', 'Godfrey', 'Oswin', 'Percival', 'Rupert'], ['Mira', 'Eleanor', 'Rosalind', 'Isolde', 'Matilda', 'Beatrice', 'Gwendolyn', 'Clara', 'Adela', 'Philippa']],
+  elf: [['Thalion', 'Faelar', 'Aerendil', 'Lorindel', 'Sylvan', 'Caelum'], ['Aelira', 'Sylvara', 'Elowen', 'Nimriel', 'Ithilwen', 'Lirael']],
+  dwarf: [['Brokk', 'Durgan', 'Harnek', 'Bardur', 'Grimvald', 'Thrain'], ['Helga', 'Brunhild', 'Dagna', 'Kelda', 'Hilde', 'Runa']],
+  orc: [['Grukk', 'Morgash', 'Skarg', 'Uzbad', 'Krull', 'Gorbag'], ['Grisha', 'Shagra', 'Murzga', 'Ogla', 'Rakka', 'Zugga']],
+};
+const rulerTitle = o => (o.ruler === 'king' ? 'King ' : 'Queen ') + o.rname;
+function crownRulers(t, folk) {
+  const civ = folk.filter(o => !o.soldier && !o.march);
+  if (!civ.length) return;
+  const roll = Math.random(), kinds = roll < 0.35 ? ['king'] : roll < 0.7 ? ['queen'] : ['king', 'queen'];
+  const names = [];
+  kinds.forEach((k, i) => {
+    const o = civ[i]; if (!o) return;
+    o.ruler = k; o.rname = pick(RULER_NAMES[t.race][k === 'king' ? 0 : 1]); o.hx = t.x; o.hz = t.z;
+    o.maxHp = o.hp = (statOf(o)[0] * 2.5) * o.s;
+    names.push(rulerTitle(o));
+  });
+  toast(`👑 ${t.name} crowned ${names.join(' and ')}!`, 2800);
+  [659, 784, 988].forEach((f, i) => tone('triangle', f, f, 0.25, 0.07, i * 0.12));
+  dirty = true;
+}
+// what kings and queens do: get crowned once the town starts to grow, train soldiers, and keep them on guard around the town
+function townRule(t, folk, homes, done, dt) {
+  const rulers = folk.filter(o => o.ruler);
+  if (!rulers.length) {
+    t.crownT = (t.crownT === undefined ? 4 : t.crownT) - dt;
+    if (t.crownT <= 0 && done >= 2 && folk.length >= 4) { crownRulers(t, folk); t.crownT = 40; }
+    return;
+  }
+  t.armyT = (t.armyT === undefined ? 6 : t.armyT) - dt;
+  if (t.armyT > 0) return;
+  t.armyT = 8 + Math.random() * 4;
+  const sol = folk.filter(o => o.soldier), want = Math.floor(folk.length * 0.45);
+  if (sol.length < want) {
+    const c = folk.find(o => !o.soldier && !o.ruler && !o.march);
+    if (c) { c.soldier = true; c.maxHp = c.hp = statOf(c)[0] * 1.6 * c.s; if (near3(c)) say(c, `For ${rulers[0].ruler === 'king' ? 'the King' : 'the Queen'}!`, '#ffd23f'); }
+  }
+  const ring = 16 + Math.sqrt(homes.length) * 6.5;                     // soldiers keep watch in a ring around the town
+  folk.filter(o => o.soldier && !o.march).forEach((o, i, all) => { const a = i / all.length * 6.283 + 0.4; o.hx = t.x + Math.cos(a) * ring; o.hz = t.z + Math.sin(a) * ring; });
+}
+// the last person is gone: the town centre blows up, and everyone hears about it
+function fallTown(t, homes) {
+  const c = homes.find(b => b.t === RACES[t.race].center);
+  if (c) { const y = c.y + 4; boomFx(c.x, y, c.z, 2.2); defeat(c, null); }
+  for (const b of homes) if (!b.gone) b.town = null;            // the houses are left empty
+  toast(`💥 ${t.name} has fallen!`, 3200);
+  boomSound(c || t, 1.4); shakeAt(t.x, t.z, 1.2, 1.2);
+  removeTown(t);
+}
+// a crown on kings and queens, and a helmet, sword and shield on soldiers
+let gearMeshes = null;
+function drawGear(o, shadow) {
+  if (!gearMeshes) {
+    const cr = new Geo(4096), qn = new Geo(4096), sd = new Geo(4096);
+    const crown = (g, gem) => { cyl(g, [0, 0, 0], [0, 0.12, 0], 0.15, 0.16, COL.gold, 20, false); for (let i = 0; i < 6; i++) { const a = i / 6 * 6.283; coneS(g, Math.cos(a) * 0.14, 0.1, Math.sin(a) * 0.14, 0.04, 0.12, COL.gold, 8); } orb(g, 0, 0.07, 0.155, 0.035, 0.035, 0.02, gem, { lo: true }); };
+    crown(cr, [0.85, 0.1, 0.15]); crown(qn, [0.3, 0.5, 1.0]);
+    orb(sd, 0, 0, 0, 0.2, 0.17, 0.21, COL.iron, { cutBelow: -0.02 }); cyl(sd, [0, 0.16, -0.02], [0, 0.3, -0.12], 0.025, 0.02, [0.8, 0.15, 0.15], 8);
+    orb(sd, -0.36, -0.75, 0.12, 0.05, 0.24, 0.2, [0.55, 0.12, 0.12]); orb(sd, -0.39, -0.75, 0.12, 0.02, 0.08, 0.07, COL.gold, { lo: true });   // shield
+    cyl(sd, [0.33, -1.0, 0.18], [0.33, -0.45, 0.32], 0.025, 0.012, COL.iron, 8); cyl(sd, [0.26, -1.0, 0.17], [0.4, -1.0, 0.19], 0.02, 0.02, COL.darkwood, 6);   // sword
+    gearMeshes = { king: makeMesh(cr), queen: makeMesh(qn), soldier: makeMesh(sd) };
+  }
+  const d = CAT[o.t], s = o.s * popScale(o), top = d.h * 0.97;
+  const base = mChain(mT(o.x, o.y, o.z), mRy(o.r), mS(s));
+  if (o.ruler) drawMesh(gearMeshes[o.ruler], mChain(base, mT(0, top, 0)), 0);
+  else if (o.soldier) drawMesh(gearMeshes.soldier, mChain(base, mT(0, top - 0.14, 0), mS(d.h / 1.9)), 0);
+}
+function drawRulerLabels() {
+  let n = 0;
+  for (const o of objs) {
+    if (!o.ruler || o.gone || n > 12) continue;
+    const p = toScreen(o.x, o.y + CAT[o.t].h * o.s + 0.9, o.z); if (!p || p[2] > 140) continue;
+    const el = labEl('wlab'); n++;
+    placeLab(el, p, 'wlab', '👑 ' + rulerTitle(o)); el.style.color = '#ffd23f'; el.style.opacity = '1';
+  }
+}
+
+/* =====================================================================
+   The battle wand: tap one town, then another, and they go to battle
+   ===================================================================== */
+let wandPick = null;
+function townNear(x, z, max) {
+  let best = null, bd = max;
+  for (const t of towns) { const d = Math.hypot(t.x - x, t.z - z); if (d < bd) { bd = d; best = t; } }
+  return best;
+}
+function wandAt(hit) {
+  const t = townNear(hit.x, hit.z, 90);
+  if (!t) { sfx('nope'); toast('🪄 Tap the battle wand on a town', 1600); return false; }
+  sparkle(t.x, groundAt(t.x, t.z) + 3, t.z);
+  const a = wandPick && TOWN[wandPick];
+  if (!a) { wandPick = t.id; toast(`🪄 ${t.name} is ready for battle! Now tap the town it should fight.`, 2600); tone('sine', 880, 1320, 0.25, 0.07); return true; }
+  if (a === t) { wandPick = null; toast('🪄 Never mind', 1000); return true; }
+  wandPick = null;
+  for (const x of [a, t]) if (x.mode === 'peace') x.mode = 'normal';
+  wars.set(warKey(a.id, t.id), { t: 180 });
+  a.marchT = Math.min(a.marchT, 2); t.marchT = Math.min(t.marchT, 4);
+  toast(`⚔️ The battle wand sent ${a.name} to war with ${t.name}!` + (settings.fight ? '' : ' (Turn Fighting on in the menu to see the battle.)'), 3000);
+  tone('sawtooth', 220, 110, 0.6, 0.08, 0, 800); [523, 392, 523, 659].forEach((f, i) => tone('square', f, f, 0.12, 0.05, i * 0.13, 1800));
+  dirty = true;
+  return true;
+}
+function sparkle(x, y, z) { for (let i = 0; i < 3; i++) poof(x, y + i, z, 1.2, [0.85, 0.55, 1.0]); }
+
+/* =====================================================================
+   Natural disasters: tornado, tsunami, bomb, sprinkle bomb, earthquake
+   ===================================================================== */
+let disasters = [], shake = { t: 0, amp: 0 };
+function shakeAt(x, z, amp, t) {
+  const k = clamp(1 - Math.hypot(x - cam.tx, z - cam.tz) / (cam.dist * 1.5 + 150), 0, 1);
+  if (k <= 0) return;
+  shake.amp = Math.max(shake.amp, amp * k); shake.t = Math.max(shake.t, t);
+  rumble(Math.min(1, amp * k), Math.min(1, amp * k * 0.6), t * 1000);
+}
+function applyShake(dt) {
+  if (shake.t <= 0) return;
+  shake.t -= dt; const a = shake.amp * Math.min(1, shake.t * 2) * (0.6 + cam.dist * 0.004);
+  camEye[0] += (Math.random() - 0.5) * a; camEye[1] += (Math.random() - 0.5) * a * 0.7; camEye[2] += (Math.random() - 0.5) * a;
+  if (shake.t <= 0) shake.amp = 0;
+}
+function boomSound(o, big) {
+  if (!near3(o)) return;
+  noiseHit('lowpass', 420, 0.7, 0.9 * big, 0.35, 60); tone('sine', 95, 28, 0.9 * big, 0.3);
+}
+function boomFx(x, y, z, k) {
+  for (let i = 0; i < 3; i++) poof(x, y, z, 2.2 * k, [1, 0.55 + i * 0.12, 0.1]);
+  poof(x, y + 1.5 * k, z, 2.8 * k, [0.32, 0.3, 0.28]); poof(x, y + 3 * k, z, 2.4 * k, [0.45, 0.43, 0.4]);
+}
+// hurt or wreck something; the big monsters can take a lot
+function wreck(o, dmg, dz, col) {
+  if (o.gone || o.held === 'gone') return;
+  const d = CAT[o.t];
+  if (o.hp === undefined) { o.maxHp = o.hp = (d.move ? statOf(o)[0] : 25) * o.s; }
+  o.hp -= dmg; o.hitT = 0.25;
+  if (o.hp > 0) return;
+  if (dz && dz.grp) dz.grp.dels.push(o);
+  if (col) poof(o.x, o.y + 0.5, o.z, Math.max(0.8, d.h * o.s * 0.4), col);
+  defeat(o, null);
+}
+function landEdit(m, x, z, r, amt, target) {
+  applyBrush(m, x, z, r, amt, target);
+  if (landEdits.length < 8000) landEdits.push([m, +x.toFixed(1), +z.toFixed(1), +r.toFixed(1), +amt.toFixed(2), +target.toFixed(2)]);
+}
+function blast(x, z, r, dz) {
+  const g = Math.max(groundAt(x, z), 0);
+  boomFx(x, g + 0.5, z, r / 6); boomSound({ x, z }, r / 6); shakeAt(x, z, r * 0.25, 0.7);
+  if (groundAt(x, z) > -20) landEdit('lower', x, z, Math.min(60, r * 0.75), Math.min(5, r * 0.4), 0);   // a crater
+  for (const o of objs.slice()) {
+    const dist = Math.hypot(o.x - x, o.z - z);
+    if (dist < r) wreck(o, 20 + 70 * (1 - dist / r) * (r / 6), dz, [0.3, 0.28, 0.26]);
+    else if (dist < r * 2.5 && CAT[o.t].move && !o.gone) { o.fleeT = 3; o.fleeFrom = { x, z }; if (Math.random() < 0.2) say(o, pick(['AAAH!', 'BOOM!', 'Run!']), '#ffd23f'); }
+  }
+  dirty = true; updateCount();
+}
+function disasterAt(hit, d) {
+  const k = SIZES[tool.size], grp = group(true);
+  const dz = { kind: d.kind, x: hit.x, z: hit.z, t: 0, k, grp };
+  if (d.kind === 'bomb') { Object.assign(dz, { y: Math.max(hit.y, 0) + 70, vy: 0 }); disasters.push(dz); tone('sine', 1400, 300, 1.1, 0.05); }
+  else if (d.kind === 'sprinkle') {
+    for (let i = 0; i < 14; i++) { const a = Math.random() * 6.283, q = Math.sqrt(Math.random()) * 24 * Math.sqrt(k); disasters.push({ kind: 'bomb', small: true, x: hit.x + Math.cos(a) * q, z: hit.z + Math.sin(a) * q, y: Math.max(hit.y, 0) + 60 + Math.random() * 45, vy: 0, t: 0, k: k * 0.55, grp }); }
+    tone('sine', 1600, 500, 1.3, 0.05);
+  }
+  else if (d.kind === 'tornado') {
+    if (disasters.filter(x => x.kind === 'tornado').length >= 3) { sfx('nope'); toast('🌪️ Only 3 tornadoes at a time!', 1500); return false; }
+    Object.assign(dz, { head: Math.random() * 6.283, life: 20 + 5 * k, R: 6 * Math.sqrt(k), soundT: 0 }); disasters.push(dz);
+    toast('🌪️ Tornado!', 1400);
+  }
+  else if (d.kind === 'tsunami') {
+    if (disasters.filter(x => x.kind === 'wave').length >= 2) { sfx('nope'); toast('🌊 Only 2 tsunamis at a time!', 1500); return false; }
+    // find the nearest open sea, and send a wave in from there
+    let best = null;
+    for (let i = 0; i < 32; i++) {
+      const a = i / 32 * 6.283, dx = Math.cos(a), dz2 = Math.sin(a);
+      for (let s = 0; s < 900; s += 8) if (groundAt(hit.x + dx * s, hit.z + dz2 * s) < -3) { if (!best || s < best.s) best = { s, dx, dz: dz2 }; break; }
+    }
+    if (!best) { sfx('nope'); toast('🌊 There\'s no sea nearby for a tsunami', 1600); return false; }
+    const start = best.s + 50;
+    Object.assign(dz, { kind: 'wave', sx: hit.x + best.dx * start, sz: hit.z + best.dz * start, dx: -best.dx, dz: -best.dz, front: 0, len: start + 70 * k, W: 90 * k, H: 9 * Math.sqrt(k), soundT: 0 });
+    disasters.push(dz); toast('🌊 Tsunami!', 1400);
+  }
+  else if (d.kind === 'quake') {
+    const R = 32 * Math.sqrt(k);
+    Object.assign(dz, { R, life: 6, tick: 0, said: false }); disasters.push(dz);
+    const a = Math.random() * 3.14, L = R * 0.9;                       // a crack opens across the ground
+    for (let s = -L; s <= L; s += 3.5) { const w = Math.sin(s * 0.15) * 3; landEdit('lower', hit.x + Math.cos(a) * s - Math.sin(a) * w, hit.z + Math.sin(a) * s + Math.cos(a) * w, 2.6, 2.4, 0); }
+    for (let i = 0; i < 4; i++) { const b = Math.random() * 6.283, q = Math.random() * R * 0.8; landEdit(Math.random() < 0.5 ? 'raise' : 'lower', hit.x + Math.cos(b) * q, hit.z + Math.sin(b) * q, 7 + Math.random() * 5, 1.2 + Math.random(), 0); }
+    toast('🏚️ Earthquake!', 1400); noiseHit('lowpass', 160, 0.6, 2.5, 0.4, 50);
+  }
+  dirty = true; sfx('big');
+  return true;
+}
+function updateDisasters(dt, time) {
+  for (const dz of disasters) {
+    dz.t += dt;
+    if (dz.kind === 'bomb') {
+      dz.vy -= 30 * dt; dz.y += dz.vy * dt;
+      const g = Math.max(groundAt(dz.x, dz.z), 0);
+      if (dz.y <= g) { dz.done = true; if (groundAt(dz.x, dz.z) < -1) { poof(dz.x, 0, dz.z, 3 * dz.k, [0.75, 0.88, 1]); } blast(dz.x, dz.z, 10 * dz.k, dz); }
+    } else if (dz.kind === 'tornado') {
+      dz.head += (Math.random() - 0.5) * dt * 2.5;
+      const sp = 7 * Math.sqrt(dz.k), nx = dz.x + Math.cos(dz.head) * sp * dt, nz = dz.z + Math.sin(dz.head) * sp * dt;
+      if (Math.abs(nx) > TS - 60 || Math.abs(nz) > TS - 60) dz.head += Math.PI; else if (!dz.still) { dz.x = nx; dz.z = nz; }
+      const fade = Math.min(1, (dz.life - dz.t) / 2), R = dz.R * fade;
+      if (dz.t >= dz.life) dz.done = true;
+      if ((dz.soundT -= dt) <= 0) { dz.soundT = 0.3; if (near3(dz)) noiseHit('bandpass', 250 + Math.random() * 250, 0.7, 0.45, 0.07); }
+      if (Math.random() < dt * 8) poof(dz.x + (Math.random() - 0.5) * R * 2, Math.max(groundAt(dz.x, dz.z), 0), dz.z + (Math.random() - 0.5) * R * 2, 1.2 * dz.k, [0.55, 0.5, 0.44]);
+      for (const o of objs.slice()) {
+        if (o.gone || o.held) continue;
+        const dist = Math.hypot(o.x - dz.x, o.z - dz.z), d = CAT[o.t];
+        if (dist > R * 1.4) continue;
+        const huge = d.r * o.s > 5 || o.t === 'dragon' || o.t === 'hydra' || o.t === 'seaserpent';
+        if (huge || (!d.move && d.cat === 'build')) { wreck(o, (huge ? 6 : 40) * dz.k * dt, dz, [0.55, 0.45, 0.35]); continue; }
+        if (dist < R && d.move !== 'swim') { o.held = { tor: dz, a: Math.atan2(o.z - dz.z, o.x - dz.x), rr: Math.max(1, dist), h: 0 }; if (d.move && Math.random() < 0.5) say(o, pick(['WHOAAA!', 'Help!', 'Wheee!']), '#ffffff'); }
+      }
+    } else if (dz.kind === 'wave') {
+      const sp = 30;
+      dz.front += sp * dt;
+      if (dz.front >= dz.len) dz.done = true;
+      if ((dz.soundT -= dt) <= 0) { dz.soundT = 0.3; if (near3({ x: dz.sx + dz.dx * dz.front, z: dz.sz + dz.dz * dz.front })) noiseHit('lowpass', 600, 0.5, 0.5, 0.12); }
+      const px = -dz.dz, pz = dz.dx;
+      for (const o of objs.slice()) {
+        if (o.gone || (o.held && o.held.wave !== dz)) continue;
+        const rx = o.x - dz.sx, rz = o.z - dz.sz, u = rx * dz.dx + rz * dz.dz, v = rx * px + rz * pz, d = CAT[o.t];
+        if (Math.abs(v) > dz.W / 2 || d.move === 'swim' || d.move === 'fly' || groundAt(o.x, o.z) < -2) { if (o.held && o.held.wave === dz) release(o); continue; }
+        if (o.held && o.held.wave === dz) {
+          if (u < dz.front - 10) { release(o); continue; }
+          o.x += dz.dx * sp * dt; o.z += dz.dz * sp * dt; o.y = Math.max(groundAt(o.x, o.z), 0) + 1; o.r += dt * 4;
+          continue;
+        }
+        if (u > dz.front - 6 && u < dz.front + 2) {
+          if (!d.move || d.cat === 'build') wreck(o, 45, dz, [0.75, 0.88, 1]);
+          else if (o.t === 'dragon' || o.t === 'hydra') wreck(o, 15, dz, null);
+          else { o.held = { wave: dz }; if (Math.random() < 0.4) say(o, pick(['Glub!', 'AAAH!', 'Splash!']), '#bfe8ff'); }
+        }
+      }
+    } else if (dz.kind === 'quake') {
+      if (dz.t >= dz.life) dz.done = true;
+      shakeAt(dz.x, dz.z, 0.9 * Math.sqrt(dz.k), 0.3);
+      if ((dz.tick -= dt) > 0) continue;
+      dz.tick = 0.35;
+      for (const o of objs.slice()) {
+        if (o.gone || Math.hypot(o.x - dz.x, o.z - dz.z) > dz.R) continue;
+        const d = CAT[o.t];
+        if (!d.move) { if (Math.random() < (d.cat === 'build' ? 0.1 : 0.04)) wreck(o, 999, dz, [0.6, 0.55, 0.48]); }
+        else if (settings.fight) { o.fleeT = 2; o.fleeFrom = { x: dz.x, z: dz.z }; if (!dz.said && Math.random() < 0.3) { say(o, 'Earthquake!', '#ffd23f'); dz.said = true; } }
+      }
+      poof(dz.x + (Math.random() - 0.5) * dz.R, Math.max(groundAt(dz.x, dz.z), 0), dz.z + (Math.random() - 0.5) * dz.R, 2, [0.6, 0.55, 0.48]);
+    }
+  }
+  // things caught by a tornado spin up and get thrown out
+  for (const o of objs) {
+    const h = o.held; if (!h || !h.tor) continue;
+    const dz = h.tor, g = () => Math.max(groundAt(o.x, o.z), 0);
+    h.a += dt * 3.2; h.rr += (2 + h.h * 0.3 - h.rr) * Math.min(1, dt * 2); h.h += dt * 7;
+    o.x = dz.x + Math.cos(h.a) * h.rr; o.z = dz.z + Math.sin(h.a) * h.rr; o.y = g() + h.h; o.r += dt * 6;
+    if (h.h > 24 * Math.sqrt(dz.k) || dz.done) {
+      const d = CAT[o.t];
+      if (!d.move) { wreck(o, 999, dz, [0.55, 0.45, 0.35]); continue; }
+      const a = Math.random() * 6.283, q = 25 + Math.random() * 25;
+      o.x += Math.cos(a) * q; o.z += Math.sin(a) * q; release(o);
+    }
+  }
+  disasters = disasters.filter(dz => !dz.done);
+  objs = objs.filter(o => !o.gone);
+}
+function release(o) {
+  o.held = null; o.hx = o.x; o.hz = o.z; o.tx = undefined;
+  const d = CAT[o.t];
+  if (d.move === 'walk' && !d.amph && groundAt(o.x, o.z) < 0) { wreck(o, 999, null, [0.75, 0.88, 1]); return; }   // washed or blown out to sea
+  settle(o); o.pitch = 0;
+  poof(o.x, o.y, o.z, 0.8, [0.7, 0.65, 0.55]);
+}
+let dzMeshes = null;
+function drawDisasters(time) {
+  if (!disasters.length) return;
+  if (!dzMeshes) {
+    const b = new Geo(4096), f = new Geo(512), tw = new Geo(4096), wv = new Geo(4096), fm = new Geo(4096);
+    orb(b, 0, 0, 0, 0.6, 0.6, 0.6, [0.12, 0.12, 0.13]); cyl(b, [0, 0.55, 0], [0, 0.85, 0], 0.07, 0.06, [0.75, 0.7, 0.6], 8);
+    orb(f, 0, 0, 0, 0.18, 0.18, 0.18, [1, 0.8, 0.3], { lo: true });
+    orb(tw, 0, 0, 0, 1, 1, 1, [0.78, 0.78, 0.8], { bump: 0.15 });
+    orb(wv, 0, 0, 0, 1, 1, 1, [0.18, 0.5, 0.7], { grad: true });
+    orb(fm, 0, 0, 0, 1, 1, 1, [0.95, 0.98, 1], { bump: 0.2 });
+    dzMeshes = { bomb: makeMesh(b), fuse: makeMesh(f), twist: makeMesh(tw), wave: makeMesh(wv), foam: makeMesh(fm) };
+  }
+  const M = dzMeshes;
+  for (const dz of disasters) {
+    if (dz.kind === 'bomb') {
+      const s = dz.k * (dz.small ? 1.4 : 1.6);
+      gl.uniform1f(progWorld.u.uAlpha, 1);
+      drawMesh(M.bomb, mChain(mT(dz.x, dz.y, dz.z), mRz(Math.sin(time * 6) * 0.2), mS(s)), 0);
+      gl.uniform1f(progWorld.u.uEmit, 1); drawMesh(M.fuse, mChain(mT(dz.x, dz.y + 0.9 * s, dz.z), mS(s * (0.8 + Math.random() * 0.6))), 0); gl.uniform1f(progWorld.u.uEmit, 0);
+    } else if (dz.kind === 'tornado') {
+      const fade = Math.min(1, (dz.life - dz.t) / 2, dz.t * 1.5), g = Math.max(groundAt(dz.x, dz.z), 0), R = dz.R;
+      gl.uniform1f(progWorld.u.uAlpha, 0.55 * fade);
+      for (let i = 0; i < 18; i++) {
+        const y = g + i * 2.0 * Math.sqrt(dz.k), r = (0.35 + i * 0.09) * R * fade, w = Math.sin(time * 2.2 + i * 0.45) * i * 0.18 * Math.sqrt(dz.k);
+        drawMesh(M.twist, mChain(mT(dz.x + w, y, dz.z + Math.cos(time * 1.7 + i * 0.4) * i * 0.12), mRy(time * 7 + i), mS3(r, 1.3 * Math.sqrt(dz.k), r)), 0);
+      }
+      gl.uniform1f(progWorld.u.uAlpha, 1);
+    } else if (dz.kind === 'wave') {
+      const px = -dz.dz, pz = dz.dx, yaw = Math.atan2(dz.dx, dz.dz);
+      for (let v = -dz.W / 2; v <= dz.W / 2; v += 5) {
+        const x = dz.sx + dz.dx * dz.front + px * v, z = dz.sz + dz.dz * dz.front + pz * v;
+        const edge = 1 - Math.pow(Math.abs(v) / (dz.W / 2), 3), over = Math.max(0, groundAt(x, z));
+        const H = dz.H * edge * Math.min(1, dz.front / 30) * Math.max(0.3, 1 - over / 25) * Math.min(1, (dz.len - dz.front) / 25 + 0.2);
+        if (H < 0.3) continue;
+        const y0 = Math.max(groundAt(x, z), 0) + Math.sin(time * 3 + v * 0.3) * 0.3;
+        gl.uniform1f(progWorld.u.uAlpha, 0.82);
+        drawMesh(M.wave, mChain(mT(x, y0 + H * 0.35, z), mRy(yaw), mS3(3.4, H * 0.75, 5.5)), 0);
+        gl.uniform1f(progWorld.u.uAlpha, 0.95);
+        drawMesh(M.foam, mChain(mT(x, y0 + H * 1.0, z + 0), mRy(yaw), mT(0, 0, 1.5), mS3(3, H * 0.18 + 0.3, 2.2)), 0);
+      }
+      gl.uniform1f(progWorld.u.uAlpha, 1);
+    }
+  }
+}
 let fx = [], texts = [], screamT = 0;
 function poof(x, y, z, size, col) {
   for (let i = 0; i < 10; i++) { const a = Math.random() * 6.283, sp = 1 + Math.random() * 2; fx.push({ x, y: y + size * 0.6, z, vx: Math.cos(a) * sp, vy: 1 + Math.random() * 2, vz: Math.sin(a) * sp, t: 0, life: 0.9 + Math.random() * 0.4, r: size * (0.25 + Math.random() * 0.25), col }); }
@@ -3131,10 +3476,11 @@ function poof(x, y, z, size, col) {
 function say(o, text, color) { texts.push({ x: o.x, y: o.y + CAT[o.t].h * o.s + 0.6, z: o.z, t: 0, text, color }); }
 function defeat(v, by) {
   if (v.gone) return;
+  if (v.ruler && TOWN[v.town] && !(by && by.t === 'zombie')) toast(`👑 ${rulerTitle(v)} of ${TOWN[v.town].name} was defeated!`, 2400);
   const dv = CAT[v.t];
   if (by && by.t === 'zombie' && dv.move !== 'swim' && v.t !== 'zombie') {      // a zombie's bite makes another zombie
     poof(v.x, v.y, v.z, dv.h * v.s * 0.6, [0.5, 0.75, 0.4]);
-    v.t = 'zombie'; v.fac = 'undead'; v.race = null; v.town = null; v.foe = null; v.fleeT = 0; v.ww = null; v.segs = null;
+    v.t = 'zombie'; v.fac = 'undead'; v.race = null; v.town = null; v.ruler = null; v.soldier = false; v.foe = null; v.fleeT = 0; v.ww = null; v.segs = null;
     v.maxHp = v.hp = STATS.zombie[0] * v.s; v.hx = v.x; v.hz = v.z; v.tx = undefined; settle(v);
     if (near3(v)) { tone('sawtooth', 160, 90, 0.5, 0.08, 0, 600); }
     return;
@@ -3171,7 +3517,7 @@ function updateArrows(dt) {
 function landHit(o, f, arrow) {
   if (f.gone || o.gone) return;
   if (f.hp === undefined) { f.maxHp = statOf(f)[0] * f.s; f.hp = f.maxHp; }
-  f.hp -= statOf(o)[1] * Math.sqrt(o.s);
+  f.hp -= statOf(o)[1] * Math.sqrt(o.s) * (o.soldier ? 1.5 : 1);
   f.hitT = 0.25; if (!arrow) o.lunge = 1;
   if (o.t === 'zombie' && CAT[f.t].move !== 'swim') { defeat(f, o); return; }   // one zombie bite makes another zombie
   if (near3(o)) { noiseHit('lowpass', 900, 0.8, 0.12, 0.09); if (o.t === 'dragon' || o.t === 'troll' || o.t === 'hydra') tone('sawtooth', 110, 60, 0.3, 0.08, 0, 500); }
@@ -3355,6 +3701,7 @@ function drawThings(time, shadow) {
     if (!shadow && Math.hypot(o.x - camEye[0], o.z - camEye[2]) > 2600) continue;
     if (d.ghost) continue;                       // ghosts are drawn see-through later, and have no shadow
     drawOne(o, time, shadow, o === hot ? 0.45 + Math.sin(time * 12) * 0.25 : 0);
+    if (o.ruler || o.soldier) drawGear(o, shadow);
   }
 }
 function drawGhosts(time) {
@@ -3374,8 +3721,8 @@ function drawCursor(time) {
   let ok, ringR, col;
   if (tool.erase) { ok = tool.brush > 0 || !!eraseTarget(cursor); ringR = tool.brush ? eraseRadius() : 1.6 + cam.dist * 0.012; col = ok ? [1, 0.35, 0.3] : [0.7, 0.5, 0.5]; }
   else if (d.tool) {
-    ok = true; ringR = landRadius();
-    col = d.tool === 'biome' ? mixc(BIOME_GROUND[d.biome][0], [1, 1, 1], 0.3) : d.mode === 'shallow' || d.mode === 'deep' ? [0.35, 0.7, 1] : [1, 0.82, 0.45];
+    ok = true; ringR = d.tool === 'disaster' ? { tornado: 6, tsunami: 12, bomb: 10, sprinkle: 24, quake: 32 }[d.kind] * Math.sqrt(SIZES[tool.size]) : d.tool === 'wand' ? 10 : landRadius();
+    col = d.tool === 'wand' ? [0.8, 0.5, 1] : d.tool === 'disaster' ? [1, 0.4, 0.2] : d.tool === 'biome' ? mixc(BIOME_GROUND[d.biome][0], [1, 1, 1], 0.3) : d.mode === 'shallow' || d.mode === 'deep' ? [0.35, 0.7, 1] : [1, 0.82, 0.45];
   }
   else { ok = canPlace(d, cursor, s); ringR = Math.max(0.8, d.r * s) + 0.3 + brushRadius(d, s); col = ok ? [0.45, 1, 0.5] : [1, 0.3, 0.25]; }
   const y = Math.max(cursor.y, 0) + 0.15;
@@ -3457,6 +3804,7 @@ function updateCursor() {
 // holding: the land tools repeat on a timer; things are placed again once you've moved a bit
 function holdBuild(dt) {
   if (!cursor) return;
+  if (isTool() && (selectedDef().tool === 'disaster' || selectedDef().tool === 'wand')) return;
   if (isTool()) { repeatT += dt; if (repeatT >= (selectedDef().tool === 'biome' ? 0.16 : 0.1)) { repeatT = 0; act(cursor); } return; }
   holdT += dt;
   const d = selectedDef(), gap = tool.erase ? Math.max(1.5, eraseRadius()) : Math.max(2, d.r * sizeOf(d) * 2.2 + brushRadius(d, sizeOf(d)));
@@ -3507,7 +3855,7 @@ let objs = [];             // the things on it
 let dirty = false, saveT = 0;
 function saveIsland() {
   if (!cur) return;
-  writeJSON(ISLE_PREFIX + cur.id, { type: cur.type, seed: cur.seed, sz: 2, land: landEdits, towns: saveTowns(), objs: objs.map(o => o.town ? [o.t, +o.hx.toFixed(2), +o.hz.toFixed(2), +o.r.toFixed(3), o.s, o.town] : [o.t, +o.hx.toFixed(2), +o.hz.toFixed(2), +o.r.toFixed(3), o.s]),
+  writeJSON(ISLE_PREFIX + cur.id, { type: cur.type, seed: cur.seed, sz: 2, land: landEdits, towns: saveTowns(), objs: objs.map(o => o.town ? [o.t, +o.hx.toFixed(2), +o.hz.toFixed(2), +o.r.toFixed(3), o.s, o.town, ...(o.ruler ? [{ k: o.ruler, n: o.rname }] : o.soldier ? [{ s: 1 }] : [])] : [o.t, +o.hx.toFixed(2), +o.hz.toFixed(2), +o.r.toFixed(3), o.s]),
     cam: { tx: +cam.tx.toFixed(1), tz: +cam.tz.toFixed(1), yaw: +cam.yaw.toFixed(3), pitch: +cam.pitch.toFixed(3), dist: +cam.dist.toFixed(1) } });
   const m = islands.find(s => s.id === cur.id);
   if (m) { m.count = objs.length; m.last = Date.now(); writeList(); }
@@ -3615,6 +3963,7 @@ function render(time) {
   // the preview of what you're about to place (see-through), drawn over the water
   gl.useProgram(progWorld.p);
   drawFx();
+  drawDisasters(time);
   drawGhosts(time);
   drawCursor(time);
   gl.disable(gl.BLEND);
@@ -3650,7 +3999,7 @@ function updateLabels() {
       const el = labEl('wlab'); placeLab(el, p, 'wlab', t.text);
       el.style.color = t.color || '#fff'; el.style.opacity = Math.min(1, (1.6 - t.t) * 2).toFixed(2);
     }
-    if (typeof drawTownLabels === 'function') drawTownLabels();
+    if (typeof drawTownLabels === 'function') { drawTownLabels(); drawRulerLabels(); }
     let bars = 0;
     for (const o of objs) {
       if (bars >= 40 || o.hp === undefined || o.hp >= o.maxHp || o.gone) continue;
@@ -3968,6 +4317,7 @@ function updatePlay(dt) {
   if (pad.connected && (Math.abs(pad.lx) + Math.abs(pad.ly) + Math.abs(pad.rx) + Math.abs(pad.ry) + pad.lt + pad.rt > 0.05)) usingPad = true;
   if (pressed(9)) { openPause(); return; }
   updateCamera(dt);
+  applyShake(dt);
   updateCursor();
   padActions(dt);
   if (mouse.ldown && !usingPad && state === "play") holdBuild(dt);
