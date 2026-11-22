@@ -171,6 +171,8 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,38px);lin
       <div><b class="h">Oops!</b>The <b>eraser</b> (X on the controller or keyboard) takes things away. <b>Undo</b> (B, or Z on the keyboard) takes back the last thing you did.</div>
       <div><b class="h">It's alive</b>People and creatures walk around by themselves. Birds and dragons fly, and dolphins swim in the sea. Monsters, zombies and the dragon attack; zombies turn what they bite into zombies; anything near a ghost runs away screaming. Turn <b>Fighting</b> off in the menu for calm building.</div>
       <div><b class="h">Towns</b>Put down a <b>human, elf, dwarf</b> or <b>orc</b> (in People) and they found a town that keeps growing. Orcs fight everyone else; humans sometimes start wars; elves are archers. Open <b>🏰 Towns</b> (T, or View on the controller) to make a town keep the peace or go to war with everyone.</div>
+      <div><b class="h">Maps</b>Ten islands, plus four big maps: <b>Island Set</b> (seven islands, each a different land), <b>Pangea</b> (one giant supercontinent), <b>Sky Islands</b> (floating in the sky) and <b>Endless Ocean</b>. Or pick <b>🎲 Random</b>. New islands are much bigger than the first ones.</div>
+      <div><b class="h">Big monsters</b>Dragons, hydras and sea serpents are huge, and each island can have up to <b>3</b> of each.</div>
       <div><b class="h">Saving</b>Every island saves by itself. Find it again under <b>My islands</b>.</div>
     </div>
   </div>
@@ -284,7 +286,7 @@ function smooth(a, b, x) {
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 
 /* =====================================================================
-   The ten islands
+   The islands (ten, plus the big maps: Island Set, Pangea, Sky Islands, Endless Ocean)
    shape: round, chain (several small islands), volcano, cliffs (terraces with
    cliff edges), swamp (ponds), dunes, candy (gumdrop hills).
    ===================================================================== */
@@ -339,36 +341,131 @@ const ISLANDS = [
     sand: [0.86, 0.76, 0.56], grass: [0.62, 0.62, 0.3], grass2: [0.5, 0.48, 0.22], rock: [0.5, 0.46, 0.42], snowH: 999,
     sky: [[0.95, 0.88, 0.78], [0.38, 0.55, 0.85]], water: [0.04, 0.26, 0.28],
     nature: [['maple', 180], ['pine', 50], ['pumpkin', 30], ['rock', 25]], critters: [['deer', 5], ['fox', 4], ['squirrel', 5]] },
+  // the big maps (only made as new, bigger islands)
+  { id: 'set', name: 'Island Set', icon: '🗺️', blurb: 'Seven islands, each a different land: forest, desert, snowy taiga, jungle, savanna, swamp and mountains.', art: 'linear-gradient(90deg,#3f8a3a,#f0c77d 30%,#e8eef5 50%,#1f6a2a 70%,#8a8680)',
+    shape: 'set', wide: true, R: 150, lift: 12, hills: 10, peak: 26, beach: 0.12,
+    sand: [0.93, 0.85, 0.62], grass: [0.36, 0.66, 0.28], grass2: [0.22, 0.52, 0.2], rock: [0.52, 0.5, 0.46], snowH: 999,
+    sky: [[0.8, 0.9, 0.96], [0.26, 0.55, 0.9]], water: [0.03, 0.32, 0.4],
+    nature: [], critters: [['deer', 4], ['camel', 3], ['penguin', 4], ['parrot', 4], ['frog', 4], ['goat', 4], ['dolphin', 4], ['seagull', 4]] },
+  { id: 'pangea', name: 'Pangea', icon: '🌍', blurb: 'One giant supercontinent, like the Earth long ago: snowy north and south, deserts in the middle, jungles by the warm sea, and a long mountain range.', art: 'radial-gradient(circle at 45% 50%,#c9a35a 18%,#4f9a3a 32%,#2f7a34 44%,#1f6aa8 46%,#164c86)',
+    shape: 'pangea', wide: true, R: 940, lift: 14, hills: 14, peak: 30, beach: 0.03,
+    sand: [0.9, 0.82, 0.6], grass: [0.34, 0.6, 0.26], grass2: [0.22, 0.46, 0.19], rock: [0.5, 0.47, 0.43], snowH: 999,
+    sky: [[0.8, 0.88, 0.95], [0.28, 0.52, 0.88]], water: [0.03, 0.26, 0.38],
+    nature: [], critters: [['deer', 6], ['dino', 4], ['camel', 3], ['polarbear', 2], ['parrot', 4], ['whale', 2], ['dolphin', 4]] },
+  { id: 'sky', name: 'Sky Islands', icon: '☁️', blurb: 'Islands floating high in the sky, with rocky bottoms and the ocean far below.', art: 'linear-gradient(#bfe3ff,#e8f4ff 55%,#4aa0d8 85%,#2a78b0)',
+    shape: 'sky', wide: true, R: 150, lift: 8, hills: 8, peak: 22, beach: 0,
+    sand: [0.9, 0.84, 0.66], grass: [0.4, 0.72, 0.32], grass2: [0.26, 0.58, 0.26], rock: [0.5, 0.46, 0.42], snowH: 999,
+    sky: [[0.9, 0.95, 1.0], [0.4, 0.64, 0.96]], water: [0.06, 0.34, 0.52],
+    nature: [], critters: [['bird', 6], ['parrot', 4], ['phoenix', 1], ['unicorn', 3], ['bunny', 4], ['seagull', 4]] },
+  { id: 'ocean', name: 'Endless Ocean', icon: '🌊', blurb: 'Deep blue sea as far as you can see, with coral shallows and a few tiny rocky islets.', art: 'linear-gradient(#8fd0f5,#2a8fd0 45%,#0f5c96 75%,#0a3f6e)',
+    shape: 'ocean', wide: true, R: 30, lift: 4, hills: 4, peak: 6, beach: 0.25,
+    sand: [0.93, 0.86, 0.66], grass: [0.4, 0.66, 0.3], grass2: [0.28, 0.54, 0.24], rock: [0.5, 0.48, 0.45], snowH: 999,
+    sky: [[0.8, 0.9, 0.97], [0.24, 0.52, 0.9]], water: [0.02, 0.3, 0.46],
+    nature: [], critters: [['dolphin', 8], ['whale', 3], ['shark', 3], ['seagull', 6]] },
 ];
+// each island in an Island Set (and each sky island) gets a land type, which picks its shape and ground colour
+const SET_BIOMES = {
+  forest: { shape: 'round', lift: 14, hills: 12, peak: 28, beach: 0.08 },
+  desert: { shape: 'dunes', lift: 8, hills: 6, peak: 24, beach: 0.1 },
+  taiga: { shape: 'round', lift: 14, hills: 12, peak: 40, beach: 0.06 },
+  jungle: { shape: 'round', lift: 12, hills: 14, peak: 30, beach: 0.12 },
+  savanna: { shape: 'round', lift: 8, hills: 5, peak: 10, beach: 0.1 },
+  swamp: { shape: 'swamp', lift: 3, hills: 1.6, peak: 6, beach: 0.05 },
+  mountain: { shape: 'round', lift: 20, hills: 16, peak: 85, beach: 0.05 },
+};
+const SKY_VOID = -36;           // under and between the sky islands: open air down to the sea floor
 const ISLE_BY_ID = Object.fromEntries(ISLANDS.map(i => [i.id, i]));
 
-let ISL = ISLANDS[0], chainCenters = [];
-function setIsland(def, seed) {
-  ISL = def; setWorldSeed(seed);
+let ISL = ISLANDS[0], chainCenters = [], TS = 620, TN = 560, TSTEP = 2 * TS / TN, HGRID = null, NYGRID = null;
+// v 2 islands (everything made from now on) are much bigger than the first ones; old saved islands keep their old size
+function setIsland(def, seed, v) {
+  const big = v >= 2 || def.wide, k = big && !def.wide ? 1.75 : 1;
+  ISL = { ...def, R: def.R * k }; setWorldSeed(seed);
+  TS = def.wide ? 1250 : big ? 1100 : def.shape === 'chain' ? 720 : 620;
+  TN = big ? 900 : 560; TSTEP = 2 * TS / TN;
   chainCenters = [];
-  if (def.shape === 'chain') {
-    const r = mulberry32(seed + 5);
-    chainCenters.push([0, 0, 170]);
-    for (let i = 0; i < 6; i++) {
-      for (let t = 0; t < 30; t++) {
-        const a = r() * 6.283, d = 250 + r() * 230, rad = 85 + r() * 70;
-        const x = Math.cos(a) * d, z = Math.sin(a) * d;
-        if (chainCenters.every(c => Math.hypot(c[0] - x, c[1] - z) > c[2] + rad + 40)) { chainCenters.push([x, z, rad]); break; }
-      }
+  const r = mulberry32(seed + 5), add = (n, dMin, dMax, rMin, rMax, gap, extra) => {
+    for (let i = 0; i < n; i++) for (let t = 0; t < 60; t++) {
+      const a = r() * 6.283, d = dMin + r() * (dMax - dMin), rad = rMin + r() * (rMax - rMin);
+      const x = Math.cos(a) * d, z = Math.sin(a) * d;
+      if (Math.max(Math.abs(x), Math.abs(z)) + rad * 1.35 > TS - 40) continue;
+      if (chainCenters.every(c => Math.hypot(c[0] - x, c[1] - z) > c[2] + rad + gap)) { chainCenters.push(extra([x, z, rad])); break; }
     }
+  };
+  if (def.shape === 'chain') {
+    chainCenters.push([0, 0, 170 * k]);
+    add(6, 250 * k, 480 * k, 85 * k, 155 * k, 40 * k, c => c);
+  } else if (def.shape === 'set' || def.shape === 'sky') {
+    const order = Object.keys(SET_BIOMES).sort(() => r() - 0.5);
+    if (def.shape === 'sky') order.splice(order.indexOf('swamp'), 1);   // (no ponds up in the sky)
+    let n = 0;
+    const tag = c => {
+      const b = order[n++ % order.length]; c.biome = b; c.I = { ...ISL, ...SET_BIOMES[b], R: c[2] };
+      if (def.shape === 'sky') { c.base = 60 + r() * 90; c.I.shape = 'round'; c.I.peak *= 0.5; }
+      return c;
+    };
+    if (def.shape === 'set') { chainCenters.push(tag([0, 0, 230])); add(6, 520, 930, 160, 230, 110, tag); }
+    else { chainCenters.push(tag([0, 0, 170])); add(13, 260, 1050, 70, 170, 60, tag); }
+  } else if (def.shape === 'ocean') {
+    add(5, 200, 1050, 22, 42, 300, c => c);
   }
 }
 // 0 in the middle of the land, 1 at the coast, more out at sea
+function landWobble(x, z) { return fbm(x * 0.0032 + 11.3, z * 0.0032 - 7.1, 3) * 0.3 + perlin(x * 0.011 + 3.1, z * 0.011 + 8.7) * 0.05; }
+function nearestCenter(x, z) {
+  let d = 99, best = null;
+  for (const c of chainCenters) { const e = Math.hypot(x - c[0], z - c[1]) / c[2]; if (e < d) { d = e; best = c; } }
+  return [best, d];
+}
+const PANGEA_RANGE = [[-0.55, 0.42], [0.05, -0.05], [0.3, -0.5]];      // the big mountain range, as a bent line (times R)
+function pangeaRange(x, z) {
+  const R = ISL.R; let best = 9;
+  for (let i = 0; i < PANGEA_RANGE.length - 1; i++) {
+    const ax = PANGEA_RANGE[i][0] * R, az = PANGEA_RANGE[i][1] * R, bx = PANGEA_RANGE[i + 1][0] * R, bz = PANGEA_RANGE[i + 1][1] * R;
+    const vx = bx - ax, vz = bz - az, t = clamp(((x - ax) * vx + (z - az) * vz) / (vx * vx + vz * vz), 0, 1);
+    best = Math.min(best, Math.hypot(x - ax - vx * t, z - az - vz * t) / R);
+  }
+  return best;
+}
 function landDist(x, z) {
-  const w = fbm(x * 0.0032 + 11.3, z * 0.0032 - 7.1, 3) * 0.3 + perlin(x * 0.011 + 3.1, z * 0.011 + 8.7) * 0.05;
-  if (ISL.shape === 'chain') { let d = 9; for (const c of chainCenters) d = Math.min(d, Math.hypot(x - c[0], z - c[1]) / c[2]); return d + w * 0.8; }
+  const w = landWobble(x, z), S = ISL.shape;
+  if (S === 'chain' || S === 'set' || S === 'ocean') { const [c, d] = nearestCenter(x, z); return c ? d + w * 0.8 : 9; }
+  if (S === 'sky') { const [c, d] = nearestCenter(x, z); return c ? d + w * 0.45 : 9; }
+  if (S === 'pangea') {
+    const R = ISL.R;
+    const d = Math.hypot(x, z * 1.12) / R + w * 0.55;
+    const e = Math.hypot((x - 0.78 * R) / (1.15 * R), (z - 0.06 * R) / (0.42 * R));   // the warm sea that cuts into it from the east
+    return Math.max(d, 1.15 - e * 0.3 + w * 0.25);
+  }
   return Math.hypot(x, z) / ISL.R + w;
 }
 // the island's height (metres; the sea is at 0)
 function islandHeight(x, z) {
-  const I = ISL, d = landDist(x, z);
-  let h = -0.8 + (1 - d) * 7;                                       // the beach slope, carried on down to the sea floor
-  if (d > 1) return Math.max(-36, -0.8 - (d - 1) * (I.shape === 'chain' ? 70 : I.R * 0.14));
+  const S = ISL.shape;
+  if (S === 'sky') {
+    const [c] = nearestCenter(x, z), d = landDist(x, z);
+    if (!c || d >= 1) return SKY_VOID;
+    const I = c.I, core = smooth(0.8, 0.05, d), rim = smooth(1, 0.82, d);
+    const ridge = 1 - Math.abs(perlin(x * 0.0055 + 1.7, z * 0.0055 - 4.2));
+    const t = I.lift * smooth(0, 1, (1 - d) / 0.6) + (fbm(x * 0.007, z * 0.007, 4) * I.hills + I.hills * 0.4) * rim + I.peak * ridge * ridge * core * core;
+    return c.base + Math.max(0, t) * rim;
+  }
+  let I = ISL, drop = I.R * 0.14;
+  const d = landDist(x, z);
+  if (S === 'set' || S === 'chain' || S === 'ocean') {
+    drop = 70;
+    if (S === 'set') { const [c] = nearestCenter(x, z); if (c) I = c.I; }
+    if (S === 'ocean' && d > 1) {                                // open sea: a rolling sea floor with coral shallows
+      const reef = smooth(0.42, 0.62, perlin(x * 0.0035 + 5.1, z * 0.0035 - 2.3)) * (24 + perlin(x * 0.03, z * 0.03) * 4);
+      const floor = -30 + fbm(x * 0.004, z * 0.004, 3) * 5 + reef;
+      return Math.max(-36, -0.8 - (d - 1) * drop, Math.min(floor, -2.2));
+    }
+  }
+  return shapeHeight(I, d, x, z, drop);
+}
+function shapeHeight(I, d, x, z, drop) {
+  const h = -0.8 + (1 - d) * 7;                                     // the beach slope, carried on down to the sea floor
+  if (d > 1) return Math.max(-36, -0.8 - (d - 1) * drop);
   const inland = smooth(1 - I.beach * 0.4, 1 - I.beach - 0.12, d);   // 0 on the beach, 1 further in
   const core = smooth(0.8, 0.05, d);
   let t = I.lift * smooth(0, 1, (1 - d) / 0.75) + fbm(x * 0.007, z * 0.007, 4) * I.hills + I.hills * 0.4;
@@ -391,15 +488,34 @@ function islandHeight(x, z) {
   } else if (I.shape === 'candy') {
     const g = perlin(x * 0.016 + 2.5, z * 0.016 + 7.5);
     t += Math.pow(Math.max(0, g), 1.4) * 40 * core;                    // round gumdrop hills
+  } else if (I.shape === 'pangea') {
+    t += I.peak * rr * smooth(0.6, 0.2, d);
+    t += smooth(0.09, 0, pangeaRange(x, z)) * (55 + rr * 45) * smooth(1, 0.85, d);   // the long mountain range
   } else {
     t += I.peak * rr * core * core;
   }
   return h + (t - Math.min(t, 0)) * inland + Math.min(t, 0);
 }
+// the land types the big maps start with (0 = the island's own colours)
+function startBiome(x, z, h) {
+  const S = ISL.shape;
+  if (h < 1.4) return 0;
+  const B = id => BIOME_IDS.indexOf(id) + 1;
+  if (S === 'set' || S === 'sky') { const [c] = nearestCenter(x, z); return c ? B(c.biome) : 0; }
+  if (S !== 'pangea') return 0;
+  const R = ISL.R, n = perlin(x * 0.004 + 7, z * 0.004 - 3) * 0.12, lat = Math.abs(z / R + n), d = landDist(x, z);
+  if (lat > 0.6) return B('taiga');
+  if (pangeaRange(x, z) < 0.06 + n * 0.15 && h > 18) return B('mountain');
+  if (d < 0.74 + n && lat < 0.5) return B('desert');                       // a big dry middle
+  if (d < 0.84 + n && lat < 0.52) return B('savanna');
+  if (lat < 0.3 && x > -0.2 * R) return B('jungle');                       // jungles by the warm sea
+  if (d > 0.86 && perlin(x * 0.01, z * 0.01) > 0.3) return B('swamp');
+  return B('forest');
+}
 
 /* ---- the island as a fine grid (heights, normals, colours), and the ground height anywhere ---- */
-const TN = 560;                 // grid cells across (Wildwood's chunks are 32 per 64 m; this is about 2 m per cell)
-let TS = 620, TSTEP = 2 * TS / TN, HGRID = null, NYGRID = null;
+// (TN: grid cells across, TS: half the map's width; setIsland sets both. Old islands: 560 cells over 1240 m, about 2.2 m each;
+//  the bigger ones: 900 cells over 2200-2500 m, about 2.4-2.8 m each)
 function gridH(i, j) { return HGRID[clamp(j, 0, TN) * (TN + 1) + clamp(i, 0, TN)]; }
 function groundAt(x, z) {
   const fx = (x + TS) / TSTEP, fz = (z + TS) / TSTEP;
@@ -839,7 +955,8 @@ let terrainMesh = null, isleGlow = null, terrainGeo = null;
 // one point of the island grid: its position, smooth normal and colour, written straight into the vertex buffer
 function terrainVert(i, j) {
   const W = TN + 1, k = j * W + i, x = -TS + i * TSTEP, z = -TS + j * TSTEP, h = HGRID[k];
-  const n = norm3(gridH(i - 1, j) - gridH(i + 1, j), 2 * TSTEP, gridH(i, j - 1) - gridH(i, j + 1));
+  const sky = ISL.shape === 'sky' && h > SKY_VOID + 0.5, nh = (a, b) => { const v = gridH(a, b); return sky && v <= SKY_VOID + 0.5 ? h : v; };   // (sky island edges: ignore the drop)
+  const n = norm3(nh(i - 1, j) - nh(i + 1, j), 2 * TSTEP, nh(i, j - 1) - nh(i, j + 1));
   NYGRID[k] = n[1];
   const c = groundColor(x, z, h, n[1], BGRID[k]), g = terrainGeo, o = k * 5, bo = k * 20;
   g.f[o] = x; g.f[o + 1] = h; g.f[o + 2] = z;
@@ -852,27 +969,68 @@ function uploadTerrainRows(j0, j1) {
   gl.bindBuffer(gl.ARRAY_BUFFER, terrainMesh.vbo);
   gl.bufferSubData(gl.ARRAY_BUFFER, j0 * W * 20, new Uint8Array(terrainGeo.buf, j0 * W * 20, (j1 - j0 + 1) * W * 20));
 }
+// the rocky bottoms of the sky islands: hanging down in a rough point under each one, joined to the top by a thin rim of rock
+function skyUndersides(g, idx, isVoid) {
+  const W = TN + 1, under = new Int32Array(W * W).fill(-1), rockA = [0.46, 0.4, 0.34], rockB = [0.3, 0.26, 0.24];
+  for (let j = 0; j < W; j++) for (let i = 0; i < W; i++) {
+    const k = j * W + i;
+    if (isVoid(k)) continue;
+    const x = -TS + i * TSTEP, z = -TS + j * TSTEP, [c] = nearestCenter(x, z), d = clamp(landDist(x, z), 0, 1);
+    const n = perlin(x * 0.06 + 2, z * 0.06 - 5), deep = Math.min(c[2] * 0.85, c.base - 12);
+    const y = c.base - 1.5 - deep * Math.pow(1 - d, 0.75) * (0.8 + 0.25 * n) - Math.max(0, perlin(x * 0.13, z * 0.13)) * 7 * (1 - d);
+    const out = norm3(x - c[0], -(1.4 - d) * c[2] * 0.6, z - c[1]), col = mixc(rockA, rockB, clamp(0.5 + n + (1 - d) * 0.4, 0, 1));
+    under[k] = g.n; g.v(x, y, z, out[0], out[1], out[2], -1, col[0], col[1], col[2], 0);
+  }
+  const edges = new Map(), key = (p, q) => p < q ? p * 4194304 + q : q * 4194304 + p;
+  for (let j = 0; j < TN; j++) for (let i = 0; i < TN; i++) {
+    const a = j * W + i, b = a + 1, c = a + W, d = c + 1;
+    for (const t of [[a, c, b], [b, c, d]]) {
+      if (isVoid(t[0]) || isVoid(t[1]) || isVoid(t[2])) continue;
+      idx.push(under[t[0]], under[t[2]], under[t[1]]);
+      for (const [p, q] of [[t[0], t[1]], [t[1], t[2]], [t[2], t[0]]]) { const kk = key(p, q); edges.set(kk, (edges.get(kk) || 0) + 1); }
+    }
+  }
+  for (const [kk, count] of edges) {            // edges used by only one triangle are the island's rim
+    if (count !== 1) continue;
+    const p = Math.floor(kk / 4194304), q = kk - p * 4194304;
+    const px = -TS + (p % W) * TSTEP, pz = -TS + Math.floor(p / W) * TSTEP, qx = -TS + (q % W) * TSTEP, qz = -TS + Math.floor(q / W) * TSTEP;
+    const [c] = nearestCenter((px + qx) / 2, (pz + qz) / 2), out = norm3((px + qx) / 2 - c[0], 0, (pz + qz) / 2 - c[1]), col = rockA, n0 = g.n;
+    g.v(px, HGRID[p], pz, out[0], out[1], out[2], -1, col[0], col[1], col[2], 0);
+    g.v(qx, HGRID[q], qz, out[0], out[1], out[2], -1, col[0], col[1], col[2], 0);
+    const up = g.f[under[p] * 5 + 1], uq = g.f[under[q] * 5 + 1];
+    g.v(px, up, pz, out[0], out[1], out[2], -1, rockB[0], rockB[1], rockB[2], 0);
+    g.v(qx, uq, qz, out[0], out[1], out[2], -1, rockB[0], rockB[1], rockB[2], 0);
+    idx.push(n0, n0 + 2, n0 + 1, n0 + 1, n0 + 2, n0 + 3);
+  }
+}
 function buildTerrain() {
-  TS = ISL.shape === 'chain' ? 720 : 620; TSTEP = 2 * TS / TN;
-  const W = TN + 1;
+  const W = TN + 1, sky = ISL.shape === 'sky';
   HGRID = new Float32Array(W * W); NYGRID = new Float32Array(W * W); BGRID = new Uint8Array(W * W);
-  for (let j = 0; j < W; j++) for (let i = 0; i < W; i++) HGRID[j * W + i] = islandHeight(-TS + i * TSTEP, -TS + j * TSTEP);
+  for (let j = 0; j < W; j++) for (let i = 0; i < W; i++) {
+    const x = -TS + i * TSTEP, z = -TS + j * TSTEP, h = islandHeight(x, z);
+    HGRID[j * W + i] = h;
+    if (ISL.wide) BGRID[j * W + i] = startBiome(x, z, h);           // the big maps start with their land types painted on
+  }
   const g = terrainGeo = new Geo(W * W + 6);
   for (let j = 0; j < W; j++) for (let i = 0; i < W; i++) terrainVert(i, j);
   g.n = W * W;
-  const idx = new Uint32Array(TN * TN * 6);
-  let k = 0;
+  const isVoid = k => sky && HGRID[k] <= SKY_VOID + 0.5;
+  const idx = [];
   for (let j = 0; j < TN; j++) for (let i = 0; i < TN; i++) {
     const a = j * W + i, b = a + 1, c = a + W, d = c + 1;
-    idx[k++] = a; idx[k++] = c; idx[k++] = b; idx[k++] = b; idx[k++] = c; idx[k++] = d;
+    for (const t of [[a, c, b], [b, c, d]]) {
+      const nv = isVoid(t[0]) + isVoid(t[1]) + isVoid(t[2]);
+      if (nv === 0 || nv === 3) idx.push(t[0], t[1], t[2]);     // (sky islands: no walls down from their edges to the sea floor)
+    }
   }
   // the deep sea floor carries on out to the horizon, so you never see where the island's square ends
   const F = 16000, fy = -36.3, fc = shade(groundColor(TS * 2, TS * 2, -36, 1), 1);
   for (const [a, b, c] of [[[-F, -F], [F, -F], [F, F]], [[-F, -F], [F, F], [-F, F]]])
     g.v(a[0], fy, a[1], 0, 1, 0, -1, fc[0], fc[1], fc[2], 0), g.v(b[0], fy, b[1], 0, 1, 0, -1, fc[0], fc[1], fc[2], 0), g.v(c[0], fy, c[1], 0, 1, 0, -1, fc[0], fc[1], fc[2], 0);
-  const idx2 = new Uint32Array(idx.length + 6); idx2.set(idx); for (let i = 0; i < 6; i++) idx2[idx.length + i] = W * W + i;
+  for (let i = 0; i < 6; i++) idx.push(W * W + i);
+  if (sky) skyUndersides(g, idx, isVoid);
   if (terrainMesh) freeMesh(terrainMesh);
-  terrainMesh = makeMesh(g, idx2);
+  terrainMesh = makeMesh(g, Uint32Array.from(idx));
   // glowing bits that belong to the island itself (the volcano's lava)
   if (isleGlow) { freeMesh(isleGlow); isleGlow = null; }
   if (ISL.shape === 'volcano') {
@@ -892,7 +1050,7 @@ function buildTerrain() {
    (the sea is at 0 m, so any ground pushed below 0 fills with water).
    Each brush stroke is saved and played back when the island loads.
    ===================================================================== */
-const LAND_RADIUS = [4, 8, 14, 22, 34];        // one for each brush size
+const LAND_RADIUS = [4, 8, 14, 24, 40];        // one for each brush size
 let landEdits = [];
 function applyBrush(mode, x, z, r, amt, target, quiet) {
   const W = TN + 1;
@@ -903,11 +1061,12 @@ function applyBrush(mode, x, z, r, amt, target, quiet) {
     if (d > r) continue;
     const w = smooth(r, r * 0.35, d), k = j * W + i;
     let h = HGRID[k];
+    if (ISL.shape === 'sky' && h <= SKY_VOID + 0.5) continue;      // (no land appears out of thin air between sky islands)
     if (mode === 'raise') h += amt * w;
     else if (mode === 'lower') h -= amt * w;
     else if (mode === 'flatten') h += (target - h) * w * amt;
     else if (h > target) h += (target - h) * Math.min(1, w * 1.6) * amt;   // water: dig down to the right depth
-    HGRID[k] = clamp(h, -35, 160);
+    HGRID[k] = ISL.shape === 'sky' ? clamp(h, 5, 320) : clamp(h, -35, 160);
   }
   if (quiet) return;
   for (let j = j0 - 1; j <= j1 + 1; j++) for (let i = Math.max(0, i0 - 1); i <= Math.min(TN, i1 + 1); i++) if (j >= 0 && j <= TN) terrainVert(i, j);
@@ -941,7 +1100,8 @@ const cam = { tx: 0, tz: 0, ty: 0, yaw: 0.7, pitch: 0.62, dist: 520 };
 const proj = new Float32Array(16), view = new Float32Array(16), vp = new Float32Array(16), lightVP = new Float32Array(16), lightView = new Float32Array(16), lightProj = new Float32Array(16);
 const SUN = norm3(0.5, 0.62, 0.32);
 let camEye = [0, 100, 0], camF = [0, 0, -1], camR = [1, 0, 0], camU = [0, 1, 0];
-function camLimits() { return { minD: 6, maxD: ISL.shape === 'chain' ? 1300 : 1000, edge: TS - 20 }; }
+const fogD = () => Math.max(1500, TS * 2);           // bigger maps see further
+function camLimits() { return { minD: 6, maxD: TS * 1.75, edge: TS - 20 }; }
 function updateCamera(dt) {
   const L = camLimits();
   cam.dist = clamp(cam.dist, L.minD, L.maxD);
@@ -967,7 +1127,7 @@ function screenRay(px, py) {
 function rayHit(d) {
   const o = camEye, surf = (x, z) => Math.max(groundAt(x, z), 0);
   let prev = 0;
-  for (let t = 0.5; t < 3500; t += Math.max(0.4, t * 0.012)) {
+  for (let t = 0.5; t < 6000; t += Math.max(0.4, t * 0.012)) {
     const x = o[0] + d[0] * t, y = o[1] + d[1] * t, z = o[2] + d[2] * t;
     if (y <= surf(x, z)) {
       let lo = prev, hi = t;
@@ -2136,6 +2296,10 @@ birdDef('phoenix', 'Phoenix', '🔥', g => {
    ===================================================================== */
 const SIZES = [0.5, 1, 1.75, 3], SIZE_NAMES = ['Small', 'Medium', 'Big', 'Giant'], SIZE_SHORT = ['S', 'M', 'L', 'XL'];
 // the brush on the left: how many things go down at once, and how wide the land tools reach
+// some things are bigger (or smaller) than their size button says, and the biggest monsters are limited to 3 of each per island
+const GROW = { dragon: 2.2, hydra: 2, seaserpent: 2.2, troll: 0.62 }, ONLY3 = new Set(['dragon', 'hydra', 'seaserpent']);
+const sizeOf = d => SIZES[tool.size] * (GROW[d.id] || 1);
+const countOf = id => { let n = 0; for (const o of objs) if (o.t === id) n++; return n; };
 const BRUSH_N = [1, 2, 3, 6, 10], BRUSH_R = [0, 3, 5, 9, 14];
 const tool = { cat: 0, item: CATS.map(() => 0), size: 1, turn: 0, erase: false, brush: 0 };
 let undoStack = [], cursor = null, holdT = 0, lastPaint = null, curGroup = null, repeatT = 0;
@@ -2174,12 +2338,14 @@ function crowded(x, z, rad) { for (const o of objs) if (Math.abs(o.x - x) < rad 
 function brushRadius(d, s) { return BRUSH_R[tool.brush] * Math.max(1, d.r * s * 0.7); }
 function landRadius() { return LAND_RADIUS[tool.brush]; }
 function placeAt(hit) {
-  const d = selectedDef(), s = SIZES[tool.size];
+  const d = selectedDef(), s = sizeOf(d);
   if (d.tool === 'land') return landAt(hit, d);
   if (d.tool === 'biome') return biomeAt(hit, d);
   if (d.race) return foundAt(hit, d);                 // humans, elves, dwarves and orcs found a town
   if (objs.length >= 3000) { toast('Your island is full! Erase some things first.'); return false; }
-  const n = BRUSH_N[tool.brush], face = Math.atan2(camEye[0] - hit.x, camEye[2] - hit.z);
+  let n = BRUSH_N[tool.brush];
+  if (ONLY3.has(d.id)) { n = Math.min(n, 3 - countOf(d.id)); if (n <= 0) { if (!curGroup) { sfx('nope'); toast(d.icon + ' Only 3 ' + d.name.toLowerCase() + 's on each island!', 1800); } return false; } }
+  const face = Math.atan2(camEye[0] - hit.x, camEye[2] - hit.z);
   const grp = group(false);
   let made = 0;
   if (canPlace(d, hit, s) && (n === 1 || !crowded(hit.x, hit.z, d.r * s * 0.6))) { if (addThing(d.id, hit.x, hit.z, face + tool.turn, s, grp)) made++; }
@@ -2290,7 +2456,8 @@ function loadThings(data, fresh) {
     if (!Array.isArray(a) || !CAT[a[0]]) continue;
     const [t, x, z, r, s] = a;
     if (![x, z, r, s].every(Number.isFinite) || Math.abs(x) > 2000 || Math.abs(z) > 2000) continue;
-    const o = makeObj(t, x, z, r, clamp(s, 0.25, 4)); settle(o); objs.push(o);
+    if (ONLY3.has(t) && countOf(t) >= 3) continue;
+    const o = makeObj(t, x, z, r, clamp(s, 0.25, 4 * (GROW[t] || 1))); settle(o); objs.push(o);
     if (typeof a[5] === 'string' && TOWN[a[5]]) o.town = a[5];
     if (CAT[t].race) o.race = CAT[t].race;
   }
@@ -2298,7 +2465,7 @@ function loadThings(data, fresh) {
 }
 function scatterStart() {
   const r = mulberry32(cur.seed ^ 0x5a5a);
-  const R = ISL.shape === 'chain' ? 700 : ISL.R * 1.05;
+  const R = ISL.shape === 'chain' || ISL.wide ? TS - 60 : ISL.R * 1.05;
   const tryPlace = (id, n) => {
     const d = CAT[id];
     for (let k = 0, made = 0; k < n * 30 && made < n; k++) {
@@ -2308,7 +2475,7 @@ function scatterStart() {
       else if (h < (d.cat === 'plants' ? 0.9 : 0.4) || slopeAt(x, z) < (d.cat === 'plants' ? 0.72 : 0.8)) continue;
       if (id === 'palm' && h > 14) continue;
       if (ISL.shape === 'volcano' && Math.hypot(x, z) < ISL.R * 0.32 && d.cat === 'plants' && id !== 'rock') continue;
-      const o = makeObj(id, x, z, r() * 6.283, d.cat === 'plants' ? 0.75 + r() * 0.6 : 1);
+      const o = makeObj(id, x, z, r() * 6.283, d.cat === 'plants' ? 0.75 + r() * 0.6 : GROW[id] || 1);
       settle(o); objs.push(o); made++;
     }
   };
@@ -2988,7 +3155,7 @@ function drawGhosts(time) {
 // the circle where the next thing will go, and a see-through preview of it
 function drawCursor(time) {
   if (state !== 'play' || !cursor) return;
-  const d = selectedDef(), s = SIZES[tool.size];
+  const d = selectedDef(), s = sizeOf(d);
   let ok, ringR, col;
   if (tool.erase) { ok = tool.brush > 0 || !!eraseTarget(cursor); ringR = tool.brush ? eraseRadius() : 1.6 + cam.dist * 0.012; col = ok ? [1, 0.35, 0.3] : [0.7, 0.5, 0.5]; }
   else if (d.tool) {
@@ -3077,7 +3244,7 @@ function holdBuild(dt) {
   if (!cursor) return;
   if (isTool()) { repeatT += dt; if (repeatT >= (selectedDef().tool === 'biome' ? 0.16 : 0.1)) { repeatT = 0; act(cursor); } return; }
   holdT += dt;
-  const d = selectedDef(), gap = tool.erase ? Math.max(1.5, eraseRadius()) : Math.max(2, d.r * SIZES[tool.size] * 2.2 + brushRadius(d, SIZES[tool.size]));
+  const d = selectedDef(), gap = tool.erase ? Math.max(1.5, eraseRadius()) : Math.max(2, d.r * sizeOf(d) * 2.2 + brushRadius(d, sizeOf(d)));
   if (holdT > 0.35 && (!lastPaint || Math.hypot(cursor.x - lastPaint.x, cursor.z - lastPaint.z) > gap)) { if (act(cursor)) lastPaint = { x: cursor.x, z: cursor.z }; holdT = 0.3; }
 }
 function padActions(dt) {
@@ -3114,7 +3281,7 @@ let islands = (() => {
   const raw = readJSON(LIST_KEY);
   if (!Array.isArray(raw)) return [];
   return raw.filter(s => s && typeof s === 'object' && typeof s.id === 'string' && s.id.length < 40 && ISLE_BY_ID[s.type] && Number.isFinite(s.seed))
-    .map(s => ({ id: s.id, type: s.type, seed: s.seed | 0, name: typeof s.name === 'string' ? s.name.slice(0, 40) : ISLE_BY_ID[s.type].name, count: Number.isFinite(s.count) ? Math.max(0, s.count | 0) : 0, last: Number.isFinite(s.last) ? s.last : 0 }))
+    .map(s => ({ id: s.id, type: s.type, seed: s.seed | 0, name: typeof s.name === 'string' ? s.name.slice(0, 40) : ISLE_BY_ID[s.type].name, count: Number.isFinite(s.count) ? Math.max(0, s.count | 0) : 0, last: Number.isFinite(s.last) ? s.last : 0, v: s.v === 2 ? 2 : 1 }))
     .slice(0, 200);
 })();
 function writeList() { writeJSON(LIST_KEY, islands); }
@@ -3150,7 +3317,7 @@ function setWorldUniforms(time) {
   gl.uniform1f(u.uTime, time);
   gl.uniform3fv(u.uSun, SUN); gl.uniform3fv(u.uSkyH, ISL.sky[0]); gl.uniform3fv(u.uSkyZ, ISL.sky[1]);
   gl.uniform3fv(u.uCam, camEye);
-  gl.uniform1f(u.uFogD, 1500); gl.uniform1f(u.uFogEnd, 3000);
+  gl.uniform1f(u.uFogD, fogD()); gl.uniform1f(u.uFogEnd, fogD() * 2);
   gl.uniform3fv(u.uWater, ISL.water);
   gl.uniform1f(u.uFlash, 0); gl.uniform1f(u.uEmit, 0); gl.uniform1f(u.uAlpha, 1);
   gl.uniformMatrix4fv(u.uLightVP, false, lightVP);
@@ -3222,7 +3389,7 @@ function render(time) {
   const wu = progWater.u;
   gl.uniformMatrix4fv(wu.uVP, false, vp); gl.uniform1f(wu.uTime, time); gl.uniform3fv(wu.uSun, SUN);
   gl.uniform3fv(wu.uSkyH, ISL.sky[0]); gl.uniform3fv(wu.uSkyZ, ISL.sky[1]);
-  gl.uniform3fv(wu.uCam, camEye); gl.uniform1f(wu.uFogD, 1500); gl.uniform1f(wu.uFogEnd, 3000); gl.uniform3fv(wu.uWater, ISL.water);
+  gl.uniform3fv(wu.uCam, camEye); gl.uniform1f(wu.uFogD, fogD()); gl.uniform1f(wu.uFogEnd, fogD() * 2); gl.uniform3fv(wu.uWater, ISL.water);
   gl.bindVertexArray(waterVao); gl.bindBuffer(gl.ARRAY_BUFFER, waterVbo); gl.bufferSubData(gl.ARRAY_BUFFER, 0, waterVerts);
   gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
   gl.depthMask(false); gl.drawArrays(gl.TRIANGLES, 0, 6); gl.depthMask(true);
@@ -3320,6 +3487,10 @@ function buildPick() {
     b.onclick = () => { sfx('click'); newIsland(I); };
     grid.appendChild(b);
   }
+  const b = document.createElement('button'); b.className = 'isle';
+  b.innerHTML = '<div class="art" style="background:linear-gradient(135deg,#ff6b9a,#ffd23f 35%,#5ec8ff 65%,#8fe36b)">🎲</div><div class="txt"><div class="name">Random</div><div class="sub">A surprise! Any one of the maps above.</div></div>';
+  b.onclick = () => { sfx('click'); newIsland(ISLANDS[Math.floor(Math.random() * ISLANDS.length)]); };
+  grid.appendChild(b);
 }
 function buildSaves() {
   const list = $('saveList'); list.innerHTML = '';
@@ -3341,7 +3512,7 @@ function buildSaves() {
 function newIsland(I) {
   const id = 'i' + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36);
   const n = islands.filter(s => s.type === I.id).length + 1;
-  const s = { id, type: I.id, seed: (Math.random() * 1e9) | 0, name: I.name + (n > 1 ? ' ' + n : ''), count: 0, last: Date.now() };
+  const s = { id, type: I.id, seed: (Math.random() * 1e9) | 0, name: I.name + (n > 1 ? ' ' + n : ''), count: 0, last: Date.now(), v: 2 };
   islands.push(s); writeList();
   openIsland(s, true);
 }
@@ -3350,14 +3521,14 @@ function openIsland(s, fresh) {
   show(null);
   setTimeout(() => {          // let "Building your island…" show first
     cur = s;
-    setIsland(ISLE_BY_ID[s.type], s.seed);
+    setIsland(ISLE_BY_ID[s.type], s.seed, s.v);
     buildTerrain();
     const data = fresh ? null : readJSON(ISLE_PREFIX + s.id);
     replayLand(data && data.land);
     loadThings(data, fresh);
     const c = data && data.cam;
     if (c && [c.tx, c.tz, c.yaw, c.pitch, c.dist].every(Number.isFinite)) Object.assign(cam, { tx: c.tx, tz: c.tz, yaw: c.yaw, pitch: c.pitch, dist: c.dist });
-    else Object.assign(cam, { tx: 0, tz: 0, yaw: 0.7, pitch: 0.62, dist: ISL.shape === 'chain' ? 1050 : 760 });
+    else Object.assign(cam, { tx: 0, tz: 0, yaw: 0.7, pitch: 0.62, dist: ISL.wide || ISL.shape === 'chain' ? TS * 1.45 : ISL.R * 2.1 });
     cam.ty = Math.max(0, groundAt(cam.tx, cam.tz));
     s.last = Date.now(); writeList();
     if (fresh) saveIsland();
@@ -3567,7 +3738,7 @@ function rumble(strong, weak, ms) {
 function paintDrag() {
   updateCursor();
   if (!cursor) return;
-  const gap = tool.erase ? 1.5 : Math.max(2, selectedDef().r * SIZES[tool.size] * 2.2);
+  const gap = tool.erase ? 1.5 : Math.max(2, selectedDef().r * sizeOf(selectedDef()) * 2.2);
   if (!lastPaint || Math.hypot(cursor.x - lastPaint.x, cursor.z - lastPaint.z) > gap) { if (act(cursor)) lastPaint = { x: cursor.x, z: cursor.z }; }
 }
 let last = performance.now();

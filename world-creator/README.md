@@ -1,6 +1,6 @@
 # World Creator
 
-A 3D island builder. Pick one of ten islands, then fly a camera around it and fill it with trees, buildings, people, creatures and weapons. People and animals walk around on their own, birds and dragons fly, and dolphins and whales swim in the sea.
+A 3D island builder. Pick one of ten islands or four big maps, then fly a camera around it and fill it with trees, buildings, people, creatures and weapons. People and animals walk around on their own, birds and dragons fly, and dolphins and whales swim in the sea.
 
 **Play it:** https://npyati.github.io/kid-games/world-creator/
 
@@ -26,7 +26,18 @@ A 3D island builder. Pick one of ten islands, then fly a camera around it and fi
 | Island Chain | a big island and up to six small ones | palms, oaks, flowers; seagulls, dolphins, a whale |
 | Autumn Valley | hills full of orange, red and yellow trees | autumn trees, pines, pumpkins; deer, foxes, squirrels |
 
-Each new island gets its own random seed, so two Tropical Paradises are different shapes. Islands start with a few animals but no plants: you paint them on.
+Plus four big maps:
+
+| Map | What it's like | Animals it starts with |
+|---|---|---|
+| Island Set | seven islands, each a different land type (forest, desert, snowy taiga, jungle, savanna, swamp, mountains), shaped to match | deer, camels, penguins, parrots, frogs, goats, dolphins, seagulls |
+| Pangea | one giant supercontinent with a warm sea cutting in from the east: snowy taiga north and south, a big desert in the middle with savanna around it, jungles by the warm sea, forests, and a long mountain range | deer, dinosaurs, camels, polar bears, parrots, whales, dolphins |
+| Sky Islands | 14 islands floating 60–150 m up, each a different land type, with rocky points hanging underneath and the ocean far below | birds, parrots, a phoenix, unicorns, bunnies, seagulls |
+| Endless Ocean | open sea to the horizon with a rolling sea floor, coral shallows and five tiny islets | dolphins, whales, sharks, seagulls |
+
+**🎲 Random** picks any of them. Each new island gets its own random seed, so two Tropical Paradises are different shapes. Islands start with a few animals but no plants: you paint them on (Island Set, Pangea and Sky Islands start with their land types already coloured in).
+
+**Size:** islands made now are much bigger than the first ones: about 1¾ times as wide (around 3 times the land), on a 900×900 grid over 2.2 km (2.5 km for the big maps). Islands saved before this change keep their old size, so nothing on them moves.
 
 ## Things to build
 
@@ -34,15 +45,15 @@ Each new island gets its own random seed, so two Tropical Paradises are differen
 - **Plants:** oak, pine, snowy pine, palm, jungle tree, acacia, autumn tree, willow, old dead tree, bush, flowers, reeds, rock, cactus, giant mushroom, lollipop tree, candy cane, gumdrop, pumpkin, snowman, dark crystal.
 - **Buildings:** little hut, cottage, big house, barn, castle (walls, four towers with flags, a gate and a keep), watch tower, windmill (the blades turn), lighthouse (the lamp glows), tent, well, fence, campfire (flickers), gold statue, market stall, sailboat (goes on deep water and bobs).
 - **People:** **human, elf, dwarf, orc**. Each one founds a town (see Towns). The older people (villager, farmer, knight, king, queen, wizard, kid, pirate, builder) still work on islands that have them.
-- **Mythical:** **dragon** (Wildwood's, drawn at 0.45x: walks on its folded wings, flies off to circle now and then, bendy neck and tail, a jaw with teeth that rears back and lunges; it attacks on sight and comes down out of the sky to do it), **sea serpent** (Wildwood's Leviathan at 0.4x: horns, two pairs of wings, a body that follows its head, rears up to bite), unicorn, phoenix (glows), goblin, skeleton, zombie, demon (wings, glowing eyes), troll, minotaur, hydra (three swaying heads), ghost (see-through).
+- **Mythical:** **dragon** (Wildwood's, full size: walks on its folded wings, flies off to circle now and then, bendy neck and tail, a jaw with teeth that rears back and lunges; it attacks on sight and comes down out of the sky to do it), **sea serpent** (Wildwood's Leviathan at about 0.9x: horns, two pairs of wings, a body that follows its head, rears up to bite), unicorn, phoenix (glows), goblin, skeleton, zombie, demon (wings, glowing eyes), troll (smaller than before), minotaur, hydra (big, with three swaying heads), ghost (see-through).
 - **Creatures:** dog, cat, sheep, cow, horse, deer, bear, polar bear, fox, goat, pig, camel, bunny, squirrel, lizard, frog, crocodile (Wildwood's, with its jaw and swishing tail), crab, chicken, penguin, dinosaur, bluebird, parrot, seagull, dolphin, whale, shark.
 - **Weapons:** sword in a stone, weapon rack, big shield, bow and arrows, battle axe, cannon, catapult, suit of armor, treasure chest.
 
-Four sizes: Small (½), Medium, Big (1¾) and Giant (3×). New things face the camera; **Turn** adds 45° each press. Land things only go on land, and the sailboat, dolphin, whale and shark only go in deep water (the circle turns red if it can't go there). Birds and dragons can go anywhere. Frogs and crocodiles can walk into shallow water. Up to 3,000 things per island.
+Four sizes: Small (½), Medium, Big (1¾) and Giant (3×). Dragons, hydras and sea serpents are about twice as big as their size says, and an island can only have **3 of each**; trolls are a bit smaller than their size says. New things face the camera; **Turn** adds 45° each press. Land things only go on land, and the sailboat, dolphin, whale and shark only go in deep water (the circle turns red if it can't go there). Birds and dragons can go anywhere. Frogs and crocodiles can walk into shallow water. Up to 3,000 things per island.
 
 ## The brush
 
-The **Brush** panel on the left picks how many things go down at once: **1, 2, 3, 6 or 10**, spread around a circle (bigger things get a bigger circle). For Nature it sets how wide you paint (4 to 34 m). The eraser uses it too (one thing, or everything in the circle). Controller: d-pad up / down. Keyboard: C (Shift+C for smaller). Everything done in one press or hold undoes together; land changes keep the last 6 for undo.
+The **Brush** panel on the left picks how many things go down at once: **1, 2, 3, 6 or 10**, spread around a circle (bigger things get a bigger circle). For Nature it sets how wide you paint (4 to 40 m). The eraser uses it too (one thing, or everything in the circle). Controller: d-pad up / down. Keyboard: C (Shift+C for smaller). Everything done in one press or hold undoes together; land changes keep the last 6 for undo.
 
 ## Fighting
 
@@ -73,7 +84,7 @@ The **Brush** panel on the left picks how many things go down at once: **1, 2, 3
 - Plain WebGL 2 in one file. The noise, shape helpers, sky, water, matrix and controller code come from Wildwood.
 - Up to 2× the screen's pixels (Wildwood stops at 1.5×), with antialiasing.
 - **Real shadows** from a 4096×4096 shadow map with soft edges. The shadow area follows the camera: tight and sharp when you're close, wide when you're far out.
-- The island is one 560×560 grid (about 2.2 m per square; Wildwood uses 2 m squares only near you), with smooth lighting. Its height comes from `islandHeight`; everything that needs the ground height uses `groundAt`, which reads the same triangles that are drawn.
+- The island is one 900×900 grid (about 2.4–2.8 m per square; old islands 560×560 at 2.2 m; Wildwood uses 2 m squares only near you). Sky Islands leave out the triangles between an island and the sea floor and add a rocky underside and rim instead, with smooth lighting. Its height comes from `islandHeight`; everything that needs the ground height uses `groundAt`, which reads the same triangles that are drawn.
 - Shapes are smooth (balls with 320 faces and smooth normals, 16-sided tubes) instead of Wildwood's chunky low-poly look.
 - The sea is drawn to the horizon over a sea floor that goes on forever, and each island has its own sky and water colours.
 
@@ -82,7 +93,7 @@ The **Brush** panel on the left picks how many things go down at once: **1, 2, 3
 `localStorage` keys (all start with `worldcreator`):
 
 - `worldcreator.v1`: music and sound settings.
-- `worldcreator.islands`: the list of islands: `{ id, type, seed, name, count, last }`. Broken entries are dropped on load.
+- `worldcreator.islands`: the list of islands: `{ id, type, seed, name, count, last, v }` (`v` 2 = the bigger size; missing = an old, smaller island). Broken entries are dropped on load.
 - `worldcreator.island.<id>`: one island: its type and seed, the camera, its towns (`{ id, race, name, x, z, mode, built }`), the land changes (each brush stroke, replayed on load), and the things on it as `[type, x, z, turn, size, town]` (where you put them, not where they've wandered to). Unknown types, bad numbers and positions far off the map are dropped on load, and sizes are kept between ¼ and 4.
 
 **My islands** lists them with Play and Delete (Delete asks twice). The island saves a few seconds after each change, when you open the menu, and when you leave the page.
