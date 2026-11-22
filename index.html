@@ -129,6 +129,29 @@ const GAMES = [
     </svg>`,
   },
   {
+    folder: 'greenhold',
+    title: 'Greenhold',
+    blurb: 'Be a knight of a giant castle. Talk to the King, the Queen, knights, guards and butlers, explore all three floors of the keep, pick apples in the green meadow, and stop the goblins, trolls and stone giants that march out of the woods. Plays great with an Xbox controller.',
+    tags: ['Adventure', '3D', 'Castle', 'Controller'],
+    accent: '#ffd23f', artBg: '#8fc3ea',
+    art: `<svg viewBox="0 0 320 180" aria-hidden="true">
+      <defs><linearGradient id="ghSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4f8fd8"/><stop offset="1" stop-color="#d6e7f2"/></linearGradient></defs>
+      <rect width="320" height="180" fill="url(#ghSky)"/>
+      <ellipse cx="62" cy="30" rx="30" ry="8" fill="#fff" opacity=".85"/><ellipse cx="262" cy="24" rx="24" ry="7" fill="#fff" opacity=".8"/>
+      <path d="M0 132 Q80 118 160 126 T320 122 V180 H0Z" fill="#6fb34a"/>
+      <rect x="40" y="96" width="240" height="40" fill="#a9a49c"/>
+      ${[...Array(12)].map((_, i) => `<rect x="${42 + i * 20}" y="89" width="10" height="8" fill="#a9a49c"/>`).join('')}
+      <rect x="112" y="52" width="96" height="84" fill="#bbb6ad"/>
+      ${[...Array(5)].map((_, i) => `<rect x="${113 + i * 20}" y="45" width="10" height="8" fill="#bbb6ad"/>`).join('')}
+      <path d="M150 136 V112 Q160 100 170 112 V136Z" fill="#5a3b22"/>
+      <rect x="128" y="64" width="16" height="28" fill="#c8323a"/><circle cx="136" cy="76" r="4" fill="#ffd23f"/>
+      <rect x="176" y="64" width="16" height="28" fill="#c8323a"/><circle cx="184" cy="76" r="4" fill="#ffd23f"/>
+      ${[[34,72],[286,72]].map(([x]) => `<rect x="${x - 14}" y="72" width="28" height="64" fill="#9f9a92"/><polygon points="${x - 18},72 ${x},40 ${x + 18},72" fill="#3d58a8"/><path d="M${x} 40 V26" stroke="#555" stroke-width="2"/><path d="M${x} 26 h16 l-4 5 l4 5 h-16Z" fill="#2f8a3c"/>`).join('')}
+      <path d="M160 45 V18" stroke="#555" stroke-width="2"/><path d="M160 18 h22 l-5 6 l5 6 h-22Z" fill="#c8323a"/>
+      ${[[70,150],[250,152]].map(([x, y]) => `<g transform="translate(${x} ${y})"><rect x="-3" y="-6" width="6" height="18" fill="#5a3b22"/><circle cx="0" cy="-16" r="15" fill="#3f8a34"/>${[[-7,-18],[6,-12],[2,-24],[-4,-8]].map(([a, b]) => `<circle cx="${a}" cy="${b}" r="3" fill="#e0262e"/>`).join('')}</g>`).join('')}
+    </svg>`,
+  },
+  {
     folder: 'wildwood',
     title: 'Wildwood',
     blurb: 'Wander a 3D forest that goes on forever. Meet deer and rabbits, fight wolves and cave bears, craft axes, swords and armor, find giant snakes in the marshes, dive under the water with the fish and sharks, and hunt for a dragon in its volcano. Plays great with an Xbox controller.',
