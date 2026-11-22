@@ -84,6 +84,19 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,38px);lin
 #tools button{padding:6px 10px;font-size:14px}
 #tools button.on{border-color:#ff8a7a;color:#ffb3a8;background:#4a1f3a}
 #tools .lab{font-size:13px;color:var(--muted)}
+#inspect{position:absolute;right:max(12px,env(safe-area-inset-right,0px));top:70px;width:min(340px,calc(100vw - 24px));max-height:calc(100vh - 250px);overflow:auto;background:rgba(21,18,63,.92);border:3px solid var(--edge);border-radius:16px;padding:10px 14px;box-sizing:border-box;display:none;z-index:6}
+#inspect.show{display:block}
+#inspect .itop{display:flex;align-items:center;gap:8px}
+#inspect h3{margin:0;flex:1;font-family:var(--display);font-weight:400;font-size:24px;color:var(--sun);line-height:1.1}
+#inspect .itop button{font-size:16px;padding:4px 10px}
+#inspect .irow{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px solid rgba(170,165,230,.2);font-size:15px}
+#inspect .irow span{color:var(--muted)}
+#inspect .irow b{text-align:right}
+#inspect small{color:var(--muted)}
+#inspect .istory{margin:8px 0 2px;font-size:15px;line-height:1.4}
+#inspect .ilog{margin-top:8px;font-size:14px;line-height:1.35}
+#inspect .ilog b{display:block;color:var(--sun);font-family:var(--display);font-weight:400;font-size:17px}
+#inspect .ilog i{color:var(--muted);font-style:normal;margin-right:4px}
 #toast{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);background:rgba(21,18,63,.9);border:3px solid var(--edge);border-radius:16px;padding:10px 18px;font-size:18px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:30;text-align:center;max-width:86vw}
 #labels{position:fixed;inset:0;pointer-events:none;z-index:9;overflow:hidden}
 .wlab{position:absolute;left:0;top:0;font-family:var(--display);font-size:17px;color:#fff;text-shadow:0 2px 0 #151233,0 0 5px rgba(0,0,0,.7);white-space:nowrap;will-change:transform}
@@ -113,12 +126,14 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,38px);lin
   </div>
   <div id="hint"></div>
   <div id="cross"></div>
+  <div id="inspect"><div class="itop"><h3 id="inspHead"></h3><button id="inspClose">✕</button></div><div id="inspBody"></div></div>
   <div id="brushPanel"><div class="lab">Brush</div><div id="brushes"></div></div>
   <div id="palette">
     <div id="cats"></div>
     <div id="items"></div>
     <div id="tools">
       <button id="eraseBtn">🧽 Eraser</button>
+      <button id="inspectBtn">🔍 Inspect</button>
       <button id="turnBtn">🔄 Turn</button>
       <span class="lab">Size:</span>
       <button id="sizeDn">➖</button><b id="sizeLab">M</b><button id="sizeUp">➕</button>
@@ -176,6 +191,7 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,38px);lin
       <div><b class="h">Maps</b>Ten islands, plus four big maps: <b>Island Set</b> (seven islands, each a different land), <b>Pangea</b> (one giant supercontinent), <b>Sky Islands</b> (floating in the sky) and <b>Endless Ocean</b>. Or pick <b>🎲 Random</b>. New islands are much bigger than the first ones, and people and animals are smaller, so everything is more to scale.</div>
       <div><b class="h">Disasters</b>The <b>Disasters</b> group has a <b>tornado</b> (picks things up and throws them), a <b>tsunami</b> (a wave rolls in from the nearest sea), a <b>bomb</b>, a <b>sprinkle bomb</b> (lots of little bombs) and an <b>earthquake</b> (cracks the ground and knocks buildings down). The size buttons make them bigger. <b>Undo</b> puts things back.</div>
       <div><b class="h">Kings, queens and battles</b>Once a town starts to grow it crowns a <b>king</b>, a <b>queen</b> or both. They train soldiers who guard the town and send them to battle. Tap the <b>🪄 Battle wand</b> (in People) on one town, then on another, and they go to war. The <b>🕊️ Peace wand</b> does the opposite: the two towns become friends and never fight (even orcs). Bears, polar bears, foxes, crocodiles, sharks and dinosaurs are hungry: they hunt people and other animals. When a town has nobody left, its town hall explodes and it has fallen.</div>
+      <div><b class="h">Inspect</b>Press <b>🔍 Inspect</b> (I on the keyboard, or press X twice on the controller) and tap a person, an animal, a monster or a town. People and animals have a name, an age, a personality, a job and a story of what's happened to them. Towns show how rich they are, their rulers, whether they're at war, at peace or neutral, and their history. One year goes by every 2 minutes.</div>
       <div><b class="h">Big monsters</b>Dragons, hydras and sea serpents are huge, and each island can have up to <b>3</b> of each.</div>
       <div><b class="h">Saving</b>Every island saves by itself. Find it again under <b>My islands</b>.</div>
     </div>
@@ -2426,7 +2442,7 @@ const SHRINK = 0.7, growOf = id => GROW[id] || (['people', 'creatures', 'mythica
 const sizeOf = d => SIZES[tool.size] * growOf(d.id);
 const countOf = id => { let n = 0; for (const o of objs) if (o.t === id) n++; return n; };
 const BRUSH_N = [1, 2, 3, 6, 10], BRUSH_R = [0, 3, 5, 9, 14];
-const tool = { cat: 0, item: CATS.map(() => 0), size: 1, turn: 0, erase: false, brush: 0 };
+const tool = { cat: 0, item: CATS.map(() => 0), size: 1, turn: 0, erase: false, inspect: false, brush: 0 };
 let undoStack = [], cursor = null, holdT = 0, lastPaint = null, curGroup = null, repeatT = 0;
 const selectedDef = () => CAT[CATS[tool.cat].items[tool.item[tool.cat]]];
 function makeObj(t, x, z, r, s) { return { t, hx: x, hz: z, x, z, y: 0, r, s, phase: Math.random() * 6.28, wait: Math.random() * 2, ang: Math.random() * 6.28, tx: undefined, tz: undefined }; }
@@ -2593,6 +2609,11 @@ function loadThings(data, fresh) {
       if ((ex.k === 'king' || ex.k === 'queen') && typeof ex.n === 'string') { o.ruler = ex.k; o.rname = ex.n.slice(0, 20); }
       else if (ex.s === 1) o.soldier = true;
     }
+    if (ex && typeof ex === 'object') {
+      for (const k of ['nm', 'tr', 'lk', 'bi', 'zb']) if (typeof ex[k] === 'string') o[k] = ex[k].slice(0, 30);
+      if (Number.isFinite(ex.ag)) o.ag = clamp(ex.ag, 0, 5000);
+      for (const k of ['ki', 'ba', 'to', 'wa', 'sc']) if (Number.isFinite(ex[k])) o[k] = clamp(ex[k] | 0, 0, 99999);
+    }
     if (CAT[t].race) o.race = CAT[t].race;
   }
   updateCount();
@@ -2637,6 +2658,7 @@ function pickTarget(o, d) {
 function updateLife(dt, time) {
   updateSettlers(dt); updateTowns(dt); buildGrid(); ghostScares(dt); corruptSpawns(dt); updateFx(dt); updateArrows(dt); updateDisasters(dt, time);
   for (const o of objs.slice()) {                        // (a copy: things can be beaten while we go)
+    if (o.ag !== undefined) o.ag += dt / YEAR;          // one year every 2 minutes
     if (o.gone || o.held) continue;                      // (caught in a tornado or a wave)
     const d = CAT[o.t];
     if (!d.move) continue;
@@ -2911,7 +2933,7 @@ function foundAt(hit, d) {
   const home = towns.find(t => t.race === race && Math.hypot(t.x - hit.x, t.z - hit.z) < 70);
   let t = home, made = 0;
   if (!t) {
-    t = makeTown(race, hit.x, hit.z);
+    t = makeTown(race, hit.x, hit.z); townLog(t, `The ${RACES[race].name.toLowerCase()} founded ${t.name}.`);
     const c = addThing(RACES[race].center, hit.x, hit.z, Math.atan2(camEye[0] - hit.x, camEye[2] - hit.z), 1, grp); if (c) c.town = t.id;
     toast(`${RACES[race].icon} The ${RACES[race].name.toLowerCase()} founded ${t.name}!`, 2600);
     [523, 659, 784].forEach((f, i) => tone('triangle', f, f, 0.2, 0.08, i * 0.1));
@@ -2969,7 +2991,7 @@ function updateSettlers(dt) {
     if (crowd.length < TOWN_NEED) continue;
     let x = crowd.reduce((s, p) => s + p.x, 0) / crowd.length, z = crowd.reduce((s, p) => s + p.z, 0) / crowd.length;
     if (groundAt(x, z) < 0.4 || slopeAt(x, z) < 0.75) { x = o.x; z = o.z; }
-    const t = makeTown(o.race, x, z, { build: 0 });
+    const t = makeTown(o.race, x, z, { build: 0 }); townLog(t, `${crowd.length} ${RACES[o.race].name.toLowerCase()} started building a town here.`);
     for (const p of crowd) { p.town = t.id; p.hx = x; p.hz = z; }
     placeCenter(t);
     toast(`🔨 The ${RACES[t.race].name.toLowerCase()} are building ${t.name}!`, 2600);
@@ -2991,7 +3013,7 @@ function buildWork(t, dt) {
     hammer(t, c, dt);
     if (t.build >= 1) {
       c.build = undefined; poof(c.x, c.y, c.z, 4, [0.85, 0.8, 0.7]);
-      toast(`🎉 ${t.name} is built! Now it will grow.`, 2600);
+      toast(`🎉 ${t.name} is built! Now it will grow.`, 2600); townLog(t, 'The town hall was finished.');
       [523, 659, 784, 1046].forEach((f, i) => tone('triangle', f, f, 0.22, 0.08, i * 0.1));
       t.growT = 6; dirty = true;
     }
@@ -3023,6 +3045,7 @@ function growTown(t, dt) {
   if (folk.length) t.hadFolk = true;
   else if (t.hadFolk && homes.length) { fallTown(t, homes); return; }
   if (!homes.length && !folk.length) { removeTown(t); return; }
+  townGold(t, folk, homes, dt);
   if (buildWork(t, dt)) return;                     // (still building the town centre)
   const slow = settings.build, done = homes.filter(b => b.build === undefined).length;
   townRule(t, folk, homes, done, dt);
@@ -3048,7 +3071,7 @@ function growTown(t, dt) {
     t.folkT = 3.5 + Math.random() * 2;
     if (folk.length < Math.min(40, (slow ? TOWN_NEED : 3) + done * 2) && objs.length < 2900) {
       const a = Math.random() * 6.283, x = t.x + Math.cos(a) * 5, z = t.z + Math.sin(a) * 5;
-      if (groundAt(x, z) > 0.2) { const id = pick(RACES[t.race].folk), o = makeObj(id, x, z, a, growOf(id)); o.race = t.race; o.town = t.id; settle(o); objs.push(o); pop.push({ o, t: 0 }); updateCount(); }
+      if (groundAt(x, z) > 0.2) { const id = pick(RACES[t.race].folk), o = makeObj(id, x, z, a, growOf(id)); o.race = t.race; o.town = t.id; o.bi = t.name; o.ag = 0; settle(o); objs.push(o); pop.push({ o, t: 0 }); updateCount(); }
     }
   }
 }
@@ -3063,14 +3086,14 @@ function removeTown(t) {
 function updateTowns(dt) {
   for (const t of towns.slice()) growTown(t, dt);
   if (!settings.fight) { for (const o of objs) if (o.march) { o.march = null; o.hx = TOWN[o.town] ? TOWN[o.town].x : o.x; o.hz = TOWN[o.town] ? TOWN[o.town].z : o.z; } return; }
-  for (const [k, w] of [...wars]) { w.t -= dt; if (w.t <= 0) { wars.delete(k); const [a, b] = k.split('|').map(id => TOWN[id]); if (a && b) toast(`🕊️ ${a.name} and ${b.name} made peace`, 2200); } }
+  for (const [k, w] of [...wars]) { w.t -= dt; if (w.t <= 0) { wars.delete(k); const [a, b] = k.split('|').map(id => TOWN[id]); if (a && b) { toast(`🕊️ ${a.name} and ${b.name} made peace`, 2200); townLog(a, `Made peace with ${b.name}.`); townLog(b, `Made peace with ${a.name}.`); } } }
   for (const t of towns) {
     if (t.race === 'human' && t.mode === 'normal') {
       t.warT -= dt;
       if (t.warT <= 0) {
         t.warT = 80 + Math.random() * 80;
         const others = towns.filter(o => o !== t && o.race !== 'orc' && o.mode !== 'peace' && !t.friends.has(o.id) && !atWar(t.id, o.id));
-        if (others.length && Math.random() < 0.45) { const e = pick(others); wars.set(warKey(t.id, e.id), { t: 60 + Math.random() * 50 }); toast(`⚔️ ${t.name} declared war on ${e.name}!`, 2600); tone('sawtooth', 220, 110, 0.6, 0.08, 0, 800); }
+        if (others.length && Math.random() < 0.45) { const e = pick(others); wars.set(warKey(t.id, e.id), { t: 60 + Math.random() * 50 }); townLog(t, `Declared war on ${e.name}.`); townLog(e, `${t.name} declared war on us!`); toast(`⚔️ ${t.name} declared war on ${e.name}!`, 2600); tone('sawtooth', 220, 110, 0.6, 0.08, 0, 800); }
       }
     }
     t.marchT -= dt;
@@ -3081,7 +3104,8 @@ function updateTowns(dt) {
       if (e && Math.hypot(e.x - t.x, e.z - t.z) < 1200) {
         const free = townFolk(t).filter(o => !o.march && !o.ruler), army = free.filter(o => o.soldier);
         const go = army.length >= 2 ? army : free.slice(0, Math.max(2, Math.floor(free.length / 2))), n = go.length;   // kings and queens send their army; without one, half the town goes
-        go.forEach(o => { o.march = e.id; o.marchT = 0; });
+        go.forEach(o => { o.march = e.id; o.marchT = 0; o.ba = (o.ba || 0) + 1; });
+        if (n) townLog(t, `Sent ${n} ${army.length >= 2 ? 'soldiers' : 'people'} to fight ${e.name}.`);
         const boss = townFolk(t).find(o => o.ruler);
         if (n && boss && near3(boss)) say(boss, `${rulerTitle(boss)}: Attack ${e.name}!`, '#ffd23f');
         else if (n && near3({ x: t.x, z: t.z })) say({ x: t.x, z: t.z, y: groundAt(t.x, t.z) + 8, t: RACES[t.race].center, s: 0 }, t.race === 'orc' ? 'Waaagh! Attack!' : 'March!', '#ffd23f');
@@ -3109,7 +3133,7 @@ function marchStep(o, d, dt) {
       if (b.hp === undefined) { b.maxHp = b.hp = 25 * b.s; }
       b.hp -= statOf(o)[1]; b.hitT = 0.2;
       if (near3(o)) noiseHit('lowpass', 400, 0.8, 0.15, 0.1);
-      if (b.hp <= 0) defeat(b, null);
+      if (b.hp <= 0) { const bt = TOWN[b.town]; if (bt) townLog(bt, `${TOWN[o.town] ? TOWN[o.town].name : 'An enemy'} knocked down a ${CAT[b.t].name.toLowerCase()}.`); defeat(b, null); }
     }
   } else o.moving = false;
   o.y = groundY(o, d); o.tx = undefined;
@@ -3144,13 +3168,15 @@ function buildTownPanel() {
     list.appendChild(row);
   }
 }
-function saveTowns() { return towns.map(t => ({ id: t.id, race: t.race, name: t.name, x: +t.x.toFixed(1), z: +t.z.toFixed(1), mode: t.mode, built: t.built, build: +t.build.toFixed(3), friends: [...t.friends] })); }
+function saveTowns() { return towns.map(t => ({ id: t.id, race: t.race, name: t.name, x: +t.x.toFixed(1), z: +t.z.toFixed(1), mode: t.mode, built: t.built, build: +t.build.toFixed(3), friends: [...t.friends], gold: Math.floor(t.gold || 0), age: Math.floor(t.age || 0), log: (t.log || []).slice(-12) })); }
 function loadTowns(list) {
   towns = []; TOWN = {}; wars = new Map();
   if (!Array.isArray(list)) return;
   for (const s of list.slice(0, 60)) {
     if (!s || typeof s.id !== 'string' || s.id.length > 30 || !RACES[s.race] || !Number.isFinite(s.x) || !Number.isFinite(s.z)) continue;
-    makeTown(s.race, s.x, s.z, { id: s.id, name: typeof s.name === 'string' ? s.name.slice(0, 30) : townName(s.race), mode: ['normal', 'peace', 'everyone'].includes(s.mode) ? s.mode : 'normal', built: Number.isFinite(s.built) ? s.built : 0, build: Number.isFinite(s.build) ? clamp(s.build, 0, 1) : 1, friends: new Set(Array.isArray(s.friends) ? s.friends.filter(f => typeof f === 'string').slice(0, 60) : []) });
+    makeTown(s.race, s.x, s.z, { id: s.id, name: typeof s.name === 'string' ? s.name.slice(0, 30) : townName(s.race), mode: ['normal', 'peace', 'everyone'].includes(s.mode) ? s.mode : 'normal', built: Number.isFinite(s.built) ? s.built : 0, build: Number.isFinite(s.build) ? clamp(s.build, 0, 1) : 1, friends: new Set(Array.isArray(s.friends) ? s.friends.filter(f => typeof f === 'string').slice(0, 60) : []),
+      gold: Number.isFinite(s.gold) ? clamp(s.gold, 0, 99999) : 50, age: Number.isFinite(s.age) ? clamp(s.age, 0, 1e7) : 0,
+      log: Array.isArray(s.log) ? s.log.filter(e => e && Number.isFinite(e.y) && typeof e.text === 'string').slice(-12).map(e => ({ y: clamp(e.y | 0, 0, 1e5), text: e.text.slice(0, 120) })) : [] });
   }
 }
 // Disasters, and the battle wand (in People)
@@ -3175,11 +3201,11 @@ function crownRulers(t, folk) {
   const names = [];
   kinds.forEach((k, i) => {
     const o = civ[i]; if (!o) return;
-    o.ruler = k; o.rname = pick(RULER_NAMES[t.race][k === 'king' ? 0 : 1]); o.hx = t.x; o.hz = t.z;
+    o.ruler = k; o.rname = pick(RULER_NAMES[t.race][k === 'king' ? 0 : 1]); o.nm = o.rname; o.hx = t.x; o.hz = t.z;
     o.maxHp = o.hp = (statOf(o)[0] * 2.5) * o.s;
     names.push(rulerTitle(o));
   });
-  toast(`👑 ${t.name} crowned ${names.join(' and ')}!`, 2800);
+  toast(`👑 ${t.name} crowned ${names.join(' and ')}!`, 2800); townLog(t, `Crowned ${names.join(' and ')}.`);
   [659, 784, 988].forEach((f, i) => tone('triangle', f, f, 0.25, 0.07, i * 0.12));
   dirty = true;
 }
@@ -3265,12 +3291,12 @@ function wandAt(hit, peace) {
     wars.delete(key); a.friends.add(t.id); t.friends.add(a.id);
     for (const o of objs) if ((o.town === a.id && o.march === t.id) || (o.town === t.id && o.march === a.id)) { o.march = null; o.foe = null; const m = TOWN[o.town]; o.hx = m.x; o.hz = m.z; }   // the armies go home
     for (const o of objs) if (o.foe && o.town && o.foe.town && ((o.town === a.id && o.foe.town === t.id) || (o.town === t.id && o.foe.town === a.id))) o.foe = null;
-    toast(`🕊️ The peace wand made ${a.name} and ${t.name} friends!`, 3000);
+    toast(`🕊️ The peace wand made ${a.name} and ${t.name} friends!`, 3000); townLog(a, `Became friends with ${t.name}.`); townLog(t, `Became friends with ${a.name}.`);
     [523, 659, 784, 1046].forEach((f, i) => tone('sine', f, f, 0.3, 0.06, i * 0.15));
   } else {
     a.friends.delete(t.id); t.friends.delete(a.id);
     for (const x of [a, t]) if (x.mode === 'peace') x.mode = 'normal';
-    wars.set(key, { t: 180 });
+    wars.set(key, { t: 180 }); townLog(a, `The battle wand started a war with ${t.name}!`); townLog(t, `The battle wand started a war with ${a.name}!`);
     a.marchT = Math.min(a.marchT, 2); t.marchT = Math.min(t.marchT, 4);
     toast(`⚔️ The battle wand sent ${a.name} to war with ${t.name}!` + (settings.fight ? '' : ' (Turn Fighting on in the menu to see the battle.)'), 3000);
     tone('sawtooth', 220, 110, 0.6, 0.08, 0, 800); [523, 392, 523, 659].forEach((f, i) => tone('square', f, f, 0.12, 0.05, i * 0.13, 1800));
@@ -3312,6 +3338,7 @@ function wreck(o, dmg, dz, col) {
   o.hp -= dmg; o.hitT = 0.25;
   if (o.hp > 0) return;
   if (dz && dz.grp) dz.grp.dels.push(o);
+  if (dz && o.town && TOWN[o.town] && !d.move && !(dz.logged || (dz.logged = new Set())).has(o.town)) { dz.logged.add(o.town); townLog(TOWN[o.town], { tornado: 'A tornado tore through the town.', wave: 'A tsunami crashed into the town.', bomb: 'A bomb fell on the town!', quake: 'An earthquake shook the town.' }[dz.kind] || 'Disaster struck!'); }
   if (col) poof(o.x, o.y + 0.5, o.z, Math.max(0.8, d.h * o.s * 0.4), col);
   defeat(o, null);
 }
@@ -3388,7 +3415,7 @@ function updateDisasters(dt, time) {
         if (dist > R * 1.4) continue;
         const huge = d.r * o.s > 5 || o.t === 'dragon' || o.t === 'hydra' || o.t === 'seaserpent';
         if (huge || (!d.move && d.cat === 'build')) { wreck(o, (huge ? 6 : 40) * dz.k * dt, dz, [0.55, 0.45, 0.35]); continue; }
-        if (dist < R && d.move !== 'swim') { o.held = { tor: dz, a: Math.atan2(o.z - dz.z, o.x - dz.x), rr: Math.max(1, dist), h: 0 }; if (d.move && Math.random() < 0.5) say(o, pick(['WHOAAA!', 'Help!', 'Wheee!']), '#ffffff'); }
+        if (dist < R && d.move !== 'swim') { o.held = { tor: dz, a: Math.atan2(o.z - dz.z, o.x - dz.x), rr: Math.max(1, dist), h: 0 }; o.to = (o.to || 0) + 1; if (d.move && Math.random() < 0.5) say(o, pick(['WHOAAA!', 'Help!', 'Wheee!']), '#ffffff'); }
       }
     } else if (dz.kind === 'wave') {
       const sp = 30;
@@ -3408,7 +3435,7 @@ function updateDisasters(dt, time) {
         if (u > dz.front - 6 && u < dz.front + 2) {
           if (!d.move || d.cat === 'build') wreck(o, 45, dz, [0.75, 0.88, 1]);
           else if (o.t === 'dragon' || o.t === 'hydra') wreck(o, 15, dz, null);
-          else { o.held = { wave: dz }; if (Math.random() < 0.4) say(o, pick(['Glub!', 'AAAH!', 'Splash!']), '#bfe8ff'); }
+          else { o.held = { wave: dz }; o.wa = (o.wa || 0) + 1; if (Math.random() < 0.4) say(o, pick(['Glub!', 'AAAH!', 'Splash!']), '#bfe8ff'); }
         }
       }
     } else if (dz.kind === 'quake') {
@@ -3492,6 +3519,143 @@ function drawDisasters(time) {
     }
   }
 }
+/* =====================================================================
+   Inspect: tap a person, animal, monster or town to see its name, age and story
+   (island time: one year goes by every 2 minutes)
+   ===================================================================== */
+const YEAR = 120;
+const FIRST_NAMES = {
+  human: ['Tom', 'Ada', 'Ben', 'Lily', 'Sam', 'Nell', 'Will', 'Rosie', 'Jack', 'Mae', 'Finn', 'Ivy', 'Hugh', 'Elsie', 'Ned', 'Poppy', 'Alfie', 'Daisy', 'Owen', 'Hazel'],
+  elf: ['Aerin', 'Lirien', 'Faelan', 'Ilyra', 'Thandor', 'Nimue', 'Elandor', 'Sylwen', 'Caladh', 'Mireth', 'Arannis', 'Liriel'],
+  dwarf: ['Borin', 'Hilda', 'Gunnar', 'Dagny', 'Thrym', 'Kelda', 'Brann', 'Sigrun', 'Odvar', 'Freya', 'Rurik', 'Astrid'],
+  orc: ['Grub', 'Snaga', 'Mogg', 'Urza', 'Krag', 'Bolga', 'Throk', 'Gash', 'Ruzga', 'Lugg', 'Nazra', 'Drok'],
+};
+const PET_NAMES = ['Bramble', 'Pip', 'Clover', 'Biscuit', 'Pebble', 'Maple', 'Snowball', 'Nutmeg', 'Thistle', 'Juniper', 'Waffles', 'Ziggy', 'Mossy', 'Sprout', 'Tiny', 'Bubbles', 'Hazelnut', 'Pumpkin', 'Rusty', 'Willow'];
+const BEAST_NAMES = [['Grim', 'Rot', 'Bone', 'Shade', 'Gloom', 'Skull', 'Murk', 'Ash', 'Ember', 'Storm', 'Fang', 'Dread'], ['jaw', 'claw', 'fang', 'grin', 'eye', 'bite', 'maw', 'scale', 'wing', 'tail', 'horn', 'howl']];
+const TRAITS = ['brave', 'shy', 'grumpy', 'cheerful', 'curious', 'sleepy', 'bossy', 'kind', 'clever', 'silly', 'proud', 'gentle', 'nosy', 'fearless', 'jumpy'];
+const LIKES = ['apples', 'sunny days', 'naps', 'singing', 'the sea', 'stories', 'shiny things', 'thunderstorms', 'flowers', 'mud', 'adventures', 'quiet mornings', 'snacks', 'the moon'];
+const JOBS = { human: ['farmer', 'baker', 'blacksmith', 'fisher', 'builder', 'shopkeeper', 'shepherd', 'carpenter'], elf: ['archer', 'gardener', 'singer', 'healer', 'scout', 'weaver'],
+  dwarf: ['miner', 'blacksmith', 'brewer', 'stonemason', 'jeweller', 'tunnel digger'], orc: ['hunter', 'drummer', 'cook', 'scout', 'boar tamer', 'axe sharpener'] };
+const AGE_RANGE = { dragon: [120, 900], hydra: [300, 1000], seaserpent: [200, 800], phoenix: [500, 1500], unicorn: [40, 200], ghost: [150, 600], skeleton: [80, 400],
+  zombie: [20, 90], demon: [100, 999], troll: [60, 250], minotaur: [40, 160], goblin: [8, 40], whale: [10, 80], dino: [5, 30], dog: [1, 12], cat: [1, 14] };
+const hashStr = s => { let h = 7; for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); };
+function lifeInfo(o) {                    // fill in the name, age and personality the first time someone looks
+  const d = CAT[o.t];
+  if (o.ruler && o.rname) o.nm = o.rname;
+  if (!o.nm) {
+    if (o.race) o.nm = pick(FIRST_NAMES[o.race]);
+    else if (d.cat === 'mythical' && !['unicorn', 'phoenix'].includes(o.t)) o.nm = pick(BEAST_NAMES[0]) + pick(BEAST_NAMES[1]);
+    else if (d.cat === 'people') o.nm = pick(FIRST_NAMES.human);
+    else o.nm = pick(PET_NAMES);
+  }
+  if (o.ag === undefined) {
+    const r = AGE_RANGE[o.t] || (o.ruler ? [35, 75] : o.race || d.cat === 'people' ? [16, 70] : [1, 10]);
+    o.ag = r[0] + Math.random() * (r[1] - r[0]);
+  }
+  if (!o.tr) o.tr = pick(TRAITS);
+  if (!o.lk) o.lk = pick(LIKES);
+}
+function townLog(t, text) {
+  if (!t) return;
+  t.log = t.log || [];
+  t.log.push({ y: Math.floor((t.age || 0) / YEAR), text });
+  if (t.log.length > 12) t.log.shift();
+}
+function townGold(t, folk, homes, dt) {          // towns get richer as they grow, and wars cost money
+  t.age = (t.age || 0) + dt;
+  if (t.gold === undefined) t.gold = 50;
+  const stalls = homes.filter(b => b.t === 'stall' || b.t === 'forge').length;
+  t.gold += (folk.length * 0.12 + homes.length * 0.25 + stalls * 0.5) * dt;
+  if (towns.some(o => atWar(t.id, o.id))) t.gold -= folk.length * 0.15 * dt;
+  t.gold = clamp(t.gold, 0, 99999);
+}
+function wealthOf(t) {
+  const g = t.gold || 0;
+  return g < 120 ? ['Poor', '🪙'] : g < 450 ? ['Getting by', '🪙🪙'] : g < 1300 ? ['Comfortable', '💰'] : g < 3500 ? ['Rich', '💰💰'] : ['Very rich', '💎💰💰'];
+}
+const yearsTxt = y => y < 1 ? 'less than a year' : Math.floor(y) === 1 ? '1 year' : Math.floor(y) + ' years';
+let inspected = null, inspectT = 0;
+function inspectAt(hit) {
+  if (!hit) return false;
+  let best = null, bd = Infinity;
+  for (const o of objs) {                                         // people and animals first, since they're small and move
+    const d = CAT[o.t]; if (!d.move || o.gone) continue;
+    const dist = Math.hypot(o.x - hit.x, o.z - hit.z), reach = d.r * o.s + 2 + cam.dist * 0.015;
+    if (dist < reach && dist < bd) { bd = dist; best = o; }
+  }
+  if (!best) { const t = townNear(hit.x, hit.z, 45); if (t) { openInspect({ town: t }); return true; } }
+  if (!best) best = eraseTarget(hit);
+  if (!best) { sfx('nope'); toast('🔍 Tap a person, an animal, a monster or a town', 1500); return false; }
+  openInspect({ obj: best });
+  return true;
+}
+function openInspect(what) { inspected = what; inspectT = 0; sfx('click'); $('inspect').classList.add('show'); fillInspect(); }
+function closeInspect() { inspected = null; $('inspect').classList.remove('show'); }
+function updateInspect(dt) {
+  if (!inspected) return;
+  if ((inspected.obj && inspected.obj.gone) || (inspected.town && !TOWN[inspected.town.id])) {
+    const who = inspected.obj ? (inspected.obj.nm || CAT[inspected.obj.t].name) : inspected.town.name;
+    $('inspBody').innerHTML = `<p class="istory">${esc(who)} is gone.</p>`; inspected = null; return;
+  }
+  if ((inspectT -= dt) <= 0) { inspectT = 0.5; fillInspect(); }
+}
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function row(k, v) { return `<div class="irow"><span>${k}</span><b>${v}</b></div>`; }
+function fillInspect() {
+  if (!inspected) return;
+  let head = '', body = '';
+  if (inspected.town) {
+    const t = inspected.town, R = RACES[t.race], folk = townFolk(t), homes = townBuildings(t);
+    const rulers = folk.filter(o => o.ruler), sol = folk.filter(o => o.soldier).length, foes = towns.filter(o => atWar(t.id, o.id)).map(o => o.name);
+    const pals = [...t.friends].map(id => TOWN[id] && TOWN[id].name).filter(Boolean), [wl, wi] = wealthOf(t);
+    const status = t.build < 1 ? `🔨 Still being built (${Math.floor(t.build * 100)}%)` : foes.length ? '⚔️ At war with ' + foes.map(esc).join(', ') : t.mode === 'peace' ? '🕊️ Keeping the peace' : pals.length ? '🤝 At peace' : '😐 Neutral';
+    head = `${R.icon} ${esc(t.name)}`;
+    body = row('People', `${R.name}`) + row('Population', folk.length) + row('Soldiers', sol) + row('Buildings', homes.length)
+      + row('Wealth', `${wi} ${wl} <small>(${Math.floor(t.gold || 0)} gold)</small>`)
+      + row('Rulers', rulers.length ? rulers.map(o => '👑 ' + esc(rulerTitle(o))).join('<br>') : 'Nobody yet')
+      + row('Status', status) + (pals.length ? row('Friends', pals.map(esc).join(', ')) : '')
+      + row('Founded', yearsTxt((t.age || 0) / YEAR) + ' ago');
+    const log = (t.log || []).slice().reverse();
+    if (log.length) body += '<div class="ilog"><b>History</b>' + log.map(e => `<div><i>Year ${e.y + 1}</i> ${esc(e.text)}</div>`).join('') + '</div>';
+  } else {
+    const o = inspected.obj, d = CAT[o.t];
+    if (!d.move) {
+      const t = o.town && TOWN[o.town];
+      head = `${d.icon} ${esc(d.name)}`;
+      body = row('What it is', CATS.find(c => c.id === d.cat) ? CATS.find(c => c.id === d.cat).name.replace(/s$/, '') : 'Thing')
+        + (t ? row('Belongs to', esc(t.name)) : '') + (o.build !== undefined ? row('Building', Math.floor(o.build * 100) + '%') : '')
+        + (o.hp !== undefined ? row('Health', Math.max(0, Math.round(o.hp / o.maxHp * 100)) + '%') : '')
+        + `<p class="istory">${t ? `Built by the ${RACES[t.race].name.toLowerCase()} of ${esc(t.name)}.` : 'You put it here.'}</p>`;
+    } else {
+      lifeInfo(o);
+      const t = o.town && TOWN[o.town], kind = o.race ? CAT[o.race].name : d.name, job = o.ruler ? (o.ruler === 'king' ? 'King' : 'Queen') + ' of ' + (t ? t.name : 'nowhere') : o.soldier ? 'Soldier' : o.race && t ? JOBS[o.race][hashStr(o.nm + o.t) % JOBS[o.race].length] : null;
+      const title = o.ruler ? rulerTitle(o) : o.nm;
+      head = `${o.ruler ? '👑' : d.icon} ${esc(title)}`;
+      const doing = o.held ? (o.held.tor ? 'Flying around in a tornado!' : 'Being swept away by a wave!') : o.fleeT > 0 ? 'Running away!' : o.march && TOWN[o.march] ? 'Marching to battle against ' + esc(TOWN[o.march].name) : o.foe && !o.foe.gone ? 'Fighting ' + esc(o.foe.nm || CAT[o.foe.t].name.toLowerCase()) : o.flying ? 'Flying' : o.moving ? 'Walking around' : 'Resting';
+      body = row('Kind', esc(kind)) + row('Age', yearsTxt(o.ag) + ' old') + (job ? row('Job', esc(job)) : '') + (t ? row('Home', esc(t.name)) : '')
+        + row('Personality', esc(o.tr)) + row('Likes', esc(o.lk))
+        + (o.hp !== undefined && o.maxHp ? row('Health', Math.max(0, Math.round(o.hp / o.maxHp * 100)) + '%') : row('Health', '100%'))
+        + row('Doing', doing);
+      // the story so far
+      const he = o.ruler === 'queen' || o.t === 'human3' ? 'she' : o.race || d.cat === 'people' ? 'he' : 'it';
+      const He = he[0].toUpperCase() + he.slice(1), bits = [];
+      bits.push(o.bi ? `${esc(o.nm)} was born in ${esc(o.bi)}.` : o.race ? `${esc(o.nm)} came to the island with the first ${CAT[o.race].name.toLowerCase()}s.` : `${esc(o.nm)} is a ${esc(o.tr)} ${esc(d.name.toLowerCase())} who loves ${esc(o.lk)}.`);
+      if (o.ruler) bits.push(`${He} was crowned ruler of ${t ? esc(t.name) : 'a town'}.`);
+      if (o.soldier) bits.push(`${He} joined the army to guard ${t ? esc(t.name) : 'the town'}.`);
+      if (o.ba) bits.push(`${He} has marched into battle ${o.ba === 1 ? 'once' : o.ba + ' times'}.`);
+      if (o.ki) bits.push(o.fac === 'predator' ? `${He} has caught ${o.ki} ${o.ki === 1 ? 'meal' : 'meals'}.` : o.t === 'zombie' ? `${He} has bitten ${o.ki} ${o.ki === 1 ? 'victim' : 'victims'}.` : `${He} has beaten ${o.ki} ${o.ki === 1 ? 'enemy' : 'enemies'}.`);
+      if (o.zb) bits.push(`${He} used to be a ${esc(o.zb)}, until a zombie bit ${he === 'it' ? 'it' : he === 'she' ? 'her' : 'him'}.`);
+      if (o.to) bits.push(`${He} once got picked up by a tornado${o.to > 1 ? ' (' + o.to + ' times!)' : ''} and lived to tell the tale.`);
+      if (o.wa) bits.push(`${He} survived a tsunami.`);
+      if (o.sc) bits.push(`${He} has run away screaming from a ghost ${o.sc === 1 ? 'once' : o.sc + ' times'}.`);
+      if (o.fac === 'predator' && !o.ki) bits.push(`${He} is hungry and on the lookout for something to eat.`);
+      if (bits.length < 3 && o.race) bits.push(`${He} is ${/^[aeiou]/.test(o.tr) ? 'an' : 'a'} ${esc(o.tr)} ${o.race === 'elf' ? 'elf' : o.race} who loves ${esc(o.lk)}.`);
+      body += `<p class="istory">${bits.join(' ')}</p>`;
+    }
+  }
+  $('inspHead').innerHTML = head; $('inspBody').innerHTML = body;
+}
+function toggleInspect() { tool.inspect = !tool.inspect; if (tool.inspect) tool.erase = tool.inspect = false; sfx('click'); fillItems(); toast(tool.inspect ? '🔍 Inspect: tap a person, an animal, a monster or a town' : '🔨 Building again', 1500); if (!tool.inspect) closeInspect(); }
 let fx = [], texts = [], screamT = 0;
 function poof(x, y, z, size, col) {
   for (let i = 0; i < 10; i++) { const a = Math.random() * 6.283, sp = 1 + Math.random() * 2; fx.push({ x, y: y + size * 0.6, z, vx: Math.cos(a) * sp, vy: 1 + Math.random() * 2, vz: Math.sin(a) * sp, t: 0, life: 0.9 + Math.random() * 0.4, r: size * (0.25 + Math.random() * 0.25), col }); }
@@ -3499,11 +3663,13 @@ function poof(x, y, z, size, col) {
 function say(o, text, color) { texts.push({ x: o.x, y: o.y + CAT[o.t].h * o.s + 0.6, z: o.z, t: 0, text, color }); }
 function defeat(v, by) {
   if (v.gone) return;
+  if (by && !by.gone) by.ki = (by.ki || 0) + 1;
+  if (v.town && TOWN[v.town] && v.ruler && !(by && by.t === 'zombie')) townLog(TOWN[v.town], `${rulerTitle(v)} was defeated.`);
   if (v.ruler && TOWN[v.town] && !(by && by.t === 'zombie')) toast(`👑 ${rulerTitle(v)} of ${TOWN[v.town].name} was defeated!`, 2400);
   const dv = CAT[v.t];
   if (by && by.t === 'zombie' && dv.move !== 'swim' && v.t !== 'zombie') {      // a zombie's bite makes another zombie
     poof(v.x, v.y, v.z, dv.h * v.s * 0.6, [0.5, 0.75, 0.4]);
-    v.t = 'zombie'; v.fac = 'undead'; v.race = null; v.town = null; v.ruler = null; v.soldier = false; v.foe = null; v.fleeT = 0; v.ww = null; v.segs = null;
+    v.t = 'zombie'; v.fac = 'undead'; v.zb = v.zb || (v.race ? CAT[v.race].name.toLowerCase() : CAT[v.t].name.toLowerCase()); v.race = null; v.town = null; v.ruler = null; v.soldier = false; v.foe = null; v.fleeT = 0; v.ww = null; v.segs = null;
     v.maxHp = v.hp = STATS.zombie[0] * v.s; v.hx = v.x; v.hz = v.z; v.tx = undefined; settle(v);
     if (near3(v)) { tone('sawtooth', 160, 90, 0.5, 0.08, 0, 600); }
     return;
@@ -3611,7 +3777,7 @@ function ghostScares(dt) {
     near(g.x, g.z, 12 * g.s, o => {
       if (o.gone || o.fac === 'ghost' || o.fac === 'undead' || o.fleeT > 0.5 || !CAT[o.t].move || CAT[o.t].move === 'fly') return;
       if (Math.hypot(o.x - g.x, o.z - g.z) > 12 * g.s) return;
-      o.fleeT = 3; o.fleeFrom = { x: g.x, z: g.z }; o.foe = null;
+      o.fleeT = 3; o.fleeFrom = { x: g.x, z: g.z }; o.foe = null; o.sc = (o.sc || 0) + 1;
       if (screamT <= 0 && near3(o)) {
         screamT = 0.45; say(o, pick(['AAAH!', 'EEEK!', 'A GHOST!', 'RUN!']), '#ffffff');
         const f0 = 700 + Math.random() * 500; tone('sawtooth', f0, f0 * 1.6, 0.35, 0.05, 0, 2500); tone('sine', f0 * 1.5, f0 * 2.2, 0.4, 0.04, 0.05);
@@ -3743,7 +3909,8 @@ function drawCursor(time) {
   if (state !== 'play' || !cursor) return;
   const d = selectedDef(), s = sizeOf(d);
   let ok, ringR, col;
-  if (tool.erase) { ok = tool.brush > 0 || !!eraseTarget(cursor); ringR = tool.brush ? eraseRadius() : 1.6 + cam.dist * 0.012; col = ok ? [1, 0.35, 0.3] : [0.7, 0.5, 0.5]; }
+  if (tool.inspect) { ok = true; ringR = 1.6 + cam.dist * 0.012; col = [0.4, 0.8, 1]; }
+  else if (tool.erase) { ok = tool.brush > 0 || !!eraseTarget(cursor); ringR = tool.brush ? eraseRadius() : 1.6 + cam.dist * 0.012; col = ok ? [1, 0.35, 0.3] : [0.7, 0.5, 0.5]; }
   else if (d.tool) {
     ok = true; ringR = d.tool === 'disaster' ? { tornado: 6, tsunami: 12, bomb: 10, sprinkle: 24, quake: 32 }[d.kind] * Math.sqrt(SIZES[tool.size]) : d.tool === 'wand' ? 10 : landRadius();
     col = d.tool === 'wand' ? (d.peace ? [1, 1, 1] : [0.8, 0.5, 1]) : d.tool === 'disaster' ? [1, 0.4, 0.2] : d.tool === 'biome' ? mixc(BIOME_GROUND[d.biome][0], [1, 1, 1], 0.3) : d.mode === 'shallow' || d.mode === 'deep' ? [0.35, 0.7, 1] : [1, 0.82, 0.45];
@@ -3755,7 +3922,7 @@ function drawCursor(time) {
   drawMesh(ringMesh(col), mChain(mT(cursor.x, y, cursor.z), mS3(ringR, 1, ringR)));
   gl.enable(gl.DEPTH_TEST);
   gl.uniform1f(progWorld.u.uEmit, 0);
-  if (!tool.erase && !d.tool) {
+  if (!tool.erase && !tool.inspect && !d.tool) {
     const ghost = { t: d.id, x: cursor.x, z: cursor.z, s, r: Math.atan2(camEye[0] - cursor.x, camEye[2] - cursor.z) + tool.turn, phase: time * 3, ang: 0, moving: false };
     settle(ghost);
     if (d.move === 'fly') ghost.y = Math.max(cursor.y, 0) + 0.5 + d.h * s * 0.5;
@@ -3782,24 +3949,25 @@ function fillItems() {
   CATS[tool.cat].items.forEach((id, i) => {
     const d = CAT[id], b = document.createElement('button');
     b.innerHTML = `<span class="e">${d.icon}</span>${d.name}`;
-    b.onclick = () => { tool.item[tool.cat] = i; tool.erase = false; sfx('click'); fillItems(); };
+    b.onclick = () => { tool.item[tool.cat] = i; tool.erase = tool.inspect = false; sfx('click'); fillItems(); };
     if (i === tool.item[tool.cat] && !tool.erase) b.classList.add('on');
     box.appendChild(b);
   });
   const sel = box.children[tool.item[tool.cat]];
   if (sel) sel.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   $('eraseBtn').classList.toggle('on', tool.erase);
+  $('inspectBtn').classList.toggle('on', !!tool.inspect);
   $('sizeLab').textContent = SIZE_SHORT[tool.size];
 }
-function setCat(i) { tool.cat = (i + CATS.length) % CATS.length; tool.erase = false; fillItems(); }
-function stepItem(k) { const n = CATS[tool.cat].items.length; tool.item[tool.cat] = (tool.item[tool.cat] + k + n) % n; tool.erase = false; sfx('click'); fillItems(); }
+function setCat(i) { tool.cat = (i + CATS.length) % CATS.length; tool.erase = tool.inspect = false; fillItems(); }
+function stepItem(k) { const n = CATS[tool.cat].items.length; tool.item[tool.cat] = (tool.item[tool.cat] + k + n) % n; tool.erase = tool.inspect = false; sfx('click'); fillItems(); }
 function stepSize(k) { tool.size = clamp(tool.size + k, 0, SIZES.length - 1); sfx('click'); fillItems(); toast('Size: ' + SIZE_NAMES[tool.size], 900); }
 function turnIt() { tool.turn += Math.PI / 4; sfx('turn'); }
-function toggleErase() { tool.erase = !tool.erase; sfx('click'); fillItems(); toast(tool.erase ? '🧽 Eraser: click things to take them away' : '🔨 Building again', 1300); }
+function toggleErase() { tool.erase = !tool.erase; tool.inspect = false; sfx('click'); fillItems(); toast(tool.erase ? '🧽 Eraser: click things to take them away' : '🔨 Building again', 1300); }
 function updateCount() { $('countLab').textContent = objs.length + ' thing' + (objs.length === 1 ? '' : 's'); }
-function act(hit) { return tool.erase ? eraseAt(hit) : placeAt(hit); }
+function act(hit) { return tool.inspect ? inspectAt(hit) : tool.erase ? eraseAt(hit) : placeAt(hit); }
 // land tools and land types keep working while you hold the button down (even without moving)
-const isTool = () => !tool.erase && !!selectedDef().tool;
+const isTool = () => !tool.erase && !tool.inspect && !!selectedDef().tool;
 function stepBrush(k) { tool.brush = clamp(tool.brush + k, 0, BRUSH_N.length - 1); sfx('click'); fillBrush(); }
 function setBrush(i) { tool.brush = i; sfx('click'); fillBrush(); }
 function fillBrush() { [...$('brushes').children].forEach((b, i) => b.classList.toggle('on', i === tool.brush)); }
@@ -3809,6 +3977,7 @@ function keyAction(e) {
   else if (c === 'Tab') setCat(tool.cat + (e.shiftKey ? -1 : 1));
   else if (c === 'KeyR') turnIt();
   else if (c === 'KeyX') toggleErase();
+  else if (c === 'KeyI') toggleInspect();
   else if (c === 'KeyZ' || c === 'Backspace') undo();
   else if (c === 'KeyT') openTowns();
   else if (c === 'Minus' || c === 'NumpadSubtract') stepSize(-1);
@@ -3827,7 +3996,7 @@ function updateCursor() {
 }
 // holding: the land tools repeat on a timer; things are placed again once you've moved a bit
 function holdBuild(dt) {
-  if (!cursor) return;
+  if (!cursor || tool.inspect) return;
   if (isTool() && (selectedDef().tool === 'disaster' || selectedDef().tool === 'wand')) return;
   if (isTool()) { repeatT += dt; if (repeatT >= (selectedDef().tool === 'biome' ? 0.16 : 0.1)) { repeatT = 0; act(cursor); } return; }
   holdT += dt;
@@ -3844,8 +4013,8 @@ function padActions(dt) {
   if (pressed(13)) stepBrush(-1);
   if (pressed(11)) { tool.size = (tool.size + 1) % SIZES.length; sfx('click'); fillItems(); toast('Size: ' + SIZE_NAMES[tool.size], 900); }
   if (pressed(3)) turnIt();
-  if (pressed(2)) toggleErase();
-  if (pressed(1)) undo();
+  if (pressed(2)) { if (tool.erase) toggleInspect(); else if (tool.inspect) toggleInspect(); else toggleErase(); }
+  if (pressed(1)) { if (inspected || $('inspect').classList.contains('show')) closeInspect(); else undo(); }
   if (pressed(8)) openTowns();
   // A builds; hold A to keep building (great for forests and painting land) or keep erasing
   if (pressed(0)) { usingPad = true; endGroup(); updateCursor(); if (cursor) { act(cursor); lastPaint = { x: cursor.x, z: cursor.z }; } holdT = 0; repeatT = 0; }
@@ -3853,6 +4022,8 @@ function padActions(dt) {
   else if (pad.prev[0]) endGroup();
 }
 $('eraseBtn').onclick = () => toggleErase();
+$('inspectBtn').onclick = () => toggleInspect();
+$('inspClose').onclick = () => { sfx('click'); closeInspect(); };
 $('turnBtn').onclick = () => turnIt();
 $('sizeDn').onclick = () => stepSize(-1);
 $('sizeUp').onclick = () => stepSize(1);
@@ -3877,9 +4048,21 @@ writeList();
 let cur = null;            // the island being built: { id, type, seed, name }
 let objs = [];             // the things on it
 let dirty = false, saveT = 0;
+// one thing in the save: [type, x, z, turn, size, town (or 0), extra]; extra holds a living thing's story
+function saveObj(o) {
+  const a = [o.t, +o.hx.toFixed(2), +o.hz.toFixed(2), +o.r.toFixed(3), o.s], x = {};
+  if (o.ruler) { x.k = o.ruler; x.n = o.rname; } else if (o.soldier) x.s = 1;
+  for (const k of ['nm', 'tr', 'lk', 'bi', 'zb']) if (typeof o[k] === 'string') x[k] = o[k];
+  if (o.ag !== undefined) x.ag = +o.ag.toFixed(2);
+  for (const k of ['ki', 'ba', 'to', 'wa', 'sc']) if (o[k]) x[k] = o[k];
+  const has = Object.keys(x).length;
+  if (o.town || has) a.push(o.town || 0);
+  if (has) a.push(x);
+  return a;
+}
 function saveIsland() {
   if (!cur) return;
-  writeJSON(ISLE_PREFIX + cur.id, { type: cur.type, seed: cur.seed, sz: 2, land: landEdits, towns: saveTowns(), objs: objs.map(o => o.town ? [o.t, +o.hx.toFixed(2), +o.hz.toFixed(2), +o.r.toFixed(3), o.s, o.town, ...(o.ruler ? [{ k: o.ruler, n: o.rname }] : o.soldier ? [{ s: 1 }] : [])] : [o.t, +o.hx.toFixed(2), +o.hz.toFixed(2), +o.r.toFixed(3), o.s]),
+  writeJSON(ISLE_PREFIX + cur.id, { type: cur.type, seed: cur.seed, sz: 2, land: landEdits, towns: saveTowns(), objs: objs.map(saveObj),
     cam: { tx: +cam.tx.toFixed(1), tz: +cam.tz.toFixed(1), yaw: +cam.yaw.toFixed(3), pitch: +cam.pitch.toFixed(3), dist: +cam.dist.toFixed(1) } });
   const m = islands.find(s => s.id === cur.id);
   if (m) { m.count = objs.length; m.last = Date.now(); writeList(); }
@@ -4142,8 +4325,8 @@ function openPause() { if (state !== 'play') return; saveIsland(); state = 'paus
 function resume() { state = 'play'; show(null); $('hud').classList.add('show'); canvas.focus(); }
 function updateHint() {
   $('hint').innerHTML = pad.connected
-    ? `Left stick: move · Right stick: turn · ${bn('LT')} / ${bn('RT')}: zoom · ${bn('A')}: build (hold to keep going) · ${bn('X')}: eraser · ${bn('B')}: undo · ${bn('LB')} / ${bn('RB')}: group · d-pad ◀ ▶: pick · d-pad ▲ ▼: brush · ${bn('R3')}: size · ${bn('Y')}: turn it · ${bn('View')}: towns`
-    : 'WASD: move · Right mouse drag: turn · Wheel: zoom · Click (hold to keep going): build · C: brush · X: eraser · Z: undo · R: turn it';
+    ? `Left stick: move · Right stick: turn · ${bn('LT')} / ${bn('RT')}: zoom · ${bn('A')}: build (hold to keep going) · ${bn('X')}: eraser / inspect · ${bn('B')}: undo · ${bn('LB')} / ${bn('RB')}: group · d-pad ◀ ▶: pick · d-pad ▲ ▼: brush · ${bn('R3')}: size · ${bn('Y')}: turn it · ${bn('View')}: towns`
+    : 'WASD: move · Right mouse drag: turn · Wheel: zoom · Click (hold to keep going): build · C: brush · X: eraser · I: inspect · Z: undo · R: turn it';
   $('hint').style.opacity = 1;
   clearTimeout(updateHint.h); updateHint.h = setTimeout(() => $('hint').style.opacity = 0, 12000);
 }
@@ -4267,7 +4450,7 @@ addEventListener('keydown', e => {
   }
   if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.code)) e.preventDefault();
   keys.add(e.code); usingPad = false;
-  if (e.code === 'Escape') { openPause(); return; }
+  if (e.code === 'Escape') { if ($('inspect').classList.contains('show')) closeInspect(); else openPause(); return; }
   if (!e.repeat) keyAction(e);
 });
 addEventListener('keyup', e => keys.delete(e.code));
@@ -4352,7 +4535,7 @@ function rumble(strong, weak, ms) {
 // hold the mouse button and drag to keep building (or erasing)
 function paintDrag() {
   updateCursor();
-  if (!cursor) return;
+  if (!cursor || tool.inspect) return;
   const gap = tool.erase ? 1.5 : Math.max(2, selectedDef().r * sizeOf(selectedDef()) * 2.2);
   if (!lastPaint || Math.hypot(cursor.x - lastPaint.x, cursor.z - lastPaint.z) > gap) { if (act(cursor)) lastPaint = { x: cursor.x, z: cursor.z }; }
 }
@@ -4361,7 +4544,7 @@ function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
   const time = now / 1000;
   pollPad();
-  if (state === 'play') updatePlay(dt);
+  if (state === 'play') { updatePlay(dt); updateInspect(dt); }
   else { menuPad(dt); if (!cur) { cam.yaw += dt * 0.04; } updateCamera(dt); }
   updateLife(dt, time);
   if (state === 'play' && dirty) { saveT += dt; if (saveT > 3) { saveT = 0; saveIsland(); } }
