@@ -63,6 +63,14 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,38px);lin
 #topbar .grow{flex:1}
 #hint{position:absolute;top:58px;left:50%;transform:translateX(-50%);background:rgba(21,18,63,.78);border-radius:12px;padding:6px 14px;font-size:14px;color:var(--cream);max-width:min(760px,92vw);text-align:center;pointer-events:none;transition:opacity .6s}
 #cross{position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border:2px solid rgba(255,255,255,.9);border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.4);pointer-events:none;display:none}
+#brushPanel{position:absolute;left:max(10px,env(safe-area-inset-left,0px));top:50%;transform:translateY(-58%);background:rgba(21,18,63,.86);border:3px solid var(--edge);border-radius:16px;padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:6px}
+#brushPanel .lab{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--sun)}
+#brushes{display:flex;flex-direction:column;gap:6px}
+#brushes button{width:54px;height:54px;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:13px;border-radius:12px}
+#brushes button i{display:block;border-radius:50%;background:var(--cream);opacity:.85}
+#brushes button.on{border-color:var(--sun);background:#2a2470}
+#brushes button.on i{background:var(--sun);opacity:1}
+@media (max-height:560px){#brushes button{width:44px;height:40px;font-size:11px}#brushPanel .lab{display:none}}
 #cross.show{display:block}
 #palette{position:absolute;left:50%;bottom:max(10px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(980px,calc(100vw - 20px));background:rgba(21,18,63,.86);border:3px solid var(--edge);border-radius:18px;padding:8px;box-sizing:border-box;display:flex;flex-direction:column;gap:6px}
 #cats{display:flex;gap:6px;flex-wrap:wrap}
@@ -97,6 +105,7 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,38px);lin
   </div>
   <div id="hint"></div>
   <div id="cross"></div>
+  <div id="brushPanel"><div class="lab">Brush</div><div id="brushes"></div></div>
   <div id="palette">
     <div id="cats"></div>
     <div id="items"></div>
@@ -147,7 +156,9 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,38px);lin
     <div class="top"><h2>How to play</h2><button class="back" data-go="title">Back</button></div>
     <div class="howto">
       <div><b class="h">Fly the camera</b><b>Controller:</b> left stick moves, right stick turns and tilts, LT zooms out, RT zooms in. <b>Keyboard and mouse:</b> WASD or the arrow keys move, hold the right mouse button and drag to turn, mouse wheel zooms, Q / E turn.</div>
-      <div><b class="h">Build</b>Pick a group (Nature, Buildings, People, Creatures, Weapons) and a thing at the bottom, then press <b>A</b> or <b>click</b> to put it down where the circle is. <b>Controller:</b> LB / RB change group, d-pad left / right pick a thing, d-pad up / down change its size, Y turns it. <b>Keyboard:</b> 1–5 change group, R turns it, - and + change its size.</div>
+      <div><b class="h">Build</b>Pick a group and a thing at the bottom, then press <b>A</b> or <b>click</b> to put it down where the circle is. Hold the button and move to keep going. <b>Controller:</b> LB / RB change group, d-pad left / right pick a thing, click the right stick to change its size, Y turns it. <b>Keyboard:</b> number keys or Tab change group, [ and ] pick a thing, R turns it, - and + change its size.</div>
+      <div><b class="h">Brush</b>The brush on the left side puts down <b>1, 2, 3, 6 or 10</b> things at a time, and makes the circle bigger for painting land. <b>Controller:</b> d-pad up / down. <b>Keyboard:</b> C (Shift+C for smaller).</div>
+      <div><b class="h">Nature</b>Paint land types: <b>forest, taiga, jungle, savanna, desert, swamp, mountain, path, cobblestone path</b> and <b>corrupted land</b>. Each one colours the ground and grows its own plants. Hold the button to keep painting. The land tools <b>raise</b> and <b>lower</b> the land, <b>flatten</b> it, or dig <b>shallow</b> or <b>deep water</b>. Single trees, rocks and flowers are in <b>Plants</b>.</div>
       <div><b class="h">Oops!</b>The <b>eraser</b> (X on the controller or keyboard) takes things away. <b>Undo</b> (B, or Z on the keyboard) takes back the last thing you did.</div>
       <div><b class="h">It's alive</b>People and creatures walk around the island by themselves. Birds and dragons fly, and fish swim in the sea.</div>
       <div><b class="h">Saving</b>Every island saves by itself. Find it again under <b>My islands</b>.</div>
@@ -382,15 +393,33 @@ function slopeAt(x, z) {        // 1 = flat, lower = steeper
   const fx = clamp(Math.round((x + TS) / TSTEP), 0, TN), fz = clamp(Math.round((z + TS) / TSTEP), 0, TN);
   return NYGRID ? NYGRID[fz * (TN + 1) + fx] : 1;
 }
-function groundColor(x, z, h, ny) {
+// land types you can paint on (Nature): the ground colour for each, by its number in BGRID (0 = the island's own)
+const BIOME_IDS = ['forest', 'taiga', 'jungle', 'savanna', 'desert', 'swamp', 'mountain', 'path', 'cobble', 'corrupt'];
+const BIOME_GROUND = {
+  forest: [[0.27, 0.54, 0.2], [0.19, 0.42, 0.15]], taiga: [[0.88, 0.91, 0.95], [0.62, 0.7, 0.62]], jungle: [[0.16, 0.44, 0.13], [0.1, 0.32, 0.1]],
+  savanna: [[0.8, 0.7, 0.38], [0.66, 0.58, 0.3]], desert: [[0.95, 0.82, 0.54], [0.88, 0.72, 0.45]], swamp: [[0.32, 0.4, 0.18], [0.24, 0.3, 0.15]],
+  mountain: [[0.55, 0.53, 0.5], [0.44, 0.42, 0.4]], path: [[0.6, 0.46, 0.3], [0.5, 0.38, 0.25]], cobble: [[0.62, 0.61, 0.6], [0.46, 0.45, 0.45]],
+  corrupt: [[0.3, 0.1, 0.36], [0.12, 0.05, 0.15]],
+};
+let BGRID = null;
+function groundColor(x, z, h, ny, b) {
   const I = ISL;
   const n = perlin(x * 0.045 + 3, z * 0.045 - 1) * 0.55 + perlin(x * 0.18, z * 0.18) * 0.25;
   let c;
   const sandTop = I.shape === 'swamp' ? 0.25 : 1.1 + n * 0.8;
-  if (h < sandTop) c = I.sand;
+  const bid = b ? BIOME_IDS[b - 1] : null;
+  if (bid) {
+    const [g1, g2] = BIOME_GROUND[bid];
+    if (bid === 'cobble') c = shade(g1, 0.72 + (perlin(x * 1.3, z * 1.3) * 0.5 + 0.5) * 0.45);
+    else if (bid === 'corrupt') c = mixc(g1, g2, clamp(0.5 + perlin(x * 0.09, z * 0.09) * 1.8, 0, 1));
+    else c = mixc(g1, g2, clamp(0.5 + n * 1.3, 0, 1));
+    if (bid === 'path' || bid === 'cobble') { if (h < 0) c = mixc(c, shade(I.sand, 0.7), smooth(0, -3, h)); return shade(c, 0.95 + n * 0.1); }
+  } else if (h < sandTop) c = I.sand;
   else c = mixc(I.grass, I.grass2, clamp(0.5 + n * 1.3, 0, 1));
-  if (I.shape === 'cliffs' || I.shape === 'dunes') c = mixc(c, I.rock, smooth(0.86, 0.7, ny));
+  if (bid === 'mountain' || bid === 'corrupt') {}
+  else if (I.shape === 'cliffs' || I.shape === 'dunes') c = mixc(c, I.rock, smooth(0.86, 0.7, ny));
   else c = mixc(c, I.rock, smooth(0.8, 0.6, ny));
+  if (bid) { if (h < 0) c = mixc(c, shade(I.sand, 0.7), smooth(0, -3, h)); return shade(c, 0.94 + n * 0.12); }
   if (I.shape === 'volcano') {
     const r = Math.hypot(x, z) / I.R;
     c = mixc(c, I.rock, smooth(0.5, 0.3, r));                        // bare rock up the volcano
@@ -787,20 +816,31 @@ function sphereVisible(x, y, z, r) { for (const p of planes) if (p[0] * x + p[1]
 /* =====================================================================
    The island mesh
    ===================================================================== */
-let terrainMesh = null, isleGlow = null;
+let terrainMesh = null, isleGlow = null, terrainGeo = null;
+// one point of the island grid: its position, smooth normal and colour, written straight into the vertex buffer
+function terrainVert(i, j) {
+  const W = TN + 1, k = j * W + i, x = -TS + i * TSTEP, z = -TS + j * TSTEP, h = HGRID[k];
+  const n = norm3(gridH(i - 1, j) - gridH(i + 1, j), 2 * TSTEP, gridH(i, j - 1) - gridH(i, j + 1));
+  NYGRID[k] = n[1];
+  const c = groundColor(x, z, h, n[1], BGRID[k]), g = terrainGeo, o = k * 5, bo = k * 20;
+  g.f[o] = x; g.f[o + 1] = h; g.f[o + 2] = z;
+  g.i8[bo + 12] = n[0] * 127; g.i8[bo + 13] = n[1] * 127; g.i8[bo + 14] = n[2] * 127; g.i8[bo + 15] = -127;
+  g.u8[bo + 16] = cl01(c[0]) * 255; g.u8[bo + 17] = cl01(c[1]) * 255; g.u8[bo + 18] = cl01(c[2]) * 255; g.u8[bo + 19] = 0;
+}
+// send changed rows of the island to the graphics card
+function uploadTerrainRows(j0, j1) {
+  const W = TN + 1; j0 = clamp(j0, 0, TN); j1 = clamp(j1, 0, TN);
+  gl.bindBuffer(gl.ARRAY_BUFFER, terrainMesh.vbo);
+  gl.bufferSubData(gl.ARRAY_BUFFER, j0 * W * 20, new Uint8Array(terrainGeo.buf, j0 * W * 20, (j1 - j0 + 1) * W * 20));
+}
 function buildTerrain() {
   TS = ISL.shape === 'chain' ? 720 : 620; TSTEP = 2 * TS / TN;
   const W = TN + 1;
-  HGRID = new Float32Array(W * W); NYGRID = new Float32Array(W * W);
+  HGRID = new Float32Array(W * W); NYGRID = new Float32Array(W * W); BGRID = new Uint8Array(W * W);
   for (let j = 0; j < W; j++) for (let i = 0; i < W; i++) HGRID[j * W + i] = islandHeight(-TS + i * TSTEP, -TS + j * TSTEP);
-  const g = new Geo(W * W);
-  for (let j = 0; j < W; j++) for (let i = 0; i < W; i++) {
-    const x = -TS + i * TSTEP, z = -TS + j * TSTEP, h = HGRID[j * W + i];
-    const n = norm3(gridH(i - 1, j) - gridH(i + 1, j), 2 * TSTEP, gridH(i, j - 1) - gridH(i, j + 1));
-    NYGRID[j * W + i] = n[1];
-    const c = groundColor(x, z, h, n[1]);
-    g.v(x, h, z, n[0], n[1], n[2], -1, c[0], c[1], c[2], 0);
-  }
+  const g = terrainGeo = new Geo(W * W + 6);
+  for (let j = 0; j < W; j++) for (let i = 0; i < W; i++) terrainVert(i, j);
+  g.n = W * W;
   const idx = new Uint32Array(TN * TN * 6);
   let k = 0;
   for (let j = 0; j < TN; j++) for (let i = 0; i < TN; i++) {
@@ -826,6 +866,52 @@ function buildTerrain() {
     }
     isleGlow = makeMesh(lg);
   }
+}
+
+/* =====================================================================
+   Changing the land: raise, lower, flatten, and dig shallow or deep water
+   (the sea is at 0 m, so any ground pushed below 0 fills with water).
+   Each brush stroke is saved and played back when the island loads.
+   ===================================================================== */
+const LAND_RADIUS = [4, 8, 14, 22, 34];        // one for each brush size
+let landEdits = [];
+function applyBrush(mode, x, z, r, amt, target, quiet) {
+  const W = TN + 1;
+  const i0 = clamp(Math.floor((x - r + TS) / TSTEP), 1, TN - 1), i1 = clamp(Math.ceil((x + r + TS) / TSTEP), 1, TN - 1);
+  const j0 = clamp(Math.floor((z - r + TS) / TSTEP), 1, TN - 1), j1 = clamp(Math.ceil((z + r + TS) / TSTEP), 1, TN - 1);
+  for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+    const px = -TS + i * TSTEP, pz = -TS + j * TSTEP, d = Math.hypot(px - x, pz - z);
+    if (d > r) continue;
+    const w = smooth(r, r * 0.35, d), k = j * W + i;
+    let h = HGRID[k];
+    if (mode === 'raise') h += amt * w;
+    else if (mode === 'lower') h -= amt * w;
+    else if (mode === 'flatten') h += (target - h) * w * amt;
+    else if (h > target) h += (target - h) * Math.min(1, w * 1.6) * amt;   // water: dig down to the right depth
+    HGRID[k] = clamp(h, -35, 160);
+  }
+  if (quiet) return;
+  for (let j = j0 - 1; j <= j1 + 1; j++) for (let i = Math.max(0, i0 - 1); i <= Math.min(TN, i1 + 1); i++) if (j >= 0 && j <= TN) terrainVert(i, j);
+  uploadTerrainRows(j0 - 1, j1 + 1);
+  for (const o of objs) if (Math.abs(o.x - x) < r + 4 && Math.abs(o.z - z) < r + 4) settle(o);
+}
+function refreshAllTerrain() {
+  for (let j = 0; j <= TN; j++) for (let i = 0; i <= TN; i++) terrainVert(i, j);
+  uploadTerrainRows(0, TN);
+  for (const o of objs) settle(o);
+}
+function replayLand(list) {
+  landEdits = [];
+  if (!Array.isArray(list)) return;
+  for (const e of list.slice(0, 8000)) {
+    if (!Array.isArray(e) || !['raise', 'lower', 'flatten', 'shallow', 'deep', 'biome'].includes(e[0]) || !e.slice(1, 6).every(Number.isFinite)) continue;
+    const [mode, x, z, r, amt, target] = e;
+    if (Math.abs(x) > 2000 || Math.abs(z) > 2000 || r <= 0 || r > 60 || amt < 0 || amt > 5) continue;
+    if (mode === 'biome') { if (!BIOME_IDS[target]) continue; paintBiome(BIOME_IDS[target], x, z, r, true); }
+    else applyBrush(mode, x, z, r, amt, target, true);
+    landEdits.push(e);
+  }
+  if (landEdits.length) refreshAllTerrain();
 }
 
 /* =====================================================================
@@ -979,7 +1065,8 @@ const COL = {
   skin: [0.96, 0.78, 0.62], skin2: [0.72, 0.5, 0.34], straw: [0.88, 0.74, 0.38], pink: [1.0, 0.6, 0.78],
 };
 const CATS = [
-  { id: 'nature', name: 'Nature', icon: '🌳', items: [] },
+  { id: 'nature', name: 'Nature', icon: '🏞️', items: [] },
+  { id: 'plants', name: 'Plants', icon: '🌳', items: [] },
   { id: 'build', name: 'Buildings', icon: '🏠', items: [] },
   { id: 'people', name: 'People', icon: '🧑', items: [] },
   { id: 'creatures', name: 'Creatures', icon: '🐾', items: [] },
@@ -1006,16 +1093,16 @@ function meshesFor(d) {
 
 /* ---------------- nature ---------------- */
 function canopy(g, pts, cols, sway = 0.5) { pts.forEach((p, i) => orb(g, p[0], p[1], p[2], p[3], p[4] || p[3] * 0.85, p[3], cols[i % cols.length], { leaf: true, sway, bump: 0.06 })); }
-def('oak', 'nature', 'Oak tree', '🌳', { r: 2.2, h: 7, body: g => {
+def('oak', 'plants', 'Oak tree', '🌳', { r: 2.2, h: 7, body: g => {
   cyl(g, [0, -0.3, 0], [0, 3.4, 0], 0.42, 0.26, COL.bark);
   cyl(g, [0, 2.6, 0], [1.2, 3.8, 0.2], 0.16, 0.08, COL.bark); cyl(g, [0, 2.9, 0], [-1.1, 4, -0.4], 0.15, 0.08, COL.bark);
   canopy(g, [[0, 5.2, 0, 2.5, 2.1], [1.6, 4.4, 0.4, 1.7], [-1.5, 4.5, -0.5, 1.8], [0.3, 4.3, 1.5, 1.6], [-0.3, 4.7, -1.6, 1.6], [0.6, 6.3, -0.3, 1.5]], [COL.leaf, COL.leaf2, [0.32, 0.6, 0.24]]);
 } });
-def('pine', 'nature', 'Pine tree', '🌲', { r: 1.8, h: 9, body: g => {
+def('pine', 'plants', 'Pine tree', '🌲', { r: 1.8, h: 9, body: g => {
   cyl(g, [0, -0.3, 0], [0, 2.4, 0], 0.32, 0.24, COL.bark);
   [[1.3, 2.5, 3.6], [2.7, 2.0, 3.2], [4.0, 1.55, 2.8], [5.2, 1.05, 2.4], [6.3, 0.6, 2.0]].forEach(([y, r, h], i) => coneS(g, 0, y, 0, r, h, shade(COL.pine, 0.92 + i * 0.05)));
 } });
-def('snowpine', 'nature', 'Snowy pine', '🎄', { r: 1.8, h: 9, body: g => {
+def('snowpine', 'plants', 'Snowy pine', '🎄', { r: 1.8, h: 9, body: g => {
   cyl(g, [0, -0.3, 0], [0, 2.4, 0], 0.32, 0.24, COL.bark);
   [[1.3, 2.5, 3.6], [2.7, 2.0, 3.2], [4.0, 1.55, 2.8], [5.2, 1.05, 2.4], [6.3, 0.6, 2.0]].forEach(([y, r, h], i) => {
     coneS(g, 0, y, 0, r, h, shade(COL.pine, 0.9 + i * 0.05));
@@ -1036,28 +1123,28 @@ function frond(g, base, ang, len, droop, w, col) {
     prevL = L; prevR = R;
   }
 }
-def('palm', 'nature', 'Palm tree', '🌴', { r: 1.5, h: 8, body: g => {
+def('palm', 'plants', 'Palm tree', '🌴', { r: 1.5, h: 8, body: g => {
   let prev = [0, -0.3, 0];
   for (let i = 1; i <= 8; i++) { const t = i / 8, p = [Math.sin(t * 1.3) * 1.2, t * 6.6, 0]; cyl(g, prev, p, 0.3 - t * 0.08, 0.28 - t * 0.08, i % 2 ? [0.58, 0.44, 0.28] : [0.5, 0.37, 0.23], 14, false); prev = p; }
   for (let i = 0; i < 9; i++) frond(g, prev, i / 9 * 6.283 + 0.2, 3.4, 1.1, 0.42, i % 2 ? [0.25, 0.6, 0.2] : [0.3, 0.68, 0.24]);
   for (let i = 0; i < 3; i++) orb(g, prev[0] + Math.cos(i * 2.1) * 0.3, prev[1] - 0.35, Math.sin(i * 2.1) * 0.3, 0.2, 0.2, 0.2, [0.4, 0.28, 0.14], { lo: true });
 } });
-def('maple', 'nature', 'Autumn tree', '🍁', { r: 2.2, h: 7, body: g => {
+def('maple', 'plants', 'Autumn tree', '🍁', { r: 2.2, h: 7, body: g => {
   cyl(g, [0, -0.3, 0], [0, 3.2, 0], 0.38, 0.24, COL.bark);
   canopy(g, [[0, 5, 0, 2.4, 2.1], [1.5, 4.3, 0.5, 1.6], [-1.4, 4.4, -0.4, 1.7], [0.2, 4.2, 1.5, 1.5], [-0.3, 4.6, -1.5, 1.5], [0.4, 6.1, -0.2, 1.4]], [[0.95, 0.45, 0.12], [0.85, 0.22, 0.12], [1.0, 0.7, 0.18]]);
 } });
-def('willow', 'nature', 'Willow tree', '🌿', { r: 2.4, h: 7, body: g => {
+def('willow', 'plants', 'Willow tree', '🌿', { r: 2.4, h: 7, body: g => {
   cyl(g, [0, -0.3, 0], [0, 3.6, 0], 0.45, 0.3, [0.36, 0.3, 0.2]);
   canopy(g, [[0, 5, 0, 2.8, 1.6], [1.4, 4.6, 0.6, 1.6, 1.1], [-1.3, 4.7, -0.5, 1.7, 1.1]], [[0.44, 0.6, 0.26], [0.38, 0.54, 0.22]], 0.3);
   for (let i = 0; i < 30; i++) { const a = i / 30 * 6.283, r = 2.2 + (i % 3) * 0.35; cyl(g, [Math.cos(a) * r, 4.8, Math.sin(a) * r], [Math.cos(a) * (r + 0.3), 1.6 + (i % 4) * 0.4, Math.sin(a) * (r + 0.3)], 0.07, 0.04, [0.42, 0.6, 0.24], 5, false); }
 } });
-def('deadtree', 'nature', 'Old dead tree', '🪵', { r: 1.2, h: 5, body: g => {
+def('deadtree', 'plants', 'Old dead tree', '🪵', { r: 1.2, h: 5, body: g => {
   const C = [0.5, 0.42, 0.34];
   cyl(g, [0, -0.3, 0], [0.2, 3.4, 0], 0.34, 0.16, C);
   cyl(g, [0.1, 2, 0], [1.4, 3.4, 0.3], 0.14, 0.05, C); cyl(g, [0.15, 2.6, 0], [-1.1, 3.9, -0.4], 0.12, 0.04, C); cyl(g, [0.2, 3.3, 0], [0.6, 4.6, 0.6], 0.1, 0.03, C);
 } });
-def('bush', 'nature', 'Bush', '🌱', { r: 1.2, h: 1.6, body: g => canopy(g, [[0, 0.7, 0, 1.0, 0.8], [0.7, 0.55, 0.3, 0.7], [-0.6, 0.55, -0.2, 0.75], [0.1, 0.6, -0.7, 0.65]], [COL.leaf, COL.leaf2], 0.2) });
-def('flowers', 'nature', 'Flowers', '🌸', { r: 1, h: 0.6, body: g => {
+def('bush', 'plants', 'Bush', '🌱', { r: 1.2, h: 1.6, body: g => canopy(g, [[0, 0.7, 0, 1.0, 0.8], [0.7, 0.55, 0.3, 0.7], [-0.6, 0.55, -0.2, 0.75], [0.1, 0.6, -0.7, 0.65]], [COL.leaf, COL.leaf2], 0.2) });
+def('flowers', 'plants', 'Flowers', '🌸', { r: 1, h: 0.6, body: g => {
   const cols = [[1, 0.35, 0.4], [1, 0.85, 0.25], [0.7, 0.45, 1], [1, 1, 1], [1, 0.6, 0.2]];
   for (let i = 0; i < 11; i++) {
     const a = i * 2.4, r = 0.25 + (i % 4) * 0.22, x = Math.cos(a) * r, z = Math.sin(a) * r, h = 0.35 + (i % 3) * 0.12;
@@ -1067,46 +1154,81 @@ def('flowers', 'nature', 'Flowers', '🌸', { r: 1, h: 0.6, body: g => {
     orb(g, x, h + 0.01, z, 0.04, 0.03, 0.04, [1, 0.85, 0.2], { lo: true });
   }
 } });
-def('reeds', 'nature', 'Reeds', '🌾', { r: 0.7, h: 2, body: g => {
+def('reeds', 'plants', 'Reeds', '🌾', { r: 0.7, h: 2, body: g => {
   for (let i = 0; i < 12; i++) { const a = i * 2.4, r = 0.1 + (i % 4) * 0.12, x = Math.cos(a) * r, z = Math.sin(a) * r, h = 1.2 + (i % 3) * 0.35;
     cyl(g, [x, 0, z], [x + 0.05, h, z], 0.03, 0.02, [0.45, 0.6, 0.28], 5, false);
     if (i % 2) cyl(g, [x + 0.04, h - 0.35, z], [x + 0.05, h - 0.05, z], 0.06, 0.06, [0.42, 0.26, 0.14], 8); }
 } });
-def('rock', 'nature', 'Rock', '🪨', { r: 1.3, h: 1.4, body: g => rockShape(g, 0, 0.5, 0, 1.3, 0.9, 1.1, COL.stone2, 7) });
-def('cactus', 'nature', 'Cactus', '🌵', { r: 0.8, h: 4.5, body: g => {
+def('rock', 'plants', 'Rock', '🪨', { r: 1.3, h: 1.4, body: g => rockShape(g, 0, 0.5, 0, 1.3, 0.9, 1.1, COL.stone2, 7) });
+def('cactus', 'plants', 'Cactus', '🌵', { r: 0.8, h: 4.5, body: g => {
   const C = [0.3, 0.6, 0.3];
   cyl(g, [0, -0.2, 0], [0, 4, 0], 0.36, 0.34, C, 16, false); orb(g, 0, 4, 0, 0.34, 0.3, 0.34, C);
   cyl(g, [0.3, 1.8, 0], [0.95, 1.8, 0], 0.2, 0.2, C, 12, false); cyl(g, [0.95, 1.8, 0], [0.95, 3, 0], 0.2, 0.19, C, 12, false); orb(g, 0.95, 3, 0, 0.19, 0.17, 0.19, C);
   cyl(g, [-0.3, 2.4, 0], [-0.85, 2.4, 0], 0.18, 0.18, C, 12, false); cyl(g, [-0.85, 2.4, 0], [-0.85, 3.3, 0], 0.18, 0.17, C, 12, false); orb(g, -0.85, 3.3, 0, 0.17, 0.15, 0.17, C);
 } });
-def('mushroom', 'nature', 'Giant mushroom', '🍄', { r: 1.4, h: 3, body: g => {
+def('mushroom', 'plants', 'Giant mushroom', '🍄', { r: 1.4, h: 3, body: g => {
   cyl(g, [0, -0.1, 0], [0, 2.1, 0], 0.32, 0.26, [0.95, 0.92, 0.84]);
   orb(g, 0, 2.1, 0, 1.4, 0.9, 1.4, [0.85, 0.16, 0.14], { cutBelow: 2.1 });
   for (let i = 0; i < 9; i++) { const a = i * 2.1, r = 0.4 + (i % 3) * 0.32, y = 2.1 + 0.9 * Math.sqrt(Math.max(0, 1 - (r / 1.4) ** 2)); orb(g, Math.cos(a) * r, y, Math.sin(a) * r, 0.14, 0.06, 0.14, COL.white, { lo: true }); }
 } });
-def('lollipop', 'nature', 'Lollipop tree', '🍭', { r: 1.3, h: 5, body: g => {
+def('lollipop', 'plants', 'Lollipop tree', '🍭', { r: 1.3, h: 5, body: g => {
   cyl(g, [0, -0.2, 0], [0, 3.6, 0], 0.12, 0.12, COL.white);
   cyl(g, [0, 4.6, -0.15], [0, 4.6, 0.15], 1.1, 1.1, [1, 0.45, 0.7], 32);
   for (let i = 0; i < 40; i++) { const t = i / 40, a = t * 18, r = 0.1 + t * 0.95; for (const zz of [0.16, -0.16]) orb(g, Math.cos(a) * r, 4.6 + Math.sin(a) * r, zz, 0.08, 0.08, 0.03, COL.white, { lo: true }); }
 } });
-def('candycane', 'nature', 'Candy cane', '🍬', { r: 0.6, h: 4, body: g => {
+def('candycane', 'plants', 'Candy cane', '🍬', { r: 0.6, h: 4, body: g => {
   let prev = [0, -0.2, 0];
   const pts = []; for (let i = 0; i <= 10; i++) pts.push([0, i * 0.35, 0]);
   for (let i = 1; i <= 8; i++) { const a = i / 8 * Math.PI; pts.push([0.55 - Math.cos(a) * 0.55, 3.5 + Math.sin(a) * 0.55, 0]); }
   pts.forEach((p, i) => { if (i) cyl(g, prev, p, 0.16, 0.16, i % 2 ? COL.red : COL.white, 14, false); prev = p; });
 } });
-def('gumdrop', 'nature', 'Gumdrop', '🟢', { r: 1.2, h: 1.6, body: g => orb(g, 0, 0, 0, 1.2, 1.5, 1.2, [[0.4, 0.9, 0.5], [1, 0.5, 0.6], [0.6, 0.55, 1]][0], { cutBelow: 0 }) });
-def('pumpkin', 'nature', 'Pumpkin', '🎃', { r: 0.8, h: 1, body: g => {
+def('gumdrop', 'plants', 'Gumdrop', '🟢', { r: 1.2, h: 1.6, body: g => orb(g, 0, 0, 0, 1.2, 1.5, 1.2, [[0.4, 0.9, 0.5], [1, 0.5, 0.6], [0.6, 0.55, 1]][0], { cutBelow: 0 }) });
+def('pumpkin', 'plants', 'Pumpkin', '🎃', { r: 0.8, h: 1, body: g => {
   for (let i = 0; i < 8; i++) { const a = i / 8 * 6.283; orb(g, Math.cos(a) * 0.32, 0.45, Math.sin(a) * 0.32, 0.38, 0.45, 0.38, [0.95, 0.5, 0.1]); }
   cyl(g, [0, 0.8, 0], [0.05, 1.05, 0], 0.07, 0.05, [0.35, 0.45, 0.2]);
 } });
-def('snowman', 'nature', 'Snowman', '⛄', { r: 0.9, h: 2.4, body: g => {
+def('snowman', 'plants', 'Snowman', '⛄', { r: 0.9, h: 2.4, body: g => {
   orb(g, 0, 0.55, 0, 0.7, 0.62, 0.7, COL.white); orb(g, 0, 1.45, 0, 0.5, 0.45, 0.5, COL.white); orb(g, 0, 2.1, 0, 0.34, 0.33, 0.34, COL.white);
   cyl(g, [0, 2.1, 0.3], [0, 2.1, 0.62], 0.06, 0.005, [1, 0.5, 0.1], 10);
   for (const x of [-0.12, 0.12]) orb(g, x, 2.2, 0.29, 0.04, 0.04, 0.04, COL.black, { lo: true });
   cyl(g, [0, 2.38, 0], [0, 2.4, 0], 0.4, 0.4, COL.black, 20); cyl(g, [0, 2.4, 0], [0, 2.8, 0], 0.25, 0.25, COL.black, 20);
   cyl(g, [0.45, 1.5, 0], [1.0, 1.9, 0], 0.03, 0.02, COL.bark, 6); cyl(g, [-0.45, 1.5, 0], [-1.0, 1.85, 0], 0.03, 0.02, COL.bark, 6);
 } });
+
+def('jungletree', 'plants', 'Jungle tree', '🌴', { r: 2.4, h: 11, body: g => {
+  cyl(g, [0, -0.3, 0], [0.3, 7.5, 0], 0.45, 0.3, [0.45, 0.36, 0.24]);
+  for (const [a, l] of [[0.4, 1.8], [2.3, 1.6], [4.2, 2]]) cyl(g, [0, 0, 0], [Math.cos(a) * l, -0.2, Math.sin(a) * l], 0.16, 0.08, [0.45, 0.36, 0.24], 8);   // roots
+  canopy(g, [[0.3, 8.6, 0, 2.6, 1.3], [1.8, 8, 0.6, 1.6, 0.9], [-1.4, 8.1, -0.4, 1.7, 0.9], [0.4, 7.9, 1.7, 1.5, 0.8], [-0.1, 8.2, -1.6, 1.5, 0.8]], [[0.14, 0.42, 0.12], [0.2, 0.5, 0.16]], 0.3);
+  for (let i = 0; i < 6; i++) frond(g, [0.3, 7.4, 0], i / 6 * 6.283, 2.6, 1.2, 0.5, [0.18, 0.5, 0.15]);
+  for (let i = 0; i < 4; i++) cyl(g, [0.2 + Math.cos(i * 1.7) * 1.6, 8, Math.sin(i * 1.7) * 1.6], [0.25 + Math.cos(i * 1.7) * 1.8, 3.5 + i * 0.6, Math.sin(i * 1.7) * 1.8], 0.04, 0.03, [0.3, 0.5, 0.2], 5, false);   // vines
+} });
+def('acacia', 'plants', 'Acacia tree', '🌳', { r: 2.6, h: 6, body: g => {
+  const B = [0.42, 0.32, 0.22];
+  cyl(g, [0, -0.3, 0], [0.2, 2.6, 0], 0.3, 0.22, B); cyl(g, [0.2, 2.6, 0], [1.6, 4.4, 0.3], 0.18, 0.1, B); cyl(g, [0.2, 2.6, 0], [-1.3, 4.5, -0.4], 0.17, 0.1, B);
+  canopy(g, [[0.2, 4.9, 0, 3.1, 0.55], [1.7, 4.7, 0.3, 1.8, 0.45], [-1.5, 4.8, -0.3, 1.9, 0.45]], [[0.42, 0.55, 0.2], [0.36, 0.48, 0.18]], 0.2);
+} });
+def('crystal', 'plants', 'Dark crystal', '🔮', { r: 1, h: 2.4, body: g => rockShape(g, 0, 0.1, 0, 0.9, 0.4, 0.8, [0.2, 0.1, 0.24], 9),
+  glow: { flicker: 'pulse', make: g => { for (let i = 0; i < 5; i++) { const a = i * 1.26, l = 0.8 + (i % 3) * 0.6; cyl(g, [Math.cos(a) * 0.3, 0.2, Math.sin(a) * 0.3], [Math.cos(a) * (0.3 + l * 0.35), 0.2 + l * 1.3, Math.sin(a) * (0.3 + l * 0.35)], 0.16, 0.01, [0.75, 0.25, 0.95], 5); } } } });
+
+/* ---------------- Nature: land types to paint, and tools that change the land ----------------
+   Land types colour the ground and grow their own plants (each one an ordinary thing you can
+   erase). Mountains also raise the land, swamps dig little ponds, and paths clear plants away.
+   Corrupted land is where skeletons and demons come from. */
+const BIOMES = {
+  forest:   { name: 'Forest', icon: '🌳', plants: [['oak', 4], ['pine', 3], ['bush', 2], ['flowers', 1], ['mushroom', 0.3]], per: 70 },
+  taiga:    { name: 'Taiga', icon: '🌲', plants: [['snowpine', 6], ['rock', 0.6], ['bush', 0.5]], per: 75 },
+  jungle:   { name: 'Jungle', icon: '🌴', plants: [['jungletree', 4], ['palm', 2], ['bush', 3], ['flowers', 1]], per: 45 },
+  savanna:  { name: 'Savanna', icon: '🦒', plants: [['acacia', 2], ['bush', 1.5], ['rock', 0.4]], per: 220 },
+  desert:   { name: 'Desert', icon: '🏜️', plants: [['cactus', 2], ['deadtree', 0.5], ['rock', 0.8]], per: 260 },
+  swamp:    { name: 'Swamp', icon: '🐸', plants: [['willow', 2], ['reeds', 3], ['mushroom', 0.5]], per: 90 },
+  mountain: { name: 'Mountain', icon: '⛰️', plants: [['rock', 2], ['pine', 1]], per: 160 },
+  path:     { name: 'Path', icon: '🟫', plants: [], clear: true },
+  cobble:   { name: 'Cobblestone path', icon: '🧱', plants: [], clear: true },
+  corrupt:  { name: 'Corrupted land', icon: '💀', plants: [['deadtree', 2], ['crystal', 1.5]], per: 160, note: 'monsters come from here' },
+};
+for (const id of BIOME_IDS) { const B = BIOMES[id]; def('b_' + id, 'nature', B.name, B.icon, { tool: 'biome', biome: id, r: 1, h: 1 }); }
+const LAND_TOOLS = [['raise', 'Raise land', '⬆️'], ['lower', 'Lower land', '⬇️'], ['flatten', 'Flatten', '🟰'], ['shallow', 'Shallow water', '💧'], ['deep', 'Deep water', '🌊']];
+for (const [m, name, icon] of LAND_TOOLS) def('t_' + m, 'nature', name, icon, { tool: 'land', mode: m, r: 1, h: 1 });
 
 /* ---------------- buildings ---------------- */
 function windowAt(g, x, y, z, w, h, nx, nz) {           // a window with a frame, on a wall facing (nx, nz)
@@ -1503,28 +1625,114 @@ def('chest', 'weapons', 'Treasure chest', '💰', { r: 0.8, h: 1.2, body: g => {
    Placing, erasing and undo
    ===================================================================== */
 const SIZES = [0.5, 1, 1.75, 3], SIZE_NAMES = ['Small', 'Medium', 'Big', 'Giant'], SIZE_SHORT = ['S', 'M', 'L', 'XL'];
-const tool = { cat: 0, item: CATS.map(() => 0), size: 1, turn: 0, erase: false };
-let undoStack = [], cursor = null, holdT = 0, lastPaint = null;
+// the brush on the left: how many things go down at once, and how wide the land tools reach
+const BRUSH_N = [1, 2, 3, 6, 10], BRUSH_R = [0, 3, 5, 9, 14];
+const tool = { cat: 0, item: CATS.map(() => 0), size: 1, turn: 0, erase: false, brush: 0 };
+let undoStack = [], cursor = null, holdT = 0, lastPaint = null, curGroup = null, repeatT = 0;
 const selectedDef = () => CAT[CATS[tool.cat].items[tool.item[tool.cat]]];
 function makeObj(t, x, z, r, s) { return { t, hx: x, hz: z, x, z, y: 0, r, s, phase: Math.random() * 6.28, wait: Math.random() * 2, ang: Math.random() * 6.28, tx: undefined, tz: undefined }; }
+function hitAt(x, z) { const g = groundAt(x, z); return { x, z, y: Math.max(g, 0), water: g < 0, depth: -g }; }
 function canPlace(d, hit, s) {
   if (!hit) return false;
+  if (d.tool) return true;
   if (d.place === 'water') return hit.water && hit.depth > Math.max(1.2, d.h * s * 0.5);
   if (d.place === 'any') return true;
   if (d.amph) return true;
   return !hit.water && groundAt(hit.x, hit.z) > 0.15;
 }
+// everything done in one press (or one hold of the button) undoes together
+function group(withLand) {
+  if (!curGroup) {
+    curGroup = { adds: [], dels: [] };
+    undoStack.push(curGroup);
+    if (undoStack.length > 200) undoStack.shift();
+  }
+  if (withLand && !curGroup.land) {
+    curGroup.land = { h: HGRID.slice(), b: BGRID.slice(), n: landEdits.length };
+    const withSnap = undoStack.filter(u => u.land);
+    if (withSnap.length > 6) withSnap[0].land = null;       // keep memory in check: only the last 6 land changes can be undone
+  }
+  return curGroup;
+}
+function endGroup() { curGroup = null; }
+function addThing(id, x, z, r, s, grp) {
+  if (objs.length >= 3000) return null;
+  const o = makeObj(id, x, z, r, s); settle(o); objs.push(o); grp.adds.push(o); pop.push({ o, t: 0 });
+  return o;
+}
+function crowded(x, z, rad) { for (const o of objs) if (Math.abs(o.x - x) < rad + 6 && Math.abs(o.z - z) < rad + 6 && Math.hypot(o.x - x, o.z - z) < rad + CAT[o.t].r * o.s * 0.7) return true; return false; }
+function brushRadius(d, s) { return BRUSH_R[tool.brush] * Math.max(1, d.r * s * 0.7); }
+function landRadius() { return LAND_RADIUS[tool.brush]; }
 function placeAt(hit) {
   const d = selectedDef(), s = SIZES[tool.size];
-  if (!canPlace(d, hit, s)) { sfx('nope'); toast(d.place === 'water' ? `${d.icon} ${d.name} needs deep water` : `${d.icon} ${d.name} goes on land`, 1500); return false; }
+  if (d.tool === 'land') return landAt(hit, d);
+  if (d.tool === 'biome') return biomeAt(hit, d);
   if (objs.length >= 3000) { toast('Your island is full! Erase some things first.'); return false; }
-  const face = Math.atan2(camEye[0] - hit.x, camEye[2] - hit.z);
-  const o = makeObj(d.id, hit.x, hit.z, face + tool.turn, s);
-  settle(o); objs.push(o);
-  undoStack.push({ add: o }); if (undoStack.length > 200) undoStack.shift();
+  const n = BRUSH_N[tool.brush], face = Math.atan2(camEye[0] - hit.x, camEye[2] - hit.z);
+  const grp = group(false);
+  let made = 0;
+  if (canPlace(d, hit, s) && (n === 1 || !crowded(hit.x, hit.z, d.r * s * 0.6))) { if (addThing(d.id, hit.x, hit.z, face + tool.turn, s, grp)) made++; }
+  const R = brushRadius(d, s);
+  for (let k = 0; k < (n - 1) * 6 && made < n; k++) {
+    const a = Math.random() * 6.283, rr = Math.sqrt(Math.random()) * R, x = hit.x + Math.cos(a) * rr, z = hit.z + Math.sin(a) * rr;
+    if (!canPlace(d, hitAt(x, z), s) || crowded(x, z, d.r * s * 0.6)) continue;
+    if (addThing(d.id, x, z, n > 1 ? Math.random() * 6.283 : face + tool.turn, s, grp)) made++;
+  }
+  if (!made) { if (!grp.adds.length && !grp.dels.length && !grp.land) undoStack.splice(undoStack.indexOf(grp), 1), curGroup = null; sfx('nope'); toast(d.place === 'water' ? `${d.icon} ${d.name} needs deep water` : `${d.icon} ${d.name} goes on land`, 1500); return false; }
   dirty = true; sfx(d.big || s >= 1.75 ? 'big' : 'place'); rumble(0.2, 0.3, 60);
-  pop.push({ o, t: 0 });
   updateCount();
+  return true;
+}
+function landAt(hit, d) {
+  const r = landRadius(), m = d.mode;
+  const target = m === 'flatten' ? (lastPaint && lastPaint.target !== undefined && curGroup ? lastPaint.target : groundAt(hit.x, hit.z)) : m === 'shallow' ? -1.3 : m === 'deep' ? -8 : 0;
+  const amt = m === 'raise' || m === 'lower' ? 0.8 + r * 0.03 : m === 'flatten' ? 0.35 : 1;   // water digs all the way down in the middle in one go
+  group(true);
+  const e = [m, +hit.x.toFixed(1), +hit.z.toFixed(1), r, +amt.toFixed(2), +target.toFixed(2)];
+  applyBrush(m, hit.x, hit.z, r, amt, target);
+  if (landEdits.length < 8000) landEdits.push(e); else toast('That\'s a lot of land changes! Some won\'t be saved.', 2000);
+  dirty = true; repeatT = 0;
+  if (Math.random() < 0.35) noiseHit('lowpass', m === 'shallow' || m === 'deep' ? 900 : 300, 0.7, 0.25, 0.12);
+  lastPaint = { x: hit.x, z: hit.z, target };
+  return true;
+}
+// painting a land type: its colour, its land changes, and its plants
+function paintBiome(id, x, z, r, quiet) {
+  const W = TN + 1, bi = BIOME_IDS.indexOf(id) + 1;
+  const i0 = clamp(Math.floor((x - r + TS) / TSTEP), 0, TN), i1 = clamp(Math.ceil((x + r + TS) / TSTEP), 0, TN);
+  const j0 = clamp(Math.floor((z - r + TS) / TSTEP), 0, TN), j1 = clamp(Math.ceil((z + r + TS) / TSTEP), 0, TN);
+  for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) if (Math.hypot(-TS + i * TSTEP - x, -TS + j * TSTEP - z) <= r) BGRID[j * W + i] = bi;
+  if (quiet) return;
+  for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) terrainVert(i, j);
+  uploadTerrainRows(j0, j1);
+}
+function biomeAt(hit, d) {
+  if (hit.water && hit.depth > 0.5) { if (!curGroup) { sfx('nope'); toast('Paint land types on land', 1200); } return false; }
+  const id = d.biome, B = BIOMES[id], r = landRadius(), grp = group(true);
+  const edit = (m, x, z, rr, amt, target) => { applyBrush(m, x, z, rr, amt, target); if (landEdits.length < 8000) landEdits.push([m, +x.toFixed(1), +z.toFixed(1), rr, +amt.toFixed(2), +target.toFixed(2)]); };
+  if (id === 'mountain') edit('raise', hit.x, hit.z, r * 1.2, Math.max(1.2, r * 0.1), 0);
+  if (id === 'path' || id === 'cobble') edit('flatten', hit.x, hit.z, r, 0.3, Math.max(0.3, groundAt(hit.x, hit.z)));
+  if (id === 'swamp' && Math.random() < 0.4) { const a = Math.random() * 6.283, q = Math.random() * r * 0.6; edit('shallow', hit.x + Math.cos(a) * q, hit.z + Math.sin(a) * q, Math.max(2.5, r * 0.3), 1, -0.9); }
+  paintBiome(id, hit.x, hit.z, r);
+  if (landEdits.length < 8000) landEdits.push(['biome', +hit.x.toFixed(1), +hit.z.toFixed(1), r, 0, BIOME_IDS.indexOf(id)]);
+  if (B.clear) {                                   // paths clear the plants out of the way
+    for (let i = objs.length - 1; i >= 0; i--) { const o = objs[i]; if (CAT[o.t].cat === 'plants' && Math.hypot(o.x - hit.x, o.z - hit.z) < r) { objs.splice(i, 1); grp.dels.push(o); } }
+  } else if (B.plants.length) {                    // grow the land type's plants, not too close together
+    const total = B.plants.reduce((s, p) => s + p[1], 0), want = Math.PI * r * r / B.per;
+    let n = Math.floor(want) + (Math.random() < want % 1 ? 1 : 0);
+    for (let k = 0; k < n * 5 && n > 0; k++) {
+      const a = Math.random() * 6.283, q = Math.sqrt(Math.random()) * r, x = hit.x + Math.cos(a) * q, z = hit.z + Math.sin(a) * q;
+      let pick = Math.random() * total, id2 = B.plants[0][0];
+      for (const [pid, w] of B.plants) { pick -= w; if (pick < 0) { id2 = pid; break; } }
+      const pd = CAT[id2], s = 0.75 + Math.random() * 0.55, h = groundAt(x, z);
+      if (h < 0.3 || (id !== 'mountain' && slopeAt(x, z) < 0.7) || crowded(x, z, pd.r * s * 0.8 + 0.8)) continue;
+      if (addThing(id2, x, z, Math.random() * 6.283, s, grp)) n--;
+    }
+    updateCount();
+  }
+  dirty = true;
+  if (Math.random() < 0.4) noiseHit('bandpass', 1400, 0.8, 0.25, 0.08);
+  lastPaint = { x: hit.x, z: hit.z };
   return true;
 }
 function eraseTarget(hit) {
@@ -1536,19 +1744,24 @@ function eraseTarget(hit) {
   }
   return best;
 }
+const eraseRadius = () => BRUSH_R[tool.brush] * 1.6;
 function eraseAt(hit) {
-  const o = eraseTarget(hit);
-  if (!o) { sfx('nope'); return false; }
-  objs.splice(objs.indexOf(o), 1);
-  undoStack.push({ del: o }); if (undoStack.length > 200) undoStack.shift();
+  const grp = group(false);
+  let gone = 0;
+  if (tool.brush === 0) { const o = eraseTarget(hit); if (o) { objs.splice(objs.indexOf(o), 1); grp.dels.push(o); gone++; } }
+  else for (let i = objs.length - 1; i >= 0; i--) { const o = objs[i]; if (Math.hypot(o.x - hit.x, o.z - hit.z) < eraseRadius() + CAT[o.t].r * o.s * 0.5) { objs.splice(i, 1); grp.dels.push(o); gone++; } }
+  if (!gone) { sfx('nope'); return false; }
   dirty = true; sfx('erase'); rumble(0.2, 0.2, 60); updateCount();
   return true;
 }
 function undo() {
-  const u = undoStack.pop();
+  endGroup();
+  let u = undoStack.pop();
+  while (u && !u.adds.length && !u.dels.length && !u.land) u = undoStack.pop();
   if (!u) { sfx('nope'); toast('Nothing to undo', 1200); return; }
-  if (u.add) { const i = objs.indexOf(u.add); if (i >= 0) objs.splice(i, 1); }
-  else if (u.del) objs.push(u.del);
+  for (const o of u.adds) { const i = objs.indexOf(o); if (i >= 0) objs.splice(i, 1); }
+  for (const o of u.dels) objs.push(o);
+  if (u.land) { HGRID.set(u.land.h); BGRID.set(u.land.b); landEdits.length = u.land.n; refreshAllTerrain(); }
   dirty = true; sfx('undo'); updateCount();
 }
 const pop = [];   // things that were just placed grow in with a little bounce
@@ -1578,14 +1791,14 @@ function scatterStart() {
       const x = (r() * 2 - 1) * R, z = (r() * 2 - 1) * R, h = groundAt(x, z);
       if (d.place === 'water') { if (h > -4 || h < -30) continue; }
       else if (d.move === 'fly') { if (h < 1) continue; }
-      else if (h < (d.cat === 'nature' ? 0.9 : 0.4) || slopeAt(x, z) < (d.cat === 'nature' ? 0.72 : 0.8)) continue;
+      else if (h < (d.cat === 'plants' ? 0.9 : 0.4) || slopeAt(x, z) < (d.cat === 'plants' ? 0.72 : 0.8)) continue;
       if (id === 'palm' && h > 14) continue;
-      if (ISL.shape === 'volcano' && Math.hypot(x, z) < ISL.R * 0.32 && d.cat === 'nature' && id !== 'rock') continue;
-      const o = makeObj(id, x, z, r() * 6.283, d.cat === 'nature' ? 0.75 + r() * 0.6 : 1);
+      if (ISL.shape === 'volcano' && Math.hypot(x, z) < ISL.R * 0.32 && d.cat === 'plants' && id !== 'rock') continue;
+      const o = makeObj(id, x, z, r() * 6.283, d.cat === 'plants' ? 0.75 + r() * 0.6 : 1);
       settle(o); objs.push(o); made++;
     }
   };
-  for (const [id, n] of ISL.nature) tryPlace(id, n);
+  // (islands start with no plants: you paint them on with Nature, or place them one by one with Plants)
   for (const [id, n] of ISL.critters) if (CAT[id]) tryPlace(id, n);
   updateCount();
 }
@@ -1716,13 +1929,19 @@ function drawCursor(time) {
   if (state !== 'play' || !cursor) return;
   const d = selectedDef(), s = SIZES[tool.size];
   let ok, ringR, col;
-  if (tool.erase) { ok = !!eraseTarget(cursor); ringR = 1.6 + cam.dist * 0.012; col = ok ? [1, 0.35, 0.3] : [0.7, 0.5, 0.5]; }
-  else { ok = canPlace(d, cursor, s); ringR = Math.max(0.8, d.r * s) + 0.3; col = ok ? [0.45, 1, 0.5] : [1, 0.3, 0.25]; }
+  if (tool.erase) { ok = tool.brush > 0 || !!eraseTarget(cursor); ringR = tool.brush ? eraseRadius() : 1.6 + cam.dist * 0.012; col = ok ? [1, 0.35, 0.3] : [0.7, 0.5, 0.5]; }
+  else if (d.tool) {
+    ok = true; ringR = landRadius();
+    col = d.tool === 'biome' ? mixc(BIOME_GROUND[d.biome][0], [1, 1, 1], 0.3) : d.mode === 'shallow' || d.mode === 'deep' ? [0.35, 0.7, 1] : [1, 0.82, 0.45];
+  }
+  else { ok = canPlace(d, cursor, s); ringR = Math.max(0.8, d.r * s) + 0.3 + brushRadius(d, s); col = ok ? [0.45, 1, 0.5] : [1, 0.3, 0.25]; }
   const y = Math.max(cursor.y, 0) + 0.15;
   gl.uniform1f(progWorld.u.uEmit, 1);
+  gl.disable(gl.DEPTH_TEST);                       // the circle shows even on a slope
   drawMesh(ringMesh(col), mChain(mT(cursor.x, y, cursor.z), mS3(ringR, 1, ringR)));
+  gl.enable(gl.DEPTH_TEST);
   gl.uniform1f(progWorld.u.uEmit, 0);
-  if (!tool.erase) {
+  if (!tool.erase && !d.tool) {
     const ghost = { t: d.id, x: cursor.x, z: cursor.z, s, r: Math.atan2(camEye[0] - cursor.x, camEye[2] - cursor.z) + tool.turn, phase: time * 3, ang: 0, moving: false };
     settle(ghost);
     if (d.move === 'fly') ghost.y = Math.max(cursor.y, 0) + 0.5 + d.h * s * 0.5;
@@ -1739,6 +1958,9 @@ function buildPalette() {
   const cats = $('cats'); cats.innerHTML = '';
   CATS.forEach((c, i) => { const b = document.createElement('button'); b.innerHTML = `${c.icon} ${c.name}`; b.onclick = () => { setCat(i); sfx('click'); }; cats.appendChild(b); });
   fillItems();
+  const bw = $("brushes"); bw.innerHTML = "";
+  BRUSH_N.forEach((n, i) => { const b = document.createElement("button"); b.innerHTML = `<i style="width:${8 + i * 6}px;height:${8 + i * 6}px"></i><span>${n}</span>`; b.title = n === 1 ? "One at a time" : n + " at a time (and a bigger circle for land)"; b.onclick = () => setBrush(i); bw.appendChild(b); });
+  fillBrush();
 }
 function fillItems() {
   [...$('cats').children].forEach((b, i) => b.classList.toggle('on', i === tool.cat && !tool.erase));
@@ -1762,24 +1984,39 @@ function turnIt() { tool.turn += Math.PI / 4; sfx('turn'); }
 function toggleErase() { tool.erase = !tool.erase; sfx('click'); fillItems(); toast(tool.erase ? '🧽 Eraser: click things to take them away' : '🔨 Building again', 1300); }
 function updateCount() { $('countLab').textContent = objs.length + ' thing' + (objs.length === 1 ? '' : 's'); }
 function act(hit) { return tool.erase ? eraseAt(hit) : placeAt(hit); }
+// land tools and land types keep working while you hold the button down (even without moving)
+const isTool = () => !tool.erase && !!selectedDef().tool;
+function stepBrush(k) { tool.brush = clamp(tool.brush + k, 0, BRUSH_N.length - 1); sfx('click'); fillBrush(); }
+function setBrush(i) { tool.brush = i; sfx('click'); fillBrush(); }
+function fillBrush() { [...$('brushes').children].forEach((b, i) => b.classList.toggle('on', i === tool.brush)); }
 function keyAction(e) {
   const c = e.code;
-  if (/^Digit[1-5]$/.test(c)) setCat(+c.slice(5) - 1);
+  if (/^Digit[1-9]$/.test(c)) { if (+c.slice(5) <= CATS.length) setCat(+c.slice(5) - 1); }
   else if (c === 'Tab') setCat(tool.cat + (e.shiftKey ? -1 : 1));
   else if (c === 'KeyR') turnIt();
   else if (c === 'KeyX') toggleErase();
   else if (c === 'KeyZ' || c === 'Backspace') undo();
   else if (c === 'Minus' || c === 'NumpadSubtract') stepSize(-1);
   else if (c === 'Equal' || c === 'NumpadAdd') stepSize(1);
+  else if (c === 'KeyC') stepBrush(e.shiftKey ? -1 : 1);
+  else if (c === 'KeyV') stepBrush(-1);
   else if (c === 'BracketLeft' || c === 'Comma') stepItem(-1);
   else if (c === 'BracketRight' || c === 'Period') stepItem(1);
-  else if (c === 'Space' || c === 'Enter') { if (cursor) act(cursor); }
+  else if (c === 'Space' || c === 'Enter') { if (cursor) { act(cursor); endGroup(); } }
 }
-function clickAction() { updateCursor(); if (cursor) { act(cursor); lastPaint = { x: cursor.x, z: cursor.z }; } }
+function clickAction() { endGroup(); updateCursor(); if (cursor) { act(cursor); if (!lastPaint || !isTool()) lastPaint = { x: cursor.x, z: cursor.z }; } repeatT = 0; }
 function updateCursor() {
   const useMouse = mouse.active && !usingPad;
   $('cross').classList.toggle('show', !useMouse && state === 'play');
   cursor = rayHit(screenRay(useMouse ? mouse.x : innerWidth / 2, useMouse ? mouse.y : innerHeight / 2));
+}
+// holding: the land tools repeat on a timer; things are placed again once you've moved a bit
+function holdBuild(dt) {
+  if (!cursor) return;
+  if (isTool()) { repeatT += dt; if (repeatT >= (selectedDef().tool === 'biome' ? 0.16 : 0.1)) { repeatT = 0; act(cursor); } return; }
+  holdT += dt;
+  const d = selectedDef(), gap = tool.erase ? Math.max(1.5, eraseRadius()) : Math.max(2, d.r * SIZES[tool.size] * 2.2 + brushRadius(d, SIZES[tool.size]));
+  if (holdT > 0.35 && (!lastPaint || Math.hypot(cursor.x - lastPaint.x, cursor.z - lastPaint.z) > gap)) { if (act(cursor)) lastPaint = { x: cursor.x, z: cursor.z }; holdT = 0.3; }
 }
 function padActions(dt) {
   if (!pad.connected) return;
@@ -1787,18 +2024,16 @@ function padActions(dt) {
   if (pressed(5)) setCat(tool.cat + 1);
   if (pressed(14)) stepItem(-1);
   if (pressed(15)) stepItem(1);
-  if (pressed(12)) stepSize(1);
-  if (pressed(13)) stepSize(-1);
+  if (pressed(12)) stepBrush(1);
+  if (pressed(13)) stepBrush(-1);
+  if (pressed(11)) { tool.size = (tool.size + 1) % SIZES.length; sfx('click'); fillItems(); toast('Size: ' + SIZE_NAMES[tool.size], 900); }
   if (pressed(3)) turnIt();
   if (pressed(2)) toggleErase();
   if (pressed(1) || pressed(8)) undo();
-  // A builds; hold A and move to keep building (great for forests) or keep erasing
-  if (pressed(0) && cursor) { usingPad = true; updateCursor(); if (cursor) { act(cursor); lastPaint = { x: cursor.x, z: cursor.z }; } holdT = 0; }
-  else if (pad.btn[0] && cursor) {
-    holdT += dt;
-    const gap = tool.erase ? 1.5 : Math.max(2, selectedDef().r * SIZES[tool.size] * 2.2);
-    if (holdT > 0.35 && (!lastPaint || Math.hypot(cursor.x - lastPaint.x, cursor.z - lastPaint.z) > gap)) { if (act(cursor)) lastPaint = { x: cursor.x, z: cursor.z }; holdT = 0.3; }
-  }
+  // A builds; hold A to keep building (great for forests and painting land) or keep erasing
+  if (pressed(0)) { usingPad = true; endGroup(); updateCursor(); if (cursor) { act(cursor); lastPaint = { x: cursor.x, z: cursor.z }; } holdT = 0; repeatT = 0; }
+  else if (pad.btn[0]) holdBuild(dt);
+  else if (pad.prev[0]) endGroup();
 }
 $('eraseBtn').onclick = () => toggleErase();
 $('turnBtn').onclick = () => turnIt();
@@ -1827,7 +2062,7 @@ let objs = [];             // the things on it
 let dirty = false, saveT = 0;
 function saveIsland() {
   if (!cur) return;
-  writeJSON(ISLE_PREFIX + cur.id, { type: cur.type, seed: cur.seed, objs: objs.map(o => [o.t, +o.hx.toFixed(2), +o.hz.toFixed(2), +o.r.toFixed(3), o.s]),
+  writeJSON(ISLE_PREFIX + cur.id, { type: cur.type, seed: cur.seed, land: landEdits, objs: objs.map(o => [o.t, +o.hx.toFixed(2), +o.hz.toFixed(2), +o.r.toFixed(3), o.s]),
     cam: { tx: +cam.tx.toFixed(1), tz: +cam.tz.toFixed(1), yaw: +cam.yaw.toFixed(3), pitch: +cam.pitch.toFixed(3), dist: +cam.dist.toFixed(1) } });
   const m = islands.find(s => s.id === cur.id);
   if (m) { m.count = objs.length; m.last = Date.now(); writeList(); }
@@ -2009,6 +2244,7 @@ function openIsland(s, fresh) {
     setIsland(ISLE_BY_ID[s.type], s.seed);
     buildTerrain();
     const data = fresh ? null : readJSON(ISLE_PREFIX + s.id);
+    replayLand(data && data.land);
     loadThings(data, fresh);
     const c = data && data.cam;
     if (c && [c.tx, c.tz, c.yaw, c.pitch, c.dist].every(Number.isFinite)) Object.assign(cam, { tx: c.tx, tz: c.tz, yaw: c.yaw, pitch: c.pitch, dist: c.dist });
@@ -2033,8 +2269,8 @@ function openPause() { if (state !== 'play') return; saveIsland(); state = 'paus
 function resume() { state = 'play'; show(null); $('hud').classList.add('show'); canvas.focus(); }
 function updateHint() {
   $('hint').innerHTML = pad.connected
-    ? 'Left stick: move · Right stick: turn · LT / RT: zoom · A: build · X: eraser · B: undo · LB / RB: group · d-pad: pick and size · Y: turn it'
-    : 'WASD: move · Right mouse drag: turn · Wheel: zoom · Click: build · X: eraser · Z: undo · R: turn it';
+    ? 'Left stick: move · Right stick: turn · LT / RT: zoom · A: build (hold to keep going) · X: eraser · B: undo · LB / RB: group · d-pad ◀ ▶: pick · d-pad ▲ ▼: brush · click right stick: size · Y: turn it'
+    : 'WASD: move · Right mouse drag: turn · Wheel: zoom · Click (hold to keep going): build · C: brush · X: eraser · Z: undo · R: turn it';
   $('hint').style.opacity = 1;
   clearTimeout(updateHint.h); updateHint.h = setTimeout(() => $('hint').style.opacity = 0, 12000);
 }
@@ -2149,16 +2385,16 @@ canvas.addEventListener('pointerdown', e => {
   mouse.x = e.clientX; mouse.y = e.clientY; mouse.active = true; mouse.lastX = e.clientX; mouse.lastY = e.clientY;
   if (e.pointerType === 'touch') { touchDown(e); return; }
   if (e.button === 2 || e.button === 1) { mouse.rdrag = true; try { canvas.setPointerCapture(e.pointerId); } catch (err) {} }
-  else if (e.button === 0) clickAction();
+  else if (e.button === 0) { mouse.ldown = true; holdT = 0; clickAction(); }
 });
 canvas.addEventListener('pointermove', e => {
   if (e.pointerType === 'touch') { touchMove(e); return; }
   mouse.x = e.clientX; mouse.y = e.clientY; mouse.active = true;
   if (mouse.rdrag) { cam.yaw += (e.clientX - mouse.lastX) * 0.006; cam.pitch += (e.clientY - mouse.lastY) * 0.005; }
-  else if ((e.buttons & 1) && state === 'play') paintDrag();
+  else if ((e.buttons & 1) === 0 && mouse.ldown) { mouse.ldown = false; endGroup(); }
   mouse.lastX = e.clientX; mouse.lastY = e.clientY;
 });
-canvas.addEventListener('pointerup', e => { if (e.pointerType === 'touch') { touchUp(e); return; } if (e.button === 2 || e.button === 1) mouse.rdrag = false; });
+canvas.addEventListener('pointerup', e => { if (e.pointerType === 'touch') { touchUp(e); return; } if (e.button === 2 || e.button === 1) mouse.rdrag = false; if (e.button === 0) { mouse.ldown = false; endGroup(); } });
 canvas.addEventListener('pointerleave', e => { if (e.pointerType !== 'touch') mouse.active = false; });
 canvas.addEventListener('wheel', e => { if (state !== 'play') return; e.preventDefault(); cam.dist *= Math.pow(1.0015, e.deltaY); }, { passive: false });
 // touch: one finger drags the island along, two fingers pinch to zoom and twist to turn, a tap builds
@@ -2212,6 +2448,7 @@ function updatePlay(dt) {
   updateCamera(dt);
   updateCursor();
   padActions(dt);
+  if (mouse.ldown && !usingPad && state === "play") holdBuild(dt);
 }
 function rumble(strong, weak, ms) {
   try { const a = pad.gp && pad.gp.vibrationActuator; if (a && a.playEffect) a.playEffect('dual-rumble', { duration: ms, strongMagnitude: strong, weakMagnitude: weak }).catch(() => {}); } catch (e) {}
