@@ -965,9 +965,847 @@ function scheduleMusic() {
 </script>
 <script>
 'use strict';
-/* PART-2: things to build (filled in next) */
-const CATS = [], CAT = {};
-function meshesFor() { return null; }
+/* =====================================================================
+   Things to build. Every model faces +z with its feet at y = 0, in metres.
+   A thing can have walking legs, flapping wings, a spinning part (windmill
+   blades) and a glowing part (fire, lamps, magic).
+   move: 'walk' (land), 'fly', 'swim' (sea), 'float' (bobs on the water), or none.
+   ===================================================================== */
+const COL = {
+  bark: [0.42, 0.29, 0.18], wood: [0.58, 0.4, 0.22], darkwood: [0.36, 0.23, 0.12], plank: [0.7, 0.52, 0.32],
+  leaf: [0.27, 0.56, 0.21], leaf2: [0.2, 0.46, 0.17], pine: [0.14, 0.38, 0.2], stone: [0.64, 0.62, 0.6], stone2: [0.52, 0.5, 0.48],
+  white: [0.95, 0.94, 0.9], cream: [0.95, 0.88, 0.72], red: [0.82, 0.2, 0.18], roof: [0.66, 0.24, 0.18], blueroof: [0.27, 0.38, 0.66],
+  glass: [0.55, 0.76, 0.92], gold: [1.0, 0.78, 0.24], iron: [0.6, 0.62, 0.66], black: [0.12, 0.12, 0.13], dark: [0.08, 0.07, 0.07],
+  skin: [0.96, 0.78, 0.62], skin2: [0.72, 0.5, 0.34], straw: [0.88, 0.74, 0.38], pink: [1.0, 0.6, 0.78],
+};
+const CATS = [
+  { id: 'nature', name: 'Nature', icon: '🌳', items: [] },
+  { id: 'build', name: 'Buildings', icon: '🏠', items: [] },
+  { id: 'people', name: 'People', icon: '🧑', items: [] },
+  { id: 'creatures', name: 'Creatures', icon: '🐾', items: [] },
+  { id: 'weapons', name: 'Weapons', icon: '⚔️', items: [] },
+];
+const CAT = {};
+function def(id, cat, name, icon, o) {
+  const d = Object.assign({ id, cat, name, icon, r: 1, h: 2, place: 'land', speed: 1.4 }, o);
+  CAT[id] = d;
+  if (!o.hidden) CATS.find(c => c.id === cat).items.push(id);
+  return d;
+}
+const meshCache = {};
+function meshesFor(d) {
+  if (meshCache[d.id]) return meshCache[d.id];
+  const m = {}, mk = fn => { if (!fn) return null; const g = new Geo(4096); fn(g); return makeMesh(g); };
+  m.body = mk(d.body);
+  m.leg = d.legs ? mk(d.legs.make) : null;
+  m.wing = d.wings ? mk(d.wings.make) : null;
+  m.spin = d.spin ? mk(d.spin.make) : null;
+  m.glow = d.glow ? mk(d.glow.make) : null;
+  return (meshCache[d.id] = m);
+}
+
+/* ---------------- nature ---------------- */
+function canopy(g, pts, cols, sway = 0.5) { pts.forEach((p, i) => orb(g, p[0], p[1], p[2], p[3], p[4] || p[3] * 0.85, p[3], cols[i % cols.length], { leaf: true, sway, bump: 0.06 })); }
+def('oak', 'nature', 'Oak tree', '🌳', { r: 2.2, h: 7, body: g => {
+  cyl(g, [0, -0.3, 0], [0, 3.4, 0], 0.42, 0.26, COL.bark);
+  cyl(g, [0, 2.6, 0], [1.2, 3.8, 0.2], 0.16, 0.08, COL.bark); cyl(g, [0, 2.9, 0], [-1.1, 4, -0.4], 0.15, 0.08, COL.bark);
+  canopy(g, [[0, 5.2, 0, 2.5, 2.1], [1.6, 4.4, 0.4, 1.7], [-1.5, 4.5, -0.5, 1.8], [0.3, 4.3, 1.5, 1.6], [-0.3, 4.7, -1.6, 1.6], [0.6, 6.3, -0.3, 1.5]], [COL.leaf, COL.leaf2, [0.32, 0.6, 0.24]]);
+} });
+def('pine', 'nature', 'Pine tree', '🌲', { r: 1.8, h: 9, body: g => {
+  cyl(g, [0, -0.3, 0], [0, 2.4, 0], 0.32, 0.24, COL.bark);
+  [[1.3, 2.5, 3.6], [2.7, 2.0, 3.2], [4.0, 1.55, 2.8], [5.2, 1.05, 2.4], [6.3, 0.6, 2.0]].forEach(([y, r, h], i) => coneS(g, 0, y, 0, r, h, shade(COL.pine, 0.92 + i * 0.05)));
+} });
+def('snowpine', 'nature', 'Snowy pine', '🎄', { r: 1.8, h: 9, body: g => {
+  cyl(g, [0, -0.3, 0], [0, 2.4, 0], 0.32, 0.24, COL.bark);
+  [[1.3, 2.5, 3.6], [2.7, 2.0, 3.2], [4.0, 1.55, 2.8], [5.2, 1.05, 2.4], [6.3, 0.6, 2.0]].forEach(([y, r, h], i) => {
+    coneS(g, 0, y, 0, r, h, shade(COL.pine, 0.9 + i * 0.05));
+    coneS(g, 0, y + h * 0.35, 0, r * 0.72, h * 0.66, [0.95, 0.97, 1.0]);
+  });
+} });
+function frond(g, base, ang, len, droop, w, col) {
+  const dx = Math.cos(ang), dz = Math.sin(ang), N = 8;
+  let prevL = null, prevR = null;
+  for (let i = 0; i <= N; i++) {
+    const u = i / N, y = base[1] + 0.5 * u * len - droop * u * u * len;
+    const cx = base[0] + dx * u * len, cz = base[2] + dz * u * len, ww = w * Math.sin(Math.PI * Math.min(1, u * 1.1 + 0.05));
+    const L = [cx - dz * ww, y - ww * 0.25, cz + dx * ww], R = [cx + dz * ww, y - ww * 0.25, cz - dx * ww];
+    if (prevL) {
+      const n = faceN(prevL, L, R), c = shade(col, 0.85 + u * 0.25);
+      tri(g, prevL, L, R, n, 0, c, c, c, 0.4, 0.6, 0.6); tri(g, prevL, R, prevR, n, 0, c, c, c, 0.4, 0.6, 0.4);
+    }
+    prevL = L; prevR = R;
+  }
+}
+def('palm', 'nature', 'Palm tree', '🌴', { r: 1.5, h: 8, body: g => {
+  let prev = [0, -0.3, 0];
+  for (let i = 1; i <= 8; i++) { const t = i / 8, p = [Math.sin(t * 1.3) * 1.2, t * 6.6, 0]; cyl(g, prev, p, 0.3 - t * 0.08, 0.28 - t * 0.08, i % 2 ? [0.58, 0.44, 0.28] : [0.5, 0.37, 0.23], 14, false); prev = p; }
+  for (let i = 0; i < 9; i++) frond(g, prev, i / 9 * 6.283 + 0.2, 3.4, 1.1, 0.42, i % 2 ? [0.25, 0.6, 0.2] : [0.3, 0.68, 0.24]);
+  for (let i = 0; i < 3; i++) orb(g, prev[0] + Math.cos(i * 2.1) * 0.3, prev[1] - 0.35, Math.sin(i * 2.1) * 0.3, 0.2, 0.2, 0.2, [0.4, 0.28, 0.14], { lo: true });
+} });
+def('maple', 'nature', 'Autumn tree', '🍁', { r: 2.2, h: 7, body: g => {
+  cyl(g, [0, -0.3, 0], [0, 3.2, 0], 0.38, 0.24, COL.bark);
+  canopy(g, [[0, 5, 0, 2.4, 2.1], [1.5, 4.3, 0.5, 1.6], [-1.4, 4.4, -0.4, 1.7], [0.2, 4.2, 1.5, 1.5], [-0.3, 4.6, -1.5, 1.5], [0.4, 6.1, -0.2, 1.4]], [[0.95, 0.45, 0.12], [0.85, 0.22, 0.12], [1.0, 0.7, 0.18]]);
+} });
+def('willow', 'nature', 'Willow tree', '🌿', { r: 2.4, h: 7, body: g => {
+  cyl(g, [0, -0.3, 0], [0, 3.6, 0], 0.45, 0.3, [0.36, 0.3, 0.2]);
+  canopy(g, [[0, 5, 0, 2.8, 1.6], [1.4, 4.6, 0.6, 1.6, 1.1], [-1.3, 4.7, -0.5, 1.7, 1.1]], [[0.44, 0.6, 0.26], [0.38, 0.54, 0.22]], 0.3);
+  for (let i = 0; i < 30; i++) { const a = i / 30 * 6.283, r = 2.2 + (i % 3) * 0.35; cyl(g, [Math.cos(a) * r, 4.8, Math.sin(a) * r], [Math.cos(a) * (r + 0.3), 1.6 + (i % 4) * 0.4, Math.sin(a) * (r + 0.3)], 0.07, 0.04, [0.42, 0.6, 0.24], 5, false); }
+} });
+def('deadtree', 'nature', 'Old dead tree', '🪵', { r: 1.2, h: 5, body: g => {
+  const C = [0.5, 0.42, 0.34];
+  cyl(g, [0, -0.3, 0], [0.2, 3.4, 0], 0.34, 0.16, C);
+  cyl(g, [0.1, 2, 0], [1.4, 3.4, 0.3], 0.14, 0.05, C); cyl(g, [0.15, 2.6, 0], [-1.1, 3.9, -0.4], 0.12, 0.04, C); cyl(g, [0.2, 3.3, 0], [0.6, 4.6, 0.6], 0.1, 0.03, C);
+} });
+def('bush', 'nature', 'Bush', '🌱', { r: 1.2, h: 1.6, body: g => canopy(g, [[0, 0.7, 0, 1.0, 0.8], [0.7, 0.55, 0.3, 0.7], [-0.6, 0.55, -0.2, 0.75], [0.1, 0.6, -0.7, 0.65]], [COL.leaf, COL.leaf2], 0.2) });
+def('flowers', 'nature', 'Flowers', '🌸', { r: 1, h: 0.6, body: g => {
+  const cols = [[1, 0.35, 0.4], [1, 0.85, 0.25], [0.7, 0.45, 1], [1, 1, 1], [1, 0.6, 0.2]];
+  for (let i = 0; i < 11; i++) {
+    const a = i * 2.4, r = 0.25 + (i % 4) * 0.22, x = Math.cos(a) * r, z = Math.sin(a) * r, h = 0.35 + (i % 3) * 0.12;
+    cyl(g, [x, 0, z], [x, h, z], 0.025, 0.02, [0.3, 0.6, 0.25], 6, false);
+    const c = cols[i % cols.length];
+    for (let p = 0; p < 5; p++) { const pa = p / 5 * 6.283; orb(g, x + Math.cos(pa) * 0.07, h, z + Math.sin(pa) * 0.07, 0.06, 0.025, 0.06, c, { lo: true }); }
+    orb(g, x, h + 0.01, z, 0.04, 0.03, 0.04, [1, 0.85, 0.2], { lo: true });
+  }
+} });
+def('reeds', 'nature', 'Reeds', '🌾', { r: 0.7, h: 2, body: g => {
+  for (let i = 0; i < 12; i++) { const a = i * 2.4, r = 0.1 + (i % 4) * 0.12, x = Math.cos(a) * r, z = Math.sin(a) * r, h = 1.2 + (i % 3) * 0.35;
+    cyl(g, [x, 0, z], [x + 0.05, h, z], 0.03, 0.02, [0.45, 0.6, 0.28], 5, false);
+    if (i % 2) cyl(g, [x + 0.04, h - 0.35, z], [x + 0.05, h - 0.05, z], 0.06, 0.06, [0.42, 0.26, 0.14], 8); }
+} });
+def('rock', 'nature', 'Rock', '🪨', { r: 1.3, h: 1.4, body: g => rockShape(g, 0, 0.5, 0, 1.3, 0.9, 1.1, COL.stone2, 7) });
+def('cactus', 'nature', 'Cactus', '🌵', { r: 0.8, h: 4.5, body: g => {
+  const C = [0.3, 0.6, 0.3];
+  cyl(g, [0, -0.2, 0], [0, 4, 0], 0.36, 0.34, C, 16, false); orb(g, 0, 4, 0, 0.34, 0.3, 0.34, C);
+  cyl(g, [0.3, 1.8, 0], [0.95, 1.8, 0], 0.2, 0.2, C, 12, false); cyl(g, [0.95, 1.8, 0], [0.95, 3, 0], 0.2, 0.19, C, 12, false); orb(g, 0.95, 3, 0, 0.19, 0.17, 0.19, C);
+  cyl(g, [-0.3, 2.4, 0], [-0.85, 2.4, 0], 0.18, 0.18, C, 12, false); cyl(g, [-0.85, 2.4, 0], [-0.85, 3.3, 0], 0.18, 0.17, C, 12, false); orb(g, -0.85, 3.3, 0, 0.17, 0.15, 0.17, C);
+} });
+def('mushroom', 'nature', 'Giant mushroom', '🍄', { r: 1.4, h: 3, body: g => {
+  cyl(g, [0, -0.1, 0], [0, 2.1, 0], 0.32, 0.26, [0.95, 0.92, 0.84]);
+  orb(g, 0, 2.1, 0, 1.4, 0.9, 1.4, [0.85, 0.16, 0.14], { cutBelow: 2.1 });
+  for (let i = 0; i < 9; i++) { const a = i * 2.1, r = 0.4 + (i % 3) * 0.32, y = 2.1 + 0.9 * Math.sqrt(Math.max(0, 1 - (r / 1.4) ** 2)); orb(g, Math.cos(a) * r, y, Math.sin(a) * r, 0.14, 0.06, 0.14, COL.white, { lo: true }); }
+} });
+def('lollipop', 'nature', 'Lollipop tree', '🍭', { r: 1.3, h: 5, body: g => {
+  cyl(g, [0, -0.2, 0], [0, 3.6, 0], 0.12, 0.12, COL.white);
+  cyl(g, [0, 4.6, -0.15], [0, 4.6, 0.15], 1.1, 1.1, [1, 0.45, 0.7], 32);
+  for (let i = 0; i < 40; i++) { const t = i / 40, a = t * 18, r = 0.1 + t * 0.95; for (const zz of [0.16, -0.16]) orb(g, Math.cos(a) * r, 4.6 + Math.sin(a) * r, zz, 0.08, 0.08, 0.03, COL.white, { lo: true }); }
+} });
+def('candycane', 'nature', 'Candy cane', '🍬', { r: 0.6, h: 4, body: g => {
+  let prev = [0, -0.2, 0];
+  const pts = []; for (let i = 0; i <= 10; i++) pts.push([0, i * 0.35, 0]);
+  for (let i = 1; i <= 8; i++) { const a = i / 8 * Math.PI; pts.push([0.55 - Math.cos(a) * 0.55, 3.5 + Math.sin(a) * 0.55, 0]); }
+  pts.forEach((p, i) => { if (i) cyl(g, prev, p, 0.16, 0.16, i % 2 ? COL.red : COL.white, 14, false); prev = p; });
+} });
+def('gumdrop', 'nature', 'Gumdrop', '🟢', { r: 1.2, h: 1.6, body: g => orb(g, 0, 0, 0, 1.2, 1.5, 1.2, [[0.4, 0.9, 0.5], [1, 0.5, 0.6], [0.6, 0.55, 1]][0], { cutBelow: 0 }) });
+def('pumpkin', 'nature', 'Pumpkin', '🎃', { r: 0.8, h: 1, body: g => {
+  for (let i = 0; i < 8; i++) { const a = i / 8 * 6.283; orb(g, Math.cos(a) * 0.32, 0.45, Math.sin(a) * 0.32, 0.38, 0.45, 0.38, [0.95, 0.5, 0.1]); }
+  cyl(g, [0, 0.8, 0], [0.05, 1.05, 0], 0.07, 0.05, [0.35, 0.45, 0.2]);
+} });
+def('snowman', 'nature', 'Snowman', '⛄', { r: 0.9, h: 2.4, body: g => {
+  orb(g, 0, 0.55, 0, 0.7, 0.62, 0.7, COL.white); orb(g, 0, 1.45, 0, 0.5, 0.45, 0.5, COL.white); orb(g, 0, 2.1, 0, 0.34, 0.33, 0.34, COL.white);
+  cyl(g, [0, 2.1, 0.3], [0, 2.1, 0.62], 0.06, 0.005, [1, 0.5, 0.1], 10);
+  for (const x of [-0.12, 0.12]) orb(g, x, 2.2, 0.29, 0.04, 0.04, 0.04, COL.black, { lo: true });
+  cyl(g, [0, 2.38, 0], [0, 2.4, 0], 0.4, 0.4, COL.black, 20); cyl(g, [0, 2.4, 0], [0, 2.8, 0], 0.25, 0.25, COL.black, 20);
+  cyl(g, [0.45, 1.5, 0], [1.0, 1.9, 0], 0.03, 0.02, COL.bark, 6); cyl(g, [-0.45, 1.5, 0], [-1.0, 1.85, 0], 0.03, 0.02, COL.bark, 6);
+} });
+
+/* ---------------- buildings ---------------- */
+function windowAt(g, x, y, z, w, h, nx, nz) {           // a window with a frame, on a wall facing (nx, nz)
+  if (nz) { box(g, x, y - 0.06, z + nz * 0.02, w + 0.14, h + 0.12, 0.08, COL.white); box(g, x, y, z + nz * 0.05, w, h, 0.06, COL.glass); }
+  else { box(g, x + nx * 0.02, y - 0.06, z, 0.08, h + 0.12, w + 0.14, COL.white); box(g, x + nx * 0.05, y, z, 0.06, h, w, COL.glass); }
+}
+def('hut', 'build', 'Little hut', '🛖', { r: 2.6, h: 4.6, big: true, body: g => {
+  cyl(g, [0, -0.2, 0], [0, 2.3, 0], 2.1, 2.1, [0.78, 0.62, 0.42], 28);
+  cyl(g, [0, 2.1, 0], [0, 4.6, 0], 2.8, 0.05, COL.straw, 28);
+  box(g, 0, 0, 2.05, 0.95, 1.8, 0.15, COL.darkwood);
+  windowAt(g, 1.5, 1.2, 1.5, 0.5, 0.5, 0, 1);
+} });
+def('cottage', 'build', 'Cottage', '🏡', { r: 4, h: 6.5, big: true, body: g => {
+  box(g, 0, -0.3, 0, 6, 3.3, 5, COL.cream);
+  roof(g, 0, 3, 0, 6, 5, 2.4, COL.roof);
+  box(g, 1.8, 3.3, -1, 0.7, 2.4, 0.7, [0.6, 0.35, 0.28]);
+  box(g, 0, 0, 2.5, 1.1, 2.1, 0.12, COL.darkwood); orb(g, 0.35, 1.0, 2.58, 0.06, 0.06, 0.04, COL.gold, { lo: true });
+  for (const x of [-1.9, 1.9]) windowAt(g, x, 1.1, 2.5, 0.9, 0.9, 0, 1);
+  for (const z of [-1.2, 1.2]) { windowAt(g, 3, 1.1, z, 0.8, 0.9, 1, 0); windowAt(g, -3, 1.1, z, 0.8, 0.9, -1, 0); }
+  for (const x of [-1.9, 0, 1.9]) windowAt(g, x, 1.1, -2.5, 0.9, 0.9, 0, -1);
+} });
+def('house', 'build', 'Big house', '🏠', { r: 5, h: 9.5, big: true, body: g => {
+  box(g, 0, -0.3, 0, 8, 6.3, 6.5, [0.85, 0.82, 0.92]);
+  box(g, 0, 2.9, 0, 8.2, 0.25, 6.7, COL.white);
+  roof(g, 0, 6, 0, 8, 6.5, 3, COL.blueroof);
+  box(g, 0, 0, 3.25, 1.2, 2.2, 0.12, [0.6, 0.18, 0.16]);
+  box(g, 0, 2.3, 3.6, 2.2, 0.15, 1, COL.white); for (const x of [-0.9, 0.9]) cyl(g, [x, 0, 3.9], [x, 2.3, 3.9], 0.1, 0.1, COL.white, 10);
+  for (const y of [1.2, 4.2]) { for (const x of [-2.6, 2.6]) windowAt(g, x, y, 3.25, 1, 1.1, 0, 1); for (const x of [-2.6, 0, 2.6]) windowAt(g, x, y, -3.25, 1, 1.1, 0, -1); for (const z of [-1.5, 1.5]) { windowAt(g, 4, y, z, 0.9, 1.1, 1, 0); windowAt(g, -4, y, z, 0.9, 1.1, -1, 0); } }
+  windowAt(g, 0, 4.2, 3.25, 1, 1.1, 0, 1);
+} });
+def('barn', 'build', 'Barn', '🐄', { r: 6, h: 8, big: true, body: g => {
+  box(g, 0, -0.3, 0, 8, 5, 10, [0.72, 0.16, 0.14]);
+  roof(g, 0, 4.7, 0, 8.4, 10, 3.2, [0.35, 0.33, 0.33]);
+  box(g, 0, 0, 5.02, 3, 3.4, 0.1, [0.62, 0.12, 0.1]);
+  for (const s of [-1, 1]) { const p0 = [-1.5, 0.1, 5.1], p1 = [1.5, 3.3, 5.1]; cyl(g, [p0[0] * s, p0[1], 5.1], [p1[0] * s, p1[1], 5.1], 0.1, 0.1, COL.white, 8); }
+  box(g, 0, 3.3, 5.02, 3.2, 0.2, 0.14, COL.white); box(g, -1.55, 0, 5.02, 0.2, 3.4, 0.14, COL.white); box(g, 1.55, 0, 5.02, 0.2, 3.4, 0.14, COL.white);
+  box(g, 0, 5.2, 5.02, 1.2, 1.2, 0.1, COL.white);
+} });
+def('castle', 'build', 'Castle', '🏰', { r: 13, h: 18, big: true, body: g => {
+  const S = 10, H = 6.5, T = 1.4, ST = COL.stone, ST2 = COL.stone2;
+  box(g, 0, -0.5, -S, 2 * S, H + 0.5, T, ST); box(g, -S, -0.5, 0, T, H + 0.5, 2 * S, ST); box(g, S, -0.5, 0, T, H + 0.5, 2 * S, ST);
+  box(g, -S / 2 - 1.3, -0.5, S, S - 2.6, H + 0.5, T, ST); box(g, S / 2 + 1.3, -0.5, S, S - 2.6, H + 0.5, T, ST);
+  box(g, 0, 4.2, S, 5.2, 2.3, T, ST); box(g, 0, 0, S + 0.72, 3.4, 4.2, 0.1, COL.darkwood);
+  for (let i = -S; i <= S; i += 1.6) for (const [x, z, w, d] of [[i, -S, 0.8, T + 0.1], [i, S, 0.8, T + 0.1], [-S, i, T + 0.1, 0.8], [S, i, T + 0.1, 0.8]]) box(g, x, H, z, w, 0.8, d, ST2);
+  for (const [x, z] of [[-S, -S], [S, -S], [-S, S], [S, S]]) {
+    cyl(g, [x, -0.5, z], [x, H + 4, z], 2.3, 2.2, ST, 24); coneS(g, x, H + 4, z, 2.9, 4.2, COL.blueroof, 24);
+    cyl(g, [x, H + 8, z], [x, H + 9.6, z], 0.06, 0.06, COL.darkwood, 6); box(g, x + 0.55, H + 9, z, 1, 0.6, 0.05, COL.red);
+    for (let a = 0; a < 6.28; a += 1.05) windowAt(g, x + Math.cos(a) * 2.25, H + 1.5, z + Math.sin(a) * 2.25, 0.4, 0.8, 0, 1);
+  }
+  box(g, 0, -0.5, -2, 8, 12, 7, ST2); for (let i = -3.5; i <= 3.5; i += 1.4) { box(g, i, 11.5, -5.5, 0.7, 0.8, 0.3, ST); box(g, i, 11.5, 1.5, 0.7, 0.8, 0.3, ST); }
+  coneS(g, 0, 11.5, -2, 3.2, 5, COL.red, 4);
+  for (const x of [-2, 0, 2]) windowAt(g, x, 7.5, 1.5, 0.6, 1.2, 0, 1);
+  box(g, 0, 0, 1.52, 1.8, 2.8, 0.1, COL.darkwood);
+} });
+def('tower', 'build', 'Watch tower', '🗼', { r: 3, h: 19, big: true, body: g => {
+  cyl(g, [0, -0.5, 0], [0, 13, 0], 2.4, 2.1, COL.stone, 28);
+  for (let a = 0; a < 6.28; a += 0.524) box(g, Math.cos(a) * 2.1, 13, Math.sin(a) * 2.1, 0.6, 0.9, 0.6, COL.stone2);
+  coneS(g, 0, 13.9, 0, 2.7, 4, COL.red, 28);
+  cyl(g, [0, 17.8, 0], [0, 19.6, 0], 0.06, 0.06, COL.darkwood, 6); box(g, 0.55, 19, 0, 1, 0.6, 0.05, COL.gold);
+  for (const y of [4, 8, 11.2]) windowAt(g, 0, y, 2.2, 0.5, 1, 0, 1);
+  box(g, 0, -0.2, 2.25, 1.1, 2.1, 0.12, COL.darkwood);
+} });
+def('windmill', 'build', 'Windmill', '🌬️', { r: 3.2, h: 14, big: true, body: g => {
+  cyl(g, [0, -0.3, 0], [0, 9, 0], 2.8, 1.9, [0.93, 0.9, 0.84], 28);
+  orb(g, 0, 9, 0, 2.2, 1.6, 2.4, [0.5, 0.3, 0.2], { cutBelow: 9 });
+  box(g, 0, -0.2, 2.6, 1.1, 2.2, 0.15, COL.darkwood); windowAt(g, 0, 5, 2.3, 0.6, 0.8, 0, 1);
+  cyl(g, [0, 9.5, 1.6], [0, 9.5, 2.6], 0.25, 0.25, COL.darkwood);
+}, spin: { at: [0, 9.5, 2.7], speed: 0.9, make: g => {
+  for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2, c = Math.cos(a), s = Math.sin(a);
+    cyl(g, [0, 0, 0], [c * 6.5, s * 6.5, 0], 0.12, 0.1, COL.darkwood, 8);
+    const px = -s, py = c; for (let k = 0; k < 5; k++) { const r0 = 1.4 + k * 1.0; tri(g, [c * r0, s * r0, 0.05], [c * (r0 + 0.9), s * (r0 + 0.9), 0.05], [c * (r0 + 0.9) + px * 1.1, s * (r0 + 0.9) + py * 1.1, 0.05], [0, 0, 1], 0, COL.cream, COL.cream, COL.cream, 0, 0, 0);
+      tri(g, [c * r0, s * r0, 0.05], [c * (r0 + 0.9) + px * 1.1, s * (r0 + 0.9) + py * 1.1, 0.05], [c * r0 + px * 1.1, s * r0 + py * 1.1, 0.05], [0, 0, 1], 0, COL.cream, COL.cream, COL.cream, 0, 0, 0); }
+  }
+  orb(g, 0, 0, 0, 0.4, 0.4, 0.3, COL.darkwood);
+} } });
+def('lighthouse', 'build', 'Lighthouse', '🚨', { r: 2.8, h: 20, big: true, body: g => {
+  for (let i = 0; i < 6; i++) { const y0 = i * 2.6 - 0.4, r0 = 2.4 - i * 0.12, r1 = 2.4 - (i + 1) * 0.12; cyl(g, [0, y0, 0], [0, y0 + 2.6, 0], r0, r1, i % 2 ? COL.red : COL.white, 28, false); }
+  cyl(g, [0, 15.2, 0], [0, 15.5, 0], 2.2, 2.2, COL.dark, 28);
+  for (let a = 0; a < 6.28; a += 0.4) cyl(g, [Math.cos(a) * 2.1, 15.5, Math.sin(a) * 2.1], [Math.cos(a) * 2.1, 16.4, Math.sin(a) * 2.1], 0.04, 0.04, COL.dark, 5);
+  orb(g, 0, 17.8, 0, 1.4, 1.1, 1.4, COL.red, { cutBelow: 17.8 });
+  box(g, 0, -0.3, 2.35, 1, 2, 0.12, COL.darkwood);
+}, glow: { flicker: 'pulse', make: g => cyl(g, [0, 15.5, 0], [0, 17.8, 0], 1.15, 1.15, [1, 0.92, 0.55], 24) } });
+def('tent', 'build', 'Tent', '⛺', { r: 2.2, h: 2.8, body: g => {
+  coneS(g, 0, -0.05, 0, 2.2, 2.8, [0.9, 0.5, 0.2], 4);
+  cyl(g, [0, 0, 1.56], [0, 1.25, 1.56], 0.6, 0.02, [0.2, 0.15, 0.1], 3, false);
+} });
+def('well', 'build', 'Well', '🪣', { r: 1.4, h: 3.4, body: g => {
+  cyl(g, [0, -0.2, 0], [0, 0.9, 0], 1.1, 1.1, COL.stone2, 24); cyl(g, [0, 0.9, 0], [0, 0.92, 0], 0.85, 0.85, [0.05, 0.12, 0.2], 24);
+  for (const x of [-0.95, 0.95]) cyl(g, [x, 0.9, 0], [x, 2.6, 0], 0.09, 0.09, COL.wood, 8);
+  cyl(g, [-1, 2.2, 0], [1, 2.2, 0], 0.07, 0.07, COL.darkwood, 8); roof(g, 0, 2.5, 0, 2.2, 1.6, 0.9, COL.roof, 0.2);
+  cyl(g, [0, 1.5, 0], [0, 1.9, 0], 0.2, 0.25, COL.wood, 12);
+} });
+def('fence', 'build', 'Fence', '🚧', { r: 3, h: 1.3, body: g => {
+  for (let x = -3; x <= 3.01; x += 1.5) { box(g, x, -0.2, 0, 0.16, 1.4, 0.16, COL.wood); }
+  for (const y of [0.45, 0.95]) box(g, 0, y, 0, 6.3, 0.14, 0.08, COL.plank);
+} });
+def('campfire', 'build', 'Campfire', '🔥', { r: 1, h: 1.2, body: g => {
+  for (let i = 0; i < 10; i++) { const a = i / 10 * 6.283; orb(g, Math.cos(a) * 0.7, 0.1, Math.sin(a) * 0.7, 0.2, 0.15, 0.2, COL.stone2, { lo: true }); }
+  cyl(g, [-0.5, 0.1, -0.2], [0.5, 0.2, 0.2], 0.09, 0.09, COL.bark, 8); cyl(g, [-0.4, 0.1, 0.4], [0.4, 0.2, -0.4], 0.09, 0.09, COL.bark, 8);
+}, glow: { flicker: 'fire', make: g => { coneS(g, 0, 0.1, 0, 0.45, 1.1, [1, 0.45, 0.08], 12); coneS(g, 0.12, 0.1, 0.05, 0.28, 0.75, [1, 0.8, 0.2], 10); coneS(g, -0.15, 0.1, -0.08, 0.25, 0.6, [1, 0.7, 0.15], 10); } } });
+def('statue', 'build', 'Gold statue', '🗽', { r: 1.4, h: 5, body: g => {
+  box(g, 0, -0.2, 0, 1.8, 1.6, 1.8, COL.stone); box(g, 0, 1.4, 0, 2, 0.2, 2, COL.stone2);
+  personBody(g, { k: 1.4, y0: 1.6, shirt: COL.gold, pants: COL.gold, skin: COL.gold, hair: COL.gold, shoes: COL.gold, raise: true });
+  for (const x of [-0.16, 0.16]) cyl(g, [x * 1.4, 1.6, 0], [x * 1.4, 1.6 + 1.2, 0], 0.12, 0.11, COL.gold, 12);
+} });
+def('stall', 'build', 'Market stall', '🏪', { r: 2.4, h: 3.2, body: g => {
+  box(g, 0, -0.2, 0, 3.4, 1.2, 1.4, COL.wood);
+  for (const [x, z] of [[-1.6, -0.6], [1.6, -0.6], [-1.6, 0.6], [1.6, 0.6]]) cyl(g, [x, 0, z], [x, 2.5, z], 0.07, 0.07, COL.darkwood, 8);
+  for (let i = 0; i < 6; i++) box(g, -1.5 + i * 0.6 + 0.3, 2.5, 0, 0.6, 0.15, 1.8, i % 2 ? COL.white : COL.red);
+  for (let i = 0; i < 6; i++) orb(g, -1.2 + i * 0.48, 1.12, 0.2, 0.17, 0.17, 0.17, [[1, 0.5, 0.1], [0.9, 0.15, 0.15], [0.4, 0.75, 0.2]][i % 3], { lo: true });
+} });
+def('boat', 'build', 'Sailboat', '⛵', { r: 3, h: 8, place: 'water', move: 'float', body: g => {
+  orb(g, 0, 0.2, 0, 1.4, 0.9, 3.4, [0.6, 0.38, 0.2], { cutBelow: -0.4 }); box(g, 0, 0.6, 0, 2.2, 0.15, 5, COL.plank);
+  cyl(g, [0, 0.6, 0.3], [0, 7.5, 0.3], 0.1, 0.07, COL.darkwood, 8);
+  tri(g, [0, 1.4, 0.2], [0, 7.2, 0.25], [0, 1.4, -2.6], [1, 0, 0], 0, COL.white, COL.white, COL.white, 0, 0, 0);
+  tri(g, [0, 1.6, 0.45], [0, 6.4, 0.4], [0, 1.6, 2.6], [1, 0, 0], 0, [0.95, 0.85, 0.85], [0.95, 0.85, 0.85], [0.95, 0.85, 0.85], 0, 0, 0);
+} });
+
+/* ---------------- people ---------------- */
+function personBody(g, o) {
+  const k = o.k || 1, y = o.y0 || 0, sh = o.shirt, sk = o.skin || COL.skin;
+  orb(g, 0, y + 1.22 * k, 0, 0.25 * k, 0.34 * k, 0.17 * k, sh);
+  orb(g, 0, y + 0.93 * k, 0, 0.21 * k, 0.13 * k, 0.15 * k, o.pants);
+  if (o.dress) cyl(g, [0, y + 0.3 * k, 0], [0, y + 1.15 * k, 0], 0.42 * k, 0.2 * k, o.dress, 20);
+  const handY = o.raise ? 2.1 : 0.98;
+  for (const s of [-1, 1]) {
+    const hand = s > 0 && o.raise ? [0.42 * k, y + handY * k, 0.05 * k] : [s * 0.34 * k, y + 0.95 * k, 0.06 * k];
+    cyl(g, [s * 0.27 * k, y + 1.47 * k, 0], hand, 0.075 * k, 0.065 * k, o.sleeve || sh, 10);
+    orb(g, hand[0], hand[1], hand[2], 0.07 * k, 0.07 * k, 0.07 * k, sk, { lo: true });
+  }
+  cyl(g, [0, y + 1.5 * k, 0], [0, y + 1.65 * k, 0], 0.07 * k, 0.07 * k, sk, 10);
+  orb(g, 0, y + 1.8 * k, 0, 0.19 * k, 0.21 * k, 0.19 * k, sk);
+  if (o.hair) orb(g, 0, y + 1.86 * k, -0.02 * k, 0.2 * k, 0.18 * k, 0.2 * k, o.hair, { cutBelow: y + 1.8 * k });
+  if (o.longHair) orb(g, 0, y + 1.6 * k, -0.1 * k, 0.2 * k, 0.32 * k, 0.12 * k, o.hair);
+  for (const s of [-1, 1]) orb(g, s * 0.07 * k, y + 1.83 * k, 0.17 * k, 0.03 * k, 0.035 * k, 0.02 * k, COL.dark, { lo: true });
+  orb(g, 0, y + 1.74 * k, 0.18 * k, 0.05 * k, 0.012 * k, 0.02 * k, [0.75, 0.3, 0.3], { lo: true });
+  if (o.extra) o.extra(g, k, y);
+}
+function personDef(id, name, icon, o) {
+  const k = o.k || 1;
+  return def(id, 'people', name, icon, { r: 0.5 * k, h: 1.9 * k, move: 'walk', speed: o.speed || 1.3, body: g => personBody(g, o),
+    legs: { at: [[-0.1 * k, 0.86 * k, 0], [0.1 * k, 0.86 * k, 0]], amp: 0.6, gait: 'biped', len: 0.86 * k,
+      make: g => { cyl(g, [0, 0.02, 0], [0, -0.78 * k, 0], 0.085 * k, 0.07 * k, o.legCol || o.pants, 10); orb(g, 0, -0.81 * k, 0.05 * k, 0.08 * k, 0.06 * k, 0.13 * k, o.shoes || COL.darkwood, { lo: true }); } },
+    glow: o.glow });
+}
+personDef('villager', 'Villager', '🧑', { shirt: [0.3, 0.6, 0.35], pants: [0.45, 0.32, 0.2], hair: [0.35, 0.22, 0.12] });
+personDef('farmer', 'Farmer', '🧑‍🌾', { shirt: [0.75, 0.25, 0.22], pants: [0.25, 0.38, 0.62], hair: [0.55, 0.35, 0.15], extra: (g, k, y) => {
+  cyl(g, [0, y + 1.94 * k, 0], [0, y + 1.96 * k, 0], 0.42 * k, 0.42 * k, COL.straw, 20); cyl(g, [0, y + 1.94 * k, 0], [0, y + 2.12 * k, 0], 0.2 * k, 0.18 * k, COL.straw, 16);
+  cyl(g, [0.36 * k, y + 0.1 * k, 0.1 * k], [0.36 * k, y + 2.0 * k, 0.1 * k], 0.025 * k, 0.025 * k, COL.wood, 6);
+  for (const dx of [-0.08, 0, 0.08]) cyl(g, [(0.36 + dx) * k, y + 2 * k, 0.1 * k], [(0.36 + dx) * k, y + 2.25 * k, 0.1 * k], 0.012 * k, 0.008 * k, COL.iron, 5);
+} });
+personDef('knight', 'Knight', '🛡️', { shirt: [0.7, 0.72, 0.76], pants: [0.55, 0.57, 0.6], shoes: [0.4, 0.4, 0.42], hair: null, speed: 1.2, extra: (g, k, y) => {
+  orb(g, 0, y + 1.82 * k, 0, 0.22 * k, 0.24 * k, 0.22 * k, [0.72, 0.74, 0.78]); box(g, 0, y + 1.8 * k, 0.2 * k, 0.26 * k, 0.04 * k, 0.04 * k, COL.dark);
+  orb(g, 0, y + 2.08 * k, -0.05 * k, 0.05 * k, 0.12 * k, 0.16 * k, COL.red, { lo: true });
+  box(g, 0.36 * k, y + 0.98 * k, 0.3 * k, 0.06 * k, 0.04 * k, 0.5 * k, COL.gold); box(g, 0.36 * k, y + 0.96 * k, 0.75 * k, 0.03 * k, 0.07 * k, 0.75 * k, [0.85, 0.87, 0.9]);
+  cyl(g, [-0.36 * k, y + 1.1 * k, 0.05 * k], [-0.42 * k, y + 1.1 * k, 0.05 * k], 0.3 * k, 0.3 * k, [0.25, 0.35, 0.7], 20); orb(g, -0.43 * k, y + 1.1 * k, 0.05 * k, 0.02 * k, 0.1 * k, 0.1 * k, COL.gold, { lo: true });
+} });
+personDef('king', 'King', '🤴', { shirt: [0.75, 0.12, 0.16], pants: [0.6, 0.1, 0.14], dress: [0.7, 0.1, 0.15], hair: [0.9, 0.88, 0.85], extra: (g, k, y) => {
+  for (let i = 0; i < 5; i++) { const a = i / 5 * 6.283; coneS(g, Math.cos(a) * 0.15 * k, y + 1.97 * k, Math.sin(a) * 0.15 * k, 0.05 * k, 0.12 * k, COL.gold, 8); }
+  cyl(g, [0, y + 1.93 * k, 0], [0, y + 2.0 * k, 0], 0.19 * k, 0.19 * k, COL.gold, 16);
+  orb(g, 0, y + 1.66 * k, 0.12 * k, 0.15 * k, 0.12 * k, 0.08 * k, [0.92, 0.9, 0.88]);
+  cyl(g, [0, y + 0.31 * k, 0], [0, y + 0.36 * k, 0], 0.43 * k, 0.43 * k, COL.white, 20);
+} });
+personDef('queen', 'Queen', '👸', { shirt: [0.55, 0.25, 0.75], pants: [0.5, 0.2, 0.7], dress: [0.55, 0.25, 0.78], hair: [0.95, 0.8, 0.35], longHair: true, extra: (g, k, y) => {
+  for (let i = 0; i < 5; i++) { const a = i / 5 * 6.283; coneS(g, Math.cos(a) * 0.14 * k, y + 1.97 * k, Math.sin(a) * 0.14 * k, 0.04 * k, 0.1 * k, COL.gold, 8); }
+  cyl(g, [0, y + 1.94 * k, 0], [0, y + 1.99 * k, 0], 0.17 * k, 0.17 * k, COL.gold, 16);
+} });
+personDef('wizard', 'Wizard', '🧙', { shirt: [0.2, 0.3, 0.75], pants: [0.2, 0.28, 0.7], dress: [0.2, 0.3, 0.75], hair: [0.9, 0.9, 0.92], speed: 1.0, extra: (g, k, y) => {
+  coneS(g, 0, y + 1.92 * k, 0, 0.3 * k, 0.7 * k, [0.22, 0.3, 0.78], 18); cyl(g, [0, y + 1.9 * k, 0], [0, y + 1.94 * k, 0], 0.36 * k, 0.36 * k, [0.22, 0.3, 0.78], 20);
+  orb(g, 0, y + 1.6 * k, 0.12 * k, 0.14 * k, 0.22 * k, 0.08 * k, [0.92, 0.92, 0.94]);
+  cyl(g, [0.36 * k, y + 0.05 * k, 0.1 * k], [0.36 * k, y + 2.0 * k, 0.1 * k], 0.03 * k, 0.03 * k, COL.bark, 8);
+}, glow: { flicker: 'pulse', make: g => orb(g, 0.36, 2.08, 0.1, 0.1, 0.1, 0.1, [0.6, 0.9, 1.0], { lo: true }) } });
+personDef('kid', 'Kid', '🧒', { k: 0.68, shirt: [0.9, 0.3, 0.3], pants: [0.25, 0.4, 0.75], hair: [0.2, 0.14, 0.1], speed: 1.6 });
+personDef('pirate', 'Pirate', '🏴‍☠️', { shirt: COL.white, pants: [0.2, 0.2, 0.3], hair: [0.15, 0.1, 0.08], extra: (g, k, y) => {
+  for (let i = 0; i < 4; i++) cyl(g, [0, y + (1.0 + i * 0.13) * k, 0], [0, y + (1.04 + i * 0.13) * k, 0], 0.26 * k, 0.26 * k, COL.red, 16);
+  orb(g, 0, y + 1.98 * k, 0, 0.36 * k, 0.1 * k, 0.24 * k, COL.black); orb(g, 0, y + 2.05 * k, 0, 0.18 * k, 0.1 * k, 0.17 * k, COL.black);
+  orb(g, 0.07 * k, y + 1.83 * k, 0.18 * k, 0.05 * k, 0.05 * k, 0.02 * k, COL.black, { lo: true });
+  box(g, 0.36 * k, y + 0.95 * k, 0.35 * k, 0.03 * k, 0.05 * k, 0.6 * k, [0.85, 0.87, 0.9]);
+} });
+personDef('builder', 'Builder', '👷', { shirt: [1, 0.6, 0.12], pants: [0.3, 0.32, 0.4], hair: [0.3, 0.2, 0.1], extra: (g, k, y) => {
+  orb(g, 0, y + 1.9 * k, 0, 0.23 * k, 0.15 * k, 0.23 * k, [1, 0.85, 0.15], { cutBelow: y + 1.88 * k }); cyl(g, [0, y + 1.88 * k, 0.05 * k], [0, y + 1.9 * k, 0.05 * k], 0.27 * k, 0.27 * k, [1, 0.85, 0.15], 16);
+  cyl(g, [0.36 * k, y + 0.9 * k, 0.06 * k], [0.36 * k, y + 1.3 * k, 0.06 * k], 0.025 * k, 0.025 * k, COL.wood, 6); box(g, 0.36 * k, y + 1.27 * k, 0.06 * k, 0.08 * k, 0.08 * k, 0.24 * k, COL.iron);
+} });
+
+/* ---------------- creatures ---------------- */
+// four legs: body along z, head at +z
+function quadDef(id, name, icon, o) {
+  const H = o.H, L = o.L, W = o.W, legLen = o.legLen || H * 0.85;
+  return def(id, 'creatures', name, icon, { r: Math.max(L, W) * 0.7, h: H + (o.headY || 0.4), move: o.move || 'walk', speed: o.speed || 1.6, place: o.place || 'land', amph: o.amph, hop: o.hop,
+    body: g => { orb(g, 0, H, 0, W, o.bodyH || W * 0.95, L / 2, o.col, { bump: o.fluffy ? 0.05 : 0 }); if (o.belly) orb(g, 0, H - W * 0.3, 0.05, W * 0.85, W * 0.6, L * 0.4, o.belly); o.head(g); if (o.tail) o.tail(g); if (o.extra) o.extra(g); },
+    legs: { at: [[-W * 0.55, H - W * 0.3, L * 0.3], [W * 0.55, H - W * 0.3, L * 0.3], [-W * 0.55, H - W * 0.3, -L * 0.3], [W * 0.55, H - W * 0.3, -L * 0.3]], amp: o.hop ? 0.25 : 0.5, gait: o.hop ? 'hop' : 'quad', len: legLen,
+      make: g => { cyl(g, [0, 0.05, 0], [0, -(H - W * 0.3) + 0.06, 0], o.legR || W * 0.22, (o.legR || W * 0.22) * 0.8, o.legCol || o.col, 10); orb(g, 0, -(H - W * 0.3) + 0.05, 0.02, (o.legR || W * 0.22) * 1.05, 0.06, (o.legR || W * 0.22) * 1.25, o.hoof || shade(o.legCol || o.col, 0.6), { lo: true }); } } });
+}
+function eyes(g, x, y, z, r = 0.05) { for (const s of [-1, 1]) { orb(g, s * x, y, z, r, r, r * 0.7, COL.white, { lo: true }); orb(g, s * x, y, z + r * 0.5, r * 0.55, r * 0.55, r * 0.4, COL.dark, { lo: true }); } }
+quadDef('dog', 'Dog', '🐕', { L: 0.95, H: 0.55, W: 0.24, col: [0.7, 0.48, 0.26], speed: 2.4, head: g => {
+  orb(g, 0, 0.78, 0.55, 0.2, 0.19, 0.22, [0.7, 0.48, 0.26]); orb(g, 0, 0.72, 0.75, 0.11, 0.1, 0.13, [0.82, 0.65, 0.45]); orb(g, 0, 0.76, 0.87, 0.04, 0.04, 0.03, COL.dark, { lo: true });
+  for (const s of [-1, 1]) orb(g, s * 0.17, 0.78, 0.5, 0.05, 0.16, 0.08, [0.45, 0.3, 0.16]); eyes(g, 0.08, 0.84, 0.72, 0.035);
+}, tail: g => cyl(g, [0, 0.62, -0.45], [0, 0.85, -0.7], 0.05, 0.03, [0.7, 0.48, 0.26], 8) });
+quadDef('cat', 'Cat', '🐈', { L: 0.7, H: 0.38, W: 0.17, col: [0.95, 0.6, 0.25], speed: 1.8, head: g => {
+  orb(g, 0, 0.56, 0.4, 0.16, 0.15, 0.15, [0.95, 0.6, 0.25]); for (const s of [-1, 1]) coneS(g, s * 0.09, 0.66, 0.4, 0.05, 0.11, [0.95, 0.6, 0.25], 8);
+  eyes(g, 0.06, 0.58, 0.53, 0.03); orb(g, 0, 0.53, 0.55, 0.02, 0.015, 0.015, [1, 0.5, 0.55], { lo: true });
+}, tail: g => { cyl(g, [0, 0.42, -0.33], [0, 0.6, -0.5], 0.04, 0.035, [0.95, 0.6, 0.25], 8); cyl(g, [0, 0.6, -0.5], [0, 0.85, -0.45], 0.035, 0.03, [0.95, 0.6, 0.25], 8); } });
+quadDef('sheep', 'Sheep', '🐑', { L: 1.0, H: 0.72, W: 0.4, col: [0.96, 0.95, 0.9], fluffy: true, legCol: COL.dark, legR: 0.06, speed: 1.1, head: g => {
+  orb(g, 0, 0.88, 0.55, 0.16, 0.18, 0.2, [0.15, 0.13, 0.12]); for (const s of [-1, 1]) orb(g, s * 0.17, 0.92, 0.5, 0.08, 0.04, 0.05, [0.15, 0.13, 0.12]);
+  orb(g, 0, 1.02, 0.48, 0.15, 0.1, 0.13, [0.96, 0.95, 0.9]); eyes(g, 0.08, 0.92, 0.68, 0.03);
+}, extra: g => { for (let i = 0; i < 8; i++) { const a = i / 8 * 6.283; orb(g, Math.cos(a) * 0.3, 0.78 + Math.sin(i) * 0.1, Math.sin(a) * 0.38, 0.22, 0.22, 0.22, [0.98, 0.97, 0.93], { lo: true }); } } });
+quadDef('cow', 'Cow', '🐄', { L: 1.8, H: 1.05, W: 0.48, col: [0.95, 0.94, 0.9], legR: 0.09, hoof: COL.dark, speed: 1.0, head: g => {
+  orb(g, 0, 1.25, 1.0, 0.24, 0.26, 0.3, [0.95, 0.94, 0.9]); orb(g, 0, 1.12, 1.25, 0.2, 0.15, 0.13, [1, 0.72, 0.72]);
+  for (const s of [-1, 1]) { cyl(g, [s * 0.15, 1.45, 0.95], [s * 0.3, 1.6, 0.95], 0.04, 0.02, COL.cream, 8); orb(g, s * 0.27, 1.32, 0.92, 0.1, 0.05, 0.06, COL.dark); }
+  eyes(g, 0.13, 1.33, 1.2, 0.04);
+}, tail: g => cyl(g, [0, 1.2, -0.88], [0, 0.6, -0.98], 0.03, 0.03, COL.dark, 6), extra: g => {
+  for (const [x, y, z, r] of [[0.4, 1.15, 0.3, 0.22], [-0.42, 1.05, -0.3, 0.25], [0.3, 1.3, -0.55, 0.18], [-0.25, 1.4, 0.45, 0.16]]) orb(g, x, y, z, r * 0.6, r, r, COL.dark, { lo: true });
+} });
+function horseHead(g, col, mane) {
+  cyl(g, [0, 1.4, 0.65], [0, 1.95, 0.95], 0.2, 0.15, col, 14); orb(g, 0, 1.95, 1.1, 0.15, 0.16, 0.3, col);
+  for (const s of [-1, 1]) coneS(g, s * 0.08, 2.08, 0.95, 0.04, 0.14, col, 8);
+  eyes(g, 0.1, 2.0, 1.15, 0.035);
+  for (let i = 0; i < 6; i++) orb(g, 0, 1.5 + i * 0.09, 0.62 + i * 0.06, 0.06, 0.1, 0.07, Array.isArray(mane[0]) ? mane[i % mane.length] : mane, { lo: true });
+}
+quadDef('horse', 'Horse', '🐎', { L: 1.7, H: 1.25, W: 0.44, bodyH: 0.5, col: [0.55, 0.33, 0.18], legR: 0.09, hoof: COL.dark, speed: 2.6, head: g => horseHead(g, [0.55, 0.33, 0.18], [0.18, 0.12, 0.08]),
+  tail: g => cyl(g, [0, 1.35, -0.8], [0, 0.7, -1.0], 0.08, 0.04, [0.18, 0.12, 0.08], 8) });
+const RAINBOW = [[1, 0.35, 0.35], [1, 0.7, 0.2], [1, 0.95, 0.3], [0.4, 0.85, 0.4], [0.35, 0.6, 1], [0.7, 0.45, 1]];
+quadDef('unicorn', 'Unicorn', '🦄', { L: 1.7, H: 1.25, W: 0.44, bodyH: 0.5, col: [0.98, 0.96, 1], legR: 0.09, hoof: COL.gold, speed: 2.6, head: g => { horseHead(g, [0.98, 0.96, 1], RAINBOW); cyl(g, [0, 2.1, 1.12], [0, 2.55, 1.28], 0.05, 0.005, COL.gold, 10); },
+  tail: g => { for (let i = 0; i < 5; i++) cyl(g, [(i - 2) * 0.03, 1.35, -0.8], [(i - 2) * 0.06, 0.7, -1.0], 0.04, 0.02, RAINBOW[i], 6); } });
+quadDef('deer', 'Deer', '🦌', { L: 1.3, H: 1.0, W: 0.32, bodyH: 0.4, col: [0.68, 0.46, 0.28], legR: 0.065, speed: 2.4, head: g => {
+  cyl(g, [0, 1.1, 0.5], [0, 1.5, 0.7], 0.12, 0.1, [0.68, 0.46, 0.28]); orb(g, 0, 1.55, 0.82, 0.12, 0.12, 0.2, [0.68, 0.46, 0.28]);
+  for (const s of [-1, 1]) { cyl(g, [s * 0.06, 1.65, 0.75], [s * 0.25, 2.1, 0.7], 0.025, 0.015, COL.cream, 6); cyl(g, [s * 0.16, 1.85, 0.73], [s * 0.1, 2.05, 0.85], 0.02, 0.01, COL.cream, 6); orb(g, s * 0.14, 1.62, 0.72, 0.08, 0.04, 0.05, [0.68, 0.46, 0.28], { lo: true }); }
+  eyes(g, 0.08, 1.6, 0.9, 0.03);
+}, tail: g => orb(g, 0, 1.05, -0.62, 0.07, 0.1, 0.05, COL.white, { lo: true }) });
+function bearDef(id, name, icon, col) {
+  quadDef(id, name, icon, { L: 1.6, H: 0.95, W: 0.55, col, legR: 0.16, speed: 1.3, head: g => {
+    orb(g, 0, 1.2, 0.95, 0.32, 0.3, 0.3, col); orb(g, 0, 1.12, 1.22, 0.14, 0.12, 0.12, shade(col, 1.25)); orb(g, 0, 1.16, 1.33, 0.05, 0.04, 0.03, COL.dark, { lo: true });
+    for (const s of [-1, 1]) orb(g, s * 0.22, 1.47, 0.9, 0.09, 0.09, 0.05, col, { lo: true }); eyes(g, 0.13, 1.28, 1.18, 0.04);
+  } });
+}
+bearDef('bear', 'Bear', '🐻', [0.4, 0.26, 0.16]);
+bearDef('polarbear', 'Polar bear', '🐻‍❄️', [0.95, 0.94, 0.9]);
+quadDef('fox', 'Fox', '🦊', { L: 0.8, H: 0.42, W: 0.18, col: [0.95, 0.45, 0.12], legCol: COL.dark, legR: 0.04, speed: 2.2, head: g => {
+  orb(g, 0, 0.62, 0.46, 0.16, 0.14, 0.16, [0.95, 0.45, 0.12]); cyl(g, [0, 0.58, 0.55], [0, 0.56, 0.75], 0.08, 0.02, [0.98, 0.95, 0.9], 10);
+  for (const s of [-1, 1]) coneS(g, s * 0.09, 0.72, 0.44, 0.05, 0.14, [0.95, 0.45, 0.12], 8); eyes(g, 0.07, 0.66, 0.58, 0.03);
+}, tail: g => { orb(g, 0, 0.5, -0.55, 0.1, 0.1, 0.28, [0.95, 0.45, 0.12]); orb(g, 0, 0.5, -0.8, 0.07, 0.07, 0.1, COL.white, { lo: true }); } });
+quadDef('goat', 'Goat', '🐐', { L: 0.9, H: 0.7, W: 0.24, col: [0.88, 0.86, 0.82], legR: 0.05, hoof: COL.dark, speed: 1.6, head: g => {
+  orb(g, 0, 0.98, 0.52, 0.13, 0.14, 0.2, [0.88, 0.86, 0.82]); orb(g, 0, 0.8, 0.6, 0.04, 0.09, 0.04, [0.88, 0.86, 0.82]);
+  for (const s of [-1, 1]) { cyl(g, [s * 0.06, 1.1, 0.48], [s * 0.12, 1.25, 0.32], 0.035, 0.02, [0.5, 0.45, 0.4], 8); cyl(g, [s * 0.12, 1.25, 0.32], [s * 0.16, 1.18, 0.2], 0.02, 0.01, [0.5, 0.45, 0.4], 8); }
+  eyes(g, 0.08, 1.02, 0.62, 0.03);
+} });
+quadDef('pig', 'Pig', '🐖', { L: 1.0, H: 0.5, W: 0.34, col: [1, 0.7, 0.72], legR: 0.07, speed: 1.2, head: g => {
+  orb(g, 0, 0.6, 0.55, 0.24, 0.22, 0.2, [1, 0.7, 0.72]); cyl(g, [0, 0.56, 0.7], [0, 0.56, 0.78], 0.1, 0.1, [1, 0.6, 0.65], 14);
+  for (const s of [-1, 1]) coneS(g, s * 0.13, 0.78, 0.5, 0.06, 0.1, [1, 0.7, 0.72], 8); eyes(g, 0.09, 0.66, 0.7, 0.03);
+}, tail: g => { cyl(g, [0, 0.6, -0.5], [0.06, 0.68, -0.56], 0.02, 0.02, [1, 0.7, 0.72], 6); } });
+quadDef('camel', 'Camel', '🐪', { L: 1.8, H: 1.5, W: 0.48, bodyH: 0.55, col: [0.82, 0.64, 0.4], legR: 0.09, speed: 1.2, head: g => {
+  cyl(g, [0, 1.6, 0.7], [0, 2.1, 1.1], 0.14, 0.11, [0.82, 0.64, 0.4]); orb(g, 0, 2.15, 1.25, 0.13, 0.13, 0.25, [0.82, 0.64, 0.4]); eyes(g, 0.09, 2.2, 1.3, 0.03);
+}, extra: g => { orb(g, 0, 1.85, -0.25, 0.3, 0.38, 0.32, [0.82, 0.64, 0.4]); orb(g, 0, 1.8, 0.35, 0.28, 0.32, 0.3, [0.82, 0.64, 0.4]); } });
+quadDef('bunny', 'Bunny', '🐇', { L: 0.36, H: 0.2, W: 0.13, col: [0.95, 0.93, 0.9], hop: true, speed: 1.8, head: g => {
+  orb(g, 0, 0.32, 0.18, 0.1, 0.1, 0.1, [0.95, 0.93, 0.9]); for (const s of [-1, 1]) orb(g, s * 0.04, 0.48, 0.15, 0.025, 0.11, 0.04, [0.95, 0.93, 0.9]); eyes(g, 0.05, 0.34, 0.25, 0.02);
+}, tail: g => orb(g, 0, 0.24, -0.2, 0.05, 0.05, 0.05, COL.white, { lo: true }) });
+quadDef('squirrel', 'Squirrel', '🐿️', { L: 0.3, H: 0.17, W: 0.09, col: [0.6, 0.35, 0.18], hop: true, speed: 2, head: g => {
+  orb(g, 0, 0.25, 0.15, 0.07, 0.07, 0.07, [0.6, 0.35, 0.18]); eyes(g, 0.035, 0.27, 0.2, 0.015);
+}, tail: g => orb(g, 0, 0.35, -0.18, 0.07, 0.2, 0.08, [0.65, 0.4, 0.2]) });
+quadDef('lizard', 'Lizard', '🦎', { L: 0.5, H: 0.1, W: 0.08, col: [0.35, 0.7, 0.3], legR: 0.02, speed: 1.5, head: g => { orb(g, 0, 0.12, 0.3, 0.06, 0.05, 0.09, [0.35, 0.7, 0.3]); eyes(g, 0.04, 0.15, 0.33, 0.015); },
+  tail: g => cyl(g, [0, 0.1, -0.25], [0, 0.05, -0.65], 0.05, 0.005, [0.35, 0.7, 0.3], 8) });
+quadDef('frog', 'Frog', '🐸', { L: 0.3, H: 0.12, W: 0.13, col: [0.3, 0.72, 0.25], hop: true, amph: true, speed: 1.2, head: g => { orb(g, 0, 0.2, 0.1, 0.13, 0.08, 0.1, [0.3, 0.72, 0.25]); for (const s of [-1, 1]) { orb(g, s * 0.07, 0.27, 0.12, 0.04, 0.04, 0.04, COL.white, { lo: true }); orb(g, s * 0.07, 0.28, 0.15, 0.02, 0.02, 0.02, COL.dark, { lo: true }); } } });
+quadDef('croc', 'Crocodile', '🐊', { L: 2.6, H: 0.32, W: 0.36, bodyH: 0.22, col: [0.3, 0.45, 0.22], legR: 0.07, amph: true, speed: 0.9, head: g => {
+  orb(g, 0, 0.32, 1.5, 0.24, 0.15, 0.45, [0.3, 0.45, 0.22]); for (const s of [-1, 1]) { orb(g, s * 0.13, 0.46, 1.25, 0.06, 0.06, 0.06, [0.9, 0.85, 0.3], { lo: true }); }
+  for (let i = 0; i < 6; i++) for (const s of [-1, 1]) coneS(g, s * 0.2, 0.25, 1.25 + i * 0.12, 0.02, -0.06, COL.white, 5);
+}, tail: g => cyl(g, [0, 0.3, -1.2], [0, 0.25, -2.6], 0.25, 0.04, [0.3, 0.45, 0.22], 12), extra: g => { for (let i = 0; i < 8; i++) coneS(g, 0, 0.5, -1 + i * 0.28, 0.06, 0.1, [0.25, 0.38, 0.18], 6); } });
+quadDef('crab', 'Crab', '🦀', { L: 0.4, H: 0.15, W: 0.26, bodyH: 0.1, col: [0.9, 0.3, 0.2], legR: 0.02, speed: 0.8, head: g => {
+  for (const s of [-1, 1]) { orb(g, s * 0.3, 0.2, 0.25, 0.1, 0.07, 0.08, [0.9, 0.3, 0.2]); cyl(g, [s * 0.06, 0.22, 0.12], [s * 0.07, 0.32, 0.14], 0.015, 0.015, [0.9, 0.3, 0.2], 5); orb(g, s * 0.07, 0.33, 0.14, 0.03, 0.03, 0.03, COL.dark, { lo: true }); }
+} });
+// two legs
+function bipedDef(id, name, icon, o) {
+  return def(id, 'creatures', name, icon, { r: o.r, h: o.h, move: 'walk', speed: o.speed, place: o.place || 'land', body: o.body,
+    legs: { at: o.legAt, amp: o.amp || 0.6, gait: 'biped', len: o.legLen, make: o.leg } });
+}
+bipedDef('chicken', 'Chicken', '🐔', { r: 0.3, h: 0.7, speed: 1.2, legAt: [[-0.08, 0.28, 0], [0.08, 0.28, 0]], legLen: 0.28,
+  body: g => { orb(g, 0, 0.42, 0, 0.17, 0.18, 0.22, COL.white); orb(g, 0, 0.62, 0.14, 0.1, 0.11, 0.1, COL.white); coneS(g, 0, 0.62, 0.22, 0.03, 0.001, [1, 0.7, 0.1]);
+    cyl(g, [0, 0.6, 0.22], [0, 0.6, 0.29], 0.025, 0.002, [1, 0.7, 0.1], 8); orb(g, 0, 0.74, 0.13, 0.02, 0.05, 0.06, COL.red, { lo: true }); eyes(g, 0.06, 0.65, 0.2, 0.02); orb(g, 0, 0.5, -0.24, 0.06, 0.12, 0.05, COL.white); },
+  leg: g => { cyl(g, [0, 0, 0], [0, -0.27, 0], 0.02, 0.018, [1, 0.65, 0.1], 6); orb(g, 0, -0.28, 0.04, 0.04, 0.01, 0.06, [1, 0.65, 0.1], { lo: true }); } });
+bipedDef('penguin', 'Penguin', '🐧', { r: 0.35, h: 0.9, speed: 0.8, amp: 0.3, legAt: [[-0.1, 0.12, 0], [0.1, 0.12, 0]], legLen: 0.12,
+  body: g => { orb(g, 0, 0.48, 0, 0.24, 0.38, 0.22, [0.12, 0.13, 0.16]); orb(g, 0, 0.44, 0.06, 0.18, 0.3, 0.17, COL.white); orb(g, 0, 0.88, 0.02, 0.15, 0.14, 0.15, [0.12, 0.13, 0.16]);
+    cyl(g, [0, 0.86, 0.14], [0, 0.85, 0.24], 0.035, 0.005, [1, 0.6, 0.1], 8); eyes(g, 0.06, 0.92, 0.13, 0.025); for (const s of [-1, 1]) orb(g, s * 0.25, 0.5, 0, 0.04, 0.22, 0.09, [0.12, 0.13, 0.16]); },
+  leg: g => orb(g, 0, -0.1, 0.05, 0.06, 0.025, 0.09, [1, 0.6, 0.1], { lo: true }) });
+bipedDef('dino', 'Dinosaur', '🦖', { r: 2.5, h: 4.5, speed: 2.0, amp: 0.5, legAt: [[-0.55, 2.1, -0.2], [0.55, 2.1, -0.2]], legLen: 2.1,
+  body: g => { const C = [0.35, 0.58, 0.28]; orb(g, 0, 2.5, -0.2, 0.75, 0.85, 1.4, C); orb(g, 0, 2.3, 0, 0.6, 0.6, 1.1, [0.75, 0.8, 0.5]);
+    cyl(g, [0, 2.9, 0.8], [0, 3.6, 1.5], 0.45, 0.35, C); orb(g, 0, 3.75, 1.9, 0.48, 0.45, 0.8, C); orb(g, 0, 3.45, 2.1, 0.4, 0.2, 0.62, shade(C, 0.9));
+    for (let i = 0; i < 7; i++) for (const s of [-1, 1]) coneS(g, s * 0.3, 3.45, 1.75 + i * 0.13, 0.035, -0.12, COL.white, 5);
+    eyes(g, 0.32, 4.0, 2.0, 0.08);
+    cyl(g, [0, 2.6, -1.3], [0, 2.1, -4.2], 0.6, 0.06, C, 16);
+    for (const s of [-1, 1]) { cyl(g, [s * 0.55, 2.6, 0.9], [s * 0.6, 2.2, 1.3], 0.08, 0.06, C, 8); }
+    for (let i = 0; i < 9; i++) coneS(g, 0, 3.25 - i * 0.12, 0.6 - i * 0.55, 0.12, 0.3, [0.25, 0.45, 0.2], 6); },
+  leg: g => { const C = [0.35, 0.58, 0.28]; orb(g, 0, -0.3, 0, 0.42, 0.7, 0.5, C); cyl(g, [0, -0.7, 0], [0, -2.05, 0.15], 0.25, 0.18, C, 12); orb(g, 0, -2.08, 0.35, 0.22, 0.08, 0.4, shade(C, 0.8)); } });
+// flyers: wings flap; the right wing is built along +x (the left one is a mirror)
+function birdDef(id, name, icon, body, wing, o = {}) {
+  return def(id, 'creatures', name, icon, { r: o.r || 0.4, h: o.h || 0.4, move: 'fly', place: 'any', speed: o.speed || 6, alt: o.alt || 14, body,
+    wings: { at: o.wingAt || [0.08, 0.05, 0], amp: o.amp || 0.8, rate: o.rate || 9, make: wing } });
+}
+function featherWing(col, tip, len = 0.45, w = 0.2) {
+  return g => { tri(g, [0, 0, w * 0.6], [len, 0, 0.05], [0, 0, -w * 0.6], [0, 1, 0], 0, col, tip, col, 0, 0, 0); tri(g, [len * 0.6, 0, 0.08], [len * 1.05, 0, -0.08], [len, 0, 0.04], [0, 1, 0], 0, tip, tip, tip, 0, 0, 0); };
+}
+birdDef('bird', 'Bluebird', '🐦', g => { orb(g, 0, 0, 0, 0.09, 0.09, 0.16, [0.3, 0.5, 0.9]); orb(g, 0, -0.02, 0.03, 0.07, 0.07, 0.12, [1, 0.6, 0.3]); orb(g, 0, 0.05, 0.15, 0.07, 0.07, 0.07, [0.3, 0.5, 0.9]); cyl(g, [0, 0.04, 0.2], [0, 0.04, 0.27], 0.02, 0.002, [1, 0.8, 0.2], 6); eyes(g, 0.04, 0.07, 0.19, 0.015); }, featherWing([0.3, 0.5, 0.9], [0.2, 0.35, 0.7]));
+birdDef('parrot', 'Parrot', '🦜', g => { orb(g, 0, 0, 0, 0.11, 0.11, 0.2, [0.9, 0.15, 0.15]); orb(g, 0, 0.07, 0.18, 0.08, 0.08, 0.08, [0.9, 0.15, 0.15]); cyl(g, [0, 0.05, 0.25], [0, 0.0, 0.31], 0.03, 0.004, [0.95, 0.9, 0.7], 6); cyl(g, [0, -0.02, -0.18], [0, -0.06, -0.48], 0.05, 0.01, [0.2, 0.4, 0.95], 8); eyes(g, 0.05, 0.1, 0.22, 0.015); },
+  featherWing([0.9, 0.15, 0.15], [0.2, 0.45, 0.95], 0.55, 0.24), { speed: 5, alt: 12 });
+birdDef('seagull', 'Seagull', '🕊️', g => { orb(g, 0, 0, 0, 0.1, 0.1, 0.22, COL.white); orb(g, 0, 0.07, 0.2, 0.07, 0.07, 0.08, COL.white); cyl(g, [0, 0.06, 0.26], [0, 0.04, 0.34], 0.025, 0.004, [1, 0.8, 0.2], 6); eyes(g, 0.045, 0.09, 0.24, 0.014); },
+  featherWing([0.92, 0.92, 0.92], [0.35, 0.35, 0.38], 0.7, 0.22), { speed: 7, alt: 18, amp: 0.5, rate: 5 });
+birdDef('dragon', 'Dragon', '🐉', g => {
+  const C = [0.78, 0.16, 0.12], B = [0.98, 0.78, 0.3];
+  orb(g, 0, 0, 0, 1.1, 1.0, 2.2, C); orb(g, 0, -0.35, 0.2, 0.85, 0.7, 1.8, B);
+  cyl(g, [0, 0.4, 1.8], [0, 1.6, 3.4], 0.55, 0.38, C, 16); orb(g, 0, 1.8, 3.9, 0.55, 0.5, 0.85, C); orb(g, 0, 1.5, 4.25, 0.42, 0.25, 0.6, shade(C, 0.9));
+  for (const s of [-1, 1]) { cyl(g, [s * 0.3, 2.15, 3.6], [s * 0.55, 2.9, 3.0], 0.1, 0.02, COL.cream, 8); eyes(g, 0.3, 2.0, 4.25, 0.1); }
+  cyl(g, [0, 0.1, -1.9], [0, -0.3, -5.5], 0.7, 0.08, C, 16); coneS(g, 0, -0.4, -5.6, 0.4, 0.6, C, 4);
+  for (let i = 0; i < 10; i++) coneS(g, 0, 0.85 - i * 0.05, 1.9 - i * 0.7, 0.18, 0.4, [0.5, 0.08, 0.06], 6);
+  for (const s of [-1, 1]) for (const z of [1.2, -1.2]) { cyl(g, [s * 0.7, -0.6, z], [s * 0.8, -1.4, z + 0.3], 0.22, 0.16, C, 10); }
+}, g => {
+  const C = [0.6, 0.1, 0.1], M = [0.9, 0.35, 0.2];
+  cyl(g, [0, 0, 0], [3, 0.6, -0.5], 0.14, 0.08, C, 8); cyl(g, [3, 0.6, -0.5], [6.2, 0.2, -1.8], 0.08, 0.04, C, 8);
+  tri(g, [0, 0, 1], [3, 0.6, -0.5], [0, 0, -1.4], [0, 1, 0], 0, M, M, M, 0, 0, 0); tri(g, [3, 0.6, -0.5], [6.2, 0.2, -1.8], [2.6, 0.1, -2.4], [0, 1, 0], 0, M, M, M, 0, 0, 0);
+  tri(g, [3, 0.6, -0.5], [2.6, 0.1, -2.4], [0, 0, -1.4], [0, 1, 0], 0, M, M, M, 0, 0, 0);
+}, { r: 4, h: 3, speed: 9, alt: 32, amp: 0.6, rate: 3, wingAt: [0.9, 0.6, 0.2] });
+// swimmers
+function swimDef(id, name, icon, body, o) { return def(id, 'creatures', name, icon, Object.assign({ move: 'swim', place: 'water', body }, o)); }
+swimDef('dolphin', 'Dolphin', '🐬', g => {
+  const C = [0.5, 0.58, 0.68];
+  orb(g, 0, 0, 0, 0.42, 0.42, 1.2, C); orb(g, 0, -0.12, 0.1, 0.32, 0.3, 1.0, [0.9, 0.9, 0.92]);
+  cyl(g, [0, 0, 1.1], [0, -0.05, 1.6], 0.16, 0.08, C, 12); coneS(g, 0, 0.3, -0.1, 0.25, 0.45, C, 4); eyes(g, 0.2, 0.08, 0.85, 0.04);
+  cyl(g, [0, 0, -1.0], [0, 0.05, -1.7], 0.22, 0.08, C, 12); for (const s of [-1, 1]) tri(g, [0, 0.05, -1.65], [s * 0.6, 0.02, -2.0], [s * 0.15, 0.05, -1.95], [0, 1, 0], 0, C, C, C, 0, 0, 0);
+}, { r: 1.2, h: 1, speed: 4.5, jumps: true });
+swimDef('whale', 'Whale', '🐋', g => {
+  const C = [0.26, 0.36, 0.52];
+  orb(g, 0, 0, 0, 2.0, 1.7, 5.5, C); orb(g, 0, -0.6, 0.6, 1.7, 1.1, 4.5, [0.82, 0.84, 0.86]); eyes(g, 1.6, 0.0, 3.4, 0.15);
+  cyl(g, [0, 0, -5], [0, 0.3, -7.6], 0.9, 0.25, C, 16); for (const s of [-1, 1]) tri(g, [0, 0.3, -7.5], [s * 2.4, 0.4, -8.6], [s * 0.5, 0.3, -8.4], [0, 1, 0], 0, C, C, C, 0, 0, 0);
+  for (const s of [-1, 1]) tri(g, [s * 1.7, -0.5, 2], [s * 3.2, -1.0, 0.8], [s * 1.6, -0.6, 0.6], [0, 1, 0], 0, C, C, C, 0, 0, 0);
+}, { r: 5, h: 3, speed: 2.5, spout: true });
+swimDef('shark', 'Shark', '🦈', g => {
+  const C = [0.48, 0.52, 0.58];
+  orb(g, 0, 0, 0, 0.5, 0.5, 1.7, C); orb(g, 0, -0.15, 0.2, 0.4, 0.32, 1.4, [0.92, 0.92, 0.92]); coneS(g, 0, 0.35, 0, 0.42, 0.8, C, 4); eyes(g, 0.28, 0.08, 1.2, 0.04);
+  cyl(g, [0, 0, -1.5], [0, 0.1, -2.4], 0.25, 0.06, C, 12); tri(g, [0, 0.1, -2.3], [0, 0.9, -2.8], [0, -0.5, -2.7], [1, 0, 0], 0, C, C, C, 0, 0, 0);
+}, { r: 1.6, h: 1, speed: 3.5, fin: true });
+
+/* ---------------- weapons ---------------- */
+function sword(g, x, y, z, k = 1, down = true) {
+  const s = down ? -1 : 1;
+  box(g, x, y, z, 0.07 * k, s * 1.1 * k, 0.025 * k, [0.88, 0.9, 0.94]);
+  box(g, x, y - s * 0.02, z, 0.34 * k, 0.06 * k, 0.07 * k, COL.gold);
+  cyl(g, [x, y - s * 0.05, z], [x, y - s * 0.3 * k, z], 0.035 * k, 0.035 * k, [0.4, 0.2, 0.12], 8);
+  orb(g, x, y - s * 0.33 * k, z, 0.055 * k, 0.055 * k, 0.055 * k, COL.gold, { lo: true });
+}
+def('swordstone', 'weapons', 'Sword in a stone', '🗡️', { r: 1.2, h: 2, body: g => { rockShape(g, 0, 0.3, 0, 1.1, 0.7, 0.9, COL.stone2, 3); sword(g, 0, 1.45, 0, 1.3, false); } });
+def('weaponrack', 'weapons', 'Weapon rack', '⚔️', { r: 1.4, h: 2.2, body: g => {
+  for (const x of [-1.1, 1.1]) box(g, x, -0.1, 0, 0.14, 2.1, 0.3, COL.wood); box(g, 0, 1.7, 0, 2.4, 0.12, 0.3, COL.wood); box(g, 0, 0.4, 0, 2.4, 0.1, 0.3, COL.wood);
+  sword(g, -0.6, 0.6, 0.1, 1.1, false); sword(g, -0.2, 0.6, 0.1, 1.1, false);
+  cyl(g, [0.3, 0.45, 0.1], [0.3, 2.0, 0.1], 0.03, 0.03, COL.wood, 8); coneS(g, 0.3, 2.0, 0.1, 0.06, 0.25, COL.iron, 8);
+  cyl(g, [0.75, 0.45, 0.1], [0.75, 1.9, 0.1], 0.035, 0.035, COL.wood, 8); box(g, 0.88, 1.6, 0.1, 0.25, 0.32, 0.03, COL.iron);
+} });
+def('shield', 'weapons', 'Big shield', '🛡️', { r: 0.9, h: 1.6, body: g => {
+  cyl(g, [0, 0.9, -0.05], [0, 0.9, 0.05], 0.75, 0.75, [0.25, 0.35, 0.75], 32); cyl(g, [0, 0.9, 0.05], [0, 0.9, 0.07], 0.76, 0.76, COL.gold, 32);
+  cyl(g, [0, 0.9, 0.07], [0, 0.9, 0.08], 0.68, 0.68, [0.25, 0.35, 0.75], 32); orb(g, 0, 0.9, 0.1, 0.16, 0.16, 0.08, COL.gold);
+  box(g, 0, 0.82, 0.09, 0.12, 0.6, 0.02, COL.white); box(g, 0, 1.05, 0.09, 0.5, 0.12, 0.02, COL.white);
+  cyl(g, [0, 0, -0.2], [0, 0.9, -0.08], 0.04, 0.04, COL.wood, 8);
+} });
+def('bow', 'weapons', 'Bow and arrows', '🏹', { r: 0.8, h: 1.7, body: g => {
+  let prev = null; for (let i = 0; i <= 12; i++) { const a = -1.1 + i / 12 * 2.2, p = [0, 0.95 + Math.sin(a) * 0.8, Math.cos(a) * 0.3 - 0.3]; if (prev) cyl(g, prev, p, 0.03, 0.03, COL.darkwood, 8, false); prev = p; }
+  cyl(g, [0, 0.95 + Math.sin(-1.1) * 0.8, Math.cos(-1.1) * 0.3 - 0.3], [0, 0.95 + Math.sin(1.1) * 0.8, Math.cos(1.1) * 0.3 - 0.3], 0.006, 0.006, COL.white, 4, false);
+  cyl(g, [0.45, 0, 0], [0.45, 0.8, 0], 0.13, 0.15, [0.5, 0.3, 0.16], 14);
+  for (let i = 0; i < 5; i++) { const ox = 0.45 + (i - 2) * 0.05; cyl(g, [ox, 0.6, 0], [ox, 1.15, 0], 0.01, 0.01, COL.plank, 5); box(g, ox, 1.08, 0, 0.01, 0.1, 0.05, COL.red); }
+} });
+def('axe', 'weapons', 'Battle axe', '🪓', { r: 0.8, h: 1.6, body: g => {
+  cyl(g, [0, -0.1, 0], [0, 0.5, 0], 0.45, 0.45, COL.bark, 20); cyl(g, [0, 0.5, 0], [0, 0.52, 0], 0.43, 0.43, COL.plank, 20);
+  cyl(g, [0.05, 0.4, 0], [0.2, 1.6, 0], 0.04, 0.04, COL.wood, 8);
+  for (const s of [-1, 1]) { tri(g, [0.18, 1.45, 0], [0.18 + s * 0.4, 1.7, 0], [0.18 + s * 0.4, 1.15, 0], [0, 0, 1], 0, COL.iron, COL.iron, COL.iron, 0, 0, 0); }
+} });
+def('cannon', 'weapons', 'Cannon', '💣', { r: 1.6, h: 1.5, big: true, body: g => {
+  box(g, 0, 0.35, -0.2, 0.9, 0.35, 1.8, COL.wood);
+  for (const s of [-1, 1]) { cyl(g, [s * 0.55, 0.42, 0.35], [s * 0.65, 0.42, 0.35], 0.42, 0.42, COL.darkwood, 20); cyl(g, [s * 0.55, 0.42, -0.75], [s * 0.65, 0.42, -0.75], 0.36, 0.36, COL.darkwood, 20); }
+  cyl(g, [0, 0.95, -0.9], [0, 1.15, 1.1], 0.36, 0.26, [0.2, 0.2, 0.22], 20); cyl(g, [0, 1.15, 1.1], [0, 1.17, 1.2], 0.32, 0.32, [0.3, 0.3, 0.32], 20); orb(g, 0, 0.92, -0.95, 0.2, 0.2, 0.2, [0.2, 0.2, 0.22]);
+  for (const [x, y, z] of [[0.9, 0.15, 0.9], [1.2, 0.15, 0.9], [1.05, 0.15, 1.15], [1.05, 0.38, 0.98]]) orb(g, x, y, z, 0.15, 0.15, 0.15, COL.black, { lo: true });
+} });
+def('catapult', 'weapons', 'Catapult', '🎯', { r: 2.4, h: 3.5, big: true, body: g => {
+  for (const s of [-1, 1]) { box(g, s * 0.8, 0.4, 0, 0.2, 0.25, 3.2, COL.wood); cyl(g, [s * 0.92, 0.35, 1.2], [s * 1.02, 0.35, 1.2], 0.38, 0.38, COL.darkwood, 18); cyl(g, [s * 0.92, 0.35, -1.2], [s * 1.02, 0.35, -1.2], 0.38, 0.38, COL.darkwood, 18);
+    cyl(g, [s * 0.8, 0.6, 0.8], [s * 0.8, 1.9, 0.2], 0.09, 0.09, COL.wood, 8); cyl(g, [s * 0.8, 0.6, -0.4], [s * 0.8, 1.9, 0.2], 0.09, 0.09, COL.wood, 8); }
+  box(g, 0, 0.45, 0, 1.6, 0.15, 0.2, COL.wood); cyl(g, [-0.8, 1.9, 0.2], [0.8, 1.9, 0.2], 0.08, 0.08, COL.darkwood, 8);
+  cyl(g, [0, 0.7, -1.3], [0, 3.1, 0.8], 0.09, 0.08, COL.plank, 8); orb(g, 0, 3.2, 0.9, 0.35, 0.2, 0.35, COL.darkwood, { cutBelow: 3.12 }); orb(g, 0, 3.32, 0.9, 0.22, 0.22, 0.22, COL.stone2, { lo: true });
+} });
+def('armor', 'weapons', 'Suit of armor', '🤺', { r: 0.6, h: 2.2, body: g => {
+  box(g, 0, -0.1, 0, 0.8, 0.2, 0.6, COL.wood);
+  personBody(g, { y0: 0.1, shirt: [0.72, 0.74, 0.78], pants: [0.6, 0.62, 0.66], skin: [0.6, 0.62, 0.66], hair: null, extra: (gg, k, y) => { orb(gg, 0, y + 1.82, 0, 0.22, 0.24, 0.22, [0.74, 0.76, 0.8]); box(gg, 0, y + 1.8, 0.2, 0.26, 0.04, 0.04, COL.dark); orb(gg, 0, y + 2.08, -0.05, 0.05, 0.12, 0.16, COL.red, { lo: true }); } });
+  for (const x of [-0.1, 0.1]) cyl(g, [x, 0.1, 0], [x, 0.96, 0], 0.09, 0.09, [0.6, 0.62, 0.66], 10);
+} });
+def('chest', 'weapons', 'Treasure chest', '💰', { r: 0.8, h: 1.2, body: g => {
+  box(g, 0, -0.05, 0, 1.1, 0.6, 0.7, COL.wood); for (const x of [-0.4, 0.4]) box(g, x, -0.05, 0, 0.08, 0.62, 0.72, COL.gold);
+  box(g, 0, 0.55, -0.32, 1.12, 0.65, 0.1, shade(COL.wood, 1.1));
+}, glow: { flicker: 'pulse', make: g => { for (let i = 0; i < 9; i++) orb(g, -0.35 + (i % 3) * 0.35, 0.58 + Math.floor(i / 3) * 0.05, -0.2 + Math.floor(i / 3) * 0.2, 0.13, 0.06, 0.13, COL.gold, { lo: true }); orb(g, 0.1, 0.7, 0.1, 0.07, 0.07, 0.07, [0.4, 0.9, 1], { lo: true }); } } });
+
+/* =====================================================================
+   Placing, erasing and undo
+   ===================================================================== */
+const SIZES = [0.5, 1, 1.75, 3], SIZE_NAMES = ['Small', 'Medium', 'Big', 'Giant'], SIZE_SHORT = ['S', 'M', 'L', 'XL'];
+const tool = { cat: 0, item: CATS.map(() => 0), size: 1, turn: 0, erase: false };
+let undoStack = [], cursor = null, holdT = 0, lastPaint = null;
+const selectedDef = () => CAT[CATS[tool.cat].items[tool.item[tool.cat]]];
+function makeObj(t, x, z, r, s) { return { t, hx: x, hz: z, x, z, y: 0, r, s, phase: Math.random() * 6.28, wait: Math.random() * 2, ang: Math.random() * 6.28, tx: undefined, tz: undefined }; }
+function canPlace(d, hit, s) {
+  if (!hit) return false;
+  if (d.place === 'water') return hit.water && hit.depth > Math.max(1.2, d.h * s * 0.5);
+  if (d.place === 'any') return true;
+  if (d.amph) return true;
+  return !hit.water && groundAt(hit.x, hit.z) > 0.15;
+}
+function placeAt(hit) {
+  const d = selectedDef(), s = SIZES[tool.size];
+  if (!canPlace(d, hit, s)) { sfx('nope'); toast(d.place === 'water' ? `${d.icon} ${d.name} needs deep water` : `${d.icon} ${d.name} goes on land`, 1500); return false; }
+  if (objs.length >= 3000) { toast('Your island is full! Erase some things first.'); return false; }
+  const face = Math.atan2(camEye[0] - hit.x, camEye[2] - hit.z);
+  const o = makeObj(d.id, hit.x, hit.z, face + tool.turn, s);
+  settle(o); objs.push(o);
+  undoStack.push({ add: o }); if (undoStack.length > 200) undoStack.shift();
+  dirty = true; sfx(d.big || s >= 1.75 ? 'big' : 'place'); rumble(0.2, 0.3, 60);
+  pop.push({ o, t: 0 });
+  updateCount();
+  return true;
+}
+function eraseTarget(hit) {
+  if (!hit) return null;
+  let best = null, bd = Infinity;
+  for (const o of objs) {
+    const d = CAT[o.t], dist = Math.hypot(o.x - hit.x, o.z - hit.z), reach = d.r * o.s + 1.5 + cam.dist * 0.01;
+    if (dist < reach && dist - d.r * o.s < bd) { bd = dist - d.r * o.s; best = o; }
+  }
+  return best;
+}
+function eraseAt(hit) {
+  const o = eraseTarget(hit);
+  if (!o) { sfx('nope'); return false; }
+  objs.splice(objs.indexOf(o), 1);
+  undoStack.push({ del: o }); if (undoStack.length > 200) undoStack.shift();
+  dirty = true; sfx('erase'); rumble(0.2, 0.2, 60); updateCount();
+  return true;
+}
+function undo() {
+  const u = undoStack.pop();
+  if (!u) { sfx('nope'); toast('Nothing to undo', 1200); return; }
+  if (u.add) { const i = objs.indexOf(u.add); if (i >= 0) objs.splice(i, 1); }
+  else if (u.del) objs.push(u.del);
+  dirty = true; sfx('undo'); updateCount();
+}
+const pop = [];   // things that were just placed grow in with a little bounce
+function settle(o) { const d = CAT[o.t]; o.y = d.move === 'swim' || d.move === 'float' ? 0 : d.move === 'fly' ? Math.max(groundAt(o.x, o.z), 0) + (d.alt || 12) * Math.sqrt(o.s) : groundAt(o.x, o.z); }
+
+/* =====================================================================
+   Loading and the starting nature on a new island
+   ===================================================================== */
+function loadThings(data, fresh) {
+  objs = []; undoStack = [];
+  if (fresh) { scatterStart(); return; }
+  if (!data || !Array.isArray(data.objs)) return;
+  for (const a of data.objs.slice(0, 3000)) {
+    if (!Array.isArray(a) || !CAT[a[0]]) continue;
+    const [t, x, z, r, s] = a;
+    if (![x, z, r, s].every(Number.isFinite) || Math.abs(x) > 2000 || Math.abs(z) > 2000) continue;
+    const o = makeObj(t, x, z, r, clamp(s, 0.25, 4)); settle(o); objs.push(o);
+  }
+  updateCount();
+}
+function scatterStart() {
+  const r = mulberry32(cur.seed ^ 0x5a5a);
+  const R = ISL.shape === 'chain' ? 700 : ISL.R * 1.05;
+  const tryPlace = (id, n) => {
+    const d = CAT[id];
+    for (let k = 0, made = 0; k < n * 30 && made < n; k++) {
+      const x = (r() * 2 - 1) * R, z = (r() * 2 - 1) * R, h = groundAt(x, z);
+      if (d.place === 'water') { if (h > -4 || h < -30) continue; }
+      else if (d.move === 'fly') { if (h < 1) continue; }
+      else if (h < (d.cat === 'nature' ? 0.9 : 0.4) || slopeAt(x, z) < (d.cat === 'nature' ? 0.72 : 0.8)) continue;
+      if (id === 'palm' && h > 14) continue;
+      if (ISL.shape === 'volcano' && Math.hypot(x, z) < ISL.R * 0.32 && d.cat === 'nature' && id !== 'rock') continue;
+      const o = makeObj(id, x, z, r() * 6.283, d.cat === 'nature' ? 0.75 + r() * 0.6 : 1);
+      settle(o); objs.push(o); made++;
+    }
+  };
+  for (const [id, n] of ISL.nature) tryPlace(id, n);
+  for (const [id, n] of ISL.critters) if (CAT[id]) tryPlace(id, n);
+  updateCount();
+}
+
+/* =====================================================================
+   Life: people and animals wander, birds and dragons circle, fish swim
+   ===================================================================== */
+function landOK(d, x, z) {
+  const h = groundAt(x, z);
+  if (d.amph) return h > -3;
+  return h > 0.2 && slopeAt(x, z) > 0.55;
+}
+function pickTarget(o, d) {
+  const roam = (d.cat === 'people' ? 22 : 30) * Math.max(1, o.s);
+  for (let k = 0; k < 8; k++) {
+    const a = Math.random() * 6.283, r = 4 + Math.random() * roam, x = o.hx + Math.cos(a) * r, z = o.hz + Math.sin(a) * r;
+    if (d.move === 'swim' ? groundAt(x, z) < -Math.max(2, d.h * o.s) : landOK(d, x, z)) { o.tx = x; o.tz = z; return; }
+  }
+  o.tx = o.hx; o.tz = o.hz;
+}
+function updateLife(dt, time) {
+  for (const o of objs) {
+    const d = CAT[o.t];
+    if (!d.move) continue;
+    if (d.move === 'float') { o.bob = Math.sin(time * 1.3 + o.phase) * 0.15 * o.s; o.tilt = Math.sin(time * 0.9 + o.phase) * 0.05; continue; }
+    if (d.move === 'fly') {
+      const rad = (d.alt > 20 ? 45 : 14) * Math.max(1, o.s);
+      o.ang += dt * d.speed * Math.sqrt(o.s) / rad;
+      o.x = o.hx + Math.cos(o.ang) * rad; o.z = o.hz + Math.sin(o.ang) * rad;
+      o.r = Math.atan2(-Math.sin(o.ang), Math.cos(o.ang));
+      const want = Math.max(groundAt(o.x, o.z), 0) + (d.alt || 12) * Math.sqrt(o.s) + Math.sin(o.ang * 2 + o.phase) * 3;
+      o.y += (want - o.y) * Math.min(1, dt * 0.8);
+      o.bank = -0.35;
+      o.phase += dt * (d.wings ? d.wings.rate : 8);
+      continue;
+    }
+    // walking and swimming
+    if (o.wait > 0) { o.wait -= dt; o.moving = false; }
+    else {
+      if (o.tx === undefined) pickTarget(o, d);
+      const dx = o.tx - o.x, dz = o.tz - o.z, dist = Math.hypot(dx, dz);
+      if (dist < 0.6 * Math.max(1, o.s)) { o.tx = undefined; o.wait = 1 + Math.random() * (d.cat === 'people' ? 5 : 4); o.moving = false; }
+      else {
+        let dy = Math.atan2(dx, dz) - o.r; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
+        o.r += clamp(dy, -3 * dt, 3 * dt);
+        const sp = d.speed * Math.sqrt(o.s) * Math.max(0.2, Math.cos(dy));
+        const nx = o.x + Math.sin(o.r) * sp * dt, nz = o.z + Math.cos(o.r) * sp * dt;
+        const ok = d.move === 'swim' ? groundAt(nx, nz) < -Math.max(1.2, d.h * o.s * 0.6) : landOK(d, nx, nz);
+        if (ok) { o.x = nx; o.z = nz; o.moving = true; o.phase += sp * dt / Math.max(0.15, ((d.legs && d.legs.len) || 0.8) * o.s) * 1.4; }
+        else { o.tx = undefined; o.wait = 0.3; o.moving = false; }
+      }
+    }
+    if (d.move === 'swim') {
+      o.phase += dt * 2;
+      o.y = -0.35 * d.h * o.s + Math.sin(o.phase) * 0.1 * o.s;
+      if (d.jumps) {            // dolphins leap now and then
+        if (!o.jump && o.moving && Math.random() < dt * 0.08) o.jump = 0.0001;
+        if (o.jump) { o.jump += dt; const t = o.jump / 1.3; o.y += Math.sin(Math.PI * t) * 2.5 * o.s; o.pitch = -Math.cos(Math.PI * t) * 0.6; if (t >= 1) { o.jump = 0; o.pitch = 0; } }
+      }
+      if (d.fin) o.y = -0.55 * o.s;
+    } else {
+      o.y = Math.max(groundAt(o.x, o.z), d.amph ? -0.2 * o.s : -10);
+      if (d.hop && o.moving) o.y += Math.abs(Math.sin(o.phase * 0.5)) * 0.25 * o.s;
+    }
+  }
+  for (let i = pop.length - 1; i >= 0; i--) { pop[i].t += dt; if (pop[i].t > 0.45) pop.splice(i, 1); }
+}
+
+/* =====================================================================
+   Drawing the things
+   ===================================================================== */
+const ringMeshes = {};
+function ringMesh(col) {
+  const k = col.join(',');
+  if (ringMeshes[k]) return ringMeshes[k];
+  const g = new Geo(512), N = 48;
+  for (let i = 0; i < N; i++) {
+    const a0 = i / N * 6.283, a1 = (i + 1) / N * 6.283, c0 = Math.cos(a0), s0 = Math.sin(a0), c1 = Math.cos(a1), s1 = Math.sin(a1);
+    tri(g, [c0 * 0.88, 0, s0 * 0.88], [c0, 0, s0], [c1, 0, s1], [0, 1, 0], -1, col, col, col, 0, 0, 0);
+    tri(g, [c0 * 0.88, 0, s0 * 0.88], [c1, 0, s1], [c1 * 0.88, 0, s1 * 0.88], [0, 1, 0], -1, col, col, col, 0, 0, 0);
+  }
+  return (ringMeshes[k] = makeMesh(g));
+}
+function popScale(o) { const p = pop.find(q => q.o === o); if (!p) return 1; const t = p.t / 0.45; return Math.min(1.15, Math.sin(t * Math.PI * 0.62) * 1.18 + 0.02); }
+function drawOne(o, time, shadow, flash) {
+  const d = CAT[o.t], M = meshesFor(d), s = o.s * popScale(o);
+  let base = mChain(mT(o.x, o.y + (o.bob || 0), o.z), mRy(o.r), mS(s));
+  if (o.tilt) base = mChain(base, mRz(o.tilt));
+  if (o.pitch) base = mChain(base, mRx(o.pitch));
+  if (o.bank) base = mChain(base, mRz(o.bank * 0.4));
+  const far = !shadow && Math.hypot(o.x - camEye[0], o.y - camEye[1], o.z - camEye[2]) > 260 + 40 * o.s;
+  if (d.move === 'walk' && o.moving && !d.hop) base = mChain(base, mT(0, Math.abs(Math.sin(o.phase)) * 0.03, 0));
+  drawMesh(M.body, base, flash);
+  if (M.leg && !far) {
+    const L = d.legs, sw = o.moving ? Math.sin(o.phase) * L.amp : 0;
+    L.at.forEach((p, i) => {
+      const a = L.gait === 'hop' ? (o.moving ? -Math.abs(Math.sin(o.phase * 0.5)) * 0.8 * (i < 2 ? 1 : -1) : 0) : L.gait === 'quad' ? (i === 0 || i === 3 ? sw : -sw) : (i ? -sw : sw);
+      drawMesh(M.leg, mChain(base, mT(p[0], p[1], p[2]), mRx(a)), flash);
+    });
+  }
+  if (M.wing) {
+    const W = d.wings, a = Math.sin(o.phase) * W.amp + 0.1;
+    drawMesh(M.wing, mChain(base, mT(W.at[0], W.at[1], W.at[2]), mRz(a)), flash);
+    drawMesh(M.wing, mChain(base, mT(-W.at[0], W.at[1], W.at[2]), mS3(-1, 1, 1), mRz(a)), flash);
+  }
+  if (M.spin) drawMesh(M.spin, mChain(base, mT(d.spin.at[0], d.spin.at[1], d.spin.at[2]), mRz(time * d.spin.speed + o.phase)), flash);
+  if (M.glow) {
+    if (!shadow) {
+      const f = d.glow.flicker === 'fire' ? 0.85 + Math.sin(time * 17 + o.phase) * 0.1 + Math.sin(time * 29) * 0.05 : 0.8 + Math.sin(time * 3 + o.phase) * 0.2;
+      gl.uniform1f(progWorld.u.uEmit, f);
+      drawMesh(M.glow, d.glow.flicker === 'fire' ? mChain(base, mS3(1, 0.85 + Math.sin(time * 13 + o.phase) * 0.15, 1)) : base, flash);
+      gl.uniform1f(progWorld.u.uEmit, 0);
+    } else drawMesh(M.glow, base);
+  }
+}
+function drawThings(time, shadow) {
+  const hot = !shadow && tool.erase && cursor ? eraseTarget(cursor) : null;
+  for (const o of objs) {
+    const d = CAT[o.t], r = d.r * o.s + d.h * o.s, cy = o.y + d.h * o.s * 0.5;
+    if (shadow) { if (Math.abs(o.x - cam.tx) > shadowHalf + r || Math.abs(o.z - cam.tz) > shadowHalf + r) continue; }
+    else if (!sphereVisible(o.x, cy, o.z, r)) continue;
+    if (!shadow && Math.hypot(o.x - camEye[0], o.z - camEye[2]) > 2600) continue;
+    drawOne(o, time, shadow, o === hot ? 0.45 + Math.sin(time * 12) * 0.25 : 0);
+  }
+}
+// the circle where the next thing will go, and a see-through preview of it
+function drawCursor(time) {
+  if (state !== 'play' || !cursor) return;
+  const d = selectedDef(), s = SIZES[tool.size];
+  let ok, ringR, col;
+  if (tool.erase) { ok = !!eraseTarget(cursor); ringR = 1.6 + cam.dist * 0.012; col = ok ? [1, 0.35, 0.3] : [0.7, 0.5, 0.5]; }
+  else { ok = canPlace(d, cursor, s); ringR = Math.max(0.8, d.r * s) + 0.3; col = ok ? [0.45, 1, 0.5] : [1, 0.3, 0.25]; }
+  const y = Math.max(cursor.y, 0) + 0.15;
+  gl.uniform1f(progWorld.u.uEmit, 1);
+  drawMesh(ringMesh(col), mChain(mT(cursor.x, y, cursor.z), mS3(ringR, 1, ringR)));
+  gl.uniform1f(progWorld.u.uEmit, 0);
+  if (!tool.erase) {
+    const ghost = { t: d.id, x: cursor.x, z: cursor.z, s, r: Math.atan2(camEye[0] - cursor.x, camEye[2] - cursor.z) + tool.turn, phase: time * 3, ang: 0, moving: false };
+    settle(ghost);
+    if (d.move === 'fly') ghost.y = Math.max(cursor.y, 0) + 0.5 + d.h * s * 0.5;
+    gl.uniform1f(progWorld.u.uAlpha, ok ? 0.55 : 0.3);
+    drawOne(ghost, time, false, ok ? 0.15 : 0.35);
+    gl.uniform1f(progWorld.u.uAlpha, 1);
+  }
+}
+
+/* =====================================================================
+   The build bar at the bottom, and the controls for building
+   ===================================================================== */
+function buildPalette() {
+  const cats = $('cats'); cats.innerHTML = '';
+  CATS.forEach((c, i) => { const b = document.createElement('button'); b.innerHTML = `${c.icon} ${c.name}`; b.onclick = () => { setCat(i); sfx('click'); }; cats.appendChild(b); });
+  fillItems();
+}
+function fillItems() {
+  [...$('cats').children].forEach((b, i) => b.classList.toggle('on', i === tool.cat && !tool.erase));
+  const box = $('items'); box.innerHTML = '';
+  CATS[tool.cat].items.forEach((id, i) => {
+    const d = CAT[id], b = document.createElement('button');
+    b.innerHTML = `<span class="e">${d.icon}</span>${d.name}`;
+    b.onclick = () => { tool.item[tool.cat] = i; tool.erase = false; sfx('click'); fillItems(); };
+    if (i === tool.item[tool.cat] && !tool.erase) b.classList.add('on');
+    box.appendChild(b);
+  });
+  const sel = box.children[tool.item[tool.cat]];
+  if (sel) sel.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  $('eraseBtn').classList.toggle('on', tool.erase);
+  $('sizeLab').textContent = SIZE_SHORT[tool.size];
+}
+function setCat(i) { tool.cat = (i + CATS.length) % CATS.length; tool.erase = false; fillItems(); }
+function stepItem(k) { const n = CATS[tool.cat].items.length; tool.item[tool.cat] = (tool.item[tool.cat] + k + n) % n; tool.erase = false; sfx('click'); fillItems(); }
+function stepSize(k) { tool.size = clamp(tool.size + k, 0, SIZES.length - 1); sfx('click'); fillItems(); toast('Size: ' + SIZE_NAMES[tool.size], 900); }
+function turnIt() { tool.turn += Math.PI / 4; sfx('turn'); }
+function toggleErase() { tool.erase = !tool.erase; sfx('click'); fillItems(); toast(tool.erase ? '🧽 Eraser: click things to take them away' : '🔨 Building again', 1300); }
+function updateCount() { $('countLab').textContent = objs.length + ' thing' + (objs.length === 1 ? '' : 's'); }
+function act(hit) { return tool.erase ? eraseAt(hit) : placeAt(hit); }
+function keyAction(e) {
+  const c = e.code;
+  if (/^Digit[1-5]$/.test(c)) setCat(+c.slice(5) - 1);
+  else if (c === 'Tab') setCat(tool.cat + (e.shiftKey ? -1 : 1));
+  else if (c === 'KeyR') turnIt();
+  else if (c === 'KeyX') toggleErase();
+  else if (c === 'KeyZ' || c === 'Backspace') undo();
+  else if (c === 'Minus' || c === 'NumpadSubtract') stepSize(-1);
+  else if (c === 'Equal' || c === 'NumpadAdd') stepSize(1);
+  else if (c === 'BracketLeft' || c === 'Comma') stepItem(-1);
+  else if (c === 'BracketRight' || c === 'Period') stepItem(1);
+  else if (c === 'Space' || c === 'Enter') { if (cursor) act(cursor); }
+}
+function clickAction() { updateCursor(); if (cursor) { act(cursor); lastPaint = { x: cursor.x, z: cursor.z }; } }
+function updateCursor() {
+  const useMouse = mouse.active && !usingPad;
+  $('cross').classList.toggle('show', !useMouse && state === 'play');
+  cursor = rayHit(screenRay(useMouse ? mouse.x : innerWidth / 2, useMouse ? mouse.y : innerHeight / 2));
+}
+function padActions(dt) {
+  if (!pad.connected) return;
+  if (pressed(4)) setCat(tool.cat - 1);
+  if (pressed(5)) setCat(tool.cat + 1);
+  if (pressed(14)) stepItem(-1);
+  if (pressed(15)) stepItem(1);
+  if (pressed(12)) stepSize(1);
+  if (pressed(13)) stepSize(-1);
+  if (pressed(3)) turnIt();
+  if (pressed(2)) toggleErase();
+  if (pressed(1) || pressed(8)) undo();
+  // A builds; hold A and move to keep building (great for forests) or keep erasing
+  if (pressed(0) && cursor) { usingPad = true; updateCursor(); if (cursor) { act(cursor); lastPaint = { x: cursor.x, z: cursor.z }; } holdT = 0; }
+  else if (pad.btn[0] && cursor) {
+    holdT += dt;
+    const gap = tool.erase ? 1.5 : Math.max(2, selectedDef().r * SIZES[tool.size] * 2.2);
+    if (holdT > 0.35 && (!lastPaint || Math.hypot(cursor.x - lastPaint.x, cursor.z - lastPaint.z) > gap)) { if (act(cursor)) lastPaint = { x: cursor.x, z: cursor.z }; holdT = 0.3; }
+  }
+}
+$('eraseBtn').onclick = () => toggleErase();
+$('turnBtn').onclick = () => turnIt();
+$('sizeDn').onclick = () => stepSize(-1);
+$('sizeUp').onclick = () => stepSize(1);
+$('undoBtn').onclick = () => undo();
+buildPalette();
 </script>
 <script>
 'use strict';
@@ -1102,8 +1940,6 @@ function updateCameraMatrices() {
   mul4(vp, proj, view);
   extractPlanes(vp);
 }
-function drawThings() {}
-function drawCursor() {}
 </script>
 <script>
 'use strict';
@@ -1186,7 +2022,6 @@ function openIsland(s, fresh) {
     toast(ISLE_BY_ID[s.type].icon + ' ' + s.name, 2000);
   }, 40);
 }
-function loadThings() {}
 function startPlay() {
   initAudio();
   state = 'play'; show(null);
@@ -1320,6 +2155,7 @@ canvas.addEventListener('pointermove', e => {
   if (e.pointerType === 'touch') { touchMove(e); return; }
   mouse.x = e.clientX; mouse.y = e.clientY; mouse.active = true;
   if (mouse.rdrag) { cam.yaw += (e.clientX - mouse.lastX) * 0.006; cam.pitch += (e.clientY - mouse.lastY) * 0.005; }
+  else if ((e.buttons & 1) && state === 'play') paintDrag();
   mouse.lastX = e.clientX; mouse.lastY = e.clientY;
 });
 canvas.addEventListener('pointerup', e => { if (e.pointerType === 'touch') { touchUp(e); return; } if (e.button === 2 || e.button === 1) mouse.rdrag = false; });
@@ -1352,8 +2188,6 @@ function touchUp(e) {
   if (touches.size < 2) pinch = null;
   if (t && !touchMoved && touches.size === 0 && performance.now() - t.t0 < 400) { mouse.x = t.x; mouse.y = t.y; mouse.active = true; clickAction(); mouse.active = false; }
 }
-function keyAction() {}
-function clickAction() {}
 
 /* ---------------- each frame ---------------- */
 function updatePlay(dt) {
@@ -1371,14 +2205,24 @@ function updatePlay(dt) {
   cam.pitch += pad.ry * Math.abs(pad.ry) * 1.6 * dt;
   if (keys.has('KeyQ')) cam.yaw -= 1.6 * dt;
   if (keys.has('KeyE')) cam.yaw += 1.6 * dt;
-  const zoom = pad.lt - pad.rt + (keys.has('PageDown') || keys.has('Minus') && false ? 1 : 0);
+  const zoom = pad.lt - pad.rt + (keys.has('PageDown') ? 1 : 0) - (keys.has('PageUp') ? 1 : 0);
   cam.dist *= Math.pow(2.2, zoom * dt);
   if (pad.connected && (Math.abs(pad.lx) + Math.abs(pad.ly) + Math.abs(pad.rx) + Math.abs(pad.ry) + pad.lt + pad.rt > 0.05)) usingPad = true;
-  if (pressed(9) || pressed(8) && false) { openPause(); return; }
-  padActions();
+  if (pressed(9)) { openPause(); return; }
   updateCamera(dt);
+  updateCursor();
+  padActions(dt);
 }
-function padActions() {}
+function rumble(strong, weak, ms) {
+  try { const a = pad.gp && pad.gp.vibrationActuator; if (a && a.playEffect) a.playEffect('dual-rumble', { duration: ms, strongMagnitude: strong, weakMagnitude: weak }).catch(() => {}); } catch (e) {}
+}
+// hold the mouse button and drag to keep building (or erasing)
+function paintDrag() {
+  updateCursor();
+  if (!cursor) return;
+  const gap = tool.erase ? 1.5 : Math.max(2, selectedDef().r * SIZES[tool.size] * 2.2);
+  if (!lastPaint || Math.hypot(cursor.x - lastPaint.x, cursor.z - lastPaint.z) > gap) { if (act(cursor)) lastPaint = { x: cursor.x, z: cursor.z }; }
+}
 let last = performance.now();
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
@@ -1393,7 +2237,6 @@ function frame(now) {
   scheduleMusic();
   requestAnimationFrame(frame);
 }
-function updateLife() {}
 
 /* ---------------- wiring ---------------- */
 $('newBtn').onclick = () => { sfx('click'); goMenu('pick'); };
