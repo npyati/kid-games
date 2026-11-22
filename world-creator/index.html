@@ -85,6 +85,12 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,38px);lin
 #tools button.on{border-color:#ff8a7a;color:#ffb3a8;background:#4a1f3a}
 #tools .lab{font-size:13px;color:var(--muted)}
 #toast{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);background:rgba(21,18,63,.9);border:3px solid var(--edge);border-radius:16px;padding:10px 18px;font-size:18px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:30;text-align:center;max-width:86vw}
+#labels{position:fixed;inset:0;pointer-events:none;z-index:9;overflow:hidden}
+.wlab{position:absolute;left:0;top:0;font-family:var(--display);font-size:17px;color:#fff;text-shadow:0 2px 0 #151233,0 0 5px rgba(0,0,0,.7);white-space:nowrap;will-change:transform}
+.wlab.town{font-size:19px;background:rgba(21,18,63,.72);border:2px solid var(--edge);border-radius:12px;padding:2px 10px;text-shadow:none}
+.wlab.town b{color:var(--sun);margin-left:6px}
+.wbar{position:absolute;left:0;top:0;width:34px;height:5px;background:rgba(0,0,0,.6);border-radius:3px;will-change:transform}
+.wbar i{display:block;height:100%;background:#ff5a4a;border-radius:3px}
 #toast.show{opacity:1}
 #loading{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(21,18,63,.85);z-index:40;font-family:var(--display);font-size:34px;color:var(--sun)}
 #loading.show{display:flex}
@@ -94,6 +100,7 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,38px);lin
 </head>
 <body>
 <canvas id="c" tabindex="0"></canvas>
+<div id="labels"></div>
 <div id="nogl"><div><h2>Your browser can't draw 3D</h2><p class="tagline">World Creator needs WebGL 2. Try Chrome or Edge.</p><a class="btn" href="../">All games</a></div></div>
 
 <div id="hud">
@@ -131,7 +138,8 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,38px);lin
       <button id="howBtn">How to play</button>
       <button class="musicToggle">Music: On</button>
       <button class="sfxToggle">Sounds: On</button>
-      <a class="btn" href="../">All games</a>
+      <button class="fightToggle">Fighting: On</button>
+      <a class="btn full" href="../">All games</a>
     </div>
     <p id="padStatus">Got an Xbox controller? Plug it in and press any button.</p>
   </div>
@@ -175,7 +183,8 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,38px);lin
       <button id="pauseMainBtn">Main menu</button>
       <button class="musicToggle">Music: On</button>
       <button class="sfxToggle">Sounds: On</button>
-      <a class="btn full" href="../">All games</a>
+      <button class="fightToggle">Fighting: On</button>
+      <a class="btn" href="../">All games</a>
     </div>
     <p class="tagline" style="font-size:14px">Your island saves by itself.</p>
   </div>
@@ -202,8 +211,8 @@ const SAVE_KEY = 'worldcreator.v1', LIST_KEY = 'worldcreator.islands', ISLE_PREF
 function readJSON(k) { try { const v = JSON.parse(localStorage.getItem(k) || 'null'); return v; } catch (e) { try { localStorage.removeItem(k); } catch (e2) {} return null; } }
 function writeJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 const S0 = readJSON(SAVE_KEY) || {};
-const settings = { music: S0.music !== false, sfx: S0.sfx !== false };
-function writeSettings() { writeJSON(SAVE_KEY, { music: settings.music, sfx: settings.sfx }); }
+const settings = { music: S0.music !== false, sfx: S0.sfx !== false, fight: S0.fight !== false };
+function writeSettings() { writeJSON(SAVE_KEY, { music: settings.music, sfx: settings.sfx, fight: settings.fight }); }
 
 /* =====================================================================
    Noise (from Wildwood)
@@ -1928,6 +1937,10 @@ const DRAGON_SCALE = 0.45, SERPENT_SCALE = 0.4, CROC_SCALE = 1.1;
 function dragonUpdate(o, dt, time) {
   o.flyT = (o.flyT === undefined ? 6 + Math.random() * 10 : o.flyT) - dt;
   if (o.flyT <= 0) { o.flying = !o.flying; o.flyT = o.flying ? 14 + Math.random() * 12 : 10 + Math.random() * 14; }
+  if (o.flying && settings.fight && (o.flySpotT = (o.flySpotT || 0) - dt) <= 0) {   // from the air it spots things to attack, and comes down
+    o.flySpotT = 1; o.fac = 'monster'; const f = findFoe(o); if (f) { o.flying = false; o.flyT = 20; o.foe = f; }
+  }
+  if (o.foe && !o.foe.gone && settings.fight) o.flying = false;     // it stays down while it's fighting
   const g = Math.max(groundAt(o.x, o.z), 0), sc = o.s * DRAGON_SCALE;
   o.flyAlt = o.flyAlt || 0;
   if (o.flying) {
@@ -2307,10 +2320,13 @@ function pickTarget(o, d) {
   o.tx = o.hx; o.tz = o.hz;
 }
 function updateLife(dt, time) {
-  for (const o of objs) {
+  buildGrid(); ghostScares(dt); corruptSpawns(dt); updateFx(dt);
+  for (const o of objs.slice()) {                        // (a copy: things can be beaten while we go)
+    if (o.gone) continue;
     const d = CAT[o.t];
     if (!d.move) continue;
     if (d.update && d.update(o, dt, time)) continue;     // the dragon flying, the sea serpent's body
+    if (fightStep(o, d, dt, time)) continue;             // chasing, fighting or running away
     if (d.move === 'float') { o.bob = Math.sin(time * 1.3 + o.phase) * 0.15 * o.s; o.tilt = Math.sin(time * 0.9 + o.phase) * 0.05; continue; }
     if (d.move === 'fly') {
       const rad = (d.alt > 20 ? 45 : 14) * Math.max(1, o.s);
@@ -2356,6 +2372,227 @@ function updateLife(dt, time) {
 }
 
 /* =====================================================================
+   Fighting. Who's on whose side:
+   - monsters (demon, minotaur, dragon, hydra, sea serpent) and the undead (skeleton,
+     zombie) attack people and animals on sight. Zombies turn whatever they beat into zombies.
+   - orcs fight every other kind of people and the monsters, but goblins and trolls are their friends.
+   - goblins and trolls fight humans, elves and dwarves.
+   - humans, elves and dwarves get along (unless their towns are at war), and fight back.
+   - animals never attack: they run away. Anything near a ghost runs away screaming.
+   Beaten things vanish in a puff of smoke (nothing gory). Fighting: Off in the menu stops it all.
+   ===================================================================== */
+// [health, damage, reach, how far it sees] at Medium size
+const STATS = {
+  skeleton: [10, 2, 1.4, 22], zombie: [9, 1.6, 1.3, 18], demon: [22, 4, 1.8, 26], troll: [45, 6, 2.6, 22], minotaur: [35, 5, 2.2, 24],
+  dragon: [90, 8, 4.5, 40], hydra: [60, 6, 4, 24], seaserpent: [60, 6, 5, 22], goblin: [7, 1.5, 1.2, 20],
+  knight: [20, 3.5, 1.6, 20], king: [14, 2.5, 1.4, 18], pirate: [12, 2.6, 1.5, 18],
+  human: [10, 2, 1.4, 18], elf: [9, 2.2, 1.6, 24], dwarf: [13, 2.5, 1.4, 16], orc: [13, 2.8, 1.5, 22], animal: [5, 0, 0, 0],
+};
+const FACTION = { skeleton: 'undead', zombie: 'undead', demon: 'monster', minotaur: 'monster', dragon: 'monster', hydra: 'monster', seaserpent: 'monster',
+  troll: 'orcfriend', goblin: 'orcfriend', ghost: 'ghost' };
+const PEOPLE_FACS = new Set(['human', 'elf', 'dwarf']);
+function facOf(o) {
+  const d = CAT[o.t];
+  if (!d.move || d.move === 'float') return null;
+  if (o.race) return o.race;                                   // town folk: human, elf, dwarf or orc
+  if (FACTION[d.id]) return FACTION[d.id];
+  if (d.cat === 'people') return 'human';
+  return 'animal';
+}
+function statOf(o) { return STATS[CAT[o.t].id] || STATS[o.fac] || STATS.animal; }
+const attacks = f => f && f !== 'animal' && f !== 'ghost';
+function hostile(a, b) {
+  const fa = a.fac, fb = b.fac;
+  if (!fa || !fb || fa === 'ghost' || fb === 'ghost' || a === b) return false;
+  const evil = f => f === 'monster' || f === 'undead';
+  if (evil(fa)) return !evil(fb);                               // monsters go after everyone else, animals too
+  if (evil(fb)) return fb !== 'animal' && fa !== 'animal';      // and everyone (but animals) fights back
+  if (fa === 'animal' || fb === 'animal') return false;
+  if (townPeace(a) || townPeace(b)) return false;              // a town at peace is left alone
+  if (fa === 'orc') return fb !== 'orc' && fb !== 'orcfriend';
+  if (fb === 'orc') return fa !== 'orcfriend';
+  if (fa === 'orcfriend') return PEOPLE_FACS.has(fb);
+  if (fb === 'orcfriend') return PEOPLE_FACS.has(fa);
+  return atWar(a.town, b.town);                                  // humans, elves and dwarves: only when their towns are at war
+}
+function townPeace(o) { return false; }
+function atWar() { return false; }
+// a quick lookup of who's near whom (24 m squares)
+let grid = new Map();
+function buildGrid() {
+  grid = new Map();
+  for (const o of objs) {
+    if (o.fac === undefined) o.fac = facOf(o);
+    if (!o.fac || o.gone) continue;
+    const k = Math.floor(o.x / 24) + ',' + Math.floor(o.z / 24);
+    let l = grid.get(k); if (!l) grid.set(k, l = []); l.push(o);
+  }
+}
+function near(x, z, r, fn) {
+  const c0 = Math.floor((x - r) / 24), c1 = Math.floor((x + r) / 24), d0 = Math.floor((z - r) / 24), d1 = Math.floor((z + r) / 24);
+  for (let i = c0; i <= c1; i++) for (let j = d0; j <= d1; j++) { const l = grid.get(i + ',' + j); if (l) for (const o of l) fn(o); }
+}
+function reachable(a, b) {
+  const db = CAT[b.t], da = CAT[a.t];
+  if (db.move === 'fly' && !(b.t === 'dragon' && !b.flying)) return false;   // you can't hit things up in the air
+  if (da.move === 'swim') return groundAt(b.x, b.z) < 1.5;                   // sea serpents get things at the water's edge
+  if (db.move === 'swim') return da.amph || groundAt(b.x, b.z) > -1.5;
+  return true;
+}
+function findFoe(o) {
+  const sight = statOf(o)[3] * Math.sqrt(o.s);
+  let best = null, bd = sight;
+  near(o.x, o.z, sight, c => {
+    if (c === o || c.gone || !hostile(o, c) || !reachable(o, c)) return;
+    const d = Math.hypot(c.x - o.x, c.z - o.z);
+    if (d < bd) { bd = d; best = c; }
+  });
+  return best;
+}
+let fx = [], texts = [], screamT = 0;
+function poof(x, y, z, size, col) {
+  for (let i = 0; i < 10; i++) { const a = Math.random() * 6.283, sp = 1 + Math.random() * 2; fx.push({ x, y: y + size * 0.6, z, vx: Math.cos(a) * sp, vy: 1 + Math.random() * 2, vz: Math.sin(a) * sp, t: 0, life: 0.9 + Math.random() * 0.4, r: size * (0.25 + Math.random() * 0.25), col }); }
+}
+function say(o, text, color) { texts.push({ x: o.x, y: o.y + CAT[o.t].h * o.s + 0.6, z: o.z, t: 0, text, color }); }
+function defeat(v, by) {
+  if (v.gone) return;
+  const dv = CAT[v.t];
+  if (by && by.t === 'zombie' && dv.move !== 'swim' && v.t !== 'zombie') {      // a zombie's bite makes another zombie
+    poof(v.x, v.y, v.z, dv.h * v.s * 0.6, [0.5, 0.75, 0.4]);
+    v.t = 'zombie'; v.fac = 'undead'; v.race = null; v.town = null; v.foe = null; v.fleeT = 0; v.ww = null; v.segs = null;
+    v.maxHp = v.hp = STATS.zombie[0] * v.s; v.hx = v.x; v.hz = v.z; v.tx = undefined; settle(v);
+    if (near3(v)) { tone('sawtooth', 160, 90, 0.5, 0.08, 0, 600); }
+    return;
+  }
+  v.gone = true;
+  const i = objs.indexOf(v); if (i >= 0) objs.splice(i, 1);
+  poof(v.x, v.y, v.z, Math.max(0.6, dv.h * v.s * 0.5), [0.85, 0.85, 0.85]);
+  if (near3(v)) noiseHit('lowpass', 700, 0.7, 0.35, 0.12);
+  updateCount(); dirty = true;
+}
+const near3 = o => Math.hypot(o.x - cam.tx, o.z - cam.tz) < cam.dist * 1.4 + 40;
+function strike(o, f) {
+  if (f.gone || o.gone) return;
+  if (f.hp === undefined) { f.maxHp = statOf(f)[0] * f.s; f.hp = f.maxHp; }
+  f.hp -= statOf(o)[1] * Math.sqrt(o.s);
+  f.hitT = 0.25; o.lunge = 1;
+  if (o.t === 'zombie' && CAT[f.t].move !== 'swim') { defeat(f, o); return; }   // one zombie bite makes another zombie
+  if (near3(o)) { noiseHit('lowpass', 900, 0.8, 0.12, 0.09); if (o.t === 'dragon' || o.t === 'troll' || o.t === 'hydra') tone('sawtooth', 110, 60, 0.3, 0.08, 0, 500); }
+  if (attacks(f.fac) && hostile(f, o)) { if (!f.foe || f.foe.gone) f.foe = o; }
+  else { f.fleeT = 2.5; f.fleeFrom = { x: o.x, z: o.z }; }
+  if (f.hp <= 0) defeat(f, o);
+}
+function stepToward(o, d, tx, tz, sp, dt) {
+  let dy = Math.atan2(tx - o.x, tz - o.z) - o.r; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
+  o.r += clamp(dy, -4 * dt, 4 * dt);
+  const nx = o.x + Math.sin(o.r) * sp * dt, nz = o.z + Math.cos(o.r) * sp * dt;
+  const ok = d.move === 'swim' ? groundAt(nx, nz) < -Math.max(1.2, d.h * o.s * 0.6) : landOK(d, nx, nz);
+  if (ok) { o.x = nx; o.z = nz; o.moving = true; o.phase += sp * dt / Math.max(0.15, ((d.legs && d.legs.len) || 0.8) * o.s) * 1.4; }
+  else o.moving = false;
+  return ok;
+}
+function groundY(o, d) { return d.move === 'swim' ? -0.35 * d.h * o.s : Math.max(groundAt(o.x, o.z), d.amph ? -0.2 * o.s : -10); }
+// one creature's fighting (or running away) this frame; true means it's busy and won't wander
+function fightStep(o, d, dt, time) {
+  if (o.hitT > 0) o.hitT -= dt;
+  if (o.lunge > 0) o.lunge = Math.max(0, o.lunge - dt * 3);
+  if (o.fac === undefined) o.fac = facOf(o);
+  if (!settings.fight || !o.fac) { o.foe = null; o.fleeT = 0; o.windup = 0; return false; }
+  if (o.fleeT > 0) {                                   // running away (from a ghost, a monster, or whoever hit it)
+    o.fleeT -= dt;
+    const ax = o.x - o.fleeFrom.x, az = o.z - o.fleeFrom.z, L = Math.hypot(ax, az) || 1;
+    if (!stepToward(o, d, o.x + ax / L * 10, o.z + az / L * 10, d.speed * Math.sqrt(o.s) * 1.9, dt)) o.r += 1.5 * dt * 3;
+    o.y = groundY(o, d); o.tx = undefined;
+    return true;
+  }
+  if (!attacks(o.fac) || d.move === 'fly') return false;
+  if (o.foe && (o.foe.gone || !hostile(o, o.foe))) o.foe = null;
+  o.lookT = (o.lookT || Math.random() * 0.5) - dt;
+  if (!o.foe && o.lookT <= 0) {
+    o.lookT = 0.45 + Math.random() * 0.3;
+    o.foe = findFoe(o);
+    if (o.foe && near3(o)) { if (o.t === 'dragon') { o.roarT = 1.2; tone('sawtooth', 75, 45, 1.4, 0.18, 0, 600); } else if (o.fac === 'orc') say(o, pick(['Waaagh!', 'Grr!', 'Charge!']), '#ff8a7a'); }
+  }
+  if (o.roarT > 0) o.roarT -= dt;
+  const f = o.foe;
+  if (!f) { o.windup = 0; return false; }
+  const st = statOf(o), dist = Math.hypot(f.x - o.x, f.z - o.z);
+  if (dist > st[3] * Math.sqrt(o.s) * 1.8) { o.foe = null; return false; }
+  const reach = st[2] * o.s + CAT[f.t].r * f.s * 0.6;
+  if (o.windup > 0) {                                  // winding up to hit
+    o.windup -= dt; o.moving = false;
+    let dy = Math.atan2(f.x - o.x, f.z - o.z) - o.r; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); o.r += clamp(dy, -4 * dt, 4 * dt);
+    if (o.windup <= 0) strike(o, f);
+  } else if (dist > reach) {
+    if (!stepToward(o, d, f.x, f.z, d.speed * Math.sqrt(o.s) * 1.35, dt)) { if (dist > reach * 1.5) { o.foe = null; o.lookT = 2; } }
+  } else {
+    o.moving = false;
+    o.cd = (o.cd || 0) - dt;
+    if (o.cd <= 0) { o.windup = o.t === 'dragon' ? 0.8 : 0.35; o.cd = 1.1 + Math.random() * 0.4; }
+  }
+  o.y = groundY(o, d);
+  if (d.hop && o.moving) o.y += Math.abs(Math.sin(o.phase * 0.5)) * 0.25 * o.s;
+  o.tx = undefined; o.wait = 0;
+  return true;
+}
+const pick = a => a[Math.floor(Math.random() * a.length)];
+// ghosts: anything alive that comes near runs away screaming
+function ghostScares(dt) {
+  screamT -= dt;
+  for (const g of objs) {
+    if (g.t !== 'ghost') continue;
+    near(g.x, g.z, 12 * g.s, o => {
+      if (o.gone || o.fac === 'ghost' || o.fac === 'undead' || o.fleeT > 0.5 || !CAT[o.t].move || CAT[o.t].move === 'fly') return;
+      if (Math.hypot(o.x - g.x, o.z - g.z) > 12 * g.s) return;
+      o.fleeT = 3; o.fleeFrom = { x: g.x, z: g.z }; o.foe = null;
+      if (screamT <= 0 && near3(o)) {
+        screamT = 0.45; say(o, pick(['AAAH!', 'EEEK!', 'A GHOST!', 'RUN!']), '#ffffff');
+        const f0 = 700 + Math.random() * 500; tone('sawtooth', f0, f0 * 1.6, 0.35, 0.05, 0, 2500); tone('sine', f0 * 1.5, f0 * 2.2, 0.4, 0.04, 0.05);
+      }
+    });
+  }
+}
+// corrupted land: now and then a skeleton, demon or zombie climbs out (a few per patch)
+let corruptT = 4;
+function corruptSpawns(dt) {
+  corruptT -= dt;
+  if (corruptT > 0 || !settings.fight) return;
+  corruptT = 7 + Math.random() * 5;
+  const spots = [];
+  for (const e of landEdits) if (e[0] === 'biome' && e[5] === BIOME_IDS.indexOf('corrupt') && spots.every(p => Math.hypot(p[0] - e[1], p[1] - e[2]) > 25)) spots.push([e[1], e[2], e[3]]);
+  if (!spots.length || objs.length > 2900) return;
+  const [cx, cz, r] = pick(spots);
+  let here = 0; for (const o of objs) if ((o.fac === 'undead' || o.fac === 'monster') && Math.hypot(o.x - cx, o.z - cz) < 40) here++;
+  if (here >= 4) return;
+  for (let k = 0; k < 8; k++) {
+    const a = Math.random() * 6.283, q = Math.random() * r, x = cx + Math.cos(a) * q, z = cz + Math.sin(a) * q;
+    if (groundAt(x, z) < 0.3) continue;
+    const t = Math.random() < 0.55 ? 'skeleton' : Math.random() < 0.6 ? 'demon' : 'zombie';
+    const o = makeObj(t, x, z, Math.random() * 6.283, 1); settle(o); objs.push(o); pop.push({ o, t: 0 });
+    poof(x, o.y, z, 1, [0.45, 0.15, 0.5]); updateCount();
+    if (near3(o)) tone('sawtooth', 120, 70, 0.6, 0.08, 0, 500);
+    break;
+  }
+}
+function updateFx(dt) {
+  for (const p of fx) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt; p.vx *= 0.96; p.vz *= 0.96; }
+  fx = fx.filter(p => p.t < p.life);
+  for (const t of texts) { t.t += dt; t.y += dt * 0.8; }
+  texts = texts.filter(t => t.t < 1.6);
+}
+let puffMesh = null;
+function drawFx() {
+  if (!fx.length) return;
+  if (!puffMesh) { const g = new Geo(2048); orb(g, 0, 0, 0, 1, 1, 1, [1, 1, 1], { lo: true }); puffMesh = makeMesh(g); }
+  for (const p of fx) {
+    const k = p.t / p.life, s = p.r * (0.6 + k * 1.2) * (1 - k * 0.6);
+    gl.uniform1f(progWorld.u.uEmit, 0.35);
+    drawMesh(puffMesh, mChain(mT(p.x, p.y, p.z), mS(s)), 0);
+  }
+  gl.uniform1f(progWorld.u.uEmit, 0);
+}
+
+/* =====================================================================
    Drawing the things
    ===================================================================== */
 const ringMeshes = {};
@@ -2378,6 +2615,8 @@ function drawOne(o, time, shadow, flash) {
   if (o.pitch) base = mChain(base, mRx(o.pitch));
   if (o.bank) base = mChain(base, mRz(o.bank * 0.4));
   const far = !shadow && Math.hypot(o.x - camEye[0], o.y - camEye[1], o.z - camEye[2]) > 260 + 40 * o.s;
+  if (o.hitT > 0) flash = Math.max(flash || 0, 0.6);                   // flashes when it gets hit
+  if (!d.draw && (o.windup > 0 || o.lunge > 0)) base = mChain(base, mT(0, 0, (o.lunge || 0) * 0.3), mRx(o.windup > 0 ? -0.15 : (o.lunge || 0) * 0.12));
   if (d.draw) { d.draw(o, base, time, flash, shadow); return; }        // Wildwood's dragon, sea serpent and crocodile, and the hydra
   if (d.move === 'walk' && o.moving && !d.hop) base = mChain(base, mT(0, Math.abs(Math.sin(o.phase)) * 0.03, 0));
   if (d.glowAll && !shadow) gl.uniform1f(progWorld.u.uEmit, 0.55 + Math.sin(time * 9 + o.phase) * 0.15);   // the phoenix glows all over
@@ -2667,10 +2906,54 @@ function render(time) {
   gl.depthMask(false); gl.drawArrays(gl.TRIANGLES, 0, 6); gl.depthMask(true);
   // the preview of what you're about to place (see-through), drawn over the water
   gl.useProgram(progWorld.p);
+  drawFx();
   drawGhosts(time);
   drawCursor(time);
   gl.disable(gl.BLEND);
   gl.bindVertexArray(null);
+}
+/* ---- words and health bars that float over the island (DOM, placed from 3D each frame) ---- */
+function toScreen(x, y, z) {
+  const cw = vp[3] * x + vp[7] * y + vp[11] * z + vp[15];
+  if (cw < 0.5) return null;
+  const cx = vp[0] * x + vp[4] * y + vp[8] * z + vp[12], cy = vp[1] * x + vp[5] * y + vp[9] * z + vp[13];
+  const sx = (cx / cw * 0.5 + 0.5) * innerWidth, sy = (1 - (cy / cw * 0.5 + 0.5)) * innerHeight;
+  return sx < -100 || sx > innerWidth + 100 || sy < -60 || sy > innerHeight + 60 ? null : [sx, sy, cw];
+}
+const labPool = { wlab: [], wbar: [] };
+let labUsed = { wlab: 0, wbar: 0 };
+function labEl(kind) {
+  const pool = labPool[kind];
+  let el = pool[labUsed[kind]];
+  if (!el) { el = document.createElement('div'); el.className = kind; if (kind === 'wbar') el.appendChild(document.createElement('i')); $('labels').appendChild(el); pool.push(el); }
+  labUsed[kind]++; el.style.display = '';
+  return el;
+}
+function placeLab(el, p, cls, html) {
+  if (el._html !== html) { el.innerHTML = html; el._html = html; }
+  if (el._cls !== cls) { el.className = cls; el._cls = cls; }
+  el.style.transform = `translate(${p[0].toFixed(1)}px,${p[1].toFixed(1)}px) translate(-50%,-100%)`;
+}
+function updateLabels() {
+  labUsed = { wlab: 0, wbar: 0 };
+  if (state === 'play' || state === 'pause') {
+    for (const t of texts) {
+      const p = toScreen(t.x, t.y, t.z); if (!p) continue;
+      const el = labEl('wlab'); placeLab(el, p, 'wlab', t.text);
+      el.style.color = t.color || '#fff'; el.style.opacity = Math.min(1, (1.6 - t.t) * 2).toFixed(2);
+    }
+    if (typeof drawTownLabels === 'function') drawTownLabels();
+    let bars = 0;
+    for (const o of objs) {
+      if (bars >= 40 || o.hp === undefined || o.hp >= o.maxHp || o.gone) continue;
+      const d = CAT[o.t], p = toScreen(o.x, o.y + d.h * o.s + 0.35, o.z);
+      if (!p || p[2] > 160) continue;
+      const el = labEl('wbar'); bars++;
+      el.style.transform = `translate(${p[0].toFixed(1)}px,${p[1].toFixed(1)}px) translate(-50%,-100%)`;
+      el.firstChild.style.width = Math.max(0, o.hp / o.maxHp * 100).toFixed(0) + '%';
+    }
+  }
+  for (const k of ['wlab', 'wbar']) for (let i = labUsed[k]; i < labPool[k].length; i++) if (labPool[k][i].style.display !== 'none') labPool[k][i].style.display = 'none';
 }
 function updateCameraMatrices() {
   perspective(proj, FOVY, width / height, Math.max(0.3, cam.dist * 0.01), 22000);
@@ -2703,6 +2986,7 @@ function toast(msg, ms = 2200) {
   clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('show'), ms);
 }
 function updateAudioToggles() {
+  document.querySelectorAll('.fightToggle').forEach(b => b.textContent = 'Fighting: ' + (settings.fight ? 'On' : 'Off'));
   document.querySelectorAll('.musicToggle').forEach(b => b.textContent = 'Music: ' + (settings.music ? 'On' : 'Off'));
   document.querySelectorAll('.sfxToggle').forEach(b => b.textContent = 'Sounds: ' + (settings.sfx ? 'On' : 'Off'));
 }
@@ -2974,6 +3258,7 @@ function frame(now) {
   if (state === 'play' && dirty) { saveT += dt; if (saveT > 3) { saveT = 0; saveIsland(); } }
   resize();
   render(time);
+  updateLabels();
   scheduleMusic();
   requestAnimationFrame(frame);
 }
@@ -2989,6 +3274,7 @@ $('pauseMainBtn').onclick = () => { sfx('click'); saveIsland(); goMenu('title');
 $('menuBtn').onclick = () => { sfx('click'); openPause(); };
 document.querySelectorAll('.musicToggle').forEach(b => b.onclick = () => { initAudio(); settings.music = !settings.music; setBus(musicBus, settings.music); writeSettings(); updateAudioToggles(); });
 document.querySelectorAll('.sfxToggle').forEach(b => b.onclick = () => { initAudio(); settings.sfx = !settings.sfx; setBus(sfxBus, settings.sfx); writeSettings(); updateAudioToggles(); sfx('click'); });
+document.querySelectorAll('.fightToggle').forEach(b => b.onclick = () => { settings.fight = !settings.fight; writeSettings(); updateAudioToggles(); sfx('click'); toast(settings.fight ? '⚔️ Fighting is on: monsters and enemies attack' : '🕊️ Fighting is off: everyone gets along', 2000); });
 addEventListener('pointermove', () => { if (padSel) setPadSel(null); });
 addEventListener('beforeunload', () => { if (cur && state !== 'title') saveIsland(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden && state === 'play') openPause(); });
