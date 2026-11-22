@@ -2275,28 +2275,130 @@ def('ghost', 'mythical', 'Ghost', '👻', { r: 0.6, h: 2, move: 'fly', place: 'a
   orb(g, 0, 1.25, 0.47, 0.09, 0.12, 0.04, COL.dark, { lo: true });
   for (const s of [-1, 1]) cyl(g, [s * 0.45, 1.4, 0.1], [s * 0.85, 1.25, 0.35], 0.12, 0.08, [0.95, 0.96, 1.0], 10);
 } });
-// the hydra: a big body on four legs with three swaying heads
-function hydraDraw(o, base, time, flash) {
-  const M = meshesFor(CAT.hydra);
-  drawMesh(M.body, base, flash);
-  for (let i = 0; i < 3; i++) {
-    const sx = (i - 1) * 0.55, yaw = (i - 1) * 0.45 + Math.sin(time * 1.3 + i * 2.1 + o.phase) * 0.25, pit = Math.sin(time * 1.7 + i * 1.3) * 0.15 - (o.lunge || 0) * 0.6;
-    drawMesh(M.spin, mChain(base, mT(sx, 1.9, 1.3), mRy(yaw), mRx(pit)), flash);
+// the hydra: built like Wildwood's dragon, but smooth and high-detail. A scaly body on four clawed legs, three long
+// bendy necks (each head looks around on its own, with horns, glowing eyes, teeth and a jaw that opens), and a swishing tail.
+const HY = {};
+const HY_NECK0 = [[-0.62, 2.35, 1.55], [0, 2.55, 1.75], [0.62, 2.35, 1.55]];            // where each neck leaves the chest
+const HY_HEAD0 = [[-1.45, 4.0, 3.0], [0, 4.6, 3.35], [1.45, 4.0, 3.0]];                 // where each head rests
+const HY_LEGS = [[-1.0, 1.55, 1.0], [1.0, 1.55, 1.0], [-1.0, 1.55, -1.05], [1.0, 1.55, -1.05]];
+function hydraModels() {
+  if (HY.ready) return HY;
+  const SC = [0.17, 0.42, 0.32], SC2 = [0.12, 0.33, 0.25], DARK = [0.08, 0.2, 0.16], BELLY = [0.86, 0.78, 0.5], HORN = [0.93, 0.89, 0.76], CLAW = [0.2, 0.18, 0.16];
+  const down = (g, p, h, r, col) => cyl(g, p, [p[0], p[1] - h, p[2]], r, 0.002, col, 8);
+  const curve = (g, pts, r0, r1, col) => { for (let i = 0; i < pts.length - 1; i++) cyl(g, pts[i], pts[i + 1], r0 + (r1 - r0) * i / (pts.length - 1), r0 + (r1 - r0) * (i + 1) / (pts.length - 1), col, 12); };
+  // body: a big scaly barrel with a pale belly, armoured plates and a row of spikes down the back
+  const b = new Geo(16384);
+  orb(b, 0, 1.95, -0.1, 1.3, 1.05, 1.95, SC, { grad: true, bump: 0.03 });
+  orb(b, 0, 1.6, 0.1, 1.12, 0.72, 1.7, BELLY, { grad: true });
+  orb(b, 0, 2.25, 1.25, 1.05, 0.95, 1.0, SC, { grad: true });                      // chest, where the necks come out
+  orb(b, 0, 1.85, 1.45, 0.85, 0.62, 0.75, BELLY);
+  for (const [x, z] of [[-1, 1], [1, 1], [-1, -1.05], [1, -1.05]]) orb(b, x * 0.95, 1.75, z, 0.55, 0.6, 0.62, SC2, { grad: true });   // shoulders and hips
+  for (let i = 0; i < 9; i++) {
+    const z = 1.6 - i * 0.42, y = 2.2 + 0.95 * Math.sqrt(Math.max(0, 1 - ((z + 0.1) / 2.1) ** 2));
+    orb(b, 0, y - 0.05, z, 0.34, 0.12, 0.26, DARK);                                  // plates
+    coneS(b, 0, y, z, 0.13, 0.42 - Math.abs(i - 4) * 0.04, HORN, 10);                   // spikes
+    for (const s of [-1, 1]) orb(b, s * 0.55, y - 0.25, z, 0.22, 0.08, 0.2, SC2, { lo: true });
   }
-  if (M.leg) CAT.hydra.legs.at.forEach((p, i) => drawMesh(M.leg, mChain(base, mT(p[0], p[1], p[2]), mRx(o.moving ? Math.sin(o.phase + (i === 0 || i === 3 ? 0 : Math.PI)) * 0.4 : 0)), flash));
+  for (let i = 0; i < 18; i++) { const a = i / 18 * 6.283, z = Math.cos(a) * 1.5 - 0.1; if (Math.abs(Math.sin(a)) > 0.3) orb(b, Math.sin(a) * 1.22, 1.95, z, 0.18, 0.18, 0.18, SC2, { lo: true }); }   // scale bumps along the sides
+  // a leg (from the hip at 0, down to the foot at -1.55): thick thigh, knee, shin, a foot with three claws
+  const lg = new Geo(8192);
+  orb(lg, 0, -0.15, 0, 0.5, 0.62, 0.55, SC, { grad: true });
+  cyl(lg, [0, -0.3, 0], [0, -0.85, 0.12], 0.42, 0.33, SC, 20);
+  orb(lg, 0, -0.88, 0.12, 0.34, 0.3, 0.34, SC2);
+  cyl(lg, [0, -0.88, 0.12], [0, -1.4, -0.02], 0.3, 0.24, SC2, 20);
+  orb(lg, 0, -1.45, 0.18, 0.34, 0.14, 0.45, DARK);
+  for (const s of [-1, 0, 1]) { cyl(lg, [s * 0.2, -1.47, 0.45], [s * 0.26, -1.53, 0.78], 0.08, 0.01, CLAW, 10); }
+  // the neck pieces: a tube (built along +z, 0..1, radius 1, scaly on top and pale underneath), a round joint, and a joint with a spike
+  const nt = new Geo(2048), NS = 24;
+  for (let i = 0; i < NS; i++) {
+    const a0 = i / NS * 6.283, a1 = (i + 1) / NS * 6.283, p0 = [Math.cos(a0), Math.sin(a0)], p1 = [Math.cos(a1), Math.sin(a1)];
+    const col = (p0[1] + p1[1]) / 2 < -0.5 ? BELLY : SC;
+    const v = (pp, zz) => nt.v(pp[0], pp[1], zz, pp[0], pp[1], 0, -1, col[0], col[1], col[2], 0);
+    v(p0, 0); v(p1, 0); v(p1, 1); v(p0, 0); v(p1, 1); v(p0, 1);
+  }
+  const ns = new Geo(4096); orb(ns, 0, 0.05, 0, 1, 0.92, 1.05, SC); orb(ns, 0, -0.3, 0, 0.86, 0.55, 0.98, BELLY);
+  const nb = new Geo(4096); orb(nb, 0, 0.05, 0, 1, 0.92, 1.05, SC2); orb(nb, 0, -0.3, 0, 0.86, 0.55, 0.98, BELLY); coneS(nb, 0, 0.75, -0.1, 0.32, 0.75, HORN, 10);
+  // a head (pivot where the neck joins, looking along +z): skull, long snout, brow ridges, glowing eyes, nostrils, curling horns, top teeth
+  const hd = new Geo(16384);
+  orb(hd, 0, 0.08, 0.28, 0.44, 0.38, 0.52, SC, { grad: true });
+  orb(hd, 0, 0.0, 0.85, 0.3, 0.2, 0.5, SC, { grad: true });                           // snout
+  orb(hd, 0, -0.12, 0.8, 0.27, 0.07, 0.46, [0.55, 0.08, 0.1]);                        // roof of the mouth
+  orb(hd, 0, -0.06, 0.05, 0.36, 0.3, 0.35, SC2);                                      // back of the head
+  for (const s of [-1, 1]) {
+    orb(hd, s * 0.22, 0.32, 0.5, 0.16, 0.08, 0.22, SC2);                               // brow ridge
+    orb(hd, s * 0.25, 0.22, 0.56, 0.085, 0.075, 0.075, [1, 0.82, 0.1]);                // eye
+    orb(hd, s * 0.3, 0.22, 0.58, 0.02, 0.06, 0.035, [0.05, 0.03, 0.02]);               // slit pupil
+    orb(hd, s * 0.1, 0.1, 1.3, 0.05, 0.035, 0.03, [0.05, 0.03, 0.02], { lo: true });    // nostril
+    curve(hd, [[s * 0.2, 0.32, 0.25], [s * 0.38, 0.55, 0.05], [s * 0.5, 0.68, -0.3], [s * 0.52, 0.62, -0.62], [s * 0.46, 0.46, -0.82]], 0.11, 0.015, HORN);   // big curling horn
+    cyl(hd, [s * 0.12, 0.36, 0.7], [s * 0.15, 0.55, 0.62], 0.05, 0.005, HORN, 10);      // little horn above the eye
+    for (let i = 0; i < 3; i++) cyl(hd, [s * 0.32, -0.05 - i * 0.04, 0.1 - i * 0.12], [s * 0.58, -0.02 - i * 0.06, -0.15 - i * 0.18], 0.06, 0.005, SC2, 10);   // frill spikes
+    for (let i = 0; i < 6; i++) down(hd, [s * (0.24 - i * 0.025), -0.12, 0.55 + i * 0.13], 0.13 - (i === 1 ? -0.06 : 0), 0.03, HORN);   // top teeth (bigger fangs at the front)
+  }
+  // the jaw (hinged at its pivot, under the back of the head): lower teeth and a forked tongue
+  const jw = new Geo(8192);
+  orb(jw, 0, -0.06, 0.42, 0.27, 0.11, 0.5, SC2, { grad: true });
+  orb(jw, 0, 0.0, 0.4, 0.21, 0.05, 0.42, [0.6, 0.1, 0.13]);
+  orb(jw, 0, -0.1, 0.3, 0.22, 0.08, 0.35, BELLY);
+  for (const s of [-1, 1]) for (let i = 0; i < 5; i++) cyl(jw, [s * (0.2 - i * 0.025), 0.02, 0.32 + i * 0.12], [s * (0.2 - i * 0.025), 0.13, 0.33 + i * 0.12], 0.026, 0.002, HORN, 8);
+  cyl(jw, [0, 0.04, 0.3], [0, 0.05, 0.8], 0.05, 0.03, [0.85, 0.2, 0.3], 10);
+  for (const s of [-1, 1]) cyl(jw, [0, 0.05, 0.8], [s * 0.06, 0.06, 0.95], 0.03, 0.005, [0.85, 0.2, 0.3], 8);
+  // the tail tip: a spiked club
+  const tp = new Geo(4096); orb(tp, 0, 0, 0.15, 0.7, 0.6, 0.9, SC2);
+  for (const [x, y] of [[0, 1], [0.8, 0.2], [-0.8, 0.2], [0, -0.6]]) cyl(tp, [x * 0.5, y * 0.45, 0.1], [x * 1.05, y * 0.95, -0.2], 0.16, 0.01, HORN, 10);
+  cyl(tp, [0, 0, 0.8], [0, 0, 1.6], 0.22, 0.005, HORN, 10);
+  Object.assign(HY, { ready: true, body: makeMesh(b), leg: makeMesh(lg), tube: makeMesh(nt), seg: makeMesh(ns), band: makeMesh(nb), head: makeMesh(hd), jaw: makeMesh(jw), tip: makeMesh(tp) });
+  return HY;
 }
-def('hydra', 'mythical', 'Hydra', '🐲', { r: 2.2, h: 4.5, move: 'walk', speed: 1.1, amph: true, big: true, draw: hydraDraw, body: g => {
-  const C = [0.25, 0.5, 0.35], B = [0.75, 0.75, 0.45];
-  orb(g, 0, 1.6, 0, 1.1, 0.9, 1.7, C); orb(g, 0, 1.3, 0.1, 0.95, 0.6, 1.4, B);
-  cyl(g, [0, 1.6, -1.5], [0, 1.0, -4.0], 0.6, 0.05, C, 14);
-  for (let i = 0; i < 6; i++) coneS(g, 0, 2.35 - i * 0.05, 1.1 - i * 0.55, 0.15, 0.35, [0.15, 0.35, 0.25], 6);
-}, spin: { at: [0, 0, 0], speed: 0, make: g => {          // (used as one neck and head, drawn three times)
-  const C = [0.25, 0.5, 0.35];
-  cyl(g, [0, 0, 0], [0, 1.6, 0.6], 0.32, 0.22, C, 12); cyl(g, [0, 1.6, 0.6], [0, 2.4, 1.3], 0.22, 0.18, C, 12);
-  orb(g, 0, 2.5, 1.55, 0.3, 0.25, 0.45, C); orb(g, 0, 2.35, 1.75, 0.22, 0.1, 0.35, [0.55, 0.1, 0.12]);
-  for (const s of [-1, 1]) { orb(g, s * 0.16, 2.62, 1.7, 0.06, 0.06, 0.05, [1, 0.85, 0.1], { lo: true }); cyl(g, [s * 0.12, 2.32, 1.95], [s * 0.12, 2.2, 1.97], 0.03, 0.004, COL.white, 5); cyl(g, [s * 0.1, 2.7, 1.3], [s * 0.18, 2.95, 1.05], 0.05, 0.005, COL.cream, 6); }
-} }, legs: { at: [[-0.8, 1.2, 0.9], [0.8, 1.2, 0.9], [-0.8, 1.2, -0.9], [0.8, 1.2, -0.9]], amp: 0.4, gait: 'quad', len: 1.2,
-  make: g => { cyl(g, [0, 0, 0], [0, -1.1, 0.1], 0.3, 0.22, [0.25, 0.5, 0.35], 10); orb(g, 0, -1.15, 0.25, 0.28, 0.12, 0.38, [0.18, 0.35, 0.25]); } } });
+// one bendy piece of neck or tail between two points (as Wildwood's dragon does it)
+function hyPiece(base, prev, p, r, prevR, band, flash) {
+  const dx = prev[0] - p[0], dy = prev[1] - p[1], dz = prev[2] - p[2], Lh = Math.hypot(dx, dz), L = Math.hypot(dx, dy, dz);
+  const yaw = Math.atan2(dx, dz), pit = -Math.atan2(dy, Lh), tr = (r + prevR) / 2 * 0.95;
+  drawMesh(HY.tube, mChain(base, mT(p[0], p[1], p[2]), mRy(yaw), mRx(pit), mS3(tr, tr * 0.92, L)), flash);
+  drawMesh(band ? HY.band : HY.seg, mChain(base, mT(p[0], p[1], p[2]), mRy(yaw + Math.PI), mS(r)), flash);
+}
+function hydraDraw(o, base, time, flash) {
+  hydraModels();
+  const st = o.hy || (o.hy = { heads: HY_HEAD0.map(p => ({ x: p[0], y: p[1], z: p[2], yaw: 0, pitch: 0, open: 0 })), lastT: time, atk: 1, wasWind: false });
+  const dt = Math.min(0.1, Math.max(0, time - st.lastT)); st.lastT = time;
+  const wind = (o.windup || 0) > 0, lunge = o.lunge || 0;
+  if (wind && !st.wasWind) st.atk = Math.floor(Math.random() * 3);           // a different head bites each time
+  st.wasWind = wind;
+  drawMesh(HY.body, base, flash);
+  HY_LEGS.forEach((p, i) => drawMesh(HY.leg, mChain(base, mT(p[0], p[1], p[2]), mRx(o.moving ? Math.sin(o.phase + (i === 0 || i === 3 ? 0 : Math.PI)) * 0.45 : 0)), flash));
+  // the three heads: each sways and looks about on its own; the biting one rears back, then lunges with its jaws wide
+  st.heads.forEach((h, i) => {
+    const h0 = HY_HEAD0[i], ph = o.phase + i * 2.1, me = st.atk === i, angry = !!o.foe;
+    const want = { x: h0[0] + Math.sin(time * 0.7 + ph) * 0.25, y: h0[1] + Math.sin(time * 0.9 + ph * 1.3) * 0.2, z: h0[2] + Math.sin(time * 0.5 + ph) * 0.15,
+      yaw: (i - 1) * 0.35 + Math.sin(time * 0.45 + ph) * 0.4, pitch: 0.1 + Math.sin(time * 0.6 + ph) * 0.12,
+      open: 0.05 + Math.max(0, Math.sin(time * 0.8 + ph * 1.7)) * (angry ? 0.5 : 0.2) };
+    if (me && wind) { want.y += 0.7; want.z -= 0.9; want.pitch = -0.25; want.open = 0.9; }
+    if (me && lunge > 0) { const k = Math.min(1, lunge * 1.6); want.y -= 1.6 * k; want.z += 2.0 * k; want.pitch = 0.55; want.open = lunge > 0.6 ? 0.05 : 0.7; }
+    if (!me && (wind || lunge > 0)) { want.z += 0.4; want.open = 0.75; want.pitch = 0; }        // the others hiss
+    const kk = 1 - Math.exp(-dt * (me && lunge > 0 ? 14 : 5));
+    for (const key of ['x', 'y', 'z', 'yaw', 'pitch', 'open']) h[key] += (want[key] - h[key]) * kk;
+    const fwd = [Math.sin(h.yaw) * Math.cos(h.pitch), -Math.sin(h.pitch), Math.cos(h.yaw) * Math.cos(h.pitch)];
+    const P0 = HY_NECK0[i], P1 = [P0[0] * 1.3, P0[1] + 1.1, P0[2] + 0.35], P3 = [h.x - fwd[0] * 0.05, h.y - 0.05, h.z - fwd[2] * 0.05];
+    const P2 = [P3[0] - fwd[0] * 1.1, P3[1] - fwd[1] * 1.1, P3[2] - fwd[2] * 1.1];
+    const bez = t => [0, 1, 2].map(j => (1 - t) ** 3 * P0[j] + 3 * (1 - t) ** 2 * t * P1[j] + 3 * (1 - t) * t * t * P2[j] + t ** 3 * P3[j]);
+    let prev = P0, prevR = 0.46;
+    for (let k = 1; k <= 10; k++) { const p = bez(k / 10), r = 0.46 - 0.17 * (k / 10); hyPiece(base, prev, p, r, prevR, k % 3 === 0, flash); prev = p; prevR = r; }
+    const headM = mChain(base, mT(h.x, h.y, h.z), mRy(h.yaw), mRx(h.pitch));
+    drawMesh(HY.head, headM, flash);
+    drawMesh(HY.jaw, mChain(headM, mT(0, -0.14, 0.12), mRx(h.open * 0.75)), flash);
+  });
+  // the tail: swishes from side to side, and lashes when it's fighting
+  let x = 0, y = 1.95, z = -1.9, ang = 0, prev = [x, y, z], prevR = 0.62;
+  const N = 10, sw = o.foe ? 0.16 : 0.08;
+  for (let i = 0; i < N; i++) {
+    ang += Math.sin(time * (o.foe ? 2.6 : 1.3) - i * 0.55 + o.phase) * sw;
+    x += Math.sin(ang) * 0.5; z -= Math.cos(ang) * 0.5; y -= 0.09 * (1 - i / N);
+    const p = [x, y, z], r = 0.62 * (1 - (i / (N - 1)) * 0.78);
+    hyPiece(base, prev, p, r, prevR, i % 2 === 1, flash);
+    if (i === N - 1) drawMesh(HY.tip, mChain(base, mT(x, y, z), mRy(Math.atan2(prev[0] - x, prev[2] - z) + Math.PI), mS(0.55)), flash);
+    prev = p; prevR = r;
+  }
+}
+def('hydra', 'mythical', 'Hydra', '🐲', { r: 2.2, h: 4.8, move: 'walk', speed: 1.1, amph: true, big: true, draw: hydraDraw, legs: { len: 1.55 } });
 // the phoenix: a fiery bird that glows
 birdDef('phoenix', 'Phoenix', '🔥', g => {
   orb(g, 0, 0, 0, 0.3, 0.3, 0.6, [1, 0.45, 0.1]); orb(g, 0, 0.18, 0.55, 0.22, 0.22, 0.22, [1, 0.55, 0.12]);
@@ -2310,7 +2412,7 @@ birdDef('phoenix', 'Phoenix', '🔥', g => {
 const SIZES = [0.5, 1, 1.75, 3], SIZE_NAMES = ['Small', 'Medium', 'Big', 'Giant'], SIZE_SHORT = ['S', 'M', 'L', 'XL'];
 // the brush on the left: how many things go down at once, and how wide the land tools reach
 // some things are bigger (or smaller) than their size button says, and the biggest monsters are limited to 3 of each per island
-const GROW = { dragon: 2.2, hydra: 2, seaserpent: 2.2, troll: 0.62 }, ONLY3 = new Set(['dragon', 'hydra', 'seaserpent']);
+const GROW = { dragon: 2.2, hydra: 1.6, seaserpent: 2.2, troll: 0.62 }, ONLY3 = new Set(['dragon', 'hydra', 'seaserpent']);
 // people, animals and monsters are 0.7 times the size they used to be (so the islands are more to scale), except the big monsters
 const SHRINK = 0.7, growOf = id => GROW[id] || (['people', 'creatures', 'mythical'].includes(CAT[id].cat) ? SHRINK : 1);
 const sizeOf = d => SIZES[tool.size] * growOf(d.id);
