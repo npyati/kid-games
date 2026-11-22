@@ -108,6 +108,7 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,38px);lin
     <button id="menuBtn">☰ Menu</button>
     <div id="isleName"></div>
     <div class="grow"></div>
+    <button id="townsBtn" title="Towns (T)">🏰 Towns</button>
     <button id="undoBtn" title="Undo (Z)">↩️ Undo</button>
   </div>
   <div id="hint"></div>
@@ -168,9 +169,18 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,38px);lin
       <div><b class="h">Brush</b>The brush on the left side puts down <b>1, 2, 3, 6 or 10</b> things at a time, and makes the circle bigger for painting land. <b>Controller:</b> d-pad up / down. <b>Keyboard:</b> C (Shift+C for smaller).</div>
       <div><b class="h">Nature</b>Paint land types: <b>forest, taiga, jungle, savanna, desert, swamp, mountain, path, cobblestone path</b> and <b>corrupted land</b>. Each one colours the ground and grows its own plants. Hold the button to keep painting. The land tools <b>raise</b> and <b>lower</b> the land, <b>flatten</b> it, or dig <b>shallow</b> or <b>deep water</b>. Single trees, rocks and flowers are in <b>Plants</b>.</div>
       <div><b class="h">Oops!</b>The <b>eraser</b> (X on the controller or keyboard) takes things away. <b>Undo</b> (B, or Z on the keyboard) takes back the last thing you did.</div>
-      <div><b class="h">It's alive</b>People and creatures walk around the island by themselves. Birds and dragons fly, and fish swim in the sea.</div>
+      <div><b class="h">It's alive</b>People and creatures walk around by themselves. Birds and dragons fly, and dolphins swim in the sea. Monsters, zombies and the dragon attack; zombies turn what they bite into zombies; anything near a ghost runs away screaming. Turn <b>Fighting</b> off in the menu for calm building.</div>
+      <div><b class="h">Towns</b>Put down a <b>human, elf, dwarf</b> or <b>orc</b> (in People) and they found a town that keeps growing. Orcs fight everyone else; humans sometimes start wars; elves are archers. Open <b>🏰 Towns</b> (T, or View on the controller) to make a town keep the peace or go to war with everyone.</div>
       <div><b class="h">Saving</b>Every island saves by itself. Find it again under <b>My islands</b>.</div>
     </div>
+  </div>
+</div>
+
+<div id="towns" class="overlay">
+  <div class="panel wide">
+    <div class="top"><h2>Towns</h2><button class="back" data-go="title">Back</button></div>
+    <p class="tagline" style="font-size:15px">Orcs fight every town that isn't orc. Humans, elves and dwarves get along, but human towns sometimes start a war. Towns at war send an army.</p>
+    <div class="saves" id="townList"></div>
   </div>
 </div>
 
@@ -1379,7 +1389,7 @@ function personBody(g, o) {
 }
 function personDef(id, name, icon, o) {
   const k = o.k || 1;
-  return def(id, o.cat || 'people', name, icon, { r: 0.5 * k, h: 1.9 * k, move: 'walk', speed: o.speed || 1.3, body: g => personBody(g, o), wings: o.wings,
+  return def(id, o.cat || 'people', name, icon, { r: 0.5 * k, h: 1.9 * k, move: 'walk', speed: o.speed || 1.3, body: g => personBody(g, o), wings: o.wings, hidden: o.hidden, race: o.race,
     legs: { at: [[-0.1 * k, 0.86 * k, 0], [0.1 * k, 0.86 * k, 0]], amp: 0.6, gait: 'biped', len: 0.86 * k,
       make: g => { cyl(g, [0, 0.02, 0], [0, -0.78 * k, 0], 0.085 * k, 0.07 * k, o.legCol || o.pants, 10); orb(g, 0, -0.81 * k, 0.05 * k, 0.08 * k, 0.06 * k, 0.13 * k, o.shoes || COL.darkwood, { lo: true }); } },
     glow: o.glow });
@@ -2167,6 +2177,7 @@ function placeAt(hit) {
   const d = selectedDef(), s = SIZES[tool.size];
   if (d.tool === 'land') return landAt(hit, d);
   if (d.tool === 'biome') return biomeAt(hit, d);
+  if (d.race) return foundAt(hit, d);                 // humans, elves, dwarves and orcs found a town
   if (objs.length >= 3000) { toast('Your island is full! Erase some things first.'); return false; }
   const n = BRUSH_N[tool.brush], face = Math.atan2(camEye[0] - hit.x, camEye[2] - hit.z);
   const grp = group(false);
@@ -2271,7 +2282,8 @@ function settle(o) { const d = CAT[o.t]; o.y = d.move === 'swim' || d.move === '
    Loading and the starting nature on a new island
    ===================================================================== */
 function loadThings(data, fresh) {
-  objs = []; undoStack = [];
+  objs = []; undoStack = []; arrows = []; fx = []; texts = [];
+  loadTowns(data && data.towns);
   if (fresh) { scatterStart(); return; }
   if (!data || !Array.isArray(data.objs)) return;
   for (const a of data.objs.slice(0, 3000)) {
@@ -2279,6 +2291,8 @@ function loadThings(data, fresh) {
     const [t, x, z, r, s] = a;
     if (![x, z, r, s].every(Number.isFinite) || Math.abs(x) > 2000 || Math.abs(z) > 2000) continue;
     const o = makeObj(t, x, z, r, clamp(s, 0.25, 4)); settle(o); objs.push(o);
+    if (typeof a[5] === 'string' && TOWN[a[5]]) o.town = a[5];
+    if (CAT[t].race) o.race = CAT[t].race;
   }
   updateCount();
 }
@@ -2320,7 +2334,7 @@ function pickTarget(o, d) {
   o.tx = o.hx; o.tz = o.hz;
 }
 function updateLife(dt, time) {
-  buildGrid(); ghostScares(dt); corruptSpawns(dt); updateFx(dt);
+  updateTowns(dt); buildGrid(); ghostScares(dt); corruptSpawns(dt); updateFx(dt); updateArrows(dt);
   for (const o of objs.slice()) {                        // (a copy: things can be beaten while we go)
     if (o.gone) continue;
     const d = CAT[o.t];
@@ -2415,8 +2429,6 @@ function hostile(a, b) {
   if (fb === 'orcfriend') return PEOPLE_FACS.has(fa);
   return atWar(a.town, b.town);                                  // humans, elves and dwarves: only when their towns are at war
 }
-function townPeace(o) { return false; }
-function atWar() { return false; }
 // a quick lookup of who's near whom (24 m squares)
 let grid = new Map();
 function buildGrid() {
@@ -2449,6 +2461,288 @@ function findFoe(o) {
   });
   return best;
 }
+
+/* =====================================================================
+   Towns. Put down a human, elf, dwarf or orc and they found a town straight away:
+   a centre building in their own style and a few townsfolk. The town keeps building
+   houses and growing. Its name and how many live there float above it ("Brook Creek 17").
+   Orcs are at war with every town that isn't orc. Humans, elves and dwarves get along,
+   but now and then a human town starts a war. Towns at war march an army at each other,
+   and knock buildings down when nobody's left to defend them. The Towns panel can make
+   a town keep the peace, or go to war with everyone.
+   ===================================================================== */
+const RACES = {
+  human: { name: 'Humans', icon: '🧑', center: 'townhall', homes: [['cottage', 4], ['house', 2], ['barn', 1], ['well', 1], ['stall', 1]], folk: ['human', 'human2', 'human3'],
+    names: [['Brook', 'Oak', 'Mill', 'River', 'Stone', 'Green', 'Fair', 'Ash', 'Elm', 'Maple', 'Clover', 'Honey', 'Willow', 'Apple'], ['Creek', 'Hollow', 'Ford', 'Hill', 'Vale', 'Haven', 'Meadow', 'Bend', 'Field', 'Crossing']] },
+  elf: { name: 'Elves', icon: '🧝', center: 'elftree', homes: [['elfhouse', 4], ['elftower', 1]], folk: ['elf', 'elf2'],
+    names: [['Silver', 'Moon', 'Star', 'Dawn', 'Mist', 'Glimmer', 'Sun', 'Dew', 'Fern', 'Lark'], ['leaf', 'glade', 'shade', 'song', 'light', 'wood', 'vale', 'brook']] },
+  dwarf: { name: 'Dwarves', icon: '🧔', center: 'dwarfhall', homes: [['dwarfhouse', 4], ['forge', 1]], folk: ['dwarf', 'dwarf2'],
+    names: [['Iron', 'Stone', 'Copper', 'Granite', 'Deep', 'Gold', 'Anvil', 'Boulder', 'Coal', 'Hammer'], ['hold', 'forge', 'delve', 'peak', 'hall', 'gate', 'mine', 'rock']] },
+  orc: { name: 'Orcs', icon: '👹', center: 'warcamp', homes: [['orchut', 4], ['orctower', 1]], folk: ['orc', 'orc2'],
+    names: [['Mud', 'Grub', 'Snarl', 'Bog', 'Thunder', 'Rust', 'Grumble', 'Fang', 'Stomp', 'Grit'], ['tusk', 'maw', 'pit', 'crag', 'camp', 'fang', 'gut', 'skull']] },
+};
+// the four peoples (the ones you place found towns; the others are townsfolk who look a bit different)
+function racePerson(id, race, name, icon, o, hidden) { return personDef(id, name, icon, Object.assign({ race, hidden }, o)); }
+racePerson('human', 'human', 'Human', '🧑', { shirt: [0.3, 0.45, 0.8], pants: [0.4, 0.3, 0.2], hair: [0.35, 0.22, 0.12] });
+racePerson('human2', 'human', 'Human', '🧑', { shirt: [0.35, 0.62, 0.3], pants: [0.45, 0.32, 0.2], hair: [0.85, 0.7, 0.35] }, true);
+racePerson('human3', 'human', 'Human', '👩', { shirt: [0.8, 0.3, 0.35], pants: [0.75, 0.3, 0.35], dress: [0.78, 0.3, 0.35], hair: [0.25, 0.15, 0.1], longHair: true }, true);
+function elfExtra(g, k, y) {
+  for (const s of [-1, 1]) cyl(g, [s * 0.17 * k, y + 1.82 * k, -0.02 * k], [s * 0.3 * k, y + 1.97 * k, -0.06 * k], 0.045 * k, 0.005, [0.98, 0.86, 0.74], 8);
+  let prev = null; for (let i = 0; i <= 8; i++) { const a = -1.1 + i / 8 * 2.2, p = [0.1 * k + Math.sin(a) * 0.05 * k, y + (1.25 + Math.sin(a) * 0.45) * k, -0.2 * k - Math.cos(a) * 0.1 * k]; if (prev) cyl(g, prev, p, 0.02 * k, 0.02 * k, COL.darkwood, 6, false); prev = p; }
+}
+racePerson('elf', 'elf', 'Elf', '🧝', { k: 1.08, skin: [0.98, 0.86, 0.74], shirt: [0.3, 0.6, 0.38], pants: [0.42, 0.5, 0.3], hair: [0.98, 0.9, 0.6], longHair: true, speed: 1.5, extra: elfExtra });
+racePerson('elf2', 'elf', 'Elf', '🧝', { k: 1.08, skin: [0.98, 0.86, 0.74], shirt: [0.82, 0.84, 0.9], pants: [0.6, 0.62, 0.7], hair: [0.75, 0.78, 0.85], longHair: true, speed: 1.5, extra: elfExtra }, true);
+function dwarfExtra(g, k, y) {
+  orb(g, 0, y + 1.62 * k, 0.14 * k, 0.17 * k, 0.24 * k, 0.1 * k, this && this.beard || [0.75, 0.35, 0.15]);
+  orb(g, 0, y + 1.9 * k, 0, 0.21 * k, 0.15 * k, 0.21 * k, [0.62, 0.64, 0.68], { cutBelow: y + 1.84 * k });
+  cyl(g, [0.36 * k, y + 0.6 * k, 0.1 * k], [0.36 * k, y + 1.4 * k, 0.1 * k], 0.03 * k, 0.03 * k, COL.wood, 8); box(g, 0.36 * k, y + 1.25 * k, 0.1 * k, 0.04 * k, 0.22 * k, 0.28 * k, COL.iron);
+}
+racePerson('dwarf', 'dwarf', 'Dwarf', '🧔', { k: 0.74, shirt: [0.6, 0.3, 0.2], pants: [0.35, 0.28, 0.2], hair: null, speed: 1.1, extra: dwarfExtra });
+racePerson('dwarf2', 'dwarf', 'Dwarf', '🧔', { k: 0.74, shirt: [0.25, 0.4, 0.6], pants: [0.35, 0.28, 0.2], hair: null, speed: 1.1, extra: (g, k, y) => { dwarfExtra(g, k, y); orb(g, 0, y + 1.62 * k, 0.14 * k, 0.17 * k, 0.24 * k, 0.1 * k, [0.5, 0.42, 0.38]); } }, true);
+function orcExtra(g, k, y) {
+  for (const s of [-1, 1]) coneS(g, s * 0.07 * k, y + 1.7 * k, 0.15 * k, 0.025 * k, 0.09 * k, COL.cream, 6);
+  orb(g, 0, y + 1.96 * k, -0.05 * k, 0.06 * k, 0.1 * k, 0.06 * k, COL.black, { lo: true });
+  cyl(g, [0.36 * k, y + 0.7 * k, 0.12 * k], [0.36 * k, y + 1.35 * k, 0.2 * k], 0.04 * k, 0.09 * k, COL.bark, 10);
+  for (const s of [-1, 1]) orb(g, s * 0.27 * k, y + 1.5 * k, 0, 0.1 * k, 0.07 * k, 0.1 * k, [0.45, 0.32, 0.22], { lo: true });
+}
+racePerson('orc', 'orc', 'Orc', '👹', { k: 1.15, skin: [0.42, 0.6, 0.3], shirt: [0.36, 0.26, 0.18], sleeve: [0.42, 0.6, 0.3], pants: [0.25, 0.2, 0.15], hair: null, speed: 1.4, extra: orcExtra });
+racePerson('orc2', 'orc', 'Orc', '👹', { k: 1.2, skin: [0.38, 0.52, 0.32], shirt: [0.4, 0.15, 0.12], sleeve: [0.38, 0.52, 0.32], pants: [0.22, 0.18, 0.14], hair: null, speed: 1.4, extra: orcExtra }, true);
+// the People group is just the four peoples now (older people stay working in saved islands)
+CATS.find(c => c.id === 'people').items = ['human', 'elf', 'dwarf', 'orc'];
+
+/* ---- town buildings, in each people's style ---- */
+const B = (id, name, icon, o) => def(id, 'build', name, icon, Object.assign({ hidden: true, big: true }, o));
+B('townhall', 'Town hall', '🏛️', { r: 5, h: 13, body: g => {
+  box(g, 0, -0.3, 0, 8, 3.3, 7, COL.stone); box(g, 0, 3, 0, 8.2, 3, 7.2, COL.cream);
+  for (const x of [-3.9, -1.3, 1.3, 3.9]) box(g, x, 3, 3.62, 0.25, 3, 0.1, COL.darkwood);
+  roof(g, 0, 6, 0, 8.2, 7.2, 3, COL.roof);
+  box(g, 0, 6, 1, 2.2, 5, 2.2, COL.stone2); coneS(g, 0, 11, 1, 1.8, 2.5, COL.roof, 4);
+  cyl(g, [0, 9.4, 2.12], [0, 9.4, 2.2], 0.7, 0.7, COL.white, 24); box(g, 0, 9.4, 2.22, 0.06, 0.5, 0.04, COL.dark); box(g, 0.15, 9.4, 2.22, 0.35, 0.06, 0.04, COL.dark);
+  box(g, 0, 0, 3.52, 1.6, 2.4, 0.1, COL.darkwood);
+  for (const x of [-2.6, 2.6]) { windowAt(g, x, 1.2, 3.5, 1, 1.1, 0, 1); windowAt(g, x, 4.2, 3.6, 1, 1, 0, 1); }
+} });
+B('elftree', 'Elf tree hall', '🌳', { r: 5, h: 18, body: g => {
+  cyl(g, [0, -0.5, 0], [0, 12, 0], 1.5, 0.9, [0.55, 0.45, 0.34], 20);
+  for (const [a, l] of [[0, 3], [2.1, 2.6], [4.2, 3.2]]) cyl(g, [0, 0, 0], [Math.cos(a) * l, -0.3, Math.sin(a) * l], 0.5, 0.15, [0.55, 0.45, 0.34], 10);
+  for (const y of [4, 8]) { cyl(g, [0, y, 0], [0, y + 0.25, 0], 4.2 - y * 0.15, 4.2 - y * 0.15, [0.85, 0.78, 0.62], 28); for (let a = 0; a < 6.28; a += 0.5) cyl(g, [Math.cos(a) * (4.1 - y * 0.15), y + 0.25, Math.sin(a) * (4.1 - y * 0.15)], [Math.cos(a) * (4.1 - y * 0.15), y + 1, Math.sin(a) * (4.1 - y * 0.15)], 0.05, 0.05, COL.white, 5); }
+  canopy(g, [[0, 14, 0, 5, 3.5], [3, 12.5, 1, 3, 2.2], [-3, 12.8, -1, 3.2, 2.2], [0.5, 12.2, 3, 2.8, 2], [-0.5, 12.6, -3, 2.8, 2]], [[0.45, 0.72, 0.4], [0.55, 0.8, 0.45]], 0.3);
+}, glow: { flicker: 'pulse', make: g => { for (let i = 0; i < 8; i++) { const a = i / 8 * 6.28, y = i % 2 ? 4 : 8, r = (i % 2 ? 3.6 : 3); orb(g, Math.cos(a) * r, y - 0.5, Math.sin(a) * r, 0.22, 0.28, 0.22, [0.7, 1, 0.75], { lo: true }); } } } });
+B('elfhouse', 'Elf house', '🏡', { r: 2.6, h: 6, big: false, body: g => {
+  for (const [x, z] of [[-1.3, -1.3], [1.3, -1.3], [-1.3, 1.3], [1.3, 1.3]]) cyl(g, [x, -0.3, z], [x, 1.6, z], 0.12, 0.1, [0.85, 0.82, 0.75], 8);
+  cyl(g, [0, 1.6, 0], [0, 4, 0], 2, 1.9, [0.92, 0.9, 0.82], 24); orb(g, 0, 4, 0, 2.5, 2, 2.5, [0.4, 0.68, 0.38], { cutBelow: 4, leaf: true });
+  box(g, 0, 1.6, 1.88, 0.8, 1.6, 0.1, [0.55, 0.62, 0.35]); windowAt(g, 1.2, 2.9, 1.45, 0.5, 0.6, 0, 1);
+  for (let i = 0; i < 6; i++) box(g, 0, -0.2 + i * 0.3, 2.3 + (5 - i) * 0.25, 0.8, 0.08, 0.3, COL.plank);
+} });
+B('elftower', 'Elf tower', '🗼', { r: 2, h: 15, body: g => {
+  cyl(g, [0, -0.3, 0], [0, 12, 0], 1.6, 0.9, [0.95, 0.95, 0.98], 24); coneS(g, 0, 12, 0, 1.4, 3.5, [0.72, 0.85, 0.95], 24);
+  for (const y of [3, 6.5, 9.5]) cyl(g, [0, y, 0], [0, y + 0.2, 0], 1.7 - y * 0.06, 1.7 - y * 0.06, [0.6, 0.8, 0.55], 24);
+}, glow: { flicker: 'pulse', make: g => { for (const y of [4.5, 8, 10.8]) orb(g, 0, y, 1.45 - y * 0.05, 0.25, 0.4, 0.08, [0.75, 1, 0.85], { lo: true }); } } });
+B('dwarfhall', 'Dwarf hall', '⛰️', { r: 6, h: 9, body: g => {
+  rockShape(g, 0, 1.5, -1.5, 7, 6, 6, COL.stone2, 13);
+  box(g, 0, -0.3, 4.2, 5, 5, 1.5, COL.stone); box(g, 0, 4.7, 4.2, 5.6, 0.6, 1.7, COL.stone2);
+  box(g, 0, 0, 5.0, 2.6, 3.6, 0.1, [0.85, 0.65, 0.2]); box(g, 0, 0, 5.06, 0.06, 3.6, 0.05, COL.dark);
+  for (const x of [-1.8, 1.8]) box(g, x, -0.3, 5.2, 0.8, 2.4, 0.8, COL.stone2);
+}, glow: { flicker: 'fire', make: g => { for (const x of [-1.8, 1.8]) { coneS(g, x, 2.1, 5.2, 0.35, 0.9, [1, 0.5, 0.1], 10); coneS(g, x, 2.1, 5.2, 0.2, 0.6, [1, 0.85, 0.3], 8); } } } });
+B('dwarfhouse', 'Dwarf house', '🏠', { r: 2.6, h: 4.5, big: false, body: g => {
+  box(g, 0, -0.3, 0, 4, 2.6, 3.6, COL.stone2); roof(g, 0, 2.3, 0, 4, 3.6, 1.2, [0.42, 0.4, 0.4], 0.2);
+  box(g, 1.2, 2.3, -0.6, 0.6, 1.8, 0.6, COL.stone);
+  cyl(g, [0, 0.9, 1.78], [0, 0.9, 1.85], 0.6, 0.6, [0.5, 0.32, 0.16], 20); box(g, 0, -0.3, 1.82, 1.2, 1.2, 0.06, [0.5, 0.32, 0.16]);
+} });
+B('forge', 'Forge', '⚒️', { r: 2.6, h: 5, big: false, body: g => {
+  box(g, 0, -0.3, -0.8, 4.4, 3, 2, COL.stone2); box(g, -1.6, -0.3, 0.6, 1.2, 1.4, 1.2, COL.stone);
+  box(g, 1.6, 2.7, -0.8, 0.8, 2.2, 0.8, COL.stone); box(g, 0.6, -0.2, 1.2, 0.5, 0.6, 0.3, COL.dark); box(g, 0.6, 0.4, 1.2, 0.9, 0.2, 0.35, COL.iron);
+  roof(g, 0, 2.7, 0, 4.4, 3.6, 0.9, [0.38, 0.36, 0.36], 0.2);
+}, glow: { flicker: 'fire', make: g => { coneS(g, -1.6, 1.1, 0.6, 0.45, 0.7, [1, 0.45, 0.08], 10); coneS(g, -1.6, 1.1, 0.6, 0.25, 0.5, [1, 0.85, 0.3], 8); } } });
+B('warcamp', 'Orc war camp', '⛺', { r: 5, h: 9, body: g => {
+  coneS(g, 0, -0.1, 0, 5, 6.5, [0.5, 0.36, 0.24], 7);
+  for (let i = 0; i < 7; i++) { const a = i / 7 * 6.28; cyl(g, [Math.cos(a) * 4.6, -0.1, Math.sin(a) * 4.6], [Math.cos(a) * 0.4, 7.5, Math.sin(a) * 0.4], 0.09, 0.07, COL.darkwood, 6); }
+  for (const s of [-1, 1]) { cyl(g, [s * 6, -0.3, 3], [s * 6, 8, 3], 0.12, 0.1, COL.darkwood, 8); tri(g, [s * 6, 7.8, 3], [s * 6, 5.6, 3], [s * 6 + s * 1.6, 6.9, 3], [0, 0, 1], 0, COL.red, COL.red, [0.6, 0.1, 0.1], 0, 0, 0); for (const t of [-1, 1]) cyl(g, [s * 6, 8, 3], [s * 6 + t * 0.4, 8.6, 3], 0.08, 0.01, COL.cream, 6); }
+  box(g, 0, -0.1, 4.9, 1.6, 2.6, 0.1, [0.2, 0.14, 0.1]);
+} });
+B('orchut', 'Orc hut', '🛖', { r: 2.8, h: 4, big: false, body: g => {
+  orb(g, 0, 0, 0, 2.2, 3, 2.2, [0.48, 0.36, 0.25], { cutBelow: 0 }); box(g, 0, 0, 2.1, 0.9, 1.6, 0.1, [0.18, 0.12, 0.08]);
+  for (let i = 0; i < 10; i++) { const a = i / 10 * 6.28; if (Math.abs(Math.sin(a) - 1) < 0.2) continue; const x = Math.cos(a) * 2.9, z = Math.sin(a) * 2.9; cyl(g, [x, -0.2, z], [x * 1.12, 1.4, z * 1.12], 0.1, 0.01, [0.6, 0.48, 0.34], 6); }
+} });
+B('orctower', 'Orc watch tower', '🗼', { r: 2.2, h: 10, body: g => {
+  for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) cyl(g, [x, -0.3, z], [x * 0.7, 6.5, z * 0.7], 0.15, 0.12, COL.darkwood, 8);
+  box(g, 0, 6.5, 0, 2.6, 0.25, 2.6, COL.plank);
+  for (let i = 0; i < 8; i++) { const a = i / 8 * 6.28; cyl(g, [Math.cos(a) * 1.3, 6.7, Math.sin(a) * 1.3], [Math.cos(a) * 1.5, 8, Math.sin(a) * 1.5], 0.08, 0.01, [0.6, 0.48, 0.34], 6); }
+  cyl(g, [0, 6.7, 0], [0, 9.8, 0], 0.07, 0.07, COL.darkwood, 6); tri(g, [0, 9.7, 0], [0, 8.6, 0], [1.3, 9.2, 0], [0, 0, 1], 0, COL.red, COL.red, COL.red, 0, 0, 0);
+} });
+
+/* ---- the towns themselves ---- */
+let towns = [], TOWN = {}, wars = new Map(), townSeq = 0;
+function townName(race) {
+  const [a, b] = RACES[race].names;
+  for (let k = 0; k < 20; k++) {
+    const n = race === 'human' ? pick(a) + ' ' + pick(b) : pick(a) + pick(b);
+    if (!towns.some(t => t.name === n)) return n;
+  }
+  return pick(a) + pick(b) + ' ' + (towns.length + 1);
+}
+function makeTown(race, x, z, o = {}) {
+  const t = Object.assign({ id: 't' + (++townSeq) + Math.floor(Math.random() * 1e4).toString(36), race, name: townName(race), x, z, mode: 'normal', built: 0, growT: 2, folkT: 1, warT: 60 + Math.random() * 60, marchT: 10 }, o);
+  towns.push(t); TOWN[t.id] = t;
+  return t;
+}
+const townFolk = t => objs.filter(o => o.town === t.id && o.race && !o.gone);
+const townBuildings = t => objs.filter(o => o.town === t.id && !o.race && !o.gone);
+function townPeace(o) { const t = o.town && TOWN[o.town]; return !!t && t.mode === 'peace'; }
+function warKey(a, b) { return a < b ? a + '|' + b : b + '|' + a; }
+function atWar(ia, ib) {
+  if (!ia || !ib || ia === ib) return false;
+  const a = TOWN[ia], b = TOWN[ib];
+  if (!a || !b || a.mode === 'peace' || b.mode === 'peace') return false;
+  if (a.mode === 'everyone' || b.mode === 'everyone') return true;
+  if ((a.race === 'orc') !== (b.race === 'orc')) return true;        // orcs fight every town that isn't orc
+  return wars.has(warKey(ia, ib));
+}
+// founding: a centre building where you put them, and a few townsfolk
+function foundAt(hit, d) {
+  if (!canPlace(d, hit, 1)) { sfx('nope'); toast(`${d.icon} ${d.name}s need land to build a town`, 1500); return false; }
+  const race = d.race, grp = group(false);
+  const home = towns.find(t => t.race === race && Math.hypot(t.x - hit.x, t.z - hit.z) < 70);
+  let t = home, made = 0;
+  if (!t) {
+    t = makeTown(race, hit.x, hit.z);
+    const c = addThing(RACES[race].center, hit.x, hit.z, Math.atan2(camEye[0] - hit.x, camEye[2] - hit.z), 1, grp); if (c) c.town = t.id;
+    toast(`${RACES[race].icon} The ${RACES[race].name.toLowerCase()} founded ${t.name}!`, 2600);
+    [523, 659, 784].forEach((f, i) => tone('triangle', f, f, 0.2, 0.08, i * 0.1));
+  }
+  for (let i = 0; i < Math.max(3, BRUSH_N[tool.brush]) && (home ? i < BRUSH_N[tool.brush] : true); i++) {
+    const a = Math.random() * 6.283, x = t.x + Math.cos(a) * (6 + Math.random() * 4), z = t.z + Math.sin(a) * (6 + Math.random() * 4);
+    if (groundAt(x, z) < 0.2) continue;
+    const o = addThing(pick(RACES[race].folk), x, z, Math.random() * 6.283, 1, grp);
+    if (o) { o.race = race; o.town = t.id; o.hx = t.x; o.hz = t.z; made++; }
+  }
+  dirty = true; updateCount(); sfx('place');
+  return made > 0 || !home;
+}
+// growing: new houses every few seconds, and more townsfolk as houses go up
+function growTown(t, dt) {
+  const folk = townFolk(t), homes = townBuildings(t);
+  if (!homes.length && !folk.length) { removeTown(t); return; }
+  t.growT -= dt;
+  if (t.growT <= 0 && homes.length < 26 && objs.length < 2900) {
+    t.growT = 5 + homes.length * 0.6 + Math.random() * 3;
+    const R = RACES[t.race], total = R.homes.reduce((s, h) => s + h[1], 0);
+    let p = Math.random() * total, id = R.homes[0][0];
+    for (const [hid, w] of R.homes) { p -= w; if (p < 0) { id = hid; break; } }
+    const hd = CAT[id], ring = 9 + Math.sqrt(homes.length) * 6;
+    for (let k = 0; k < 14; k++) {
+      const a = Math.random() * 6.283, q = 7 + Math.random() * ring, x = t.x + Math.cos(a) * q, z = t.z + Math.sin(a) * q;
+      if (groundAt(x, z) < 0.4 || slopeAt(x, z) < 0.78 || crowded(x, z, hd.r * 0.9 + 1.5)) continue;
+      const o = makeObj(id, x, z, Math.atan2(t.x - x, t.z - z), 1); o.town = t.id; settle(o); objs.push(o); pop.push({ o, t: 0 });
+      t.built++; updateCount(); dirty = true;
+      if (near3(o)) noiseHit('lowpass', 500, 0.7, 0.2, 0.08);
+      break;
+    }
+  }
+  t.folkT -= dt;
+  if (t.folkT <= 0) {
+    t.folkT = 3.5 + Math.random() * 2;
+    if (folk.length < Math.min(40, 3 + homes.length * 2) && objs.length < 2900) {
+      const a = Math.random() * 6.283, x = t.x + Math.cos(a) * 5, z = t.z + Math.sin(a) * 5;
+      if (groundAt(x, z) > 0.2) { const o = makeObj(pick(RACES[t.race].folk), x, z, a, 1); o.race = t.race; o.town = t.id; settle(o); objs.push(o); pop.push({ o, t: 0 }); updateCount(); }
+    }
+  }
+}
+function removeTown(t) {
+  towns = towns.filter(x => x !== t); delete TOWN[t.id];
+  for (const k of [...wars.keys()]) if (k.split('|').includes(t.id)) wars.delete(k);
+  for (const o of objs) if (o.march === t.id) o.march = null;
+  dirty = true; if (state === 'towns') buildTownPanel();
+}
+// wars: humans start one now and then; towns at war march an army at their enemy
+function updateTowns(dt) {
+  for (const t of towns.slice()) growTown(t, dt);
+  if (!settings.fight) { for (const o of objs) if (o.march) { o.march = null; o.hx = TOWN[o.town] ? TOWN[o.town].x : o.x; o.hz = TOWN[o.town] ? TOWN[o.town].z : o.z; } return; }
+  for (const [k, w] of [...wars]) { w.t -= dt; if (w.t <= 0) { wars.delete(k); const [a, b] = k.split('|').map(id => TOWN[id]); if (a && b) toast(`🕊️ ${a.name} and ${b.name} made peace`, 2200); } }
+  for (const t of towns) {
+    if (t.race === 'human' && t.mode === 'normal') {
+      t.warT -= dt;
+      if (t.warT <= 0) {
+        t.warT = 80 + Math.random() * 80;
+        const others = towns.filter(o => o !== t && o.race !== 'orc' && o.mode !== 'peace' && !atWar(t.id, o.id));
+        if (others.length && Math.random() < 0.45) { const e = pick(others); wars.set(warKey(t.id, e.id), { t: 60 + Math.random() * 50 }); toast(`⚔️ ${t.name} declared war on ${e.name}!`, 2600); tone('sawtooth', 220, 110, 0.6, 0.08, 0, 800); }
+      }
+    }
+    t.marchT -= dt;
+    if (t.marchT <= 0) {
+      t.marchT = 18 + Math.random() * 10;
+      const enemies = towns.filter(o => atWar(t.id, o.id)).sort((a, b) => Math.hypot(a.x - t.x, a.z - t.z) - Math.hypot(b.x - t.x, b.z - t.z));
+      const e = enemies[0];
+      if (e && Math.hypot(e.x - t.x, e.z - t.z) < 1200) {
+        const folk = townFolk(t).filter(o => !o.march), n = Math.max(2, Math.floor(folk.length / 2));
+        folk.slice(0, n).forEach(o => { o.march = e.id; o.marchT = 0; });
+        if (n && near3({ x: t.x, z: t.z })) say({ x: t.x, z: t.z, y: groundAt(t.x, t.z) + 8, t: RACES[t.race].center, s: 0 }, t.race === 'orc' ? 'Waaagh! Attack!' : 'March!', '#ffd23f');
+      }
+    }
+  }
+  for (const o of objs) if (o.march) {                 // armies go home once the war's over
+    const e = TOWN[o.march], mine = TOWN[o.town];
+    if (!e || !mine || !atWar(o.town, o.march)) { o.march = null; if (mine) { o.hx = mine.x; o.hz = mine.z; } }
+  }
+}
+// a marching soldier with nobody to fight walks to the enemy town and knocks its buildings down
+function marchStep(o, d, dt) {
+  const e = TOWN[o.march]; if (!e) { o.march = null; return false; }
+  let tx = e.x, tz = e.z;
+  if (!o.bfoe || o.bfoe.gone) { o.bfoe = null; const near = townBuildings(e).filter(b => Math.hypot(b.x - o.x, b.z - o.z) < 45); if (near.length) o.bfoe = near.reduce((a, b) => Math.hypot(a.x - o.x, a.z - o.z) < Math.hypot(b.x - o.x, b.z - o.z) ? a : b); }
+  if (o.bfoe) { tx = o.bfoe.x; tz = o.bfoe.z; }
+  const dist = Math.hypot(tx - o.x, tz - o.z), reach = o.bfoe ? CAT[o.bfoe.t].r * o.bfoe.s + 1.2 : 4;
+  if (dist > reach) {
+    if (!stepToward(o, d, tx, tz, d.speed * Math.sqrt(o.s) * 1.2, dt)) { o.marchT = (o.marchT || 0) + dt; if (o.marchT > 8) { o.march = null; const m = TOWN[o.town]; if (m) { o.hx = m.x; o.hz = m.z; } } }
+  } else if (o.bfoe) {
+    o.moving = false; o.cd = (o.cd || 0) - dt;
+    if (o.cd <= 0) {
+      o.cd = 1.2; o.lunge = 1; const b = o.bfoe;
+      if (b.hp === undefined) { b.maxHp = b.hp = 25 * b.s; }
+      b.hp -= statOf(o)[1]; b.hitT = 0.2;
+      if (near3(o)) noiseHit('lowpass', 400, 0.8, 0.15, 0.1);
+      if (b.hp <= 0) defeat(b, null);
+    }
+  } else o.moving = false;
+  o.y = groundY(o, d); o.tx = undefined;
+  return true;
+}
+// "Brook Creek 17" over each town
+function drawTownLabels() {
+  for (const t of towns) {
+    const p = toScreen(t.x, groundAt(t.x, t.z) + 12, t.z); if (!p || p[2] > 1400) continue;
+    const n = townFolk(t).length, war = towns.some(o => atWar(t.id, o.id));
+    const el = labEl('wlab');
+    placeLab(el, p, 'wlab town', `${RACES[t.race].icon} ${t.name}<b>${n}</b>${t.mode === 'peace' ? ' 🕊️' : war ? ' ⚔️' : ''}`);
+    el.style.color = ''; el.style.opacity = '1';
+  }
+}
+// the Towns panel: every town, its people, and peace / war
+function buildTownPanel() {
+  const list = $('townList'); list.innerHTML = '';
+  if (!towns.length) { list.innerHTML = '<p class="tagline">No towns yet. Put down a human, elf, dwarf or orc (in People) and they\'ll found one!</p>'; return; }
+  for (const t of towns) {
+    const n = townFolk(t).length, foes = towns.filter(o => atWar(t.id, o.id)).map(o => o.name);
+    const row = document.createElement('div'); row.className = 'saverow';
+    row.innerHTML = `<div class="ic">${RACES[t.race].icon}</div><div class="info"><b></b><span></span></div>`;
+    row.querySelector('b').textContent = `${t.name} · ${n}`;
+    row.querySelector('span').textContent = t.mode === 'peace' ? 'Keeping the peace' : foes.length ? 'At war with ' + foes.join(', ') : 'At peace';
+    const mk = (label, fn, on) => { const b = document.createElement('button'); b.textContent = label; if (on) b.className = 'primary', b.style.fontSize = '15px'; b.onclick = () => { fn(); sfx('click'); dirty = true; buildTownPanel(); if (pad.connected) ensureSel(); }; row.appendChild(b); };
+    mk('🕊️ Make peace', () => { t.mode = 'peace'; for (const k of [...wars.keys()]) if (k.split('|').includes(t.id)) wars.delete(k); toast(`🕊️ ${t.name} is keeping the peace`, 1800); }, t.mode === 'peace');
+    mk('⚔️ War with everyone', () => { t.mode = 'everyone'; toast(`⚔️ ${t.name} is at war with everyone!`, 1800); }, t.mode === 'everyone');
+    if (t.mode !== 'normal') mk('Normal', () => { t.mode = 'normal'; });
+    mk('📍 Go there', () => { Object.assign(cam, { tx: t.x, tz: t.z, dist: 90 }); resume(); });
+    list.appendChild(row);
+  }
+}
+function saveTowns() { return towns.map(t => ({ id: t.id, race: t.race, name: t.name, x: +t.x.toFixed(1), z: +t.z.toFixed(1), mode: t.mode, built: t.built })); }
+function loadTowns(list) {
+  towns = []; TOWN = {}; wars = new Map();
+  if (!Array.isArray(list)) return;
+  for (const s of list.slice(0, 60)) {
+    if (!s || typeof s.id !== 'string' || s.id.length > 30 || !RACES[s.race] || !Number.isFinite(s.x) || !Number.isFinite(s.z)) continue;
+    makeTown(s.race, s.x, s.z, { id: s.id, name: typeof s.name === 'string' ? s.name.slice(0, 30) : townName(s.race), mode: ['normal', 'peace', 'everyone'].includes(s.mode) ? s.mode : 'normal', built: Number.isFinite(s.built) ? s.built : 0 });
+  }
+}
 let fx = [], texts = [], screamT = 0;
 function poof(x, y, z, size, col) {
   for (let i = 0; i < 10; i++) { const a = Math.random() * 6.283, sp = 1 + Math.random() * 2; fx.push({ x, y: y + size * 0.6, z, vx: Math.cos(a) * sp, vy: 1 + Math.random() * 2, vz: Math.sin(a) * sp, t: 0, life: 0.9 + Math.random() * 0.4, r: size * (0.25 + Math.random() * 0.25), col }); }
@@ -2471,11 +2765,33 @@ function defeat(v, by) {
   updateCount(); dirty = true;
 }
 const near3 = o => Math.hypot(o.x - cam.tx, o.z - cam.tz) < cam.dist * 1.4 + 40;
+// elves shoot an arrow that flies to the target; everyone else hits up close
+let arrows = [];
 function strike(o, f) {
+  if (o.race === 'elf' && !o.gone && !f.gone) {
+    arrows.push({ x: o.x + Math.sin(o.r) * 0.4 * o.s, y: o.y + 1.45 * o.s, z: o.z + Math.cos(o.r) * 0.4 * o.s, f, from: o, t: 0 });
+    o.lunge = 0.5;
+    if (near3(o)) { noiseHit('bandpass', 2200, 1.5, 0.15, 0.06, 900); tone('triangle', 400, 250, 0.08, 0.04); }
+    return;
+  }
+  landHit(o, f);
+}
+function updateArrows(dt) {
+  for (const a of arrows) {
+    const f = a.f, tx = f.x, ty = f.y + CAT[f.t].h * f.s * 0.55, tz = f.z;
+    const dx = tx - a.x, dy = ty - a.y, dz = tz - a.z, d = Math.hypot(dx, dy, dz), sp = 32 * dt;
+    a.t += dt; a.vx = dx / (d || 1); a.vy = dy / (d || 1); a.vz = dz / (d || 1);
+    if (f.gone || a.t > 2) { a.done = true; continue; }
+    if (d <= sp + 0.4) { a.done = true; if (!a.from.gone) landHit(a.from, f, true); else { f.hp = (f.hp === undefined ? statOf(f)[0] * f.s : f.hp) - 2; f.hitT = 0.25; if (f.hp <= 0) defeat(f, null); } continue; }
+    a.x += a.vx * sp; a.y += a.vy * sp + Math.sin(Math.PI * Math.min(1, a.t * 2)) * dt * 2; a.z += a.vz * sp;
+  }
+  arrows = arrows.filter(a => !a.done);
+}
+function landHit(o, f, arrow) {
   if (f.gone || o.gone) return;
   if (f.hp === undefined) { f.maxHp = statOf(f)[0] * f.s; f.hp = f.maxHp; }
   f.hp -= statOf(o)[1] * Math.sqrt(o.s);
-  f.hitT = 0.25; o.lunge = 1;
+  f.hitT = 0.25; if (!arrow) o.lunge = 1;
   if (o.t === 'zombie' && CAT[f.t].move !== 'swim') { defeat(f, o); return; }   // one zombie bite makes another zombie
   if (near3(o)) { noiseHit('lowpass', 900, 0.8, 0.12, 0.09); if (o.t === 'dragon' || o.t === 'troll' || o.t === 'hydra') tone('sawtooth', 110, 60, 0.3, 0.08, 0, 500); }
   if (attacks(f.fac) && hostile(f, o)) { if (!f.foe || f.foe.gone) f.foe = o; }
@@ -2515,10 +2831,10 @@ function fightStep(o, d, dt, time) {
   }
   if (o.roarT > 0) o.roarT -= dt;
   const f = o.foe;
-  if (!f) { o.windup = 0; return false; }
+  if (!f) { o.windup = 0; return o.march ? marchStep(o, d, dt) : false; }
   const st = statOf(o), dist = Math.hypot(f.x - o.x, f.z - o.z);
   if (dist > st[3] * Math.sqrt(o.s) * 1.8) { o.foe = null; return false; }
-  const reach = st[2] * o.s + CAT[f.t].r * f.s * 0.6;
+  const reach = (o.race === 'elf' ? 14 * Math.sqrt(o.s) : st[2] * o.s) + CAT[f.t].r * f.s * 0.6;   // elves are archers: they shoot from far away
   if (o.windup > 0) {                                  // winding up to hit
     o.windup -= dt; o.moving = false;
     let dy = Math.atan2(f.x - o.x, f.z - o.z) - o.r; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); o.r += clamp(dy, -4 * dt, 4 * dt);
@@ -2580,8 +2896,12 @@ function updateFx(dt) {
   for (const t of texts) { t.t += dt; t.y += dt * 0.8; }
   texts = texts.filter(t => t.t < 1.6);
 }
-let puffMesh = null;
+let puffMesh = null, arrowMesh = null;
 function drawFx() {
+  if (arrows.length) {
+    if (!arrowMesh) { const g = new Geo(512); cyl(g, [0, 0, -0.45], [0, 0, 0.35], 0.025, 0.025, COL.plank, 6); coneS(g, 0, 0, 0, 0.001, 0.001, COL.iron); cyl(g, [0, 0, 0.35], [0, 0, 0.5], 0.06, 0.001, COL.iron, 6); tri(g, [0, 0, -0.45], [0, 0.1, -0.3], [0, 0, -0.25], [1, 0, 0], 0, COL.red, COL.red, COL.red, 0, 0, 0); tri(g, [0, 0, -0.45], [0.1, 0, -0.3], [0, 0, -0.25], [0, 1, 0], 0, COL.red, COL.red, COL.red, 0, 0, 0); arrowMesh = makeMesh(g); }
+    for (const a of arrows) drawMesh(arrowMesh, mChain(mT(a.x, a.y, a.z), mRy(Math.atan2(a.vx || 0, a.vz || 1)), mRx(-Math.atan2(a.vy || 0, Math.hypot(a.vx || 0, a.vz || 1))), mS(1.4)), 0);
+  }
   if (!fx.length) return;
   if (!puffMesh) { const g = new Geo(2048); orb(g, 0, 0, 0, 1, 1, 1, [1, 1, 1], { lo: true }); puffMesh = makeMesh(g); }
   for (const p of fx) {
@@ -2737,6 +3057,7 @@ function keyAction(e) {
   else if (c === 'KeyR') turnIt();
   else if (c === 'KeyX') toggleErase();
   else if (c === 'KeyZ' || c === 'Backspace') undo();
+  else if (c === 'KeyT') openTowns();
   else if (c === 'Minus' || c === 'NumpadSubtract') stepSize(-1);
   else if (c === 'Equal' || c === 'NumpadAdd') stepSize(1);
   else if (c === 'KeyC') stepBrush(e.shiftKey ? -1 : 1);
@@ -2770,7 +3091,8 @@ function padActions(dt) {
   if (pressed(11)) { tool.size = (tool.size + 1) % SIZES.length; sfx('click'); fillItems(); toast('Size: ' + SIZE_NAMES[tool.size], 900); }
   if (pressed(3)) turnIt();
   if (pressed(2)) toggleErase();
-  if (pressed(1) || pressed(8)) undo();
+  if (pressed(1)) undo();
+  if (pressed(8)) openTowns();
   // A builds; hold A to keep building (great for forests and painting land) or keep erasing
   if (pressed(0)) { usingPad = true; endGroup(); updateCursor(); if (cursor) { act(cursor); lastPaint = { x: cursor.x, z: cursor.z }; } holdT = 0; repeatT = 0; }
   else if (pad.btn[0]) holdBuild(dt);
@@ -2803,7 +3125,7 @@ let objs = [];             // the things on it
 let dirty = false, saveT = 0;
 function saveIsland() {
   if (!cur) return;
-  writeJSON(ISLE_PREFIX + cur.id, { type: cur.type, seed: cur.seed, land: landEdits, objs: objs.map(o => [o.t, +o.hx.toFixed(2), +o.hz.toFixed(2), +o.r.toFixed(3), o.s]),
+  writeJSON(ISLE_PREFIX + cur.id, { type: cur.type, seed: cur.seed, land: landEdits, towns: saveTowns(), objs: objs.map(o => o.town ? [o.t, +o.hx.toFixed(2), +o.hz.toFixed(2), +o.r.toFixed(3), o.s, o.town] : [o.t, +o.hx.toFixed(2), +o.hz.toFixed(2), +o.r.toFixed(3), o.s]),
     cam: { tx: +cam.tx.toFixed(1), tz: +cam.tz.toFixed(1), yaw: +cam.yaw.toFixed(3), pitch: +cam.pitch.toFixed(3), dist: +cam.dist.toFixed(1) } });
   const m = islands.find(s => s.id === cur.id);
   if (m) { m.count = objs.length; m.last = Date.now(); writeList(); }
@@ -2967,7 +3289,7 @@ function updateCameraMatrices() {
 /* =====================================================================
    Menus, input and the main loop
    ===================================================================== */
-const OVERLAYS = ['title', 'pick', 'saves', 'how', 'pause'];
+const OVERLAYS = ['title', 'pick', 'saves', 'how', 'pause', 'towns'];
 let state = 'title', shownAt = 0, howFrom = 'title';
 function show(id) {
   OVERLAYS.forEach(o => $(o).classList.toggle('show', o === id));
@@ -3129,6 +3451,7 @@ function moveSel(dx, dy) {
   if (best) { setPadSel(best); sfx('click'); }
 }
 function menuBack() {
+  if (state === 'towns') { resume(); return; }
   if (state === 'pick' || state === 'saves') goMenu('title');
   else if (state === 'how') { if (howFrom === 'pause') { state = 'pause'; show('pause'); } else goMenu('title'); }
   else if (state === 'pause') resume();
@@ -3272,6 +3595,8 @@ document.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { sfx('cli
 $('resumeBtn').onclick = () => { sfx('click'); resume(); };
 $('pauseMainBtn').onclick = () => { sfx('click'); saveIsland(); goMenu('title'); };
 $('menuBtn').onclick = () => { sfx('click'); openPause(); };
+$('townsBtn').onclick = () => { sfx('click'); openTowns(); };
+function openTowns() { if (state !== 'play') return; saveIsland(); state = 'towns'; buildTownPanel(); show('towns'); }
 document.querySelectorAll('.musicToggle').forEach(b => b.onclick = () => { initAudio(); settings.music = !settings.music; setBus(musicBus, settings.music); writeSettings(); updateAudioToggles(); });
 document.querySelectorAll('.sfxToggle').forEach(b => b.onclick = () => { initAudio(); settings.sfx = !settings.sfx; setBus(sfxBus, settings.sfx); writeSettings(); updateAudioToggles(); sfx('click'); });
 document.querySelectorAll('.fightToggle').forEach(b => b.onclick = () => { settings.fight = !settings.fight; writeSettings(); updateAudioToggles(); sfx('click'); toast(settings.fight ? '⚔️ Fighting is on: monsters and enemies attack' : '🕊️ Fighting is off: everyone gets along', 2000); });

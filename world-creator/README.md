@@ -13,7 +13,7 @@ A 3D island builder. Pick one of ten islands, then fly a camera around it and fi
 
 ## Islands
 
-| Island | What it's like | Starts with |
+| Island | What it's like | Animals it starts with |
 |---|---|---|
 | Tropical Paradise | one round island, wide beaches | palms, bushes, flowers, rocks; parrots, crabs, dolphins |
 | Big Forest | rolling green hills with ridges | pines, oaks, bushes, mushrooms; deer, bears, birds |
@@ -26,17 +26,39 @@ A 3D island builder. Pick one of ten islands, then fly a camera around it and fi
 | Island Chain | a big island and up to six small ones | palms, oaks, flowers; seagulls, dolphins, a whale |
 | Autumn Valley | hills full of orange, red and yellow trees | autumn trees, pines, pumpkins; deer, foxes, squirrels |
 
-Each new island gets its own random seed, so two Tropical Paradises are different shapes.
+Each new island gets its own random seed, so two Tropical Paradises are different shapes. Islands start with a few animals but no plants: you paint them on.
 
 ## Things to build
 
-- **Nature:** oak, pine, snowy pine, palm, autumn tree, willow, old dead tree, bush, flowers, reeds, rock, cactus, giant mushroom, lollipop tree, candy cane, gumdrop, pumpkin, snowman.
+- **Nature:** land types you paint on (hold the button to keep painting): **forest, taiga, jungle, savanna, desert, swamp, mountain, path, cobblestone path** and **corrupted land**. Each colours the ground and grows its own plants (each an ordinary thing you can erase). Mountains also raise the land, swamps dig little ponds, paths flatten the ground and clear plants away, and corrupted land is dark purple with dark crystals: skeletons, demons and zombies climb out of it (up to 4 near each patch). Plus land tools: **raise land, lower land, flatten, shallow water** and **deep water** (the sea is at 0 m, so anything dug below that fills with water).
+- **Plants:** oak, pine, snowy pine, palm, jungle tree, acacia, autumn tree, willow, old dead tree, bush, flowers, reeds, rock, cactus, giant mushroom, lollipop tree, candy cane, gumdrop, pumpkin, snowman, dark crystal.
 - **Buildings:** little hut, cottage, big house, barn, castle (walls, four towers with flags, a gate and a keep), watch tower, windmill (the blades turn), lighthouse (the lamp glows), tent, well, fence, campfire (flickers), gold statue, market stall, sailboat (goes on deep water and bobs).
-- **People:** villager, farmer (with a pitchfork), knight (sword and shield), king, queen, wizard (glowing staff), kid, pirate, builder.
-- **Creatures:** dog, cat, sheep, cow, horse, unicorn, deer, bear, polar bear, fox, goat, pig, camel, bunny, squirrel, lizard, frog, crocodile, crab, chicken, penguin, dinosaur, bluebird, parrot, seagull, dragon, dolphin, whale, shark.
+- **People:** **human, elf, dwarf, orc**. Each one founds a town (see Towns). The older people (villager, farmer, knight, king, queen, wizard, kid, pirate, builder) still work on islands that have them.
+- **Mythical:** **dragon** (Wildwood's, drawn at 0.45x: walks on its folded wings, flies off to circle now and then, bendy neck and tail, a jaw with teeth that rears back and lunges; it attacks on sight and comes down out of the sky to do it), **sea serpent** (Wildwood's Leviathan at 0.4x: horns, two pairs of wings, a body that follows its head, rears up to bite), unicorn, phoenix (glows), goblin, skeleton, zombie, demon (wings, glowing eyes), troll, minotaur, hydra (three swaying heads), ghost (see-through).
+- **Creatures:** dog, cat, sheep, cow, horse, deer, bear, polar bear, fox, goat, pig, camel, bunny, squirrel, lizard, frog, crocodile (Wildwood's, with its jaw and swishing tail), crab, chicken, penguin, dinosaur, bluebird, parrot, seagull, dolphin, whale, shark.
 - **Weapons:** sword in a stone, weapon rack, big shield, bow and arrows, battle axe, cannon, catapult, suit of armor, treasure chest.
 
 Four sizes: Small (½), Medium, Big (1¾) and Giant (3×). New things face the camera; **Turn** adds 45° each press. Land things only go on land, and the sailboat, dolphin, whale and shark only go in deep water (the circle turns red if it can't go there). Birds and dragons can go anywhere. Frogs and crocodiles can walk into shallow water. Up to 3,000 things per island.
+
+## The brush
+
+The **Brush** panel on the left picks how many things go down at once: **1, 2, 3, 6 or 10**, spread around a circle (bigger things get a bigger circle). For Nature it sets how wide you paint (4 to 34 m). The eraser uses it too (one thing, or everything in the circle). Controller: d-pad up / down. Keyboard: C (Shift+C for smaller). Everything done in one press or hold undoes together; land changes keep the last 6 for undo.
+
+## Fighting
+
+- **Monsters** (demon, minotaur, dragon, hydra, sea serpent) and the **undead** (skeleton, zombie) attack people and animals on sight. **Zombies** turn anything they bite into another zombie.
+- **Orcs** fight every other kind of people and the monsters, but are friends with **goblins and trolls**. Goblins and trolls fight humans, elves and dwarves.
+- **Humans, elves and dwarves** get along unless their towns are at war, and fight back against anyone who attacks. **Elves are archers**: they shoot arrows from up to 14 m away.
+- Animals never fight; they run away when hit. Anything near a **ghost** runs away screaming ("AAAH!").
+- Health bars show over anything that's hurt; beaten things vanish in a puff of smoke. Bigger things are stronger.
+- **Fighting: On / Off** (title and menu) stops all fighting, monster spawning and wars.
+
+## Towns
+
+- Putting down a human, elf, dwarf or orc founds a town at once (or joins one of its own people's towns within 70 m): a centre building (human town hall with a clock tower, elf tree hall with glowing lanterns, dwarf mountain hall with fires, orc war camp with banners) and a few townsfolk.
+- Every few seconds the town builds a house in its own style (human cottages, houses, barns, wells and market stalls; elf houses on stilts and towers; dwarf stone houses and forges; orc huts and watch towers), up to 26, and gets more people (2 per house, up to 40). Its name and population float above it, like **Brook Creek 17**, with ⚔️ when it's at war and 🕊️ when it's keeping the peace.
+- **Orc towns** are at war with every town that isn't orc. Now and then a **human town** declares war on another human, elf or dwarf town for a minute or so. Towns at war send half their people marching to the enemy every 20 or so seconds; with nobody left to fight, they knock the enemy's buildings down. A town with no buildings and nobody left is gone.
+- The **🏰 Towns** panel (button at the top, T on the keyboard, View on the controller) lists every town with its population and who it's at war with, and has **🕊️ Make peace** (it never fights, and nobody marches on it), **⚔️ War with everyone**, **Normal** and **📍 Go there**.
 
 ## How things move
 
@@ -61,7 +83,7 @@ Four sizes: Small (½), Medium, Big (1¾) and Giant (3×). New things face the c
 
 - `worldcreator.v1`: music and sound settings.
 - `worldcreator.islands`: the list of islands: `{ id, type, seed, name, count, last }`. Broken entries are dropped on load.
-- `worldcreator.island.<id>`: one island: its type and seed, the camera, and the things on it as `[type, x, z, turn, size]` (where you put them, not where they've wandered to). Unknown types, bad numbers and positions far off the map are dropped on load, and sizes are kept between ¼ and 4.
+- `worldcreator.island.<id>`: one island: its type and seed, the camera, its towns (`{ id, race, name, x, z, mode, built }`), the land changes (each brush stroke, replayed on load), and the things on it as `[type, x, z, turn, size, town]` (where you put them, not where they've wandered to). Unknown types, bad numbers and positions far off the map are dropped on load, and sizes are kept between ¼ and 4.
 
 **My islands** lists them with Play and Delete (Delete asks twice). The island saves a few seconds after each change, when you open the menu, and when you leave the page.
 
