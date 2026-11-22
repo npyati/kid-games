@@ -67,7 +67,7 @@ The **Brush** panel on the left picks how many things go down at once: **1, 2, 3
 - **Monsters** (demon, minotaur, dragon, hydra, sea serpent) and the **undead** (skeleton, zombie) attack people and animals on sight. **Zombies** turn anything they bite into another zombie.
 - **Orcs** fight every other kind of people and the monsters, but are friends with **goblins and trolls**. Goblins and trolls fight humans, elves and dwarves.
 - **Humans, elves and dwarves** get along unless their towns are at war, and fight back against anyone who attacks. **Elves are archers**: they shoot arrows from up to 14 m away.
-- Animals never fight; they run away when hit. Anything near a **ghost** runs away screaming ("AAAH!").
+- **Hungry animals** (bear, polar bear, fox, crocodile, shark, dinosaur) hunt people and other animals; a smaller animal is caught in one bite. People and monsters fight back. Other animals never fight; they run away when hit. Anything near a **ghost** runs away screaming ("AAAH!").
 - Health bars show over anything that's hurt; beaten things vanish in a puff of smoke. Bigger things are stronger.
 - **Fighting: On / Off** (title and menu) stops all fighting, monster spawning and wars.
 
@@ -79,7 +79,8 @@ The **Brush** panel on the left picks how many things go down at once: **1, 2, 3
 - **Orc towns** are at war with every town that isn't orc. Now and then a **human town** declares war on another human, elf or dwarf town for a minute or so. Towns at war send half their people marching to the enemy every 20 or so seconds; with nobody left to fight, they knock the enemy's buildings down. A town with no buildings and nobody left is gone.
 - **Kings and queens:** once a town has finished its centre and one more building and has 4 people, it crowns a **king**, a **queen** or both, each with a name (like King Aldric or Queen Elowen, in their people's style) shown over them, and a crown. They're 2½ times as tough as their people. If they're beaten, everyone hears, and the town crowns someone new 40 seconds later.
 - **Armies:** a town with a ruler trains a soldier every 8–12 seconds until nearly half the town are soldiers (with a helmet, sword and shield, half again as tough and hitting half again as hard). Soldiers keep watch in a ring around the town. When the town is at war, the ruler calls out ("King Aldric: Attack Mill Ford!") and sends the army; towns without soldiers send half their people instead.
-- **🪄 Battle wand** (in People): tap it on one town, then on another, and they go to war for 3 minutes (even if one was keeping the peace). Tap the same town twice to cancel.
+- **🪄 Battle wand** (in People): tap it on one town, then on another, and they go to war for 3 minutes (even if one was keeping the peace, and even if they were friends). Tap the same town twice to cancel.
+- **🕊️ Peace wand** (in People): the opposite. Tap two towns and they become friends for good: they stop fighting, their armies go home, and they never go to war with each other again (even orcs), until the battle wand says otherwise. The Towns panel shows who is friends with whom.
 - **A town falls** when its last person is gone: its town hall explodes, the screen shakes and you get "💥 Brook Creek has fallen!". Its houses stay, empty.
 - The **🏰 Towns** panel (button at the top, T on the keyboard, View on the controller) lists every town with its population and who it's at war with, and has **🕊️ Make peace** (it never fights, and nobody marches on it), **⚔️ War with everyone**, **Normal** and **📍 Go there**.
 
@@ -106,7 +107,7 @@ The **Brush** panel on the left picks how many things go down at once: **1, 2, 3
 
 - `worldcreator.v1`: settings: music, sounds, fighting, and how towns are made (`build`: true = People build).
 - `worldcreator.islands`: the list of islands: `{ id, type, seed, name, count, last, v }` (`v` is the island size: 3 = now, 2 = the middle size, missing = the first, smallest ones). Broken entries are dropped on load.
-- `worldcreator.island.<id>`: one island: its type and seed, the camera, its towns (`{ id, race, name, x, z, mode, built, build }`, where `build` is how far the town centre is built, 0 to 1), `sz: 2` once its people and animals are the new smaller size, the land changes (each brush stroke, replayed on load), and the things on it as `[type, x, z, turn, size, town, extra]` (extra: `{ k: "king" | "queen", n: name }` for rulers, `{ s: 1 }` for soldiers) (where you put them, not where they've wandered to). Unknown types, bad numbers and positions far off the map are dropped on load, and sizes are kept between ¼ and 4.
+- `worldcreator.island.<id>`: one island: its type and seed, the camera, its towns (`{ id, race, name, x, z, mode, built, build, friends }`, where `build` is how far the town centre is built, 0 to 1), `sz: 2` once its people and animals are the new smaller size, the land changes (each brush stroke, replayed on load), and the things on it as `[type, x, z, turn, size, town, extra]` (extra: `{ k: "king" | "queen", n: name }` for rulers, `{ s: 1 }` for soldiers) (where you put them, not where they've wandered to). Unknown types, bad numbers and positions far off the map are dropped on load, and sizes are kept between ¼ and 4.
 
 **My islands** lists them with Play and Delete (Delete asks twice). The island saves a few seconds after each change, when you open the menu, and when you leave the page.
 

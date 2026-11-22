@@ -175,7 +175,7 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,38px);lin
       <div><b class="h">Towns</b>Put down <b>humans, elves, dwarves</b> or <b>orcs</b> (in People). With <b>Towns: People build</b> (in the menu), once <b>10</b> of a kind are together they start building a town: the town hall takes about 2 minutes, then they build their own houses one at a time. With <b>Towns: Quick</b>, one person founds a whole town at once. Orcs fight everyone else; humans sometimes start wars; elves are archers. Open <b>🏰 Towns</b> (T, or View on the controller) to make a town keep the peace or go to war with everyone.</div>
       <div><b class="h">Maps</b>Ten islands, plus four big maps: <b>Island Set</b> (seven islands, each a different land), <b>Pangea</b> (one giant supercontinent), <b>Sky Islands</b> (floating in the sky) and <b>Endless Ocean</b>. Or pick <b>🎲 Random</b>. New islands are much bigger than the first ones, and people and animals are smaller, so everything is more to scale.</div>
       <div><b class="h">Disasters</b>The <b>Disasters</b> group has a <b>tornado</b> (picks things up and throws them), a <b>tsunami</b> (a wave rolls in from the nearest sea), a <b>bomb</b>, a <b>sprinkle bomb</b> (lots of little bombs) and an <b>earthquake</b> (cracks the ground and knocks buildings down). The size buttons make them bigger. <b>Undo</b> puts things back.</div>
-      <div><b class="h">Kings, queens and battles</b>Once a town starts to grow it crowns a <b>king</b>, a <b>queen</b> or both. They train soldiers who guard the town and send them to battle. Tap the <b>🪄 Battle wand</b> (in People) on one town, then on another, and they go to war. When a town has nobody left, its town hall explodes and it has fallen.</div>
+      <div><b class="h">Kings, queens and battles</b>Once a town starts to grow it crowns a <b>king</b>, a <b>queen</b> or both. They train soldiers who guard the town and send them to battle. Tap the <b>🪄 Battle wand</b> (in People) on one town, then on another, and they go to war. The <b>🕊️ Peace wand</b> does the opposite: the two towns become friends and never fight (even orcs). Bears, polar bears, foxes, crocodiles, sharks and dinosaurs are hungry: they hunt people and other animals. When a town has nobody left, its town hall explodes and it has fallen.</div>
       <div><b class="h">Big monsters</b>Dragons, hydras and sea serpents are huge, and each island can have up to <b>3</b> of each.</div>
       <div><b class="h">Saving</b>Every island saves by itself. Find it again under <b>My islands</b>.</div>
     </div>
@@ -2465,7 +2465,7 @@ function landRadius() { return LAND_RADIUS[tool.brush]; }
 function placeAt(hit) {
   const d = selectedDef(), s = sizeOf(d);
   if (d.tool === 'disaster') return disasterAt(hit, d);
-  if (d.tool === 'wand') return wandAt(hit);
+  if (d.tool === 'wand') return wandAt(hit, d.peace);
   if (d.tool === 'land') return landAt(hit, d);
   if (d.tool === 'biome') return biomeAt(hit, d);
   if (d.race) return foundAt(hit, d);                 // humans, elves, dwarves and orcs found a town
@@ -2701,10 +2701,12 @@ const STATS = {
   skeleton: [10, 2, 1.4, 22], zombie: [9, 1.6, 1.3, 18], demon: [22, 4, 1.8, 26], troll: [45, 6, 2.6, 22], minotaur: [35, 5, 2.2, 24],
   dragon: [90, 8, 4.5, 40], hydra: [60, 6, 4, 24], seaserpent: [60, 6, 5, 22], goblin: [7, 1.5, 1.2, 20],
   knight: [20, 3.5, 1.6, 20], king: [14, 2.5, 1.4, 18], pirate: [12, 2.6, 1.5, 18],
+  bear: [24, 4, 1.8, 16], polarbear: [28, 4.5, 1.9, 16], fox: [6, 1.4, 1.0, 12], croc: [20, 4, 1.8, 10], shark: [18, 4, 2.0, 14], dino: [40, 6, 2.6, 20],
   human: [10, 2, 1.4, 18], elf: [9, 2.2, 1.6, 24], dwarf: [13, 2.5, 1.4, 16], orc: [13, 2.8, 1.5, 22], animal: [5, 0, 0, 0],
 };
 const FACTION = { skeleton: 'undead', zombie: 'undead', demon: 'monster', minotaur: 'monster', dragon: 'monster', hydra: 'monster', seaserpent: 'monster',
-  troll: 'orcfriend', goblin: 'orcfriend', ghost: 'ghost' };
+  troll: 'orcfriend', goblin: 'orcfriend', ghost: 'ghost',
+  bear: 'predator', polarbear: 'predator', fox: 'predator', croc: 'predator', shark: 'predator', dino: 'predator' };
 const PEOPLE_FACS = new Set(['human', 'elf', 'dwarf']);
 function facOf(o) {
   const d = CAT[o.t];
@@ -2719,11 +2721,14 @@ const attacks = f => f && f !== 'animal' && f !== 'ghost';
 function hostile(a, b) {
   const fa = a.fac, fb = b.fac;
   if (!fa || !fb || fa === 'ghost' || fb === 'ghost' || a === b) return false;
+  if (fa === 'predator') return fb !== 'predator';               // hungry animals go after people and other animals
+  if (fb === 'predator') return fa !== 'animal';                // people and monsters fight back; other animals just run
   const evil = f => f === 'monster' || f === 'undead';
   if (evil(fa)) return !evil(fb);                               // monsters go after everyone else, animals too
   if (evil(fb)) return fb !== 'animal' && fa !== 'animal';      // and everyone (but animals) fights back
   if (fa === 'animal' || fb === 'animal') return false;
   if (townPeace(a) || townPeace(b)) return false;              // a town at peace is left alone
+  if (a.town && b.town && TOWN[a.town] && TOWN[a.town].friends.has(b.town)) return false;   // towns that made peace with the peace wand
   if (fa === 'orc') return fb !== 'orc' && fb !== 'orcfriend';
   if (fb === 'orc') return fa !== 'orcfriend';
   if (fa === 'orcfriend') return PEOPLE_FACS.has(fb);
@@ -2882,7 +2887,7 @@ function townName(race) {
   return pick(a) + pick(b) + ' ' + (towns.length + 1);
 }
 function makeTown(race, x, z, o = {}) {
-  const t = Object.assign({ build: 1, id: 't' + (++townSeq) + Math.floor(Math.random() * 1e4).toString(36), race, name: townName(race), x, z, mode: 'normal', built: 0, growT: 2, folkT: 1, warT: 60 + Math.random() * 60, marchT: 10 }, o);
+  const t = Object.assign({ build: 1, id: 't' + (++townSeq) + Math.floor(Math.random() * 1e4).toString(36), race, name: townName(race), x, z, mode: 'normal', built: 0, growT: 2, folkT: 1, warT: 60 + Math.random() * 60, marchT: 10, friends: new Set() }, o);
   towns.push(t); TOWN[t.id] = t;
   return t;
 }
@@ -2893,7 +2898,7 @@ function warKey(a, b) { return a < b ? a + '|' + b : b + '|' + a; }
 function atWar(ia, ib) {
   if (!ia || !ib || ia === ib) return false;
   const a = TOWN[ia], b = TOWN[ib];
-  if (!a || !b || a.mode === 'peace' || b.mode === 'peace') return false;
+  if (!a || !b || a.mode === 'peace' || b.mode === 'peace' || a.friends.has(ib)) return false;
   if (a.mode === 'everyone' || b.mode === 'everyone') return true;
   if ((a.race === 'orc') !== (b.race === 'orc')) return true;        // orcs fight every town that isn't orc
   return wars.has(warKey(ia, ib));
@@ -3049,6 +3054,7 @@ function growTown(t, dt) {
 }
 function removeTown(t) {
   towns = towns.filter(x => x !== t); delete TOWN[t.id];
+  for (const o of towns) o.friends.delete(t.id);
   for (const k of [...wars.keys()]) if (k.split('|').includes(t.id)) wars.delete(k);
   for (const o of objs) if (o.march === t.id) o.march = null;
   dirty = true; if (state === 'towns') buildTownPanel();
@@ -3063,7 +3069,7 @@ function updateTowns(dt) {
       t.warT -= dt;
       if (t.warT <= 0) {
         t.warT = 80 + Math.random() * 80;
-        const others = towns.filter(o => o !== t && o.race !== 'orc' && o.mode !== 'peace' && !atWar(t.id, o.id));
+        const others = towns.filter(o => o !== t && o.race !== 'orc' && o.mode !== 'peace' && !t.friends.has(o.id) && !atWar(t.id, o.id));
         if (others.length && Math.random() < 0.45) { const e = pick(others); wars.set(warKey(t.id, e.id), { t: 60 + Math.random() * 50 }); toast(`⚔️ ${t.name} declared war on ${e.name}!`, 2600); tone('sawtooth', 220, 110, 0.6, 0.08, 0, 800); }
       }
     }
@@ -3128,7 +3134,8 @@ function buildTownPanel() {
     const row = document.createElement('div'); row.className = 'saverow';
     row.innerHTML = `<div class="ic">${RACES[t.race].icon}</div><div class="info"><b></b><span></span></div>`;
     row.querySelector('b').textContent = `${t.name} · ${n}`;
-    row.querySelector('span').textContent = t.build < 1 ? `Building the town: ${Math.floor(t.build * 100)}%` : t.mode === 'peace' ? 'Keeping the peace' : foes.length ? 'At war with ' + foes.join(', ') : 'At peace';
+    const pals = [...t.friends].map(id => TOWN[id] && TOWN[id].name).filter(Boolean);
+    row.querySelector('span').textContent = (t.build < 1 ? `Building the town: ${Math.floor(t.build * 100)}%` : t.mode === 'peace' ? 'Keeping the peace' : foes.length ? 'At war with ' + foes.join(', ') : 'At peace') + (pals.length ? ' · Friends with ' + pals.join(', ') : '');
     const mk = (label, fn, on) => { const b = document.createElement('button'); b.textContent = label; if (on) b.className = 'primary', b.style.fontSize = '15px'; b.onclick = () => { fn(); sfx('click'); dirty = true; buildTownPanel(); if (pad.connected) ensureSel(); }; row.appendChild(b); };
     mk('🕊️ Make peace', () => { t.mode = 'peace'; for (const k of [...wars.keys()]) if (k.split('|').includes(t.id)) wars.delete(k); toast(`🕊️ ${t.name} is keeping the peace`, 1800); }, t.mode === 'peace');
     mk('⚔️ War with everyone', () => { t.mode = 'everyone'; toast(`⚔️ ${t.name} is at war with everyone!`, 1800); }, t.mode === 'everyone');
@@ -3137,19 +3144,20 @@ function buildTownPanel() {
     list.appendChild(row);
   }
 }
-function saveTowns() { return towns.map(t => ({ id: t.id, race: t.race, name: t.name, x: +t.x.toFixed(1), z: +t.z.toFixed(1), mode: t.mode, built: t.built, build: +t.build.toFixed(3) })); }
+function saveTowns() { return towns.map(t => ({ id: t.id, race: t.race, name: t.name, x: +t.x.toFixed(1), z: +t.z.toFixed(1), mode: t.mode, built: t.built, build: +t.build.toFixed(3), friends: [...t.friends] })); }
 function loadTowns(list) {
   towns = []; TOWN = {}; wars = new Map();
   if (!Array.isArray(list)) return;
   for (const s of list.slice(0, 60)) {
     if (!s || typeof s.id !== 'string' || s.id.length > 30 || !RACES[s.race] || !Number.isFinite(s.x) || !Number.isFinite(s.z)) continue;
-    makeTown(s.race, s.x, s.z, { id: s.id, name: typeof s.name === 'string' ? s.name.slice(0, 30) : townName(s.race), mode: ['normal', 'peace', 'everyone'].includes(s.mode) ? s.mode : 'normal', built: Number.isFinite(s.built) ? s.built : 0, build: Number.isFinite(s.build) ? clamp(s.build, 0, 1) : 1 });
+    makeTown(s.race, s.x, s.z, { id: s.id, name: typeof s.name === 'string' ? s.name.slice(0, 30) : townName(s.race), mode: ['normal', 'peace', 'everyone'].includes(s.mode) ? s.mode : 'normal', built: Number.isFinite(s.built) ? s.built : 0, build: Number.isFinite(s.build) ? clamp(s.build, 0, 1) : 1, friends: new Set(Array.isArray(s.friends) ? s.friends.filter(f => typeof f === 'string').slice(0, 60) : []) });
   }
 }
 // Disasters, and the battle wand (in People)
 for (const [k, name, icon] of [['tornado', 'Tornado', '🌪️'], ['tsunami', 'Tsunami', '🌊'], ['bomb', 'Bomb', '💣'], ['sprinkle', 'Sprinkle bomb', '🎆'], ['quake', 'Earthquake', '🏚️']])
   def('d_' + k, 'disasters', name, icon, { tool: 'disaster', kind: k, r: 1, h: 1 });
 def('wand', 'people', 'Battle wand', '🪄', { tool: 'wand', r: 1, h: 1 });
+def('peacewand', 'people', 'Peace wand', '🕊️', { tool: 'wand', peace: true, r: 1, h: 1 });
 /* =====================================================================
    Kings and queens, their armies, and towns that fall
    ===================================================================== */
@@ -3239,23 +3247,38 @@ function townNear(x, z, max) {
   for (const t of towns) { const d = Math.hypot(t.x - x, t.z - z); if (d < bd) { bd = d; best = t; } }
   return best;
 }
-function wandAt(hit) {
-  const t = townNear(hit.x, hit.z, 90);
-  if (!t) { sfx('nope'); toast('🪄 Tap the battle wand on a town', 1600); return false; }
-  sparkle(t.x, groundAt(t.x, t.z) + 3, t.z);
-  const a = wandPick && TOWN[wandPick];
-  if (!a) { wandPick = t.id; toast(`🪄 ${t.name} is ready for battle! Now tap the town it should fight.`, 2600); tone('sine', 880, 1320, 0.25, 0.07); return true; }
-  if (a === t) { wandPick = null; toast('🪄 Never mind', 1000); return true; }
+// the battle wand sends two towns to war; the peace wand makes them friends for good (until the battle wand says otherwise)
+function wandAt(hit, peace) {
+  const W = peace ? '🕊️' : '🪄', t = townNear(hit.x, hit.z, 90);
+  if (!t) { sfx('nope'); toast(`${W} Tap the ${peace ? 'peace' : 'battle'} wand on a town`, 1600); return false; }
+  sparkle(t.x, groundAt(t.x, t.z) + 3, t.z, peace);
+  const a = wandPick && wandPick.peace === !!peace && TOWN[wandPick.id];
+  if (!a) {
+    wandPick = { id: t.id, peace: !!peace };
+    toast(peace ? `🕊️ ${t.name} wants peace. Now tap the town it should make friends with.` : `🪄 ${t.name} is ready for battle! Now tap the town it should fight.`, 2600);
+    tone('sine', peace ? 660 : 880, peace ? 990 : 1320, 0.25, 0.07); return true;
+  }
+  if (a === t) { wandPick = null; toast(W + ' Never mind', 1000); return true; }
   wandPick = null;
-  for (const x of [a, t]) if (x.mode === 'peace') x.mode = 'normal';
-  wars.set(warKey(a.id, t.id), { t: 180 });
-  a.marchT = Math.min(a.marchT, 2); t.marchT = Math.min(t.marchT, 4);
-  toast(`⚔️ The battle wand sent ${a.name} to war with ${t.name}!` + (settings.fight ? '' : ' (Turn Fighting on in the menu to see the battle.)'), 3000);
-  tone('sawtooth', 220, 110, 0.6, 0.08, 0, 800); [523, 392, 523, 659].forEach((f, i) => tone('square', f, f, 0.12, 0.05, i * 0.13, 1800));
+  const key = warKey(a.id, t.id);
+  if (peace) {
+    wars.delete(key); a.friends.add(t.id); t.friends.add(a.id);
+    for (const o of objs) if ((o.town === a.id && o.march === t.id) || (o.town === t.id && o.march === a.id)) { o.march = null; o.foe = null; const m = TOWN[o.town]; o.hx = m.x; o.hz = m.z; }   // the armies go home
+    for (const o of objs) if (o.foe && o.town && o.foe.town && ((o.town === a.id && o.foe.town === t.id) || (o.town === t.id && o.foe.town === a.id))) o.foe = null;
+    toast(`🕊️ The peace wand made ${a.name} and ${t.name} friends!`, 3000);
+    [523, 659, 784, 1046].forEach((f, i) => tone('sine', f, f, 0.3, 0.06, i * 0.15));
+  } else {
+    a.friends.delete(t.id); t.friends.delete(a.id);
+    for (const x of [a, t]) if (x.mode === 'peace') x.mode = 'normal';
+    wars.set(key, { t: 180 });
+    a.marchT = Math.min(a.marchT, 2); t.marchT = Math.min(t.marchT, 4);
+    toast(`⚔️ The battle wand sent ${a.name} to war with ${t.name}!` + (settings.fight ? '' : ' (Turn Fighting on in the menu to see the battle.)'), 3000);
+    tone('sawtooth', 220, 110, 0.6, 0.08, 0, 800); [523, 392, 523, 659].forEach((f, i) => tone('square', f, f, 0.12, 0.05, i * 0.13, 1800));
+  }
   dirty = true;
   return true;
 }
-function sparkle(x, y, z) { for (let i = 0; i < 3; i++) poof(x, y + i, z, 1.2, [0.85, 0.55, 1.0]); }
+function sparkle(x, y, z, peace) { for (let i = 0; i < 3; i++) poof(x, y + i, z, 1.2, peace ? [1, 1, 1] : [0.85, 0.55, 1.0]); }
 
 /* =====================================================================
    Natural disasters: tornado, tsunami, bomb, sprinkle bomb, earthquake
@@ -3518,6 +3541,7 @@ function landHit(o, f, arrow) {
   if (f.gone || o.gone) return;
   if (f.hp === undefined) { f.maxHp = statOf(f)[0] * f.s; f.hp = f.maxHp; }
   f.hp -= statOf(o)[1] * Math.sqrt(o.s) * (o.soldier ? 1.5 : 1);
+  if (o.fac === 'predator' && f.fac === 'animal' && CAT[f.t].r * f.s < CAT[o.t].r * o.s * 1.2) f.hp = 0;   // a hungry animal catches smaller animals in one bite
   f.hitT = 0.25; if (!arrow) o.lunge = 1;
   if (o.t === 'zombie' && CAT[f.t].move !== 'swim') { defeat(f, o); return; }   // one zombie bite makes another zombie
   if (near3(o)) { noiseHit('lowpass', 900, 0.8, 0.12, 0.09); if (o.t === 'dragon' || o.t === 'troll' || o.t === 'hydra') tone('sawtooth', 110, 60, 0.3, 0.08, 0, 500); }
@@ -3722,7 +3746,7 @@ function drawCursor(time) {
   if (tool.erase) { ok = tool.brush > 0 || !!eraseTarget(cursor); ringR = tool.brush ? eraseRadius() : 1.6 + cam.dist * 0.012; col = ok ? [1, 0.35, 0.3] : [0.7, 0.5, 0.5]; }
   else if (d.tool) {
     ok = true; ringR = d.tool === 'disaster' ? { tornado: 6, tsunami: 12, bomb: 10, sprinkle: 24, quake: 32 }[d.kind] * Math.sqrt(SIZES[tool.size]) : d.tool === 'wand' ? 10 : landRadius();
-    col = d.tool === 'wand' ? [0.8, 0.5, 1] : d.tool === 'disaster' ? [1, 0.4, 0.2] : d.tool === 'biome' ? mixc(BIOME_GROUND[d.biome][0], [1, 1, 1], 0.3) : d.mode === 'shallow' || d.mode === 'deep' ? [0.35, 0.7, 1] : [1, 0.82, 0.45];
+    col = d.tool === 'wand' ? (d.peace ? [1, 1, 1] : [0.8, 0.5, 1]) : d.tool === 'disaster' ? [1, 0.4, 0.2] : d.tool === 'biome' ? mixc(BIOME_GROUND[d.biome][0], [1, 1, 1], 0.3) : d.mode === 'shallow' || d.mode === 'deep' ? [0.35, 0.7, 1] : [1, 0.82, 0.45];
   }
   else { ok = canPlace(d, cursor, s); ringR = Math.max(0.8, d.r * s) + 0.3 + brushRadius(d, s); col = ok ? [0.45, 1, 0.5] : [1, 0.3, 0.25]; }
   const y = Math.max(cursor.y, 0) + 0.15;
