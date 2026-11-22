@@ -1,0 +1,1423 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>World Creator</title>
+<meta name="description" content="Fly around a giant 3D island and fill it with trees, buildings, people, creatures and weapons. Ten islands to pick from.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@700;800;900&display=swap">
+<style>
+:root{
+  --night:#15123f; --shelf:#201c5c; --edge:#433db0; --cream:#fff5dc; --muted:#aaa5e6;
+  --sun:#ffd23f; --berry:#d6407f; --leaf:#8fe36b; --sea:#5ec8ff; --ink:#151233;
+  --display:"Lilita One","Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif;
+  --body:"Nunito","Avenir Next","Segoe UI",system-ui,sans-serif;
+  color-scheme:dark;
+}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--night);font-family:var(--body);font-weight:800;color:var(--cream);-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;outline:none}
+button,.btn{font:inherit;font-size:17px;color:var(--cream);background:var(--night);border:3px solid var(--edge);border-radius:14px;padding:10px 12px;cursor:pointer;text-align:center;text-decoration:none;display:block;box-sizing:border-box}
+button:hover:not(:disabled),.btn:hover{border-color:var(--muted)}
+button:focus-visible,.btn:focus-visible{outline:none;border-color:var(--sun);box-shadow:0 0 0 3px var(--sun)}
+.padsel{border-color:var(--sun)!important;box-shadow:0 0 0 3px var(--sun)!important}
+.primary{font-family:var(--display);font-weight:400;font-size:26px;background:var(--sun);color:var(--ink);border-color:var(--sun)}
+.overlay{position:fixed;inset:0;display:none;align-items:flex-start;justify-content:center;background:radial-gradient(ellipse at center,rgba(21,18,63,.35),rgba(21,18,63,.82));padding:16px;box-sizing:border-box;overflow:auto;z-index:20}
+.overlay.show{display:flex}
+.panel{width:min(520px,100%);background:rgba(32,28,92,.96);border:4px solid var(--edge);border-radius:24px;padding:22px 20px 20px;box-sizing:border-box;display:flex;flex-direction:column;gap:14px;box-shadow:0 18px 50px rgba(0,0,0,.35);margin:auto}
+.panel.wide{width:min(900px,100%)}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(46px,11vw,72px);line-height:.92;margin:0;color:var(--sun);text-shadow:0 5px 0 var(--berry);text-align:center}
+h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,38px);line-height:1;margin:0;color:var(--sun);text-shadow:0 4px 0 var(--berry)}
+.tagline{margin:0;text-align:center;color:var(--muted);font-size:17px;line-height:1.35}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.full{grid-column:1/-1}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.top .back{padding:8px 14px}
+.isles{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+.isle{padding:0;overflow:hidden;text-align:left;display:flex;flex-direction:column}
+.isle .art{height:96px;display:flex;align-items:center;justify-content:center;font-size:52px;text-shadow:0 4px 10px rgba(0,0,0,.25)}
+.isle .txt{padding:10px 12px 12px}
+.isle .name{font-family:var(--display);font-weight:400;font-size:21px;line-height:1.05}
+.isle .sub{font-size:14px;color:var(--muted);line-height:1.3;margin-top:4px}
+.saves{display:flex;flex-direction:column;gap:10px}
+.saverow{display:flex;align-items:center;gap:10px;background:var(--night);border-radius:14px;padding:8px 10px}
+.saverow .ic{font-size:32px}
+.saverow .info{flex:1;min-width:0}
+.saverow .info b{display:block;font-family:var(--display);font-weight:400;font-size:20px}
+.saverow .info span{font-size:14px;color:var(--muted)}
+.saverow button{padding:8px 12px;font-size:15px}
+.howto{display:flex;flex-direction:column;gap:10px;font-size:15px;line-height:1.4;background:var(--night);border-radius:14px;padding:12px 14px}
+.howto b.h{display:block;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--sun)}
+#padStatus{margin:0;text-align:center;font-size:14px;color:var(--muted)}
+#padStatus.on{color:var(--leaf)}
+
+/* building HUD */
+#hud{position:fixed;inset:0;pointer-events:none;display:none;z-index:10}
+#hud.show{display:block}
+#hud > *{pointer-events:auto}
+#topbar{position:absolute;top:max(10px,env(safe-area-inset-top,0px));left:10px;right:10px;display:flex;gap:8px;align-items:flex-start;pointer-events:none}
+#topbar > *{pointer-events:auto}
+#topbar button{padding:8px 12px;font-size:15px;background:rgba(21,18,63,.8)}
+#isleName{font-family:var(--display);font-size:22px;color:var(--sun);text-shadow:0 2px 0 var(--ink),0 0 8px rgba(0,0,0,.4);padding:6px 4px;pointer-events:none}
+#topbar .grow{flex:1}
+#hint{position:absolute;top:58px;left:50%;transform:translateX(-50%);background:rgba(21,18,63,.78);border-radius:12px;padding:6px 14px;font-size:14px;color:var(--cream);max-width:min(760px,92vw);text-align:center;pointer-events:none;transition:opacity .6s}
+#cross{position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border:2px solid rgba(255,255,255,.9);border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.4);pointer-events:none;display:none}
+#cross.show{display:block}
+#palette{position:absolute;left:50%;bottom:max(10px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(980px,calc(100vw - 20px));background:rgba(21,18,63,.86);border:3px solid var(--edge);border-radius:18px;padding:8px;box-sizing:border-box;display:flex;flex-direction:column;gap:6px}
+#cats{display:flex;gap:6px;flex-wrap:wrap}
+#cats button{padding:6px 10px;font-size:15px;flex:1;min-width:max-content}
+#cats button.on{border-color:var(--sun);color:var(--sun);background:#2a2470}
+#items{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:thin}
+#items button{flex:none;padding:5px 8px;font-size:13px;min-width:76px;display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1.1}
+#items button .e{font-size:26px;line-height:1.15}
+#items button.on{border-color:var(--sun);background:#2a2470}
+#tools{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+#tools button{padding:6px 10px;font-size:14px}
+#tools button.on{border-color:#ff8a7a;color:#ffb3a8;background:#4a1f3a}
+#tools .lab{font-size:13px;color:var(--muted)}
+#toast{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);background:rgba(21,18,63,.9);border:3px solid var(--edge);border-radius:16px;padding:10px 18px;font-size:18px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:30;text-align:center;max-width:86vw}
+#toast.show{opacity:1}
+#loading{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(21,18,63,.85);z-index:40;font-family:var(--display);font-size:34px;color:var(--sun)}
+#loading.show{display:flex}
+#nogl{position:fixed;inset:0;display:none;place-items:center;text-align:center;padding:20px;z-index:50;background:var(--night)}
+@media (max-width:560px){#items button{min-width:64px}#isleName{font-size:18px}}
+</style>
+</head>
+<body>
+<canvas id="c" tabindex="0"></canvas>
+<div id="nogl"><div><h2>Your browser can't draw 3D</h2><p class="tagline">World Creator needs WebGL 2. Try Chrome or Edge.</p><a class="btn" href="../">All games</a></div></div>
+
+<div id="hud">
+  <div id="topbar">
+    <button id="menuBtn">☰ Menu</button>
+    <div id="isleName"></div>
+    <div class="grow"></div>
+    <button id="undoBtn" title="Undo (Z)">↩️ Undo</button>
+  </div>
+  <div id="hint"></div>
+  <div id="cross"></div>
+  <div id="palette">
+    <div id="cats"></div>
+    <div id="items"></div>
+    <div id="tools">
+      <button id="eraseBtn">🧽 Eraser</button>
+      <button id="turnBtn">🔄 Turn</button>
+      <span class="lab">Size:</span>
+      <button id="sizeDn">➖</button><b id="sizeLab">M</b><button id="sizeUp">➕</button>
+      <span class="lab" id="countLab"></span>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+<div id="loading">Building your island…</div>
+
+<div id="title" class="overlay show">
+  <div class="panel">
+    <h1>World<br>Creator</h1>
+    <p class="tagline">Pick an island, then fly around it and fill it with trees, houses, castles, people, creatures and more!</p>
+    <div class="btns">
+      <button class="primary full" id="newBtn">New island</button>
+      <button class="full" id="loadBtn">My islands</button>
+      <button id="howBtn">How to play</button>
+      <button class="musicToggle">Music: On</button>
+      <button class="sfxToggle">Sounds: On</button>
+      <a class="btn" href="../">All games</a>
+    </div>
+    <p id="padStatus">Got an Xbox controller? Plug it in and press any button.</p>
+  </div>
+</div>
+
+<div id="pick" class="overlay">
+  <div class="panel wide">
+    <div class="top"><h2>Pick an island</h2><button class="back" data-go="title">Back</button></div>
+    <div class="isles" id="isleGrid"></div>
+  </div>
+</div>
+
+<div id="saves" class="overlay">
+  <div class="panel wide">
+    <div class="top"><h2>My islands</h2><button class="back" data-go="title">Back</button></div>
+    <div class="saves" id="saveList"></div>
+  </div>
+</div>
+
+<div id="how" class="overlay">
+  <div class="panel wide">
+    <div class="top"><h2>How to play</h2><button class="back" data-go="title">Back</button></div>
+    <div class="howto">
+      <div><b class="h">Fly the camera</b><b>Controller:</b> left stick moves, right stick turns and tilts, LT zooms out, RT zooms in. <b>Keyboard and mouse:</b> WASD or the arrow keys move, hold the right mouse button and drag to turn, mouse wheel zooms, Q / E turn.</div>
+      <div><b class="h">Build</b>Pick a group (Nature, Buildings, People, Creatures, Weapons) and a thing at the bottom, then press <b>A</b> or <b>click</b> to put it down where the circle is. <b>Controller:</b> LB / RB change group, d-pad left / right pick a thing, d-pad up / down change its size, Y turns it. <b>Keyboard:</b> 1–5 change group, R turns it, - and + change its size.</div>
+      <div><b class="h">Oops!</b>The <b>eraser</b> (X on the controller or keyboard) takes things away. <b>Undo</b> (B, or Z on the keyboard) takes back the last thing you did.</div>
+      <div><b class="h">It's alive</b>People and creatures walk around the island by themselves. Birds and dragons fly, and fish swim in the sea.</div>
+      <div><b class="h">Saving</b>Every island saves by itself. Find it again under <b>My islands</b>.</div>
+    </div>
+  </div>
+</div>
+
+<div id="pause" class="overlay">
+  <div class="panel">
+    <h2 style="text-align:center">Menu</h2>
+    <div class="btns">
+      <button class="primary full" id="resumeBtn">Keep building</button>
+      <button id="pauseHowBtn">How to play</button>
+      <button id="pauseMainBtn">Main menu</button>
+      <button class="musicToggle">Music: On</button>
+      <button class="sfxToggle">Sounds: On</button>
+      <a class="btn full" href="../">All games</a>
+    </div>
+    <p class="tagline" style="font-size:14px">Your island saves by itself.</p>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* =====================================================================
+   World Creator
+   Fly a camera around a big 3D island (ten kinds to pick from) and fill it
+   with nature, buildings, people, creatures and weapons. People and animals
+   wander around on their own. Plain WebGL 2, no libraries. The noise,
+   shapes, shaders, matrices, controller and sound code come from Wildwood,
+   with higher detail: up to 2x pixels, smooth shading, a finer island and
+   real shadows from a shadow map.
+   ===================================================================== */
+const canvas = document.getElementById('c');
+const gl = canvas.getContext('webgl2', { antialias: true, powerPreference: 'high-performance' });
+if (!gl) { document.getElementById('nogl').style.display = 'grid'; document.getElementById('title').classList.remove('show'); throw new Error('no webgl2'); }
+const $ = id => document.getElementById(id);
+
+/* ---------------- Saved data ---------------- */
+const SAVE_KEY = 'worldcreator.v1', LIST_KEY = 'worldcreator.islands', ISLE_PREFIX = 'worldcreator.island.';
+function readJSON(k) { try { const v = JSON.parse(localStorage.getItem(k) || 'null'); return v; } catch (e) { try { localStorage.removeItem(k); } catch (e2) {} return null; } }
+function writeJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+const S0 = readJSON(SAVE_KEY) || {};
+const settings = { music: S0.music !== false, sfx: S0.sfx !== false };
+function writeSettings() { writeJSON(SAVE_KEY, { music: settings.music, sfx: settings.sfx }); }
+
+/* =====================================================================
+   Noise (from Wildwood)
+   ===================================================================== */
+const perm = new Uint8Array(512);
+const gradX = new Float32Array(256), gradY = new Float32Array(256);
+let seedMix = 0;
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function setWorldSeed(s) {
+  const r = mulberry32(s);
+  const p = new Uint8Array(256);
+  for (let i = 0; i < 256; i++) p[i] = i;
+  for (let i = 255; i > 0; i--) { const j = Math.floor(r() * (i + 1)); const t = p[i]; p[i] = p[j]; p[j] = t; }
+  for (let i = 0; i < 512; i++) perm[i] = p[i & 255];
+  for (let i = 0; i < 256; i++) { const a = r() * Math.PI * 2; gradX[i] = Math.cos(a); gradY[i] = Math.sin(a); }
+  seedMix = Math.floor(r() * 0x7fffffff);
+}
+function hashInt(a, b, c) {
+  let h = seedMix ^ Math.imul(a | 0, 0x27d4eb2d) ^ Math.imul(b | 0, 0x165667b1) ^ Math.imul(c | 0, 0x2f0b3a49);
+  h = Math.imul(h ^ (h >>> 15), 0x85ebca6b);
+  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
+  return (h ^ (h >>> 16)) >>> 0;
+}
+function perlin(x, y) {
+  const x0 = Math.floor(x), y0 = Math.floor(y);
+  const xf = x - x0, yf = y - y0;
+  const X = x0 & 255, Y = y0 & 255;
+  const u = xf * xf * xf * (xf * (xf * 6 - 15) + 10);
+  const v = yf * yf * yf * (yf * (yf * 6 - 15) + 10);
+  const a = perm[X] + Y, b = perm[X + 1] + Y;
+  const aa = perm[a], ab = perm[a + 1], ba = perm[b], bb = perm[b + 1];
+  const n00 = gradX[aa] * xf + gradY[aa] * yf;
+  const n10 = gradX[ba] * (xf - 1) + gradY[ba] * yf;
+  const n01 = gradX[ab] * xf + gradY[ab] * (yf - 1);
+  const n11 = gradX[bb] * (xf - 1) + gradY[bb] * (yf - 1);
+  const nx0 = n00 + u * (n10 - n00), nx1 = n01 + u * (n11 - n01);
+  return nx0 + v * (nx1 - nx0);
+}
+function fbm(x, y, oct) {
+  let s = 0, a = 1, n = 0;
+  for (let i = 0; i < oct; i++) {
+    s += a * perlin(x, y); n += a; a *= 0.5;
+    const nx = x * 1.6 - y * 1.2 + 5.3, ny = x * 1.2 + y * 1.6 - 2.7;
+    x = nx; y = ny;
+  }
+  return s / n;
+}
+function smooth(a, b, x) {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+}
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+
+/* =====================================================================
+   The ten islands
+   shape: round, chain (several small islands), volcano, cliffs (terraces with
+   cliff edges), swamp (ponds), dunes, candy (gumdrop hills).
+   ===================================================================== */
+const ISLANDS = [
+  { id: 'tropical', name: 'Tropical Paradise', icon: '🏝️', blurb: 'Palm trees, wide sandy beaches and warm blue water.', art: 'linear-gradient(#5fd0f0,#f7e3a1 70%,#1fb6c1 71%)',
+    shape: 'round', R: 360, lift: 10, hills: 9, peak: 26, beach: 0.18,
+    sand: [0.95, 0.86, 0.62], grass: [0.36, 0.7, 0.28], grass2: [0.2, 0.55, 0.22], rock: [0.52, 0.48, 0.42], snowH: 999,
+    sky: [[0.78, 0.9, 0.96], [0.22, 0.55, 0.92]], water: [0.02, 0.36, 0.4],
+    nature: [['palm', 110], ['bush', 40], ['flowers', 40], ['rock', 18]], critters: [['parrot', 4], ['crab', 5], ['dolphin', 3]] },
+  { id: 'forest', name: 'Big Forest', icon: '🌲', blurb: 'Rolling green hills covered in pine trees and oaks.', art: 'linear-gradient(#8cc3ea,#3f8a3a 60%,#2a6a2e)',
+    shape: 'round', R: 380, lift: 18, hills: 16, peak: 34, beach: 0.07,
+    sand: [0.83, 0.77, 0.58], grass: [0.3, 0.6, 0.24], grass2: [0.18, 0.44, 0.17], rock: [0.48, 0.46, 0.43], snowH: 999,
+    sky: [[0.8, 0.87, 0.93], [0.3, 0.53, 0.86]], water: [0.04, 0.25, 0.28],
+    nature: [['pine', 230], ['oak', 120], ['bush', 50], ['mushroom', 10], ['rock', 25]], critters: [['deer', 6], ['bear', 2], ['bird', 4]] },
+  { id: 'snow', name: 'Snowy Mountains', icon: '🏔️', blurb: 'Tall white peaks, snowy pines and icy water.', art: 'linear-gradient(#a9c8ec,#ffffff 55%,#9db6d2)',
+    shape: 'round', R: 370, lift: 16, hills: 14, peak: 90, beach: 0.06, snowAll: true,
+    sand: [0.82, 0.84, 0.88], grass: [0.93, 0.95, 0.99], grass2: [0.82, 0.88, 0.96], rock: [0.5, 0.52, 0.58], snowH: 0,
+    sky: [[0.86, 0.9, 0.96], [0.42, 0.6, 0.86]], water: [0.05, 0.22, 0.32],
+    nature: [['snowpine', 170], ['rock', 30], ['snowman', 6]], critters: [['penguin', 8], ['polarbear', 2]] },
+  { id: 'desert', name: 'Desert Dunes', icon: '🏜️', blurb: 'Golden sand dunes, cactuses and rocky mesas.', art: 'linear-gradient(#f5b36b,#f0c77d 55%,#c98f4f)',
+    shape: 'dunes', R: 370, lift: 8, hills: 6, peak: 30, beach: 0.1,
+    sand: [0.94, 0.78, 0.5], grass: [0.9, 0.72, 0.44], grass2: [0.84, 0.64, 0.38], rock: [0.74, 0.44, 0.27], snowH: 999,
+    sky: [[0.98, 0.88, 0.7], [0.35, 0.6, 0.9]], water: [0.04, 0.32, 0.38],
+    nature: [['cactus', 70], ['rock', 40], ['deadtree', 14]], critters: [['camel', 4], ['lizard', 6]] },
+  { id: 'volcano', name: 'Volcano Island', icon: '🌋', blurb: 'A huge smoking volcano with glowing lava at the top.', art: 'linear-gradient(#f08a5d,#4a3a3a 60%,#2a2020)',
+    shape: 'volcano', R: 360, lift: 6, hills: 6, peak: 120, beach: 0.08,
+    sand: [0.3, 0.27, 0.27], grass: [0.33, 0.52, 0.24], grass2: [0.22, 0.4, 0.18], rock: [0.26, 0.23, 0.23], snowH: 999,
+    sky: [[0.95, 0.75, 0.62], [0.42, 0.4, 0.62]], water: [0.04, 0.2, 0.24],
+    nature: [['palm', 40], ['rock', 60], ['bush', 30]], critters: [['dragon', 1], ['dino', 2]] },
+  { id: 'candy', name: 'Candy Land', icon: '🍭', blurb: 'Pink hills, gumdrop mountains and lollipop trees.', art: 'linear-gradient(#ffb0dc,#bf94ff 55%,#7fe0c4)',
+    shape: 'candy', R: 350, lift: 10, hills: 8, peak: 26, beach: 0.12,
+    sand: [1.0, 0.86, 0.72], grass: [1.0, 0.62, 0.82], grass2: [0.62, 0.92, 0.82], rock: [0.74, 0.58, 1.0], snowH: 999,
+    sky: [[1.0, 0.88, 0.95], [0.7, 0.6, 0.98]], water: [0.25, 0.42, 0.6],
+    nature: [['lollipop', 90], ['candycane', 40], ['gumdrop', 40], ['flowers', 30]], critters: [['unicorn', 4], ['bunny', 6]] },
+  { id: 'swamp', name: 'Misty Swamp', icon: '🐸', blurb: 'Low muddy land, lots of little ponds and droopy willows.', art: 'linear-gradient(#a8b89a,#4f6b2a 60%,#3d5a3a)',
+    shape: 'swamp', R: 380, lift: 3, hills: 1.6, peak: 6, beach: 0.05,
+    sand: [0.42, 0.38, 0.26], grass: [0.34, 0.46, 0.2], grass2: [0.26, 0.36, 0.17], rock: [0.4, 0.4, 0.36], snowH: 999,
+    sky: [[0.78, 0.82, 0.76], [0.45, 0.55, 0.6]], water: [0.12, 0.2, 0.12],
+    nature: [['willow', 80], ['mushroom', 20], ['reeds', 70], ['bush', 30]], critters: [['frog', 8], ['croc', 3]] },
+  { id: 'cliffs', name: 'Rocky Cliffs', icon: '🪨', blurb: 'Tall flat-topped rocks with steep cliffs down to the sea.', art: 'linear-gradient(#9cc0dc,#8f8a86 55%,#5d7d8f)',
+    shape: 'cliffs', R: 360, lift: 30, hills: 24, peak: 0, beach: 0.02,
+    sand: [0.6, 0.56, 0.5], grass: [0.42, 0.6, 0.3], grass2: [0.32, 0.5, 0.25], rock: [0.55, 0.52, 0.5], snowH: 999,
+    sky: [[0.82, 0.88, 0.94], [0.32, 0.52, 0.82]], water: [0.03, 0.24, 0.32],
+    nature: [['pine', 60], ['rock', 60], ['bush', 40]], critters: [['goat', 6], ['bird', 6]] },
+  { id: 'chain', name: 'Island Chain', icon: '🏖️', blurb: 'Lots of little islands with sea in between.', art: 'linear-gradient(#5fd0f0,#2aa6c4 50%,#f2dc9a 51%,#1fb6c1 75%)',
+    shape: 'chain', R: 150, lift: 9, hills: 7, peak: 18, beach: 0.2,
+    sand: [0.95, 0.87, 0.64], grass: [0.4, 0.72, 0.3], grass2: [0.24, 0.58, 0.24], rock: [0.52, 0.48, 0.42], snowH: 999,
+    sky: [[0.78, 0.9, 0.96], [0.24, 0.56, 0.92]], water: [0.02, 0.38, 0.42],
+    nature: [['palm', 70], ['oak', 20], ['bush', 30], ['flowers', 30]], critters: [['seagull', 6], ['dolphin', 4], ['whale', 1]] },
+  { id: 'autumn', name: 'Autumn Valley', icon: '🍂', blurb: 'Hills full of orange, red and yellow trees.', art: 'linear-gradient(#f5c27a,#d9682e 55%,#8a5a2e)',
+    shape: 'round', R: 370, lift: 16, hills: 14, peak: 40, beach: 0.07,
+    sand: [0.86, 0.76, 0.56], grass: [0.62, 0.62, 0.3], grass2: [0.5, 0.48, 0.22], rock: [0.5, 0.46, 0.42], snowH: 999,
+    sky: [[0.95, 0.88, 0.78], [0.38, 0.55, 0.85]], water: [0.04, 0.26, 0.28],
+    nature: [['maple', 180], ['pine', 50], ['pumpkin', 30], ['rock', 25]], critters: [['deer', 5], ['fox', 4], ['squirrel', 5]] },
+];
+const ISLE_BY_ID = Object.fromEntries(ISLANDS.map(i => [i.id, i]));
+
+let ISL = ISLANDS[0], chainCenters = [];
+function setIsland(def, seed) {
+  ISL = def; setWorldSeed(seed);
+  chainCenters = [];
+  if (def.shape === 'chain') {
+    const r = mulberry32(seed + 5);
+    chainCenters.push([0, 0, 170]);
+    for (let i = 0; i < 6; i++) {
+      for (let t = 0; t < 30; t++) {
+        const a = r() * 6.283, d = 250 + r() * 230, rad = 85 + r() * 70;
+        const x = Math.cos(a) * d, z = Math.sin(a) * d;
+        if (chainCenters.every(c => Math.hypot(c[0] - x, c[1] - z) > c[2] + rad + 40)) { chainCenters.push([x, z, rad]); break; }
+      }
+    }
+  }
+}
+// 0 in the middle of the land, 1 at the coast, more out at sea
+function landDist(x, z) {
+  const w = fbm(x * 0.0032 + 11.3, z * 0.0032 - 7.1, 3) * 0.3 + perlin(x * 0.011 + 3.1, z * 0.011 + 8.7) * 0.05;
+  if (ISL.shape === 'chain') { let d = 9; for (const c of chainCenters) d = Math.min(d, Math.hypot(x - c[0], z - c[1]) / c[2]); return d + w * 0.8; }
+  return Math.hypot(x, z) / ISL.R + w;
+}
+// the island's height (metres; the sea is at 0)
+function islandHeight(x, z) {
+  const I = ISL, d = landDist(x, z);
+  let h = -0.8 + (1 - d) * 7;                                       // the beach slope, carried on down to the sea floor
+  if (d > 1) return Math.max(-36, -0.8 - (d - 1) * (I.shape === 'chain' ? 70 : I.R * 0.14));
+  const inland = smooth(1 - I.beach * 0.4, 1 - I.beach - 0.12, d);   // 0 on the beach, 1 further in
+  const core = smooth(0.8, 0.05, d);
+  let t = I.lift * smooth(0, 1, (1 - d) / 0.75) + fbm(x * 0.007, z * 0.007, 4) * I.hills + I.hills * 0.4;
+  const ridge = 1 - Math.abs(perlin(x * 0.0055 + 1.7, z * 0.0055 - 4.2)), rr = ridge * ridge;
+  if (I.shape === 'volcano') {
+    const r = Math.hypot(x, z) / I.R;
+    t += I.peak * Math.pow(Math.max(0, 1 - r / 0.62), 1.35) * (0.9 + 0.1 * rr);
+    if (r < 0.075) t -= (1 - r / 0.075) * 30;                        // the crater
+  } else if (I.shape === 'cliffs') {
+    t = I.lift * smooth(0.97, 0.9, d) + (fbm(x * 0.006, z * 0.006, 3) * 0.5 + 0.5) * I.hills * core;
+    const step = 7, s = t / step, f = s - Math.floor(s);
+    t = (Math.floor(s) + smooth(0.75, 1, f)) * step;                  // flat tops and steep steps
+  } else if (I.shape === 'swamp') {
+    const n = perlin(x * 0.018 + 4.4, z * 0.018 - 2.2) + perlin(x * 0.05, z * 0.05) * 0.25;
+    t -= smooth(0.12, 0.28, n) * (t + 1.6);                            // ponds
+  } else if (I.shape === 'dunes') {
+    const dn = perlin(x * 0.006 + 9, z * 0.006 - 3) * 4;
+    t += (Math.abs(Math.sin(x * 0.045 + z * 0.012 + dn)) * 5 + 1) * core;
+    t += I.peak * smooth(0.55, 0.75, perlin(x * 0.008 - 2, z * 0.008 + 6)) * core;   // flat-topped mesas
+  } else if (I.shape === 'candy') {
+    const g = perlin(x * 0.016 + 2.5, z * 0.016 + 7.5);
+    t += Math.pow(Math.max(0, g), 1.4) * 40 * core;                    // round gumdrop hills
+  } else {
+    t += I.peak * rr * core * core;
+  }
+  return h + (t - Math.min(t, 0)) * inland + Math.min(t, 0);
+}
+
+/* ---- the island as a fine grid (heights, normals, colours), and the ground height anywhere ---- */
+const TN = 560;                 // grid cells across (Wildwood's chunks are 32 per 64 m; this is about 2 m per cell)
+let TS = 620, TSTEP = 2 * TS / TN, HGRID = null, NYGRID = null;
+function gridH(i, j) { return HGRID[clamp(j, 0, TN) * (TN + 1) + clamp(i, 0, TN)]; }
+function groundAt(x, z) {
+  const fx = (x + TS) / TSTEP, fz = (z + TS) / TSTEP;
+  if (fx < 0 || fz < 0 || fx >= TN || fz >= TN) return -36;
+  const i = Math.floor(fx), j = Math.floor(fz), u = fx - i, v = fz - j;
+  const h00 = gridH(i, j), h10 = gridH(i + 1, j), h01 = gridH(i, j + 1), h11 = gridH(i + 1, j + 1);
+  return u + v < 1 ? h00 + (h10 - h00) * u + (h01 - h00) * v : h11 + (h01 - h11) * (1 - u) + (h10 - h11) * (1 - v);   // the same triangles that are drawn
+}
+function slopeAt(x, z) {        // 1 = flat, lower = steeper
+  const fx = clamp(Math.round((x + TS) / TSTEP), 0, TN), fz = clamp(Math.round((z + TS) / TSTEP), 0, TN);
+  return NYGRID ? NYGRID[fz * (TN + 1) + fx] : 1;
+}
+function groundColor(x, z, h, ny) {
+  const I = ISL;
+  const n = perlin(x * 0.045 + 3, z * 0.045 - 1) * 0.55 + perlin(x * 0.18, z * 0.18) * 0.25;
+  let c;
+  const sandTop = I.shape === 'swamp' ? 0.25 : 1.1 + n * 0.8;
+  if (h < sandTop) c = I.sand;
+  else c = mixc(I.grass, I.grass2, clamp(0.5 + n * 1.3, 0, 1));
+  if (I.shape === 'cliffs' || I.shape === 'dunes') c = mixc(c, I.rock, smooth(0.86, 0.7, ny));
+  else c = mixc(c, I.rock, smooth(0.8, 0.6, ny));
+  if (I.shape === 'volcano') {
+    const r = Math.hypot(x, z) / I.R;
+    c = mixc(c, I.rock, smooth(0.5, 0.3, r));                        // bare rock up the volcano
+    if (r < 0.06 && h < 70) c = mixc([1.0, 0.35, 0.08], [1.0, 0.75, 0.2], clamp(0.5 + n, 0, 1));   // lava in the crater
+  }
+  if (I.snowAll) c = mixc(c, [0.97, 0.98, 1.0], smooth(0.7, 0.85, ny) * smooth(0.6, 2, h));
+  else if (I.snowCap && h > 60) c = mixc(c, [0.97, 0.98, 1.0], smooth(60, 75, h + n * 6) * smooth(0.6, 0.8, ny));
+  if (h < 0) c = mixc(c, shade(I.sand, 0.7), smooth(0, -3, h));       // the sea floor
+  return shade(c, 0.94 + n * 0.12);
+}
+
+/* =====================================================================
+   WebGL: shaders (from Wildwood, plus per-island sky colours and real shadows)
+   ===================================================================== */
+const SKY_GLSL = `
+uniform vec3 uSun; uniform vec3 uSkyH; uniform vec3 uSkyZ;
+vec3 skyCol(vec3 d){
+  float y = max(d.y, 0.0);
+  vec3 c = mix(uSkyH, uSkyZ, pow(y, 0.55));
+  float s = max(dot(d, uSun), 0.0);
+  c += vec3(1.0,0.85,0.6) * pow(s, 10.0) * 0.22;
+  c += vec3(1.0,0.9,0.7) * pow(s, 60.0) * 0.35;
+  return c;
+}
+vec3 fogCol(vec3 d){
+  vec3 h = normalize(vec3(d.x, 0.0, d.z) + vec3(0.0, 0.0001, 0.0));
+  return skyCol(h) + vec3(1.0,0.82,0.55) * pow(max(dot(h, uSun), 0.0), 2.0) * 0.2;
+}
+`;
+const FOG_GLSL = `
+uniform vec3 uCam; uniform float uFogD; uniform float uFogEnd;
+vec3 applyFog(vec3 c, vec3 world){
+  vec3 dv = world - uCam;
+  float dist = length(dv);
+  float f = 1.0 - exp(-pow(dist / uFogD, 2.0));
+  f = max(f, smoothstep(uFogEnd - 300.0, uFogEnd, dist));
+  return mix(c, fogCol(dv), clamp(f, 0.0, 1.0));
+}
+`;
+const WORLD_VS = `#version 300 es
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec4 aNor;
+layout(location=2) in vec4 aCol;
+uniform mat4 uVP; uniform mat4 uModel; uniform float uTime;
+out vec4 vNor; out vec3 vCol; out vec3 vWorld;
+void main(){
+  vec3 p = aPos;
+  float s = aCol.a;
+  if (s > 0.0) {
+    float ph = uTime * 1.6 + p.x * 0.21 + p.z * 0.17;
+    p.x += sin(ph) * 0.1 * s; p.z += sin(ph * 0.83 + 1.3) * 0.07 * s;
+  }
+  vec4 wp = uModel * vec4(p, 1.0);
+  vWorld = wp.xyz; vNor = vec4(mat3(uModel) * aNor.xyz, aNor.w); vCol = aCol.rgb;
+  gl_Position = uVP * wp;
+}`;
+const WORLD_FS = `#version 300 es
+precision highp float;
+precision highp sampler2DShadow;
+in vec4 vNor; in vec3 vCol; in vec3 vWorld;
+uniform float uFlash; uniform float uEmit; uniform float uTime; uniform vec3 uWater; uniform float uAlpha;
+uniform mat4 uLightVP; uniform sampler2DShadow uShadowMap; uniform float uShadowOn; uniform float uTexel; uniform float uNOff;
+out vec4 o;
+${SKY_GLSL}
+${FOG_GLSL}
+float shadowAt(vec3 p, vec3 n){
+  vec4 l = uLightVP * vec4(p + n * uNOff, 1.0);
+  vec3 s = l.xyz / l.w * 0.5 + 0.5;
+  if (s.x < 0.0 || s.x > 1.0 || s.y < 0.0 || s.y > 1.0 || s.z > 1.0) return 1.0;
+  float sum = 0.0;
+  for (int i = -1; i <= 1; i++) for (int j = -1; j <= 1; j++) sum += texture(uShadowMap, vec3(s.xy + vec2(float(i), float(j)) * uTexel, s.z - 0.0004));
+  return sum / 9.0;
+}
+void main(){
+  vec3 n = normalize(vNor.xyz + vec3(0.0, 1e-4, 0.0));
+  bool fol = vNor.w > 0.5;
+  if (vNor.w > -0.5 && vNor.w < 0.5 && !gl_FrontFacing) n = -n;
+  float d = dot(n, uSun);
+  float diff = fol ? clamp(d * 0.55 + 0.45, 0.0, 1.0) : clamp((d + 0.15) / 1.15, 0.0, 1.0);
+  if (uShadowOn > 0.5 && d > -0.3) diff *= mix(0.12, 1.0, shadowAt(vWorld, n));
+  vec3 amb = mix(vec3(0.30,0.28,0.22), vec3(0.45,0.55,0.72), n.y * 0.5 + 0.5);
+  vec3 sunC = vec3(1.0, 0.92, 0.78);
+  vec3 c = vCol * (amb + sunC * diff * 0.95);
+  vec3 v = normalize(uCam - vWorld);
+  c += sunC * pow(max(dot(reflect(-uSun, n), v), 0.0), 24.0) * 0.12 * diff;   // a little shine
+  if (vWorld.y < 0.0) { float k = clamp(-vWorld.y * 0.11, 0.0, 0.8); c = mix(c, uWater * 0.9, k); }
+  c = mix(c, vCol * 1.15, uEmit);
+  c = mix(c, vec3(1.0, 0.96, 0.9), uFlash);
+  o = vec4(applyFog(c, vWorld), uAlpha);
+}`;
+const DEPTH_VS = `#version 300 es
+layout(location=0) in vec3 aPos;
+uniform mat4 uLVP; uniform mat4 uModel;
+void main(){ gl_Position = uLVP * uModel * vec4(aPos, 1.0); }`;
+const DEPTH_FS = `#version 300 es
+precision mediump float;
+out vec4 o;
+void main(){ o = vec4(1.0); }`;
+const SKYBOX_VS = `#version 300 es
+out vec2 vNdc;
+void main(){
+  vec2 p = vec2((gl_VertexID << 1) & 2, gl_VertexID & 2) * 2.0 - 1.0;
+  vNdc = p; gl_Position = vec4(p, 0.9999, 1.0);
+}`;
+const SKYBOX_FS = `#version 300 es
+precision highp float;
+in vec2 vNdc;
+uniform vec3 uFwd, uRight, uUp; uniform float uTanY, uAspect, uTime;
+out vec4 o;
+${SKY_GLSL}
+float hsh(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hsh(i), hsh(i + vec2(1,0)), f.x), mix(hsh(i + vec2(0,1)), hsh(i + vec2(1,1)), f.x), f.y); }
+float cfbm(vec2 p){ float s = 0.0, a = 0.5; for (int i = 0; i < 6; i++){ s += a * vn(p); p = p * 2.03 + vec2(1.7, 9.2); a *= 0.5; } return s; }
+void main(){
+  vec3 d = normalize(uFwd + uRight * vNdc.x * uTanY * uAspect + uUp * vNdc.y * uTanY);
+  vec3 c = skyCol(d);
+  float s = max(dot(d, uSun), 0.0);
+  c += vec3(1.0, 0.95, 0.8) * smoothstep(0.9993, 0.9997, s);
+  if (d.y > 0.0) {
+    vec2 uv = d.xz / (d.y + 0.08) * 0.9 + vec2(uTime * 0.006, uTime * 0.002);
+    float cl = smoothstep(0.48, 0.78, cfbm(uv * 1.4));
+    cl *= smoothstep(0.0, 0.22, d.y);
+    c = mix(c, vec3(1.0, 1.0, 0.98), cl * 0.85);
+  }
+  o = vec4(c, 1.0);
+}`;
+const WATER_VS = `#version 300 es
+layout(location=0) in vec3 aPos;
+uniform mat4 uVP;
+out vec3 vWorld;
+void main(){ vWorld = aPos; gl_Position = uVP * vec4(aPos, 1.0); }`;
+const WATER_FS = `#version 300 es
+precision highp float;
+in vec3 vWorld;
+uniform float uTime; uniform vec3 uWater;
+out vec4 o;
+${SKY_GLSL}
+${FOG_GLSL}
+vec2 wave(vec2 p, vec2 dir, float freq, float amp, float spd){
+  float ph = dot(p, dir) * freq + uTime * spd;
+  return dir * cos(ph) * amp * freq;
+}
+void main(){
+  vec2 p = vWorld.xz;
+  vec2 g = wave(p, normalize(vec2(0.9, 0.4)), 0.35, 0.05, 1.1)
+         + wave(p, normalize(vec2(-0.5, 0.8)), 0.8, 0.035, 1.7)
+         + wave(p, normalize(vec2(0.2, -1.0)), 1.9, 0.014, 2.6)
+         + wave(p, normalize(vec2(-0.9, -0.3)), 3.7, 0.007, 3.4)
+         + wave(p, normalize(vec2(0.6, 0.7)), 7.3, 0.003, 4.1);
+  vec3 n = normalize(vec3(-g.x, 1.0, -g.y));
+  vec3 v = normalize(uCam - vWorld);
+  float fres = 0.04 + 0.96 * pow(1.0 - max(dot(n, v), 0.0), 5.0);
+  vec3 r = reflect(-v, n);
+  r.y = abs(r.y);
+  vec3 col = mix(uWater, skyCol(r), fres);
+  float spec = pow(max(dot(r, uSun), 0.0), 400.0) * 3.0;
+  col += vec3(1.0, 0.95, 0.8) * spec;
+  float a = mix(0.7, 0.97, fres);
+  o = vec4(applyFog(col, vWorld), a);
+}`;
+function compile(vs, fs) {
+  const mk = (type, src) => {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+    return s;
+  };
+  const p = gl.createProgram();
+  gl.attachShader(p, mk(gl.VERTEX_SHADER, vs));
+  gl.attachShader(p, mk(gl.FRAGMENT_SHADER, fs));
+  gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+  const u = {};
+  const n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
+  for (let i = 0; i < n; i++) { const info = gl.getActiveUniform(p, i); u[info.name] = gl.getUniformLocation(p, info.name); }
+  return { p, u };
+}
+const progWorld = compile(WORLD_VS, WORLD_FS);
+const progDepth = compile(DEPTH_VS, DEPTH_FS);
+const progSky = compile(SKYBOX_VS, SKYBOX_FS);
+const progWater = compile(WATER_VS, WATER_FS);
+const emptyVao = gl.createVertexArray();
+
+// the sea: one big square around the camera
+const waterVao = gl.createVertexArray(), waterVbo = gl.createBuffer();
+gl.bindVertexArray(waterVao);
+gl.bindBuffer(gl.ARRAY_BUFFER, waterVbo);
+gl.bufferData(gl.ARRAY_BUFFER, 6 * 3 * 4, gl.DYNAMIC_DRAW);
+gl.enableVertexAttribArray(0);
+gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 12, 0);
+gl.bindVertexArray(null);
+const waterVerts = new Float32Array(18);
+
+// the shadow map: the scene drawn from the sun into a depth texture
+const SHADOW_N = Math.min(4096, gl.getParameter(gl.MAX_TEXTURE_SIZE));
+const shadowTex = gl.createTexture();
+gl.bindTexture(gl.TEXTURE_2D, shadowTex);
+gl.texStorage2D(gl.TEXTURE_2D, 1, gl.DEPTH_COMPONENT24, SHADOW_N, SHADOW_N);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_COMPARE_MODE, gl.COMPARE_REF_TO_TEXTURE);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_COMPARE_FUNC, gl.LEQUAL);
+const shadowFbo = gl.createFramebuffer();
+gl.bindFramebuffer(gl.FRAMEBUFFER, shadowFbo);
+gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, shadowTex, 0);
+const shadowOK = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+/* =====================================================================
+   Geometry builder and shapes (from Wildwood; shapes here use smooth shading
+   and many more faces)
+   One vertex = 20 bytes: position (3 floats), normal + mode (4 bytes), colour + sway (4 bytes).
+   Mode: 1 = leaves (soft light), -1 = solid, 0 = flip by side.
+   ===================================================================== */
+class Geo {
+  constructor(cap) { this.cap = cap; this.n = 0; this.alloc(cap); }
+  alloc(cap) {
+    const old = this.buf;
+    this.buf = new ArrayBuffer(cap * 20);
+    if (old) new Uint8Array(this.buf).set(new Uint8Array(old));
+    this.f = new Float32Array(this.buf); this.i8 = new Int8Array(this.buf); this.u8 = new Uint8Array(this.buf);
+    this.cap = cap;
+  }
+  v(x, y, z, nx, ny, nz, m, r, g, b, s) {
+    if (this.n === this.cap) this.alloc(this.cap * 2);
+    const i = this.n++, o = i * 5, bo = i * 20;
+    this.f[o] = x; this.f[o + 1] = y; this.f[o + 2] = z;
+    this.i8[bo + 12] = nx * 127; this.i8[bo + 13] = ny * 127; this.i8[bo + 14] = nz * 127; this.i8[bo + 15] = m * 127;
+    this.u8[bo + 16] = cl01(r) * 255; this.u8[bo + 17] = cl01(g) * 255; this.u8[bo + 18] = cl01(b) * 255; this.u8[bo + 19] = cl01(s) * 255;
+  }
+}
+const cl01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+function norm3(x, y, z) { const l = Math.hypot(x, y, z) || 1; return [x / l, y / l, z / l]; }
+function faceN(a, b, c) {
+  const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2];
+  const vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+  return norm3(uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx);
+}
+function tri(g, a, b, c, n, m, ca, cb, cc, sa, sb, sc) {
+  g.v(a[0], a[1], a[2], n[0], n[1], n[2], m, ca[0], ca[1], ca[2], sa);
+  g.v(b[0], b[1], b[2], n[0], n[1], n[2], m, cb[0], cb[1], cb[2], sb);
+  g.v(c[0], c[1], c[2], n[0], n[1], n[2], m, cc[0], cc[1], cc[2], sc);
+}
+function shade(c, k) { return [c[0] * k, c[1] * k, c[2] * k]; }
+function mixc(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
+function makeMesh(geo, idx) {
+  if (!geo || geo.n === 0) return null;
+  const vao = gl.createVertexArray();
+  gl.bindVertexArray(vao);
+  const vbo = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+  gl.bufferData(gl.ARRAY_BUFFER, new Uint8Array(geo.buf, 0, geo.n * 20), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.BYTE, true, 20, 12);
+  gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 4, gl.UNSIGNED_BYTE, true, 20, 16);
+  let ibo = null, count = geo.n;
+  if (idx) { ibo = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, idx, gl.STATIC_DRAW); count = idx.length; }
+  gl.bindVertexArray(null);
+  return { vao, vbo, ibo, count, idx32: idx instanceof Uint32Array };
+}
+function freeMesh(m) { if (!m) return; gl.deleteVertexArray(m.vao); gl.deleteBuffer(m.vbo); if (m.ibo) gl.deleteBuffer(m.ibo); }
+
+// a round ball split into 320 faces, for smooth spheres
+const PHI = (1 + Math.sqrt(5)) / 2;
+const ICO_V = [[-1, PHI, 0], [1, PHI, 0], [-1, -PHI, 0], [1, -PHI, 0], [0, -1, PHI], [0, 1, PHI], [0, -1, -PHI], [0, 1, -PHI], [PHI, 0, -1], [PHI, 0, 1], [-PHI, 0, -1], [-PHI, 0, 1]].map(v => norm3(v[0], v[1], v[2]));
+const ICO_F = [[0, 11, 5], [0, 5, 1], [0, 1, 7], [0, 7, 10], [0, 10, 11], [1, 5, 9], [5, 11, 4], [11, 10, 2], [10, 7, 6], [7, 1, 8], [3, 9, 4], [3, 4, 2], [3, 2, 6], [3, 6, 8], [3, 8, 9], [4, 9, 5], [2, 4, 11], [6, 2, 10], [8, 6, 7], [9, 8, 1]];
+function subdivide(V0, F0) {
+  const V = V0.map(v => v.slice()), F = [], mid = new Map();
+  const m = (a, b) => {
+    const k = a < b ? a + '_' + b : b + '_' + a;
+    if (!mid.has(k)) { const p = V[a], q = V[b]; V.push(norm3(p[0] + q[0], p[1] + q[1], p[2] + q[2])); mid.set(k, V.length - 1); }
+    return mid.get(k);
+  };
+  for (const [a, b, c] of F0) { const ab = m(a, b), bc = m(b, c), ca = m(c, a); F.push([a, ab, ca], [b, bc, ab], [c, ca, bc], [ab, bc, ca]); }
+  return [V, F];
+}
+const [ICO1_V, ICO1_F] = subdivide(ICO_V, ICO_F);
+const [ICO2_V, ICO2_F] = subdivide(ICO1_V, ICO1_F);
+// a smooth ball (squashed to rx, ry, rz); cutBelow flattens the bottom
+function orb(g, x, y, z, rx, ry, rz, col, opts = {}) {
+  const VV = opts.lo ? ICO1_V : ICO2_V, FF = opts.lo ? ICO1_F : ICO2_F, mode = opts.leaf ? 1 : -1, sway = opts.sway || 0, bump = opts.bump || 0;
+  const k = bump ? VV.map((v, i) => 1 + Math.sin(v[0] * 5.1 + v[1] * 3.7 + i * 0.01) * bump * Math.sin(v[2] * 4.3 + v[1] * 2.1)) : null;
+  const P = VV.map((v, i) => { const s = k ? k[i] : 1; let py = y + v[1] * ry * s; if (opts.cutBelow !== undefined && py < opts.cutBelow) py = opts.cutBelow; return [x + v[0] * rx * s, py, z + v[2] * rz * s]; });
+  const N = VV.map(v => norm3(v[0] / rx, v[1] / ry, v[2] / rz));
+  for (const f of FF) for (const i of f) {
+    const sh = opts.grad ? mixc(shade(col, 0.82), col, VV[i][1] * 0.5 + 0.5) : col;
+    g.v(P[i][0], P[i][1], P[i][2], N[i][0], N[i][1], N[i][2], mode, sh[0], sh[1], sh[2], sway * Math.max(0, VV[i][1] * 0.5 + 0.5));
+  }
+}
+// a smooth tube from p0 (radius r0) to p1 (radius r1), with caps
+function cyl(g, p0, p1, r0, r1, col, sides = 16, caps = true, col1) {
+  const ax = norm3(p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]);
+  const u0 = Math.abs(ax[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
+  const ux = norm3(u0[1] * ax[2] - u0[2] * ax[1], u0[2] * ax[0] - u0[0] * ax[2], u0[0] * ax[1] - u0[1] * ax[0]);
+  const w = [ax[1] * ux[2] - ax[2] * ux[1], ax[2] * ux[0] - ax[0] * ux[2], ax[0] * ux[1] - ax[1] * ux[0]];
+  const ring = [];
+  for (let i = 0; i <= sides; i++) { const a = i / sides * Math.PI * 2, c = Math.cos(a), s = Math.sin(a); ring.push([ux[0] * c + w[0] * s, ux[1] * c + w[1] * s, ux[2] * c + w[2] * s]); }
+  const ca = col, cb = col1 || col, slope = (r0 - r1) / (Math.hypot(p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]) || 1);
+  for (let i = 0; i < sides; i++) {
+    const d0 = ring[i], d1 = ring[i + 1];
+    const n0 = norm3(d0[0] + ax[0] * slope, d0[1] + ax[1] * slope, d0[2] + ax[2] * slope), n1 = norm3(d1[0] + ax[0] * slope, d1[1] + ax[1] * slope, d1[2] + ax[2] * slope);
+    const A0 = [p0[0] + d0[0] * r0, p0[1] + d0[1] * r0, p0[2] + d0[2] * r0], A1 = [p0[0] + d1[0] * r0, p0[1] + d1[1] * r0, p0[2] + d1[2] * r0];
+    const B0 = [p1[0] + d0[0] * r1, p1[1] + d0[1] * r1, p1[2] + d0[2] * r1], B1 = [p1[0] + d1[0] * r1, p1[1] + d1[1] * r1, p1[2] + d1[2] * r1];
+    g.v(A0[0], A0[1], A0[2], n0[0], n0[1], n0[2], -1, ca[0], ca[1], ca[2], 0); g.v(A1[0], A1[1], A1[2], n1[0], n1[1], n1[2], -1, ca[0], ca[1], ca[2], 0); g.v(B1[0], B1[1], B1[2], n1[0], n1[1], n1[2], -1, cb[0], cb[1], cb[2], 0);
+    g.v(A0[0], A0[1], A0[2], n0[0], n0[1], n0[2], -1, ca[0], ca[1], ca[2], 0); g.v(B1[0], B1[1], B1[2], n1[0], n1[1], n1[2], -1, cb[0], cb[1], cb[2], 0); g.v(B0[0], B0[1], B0[2], n0[0], n0[1], n0[2], -1, cb[0], cb[1], cb[2], 0);
+    if (caps) {
+      if (r0 > 0.001) tri(g, p0, A1, A0, [-ax[0], -ax[1], -ax[2]], -1, ca, ca, ca, 0, 0, 0);
+      if (r1 > 0.001) tri(g, p1, B0, B1, ax, -1, cb, cb, cb, 0, 0, 0);
+    }
+  }
+}
+const coneS = (g, x, y, z, r, h, col, sides = 20) => cyl(g, [x, y, z], [x, y + h, z], r, 0.001, col, sides, true);
+// a box (bottom at y), from Wildwood
+function box(g, x, y, z, w, h, d, col) {
+  const x0 = x - w / 2, x1 = x + w / 2, y1 = y + h, z0 = z - d / 2, z1 = z + d / 2;
+  const P = [[x0, y, z0], [x1, y, z0], [x1, y1, z0], [x0, y1, z0], [x0, y, z1], [x1, y, z1], [x1, y1, z1], [x0, y1, z1]];
+  const F = [[0, 3, 2, 1, [0, 0, -1]], [4, 5, 6, 7, [0, 0, 1]], [0, 4, 7, 3, [-1, 0, 0]], [1, 2, 6, 5, [1, 0, 0]], [3, 7, 6, 2, [0, 1, 0]], [0, 1, 5, 4, [0, -1, 0]]];
+  for (const [a, b, c, e, n] of F) {
+    const k = n[1] > 0 ? 1.04 : n[1] < 0 ? 0.6 : 1, cc = shade(col, k);
+    tri(g, P[a], P[b], P[c], n, -1, cc, cc, cc, 0, 0, 0);
+    tri(g, P[a], P[c], P[e], n, -1, cc, cc, cc, 0, 0, 0);
+  }
+}
+// a gable roof along x: w wide, d deep, h tall, sitting on y
+function roof(g, x, y, z, w, d, h, col, over = 0.35) {
+  const x0 = x - w / 2 - over, x1 = x + w / 2 + over, z0 = z - d / 2 - over, z1 = z + d / 2 + over, top = y + h;
+  const nA = norm3(0, d / 2 + over, -h), nB = norm3(0, d / 2 + over, h);
+  tri(g, [x0, y, z0], [x1, y, z0], [x1, top, z], nA, -1, col, col, col, 0, 0, 0); tri(g, [x0, y, z0], [x1, top, z], [x0, top, z], nA, -1, col, col, col, 0, 0, 0);
+  const c2 = shade(col, 0.92);
+  tri(g, [x0, y, z1], [x0, top, z], [x1, top, z], nB, -1, c2, c2, c2, 0, 0, 0); tri(g, [x0, y, z1], [x1, top, z], [x1, y, z1], nB, -1, c2, c2, c2, 0, 0, 0);
+  const wc = shade(col, 0.75);   // the triangle ends
+  tri(g, [x - w / 2, y, z - d / 2], [x - w / 2, y, z + d / 2], [x - w / 2, top - h * over / (d / 2 + over), z], [-1, 0, 0], -1, wc, wc, wc, 0, 0, 0);
+  tri(g, [x + w / 2, y, z - d / 2], [x + w / 2, top - h * over / (d / 2 + over), z], [x + w / 2, y, z + d / 2], [1, 0, 0], -1, wc, wc, wc, 0, 0, 0);
+}
+// a lumpy rock (from Wildwood's caveRock), with smooth shading
+function rockShape(g, x, y, z, rx, ry, rz, col, seed) {
+  const r = mulberry32(seed), W = [];
+  for (let i = 0; i < 5; i++) W.push([norm3(r() * 2 - 1, r() * 2 - 1, r() * 2 - 1), 2 + r() * 3.5, r() * 6.283, 0.05 + r() * 0.06]);
+  const bumpK = v => { let k = 1; for (const [d, f, ph, a] of W) k += Math.sin((v[0] * d[0] + v[1] * d[1] + v[2] * d[2]) * f + ph) * a; return k; };
+  const P = ICO2_V.map(v => { const k = bumpK(v); return [x + v[0] * rx * k, Math.max(y - ry * 0.3, y + v[1] * ry * k), z + v[2] * rz * k, k]; });
+  for (const f of ICO2_F) {
+    const a = P[f[0]], b = P[f[1]], c = P[f[2]];
+    let n = faceN(a, b, c);
+    const k = (a[3] + b[3] + c[3]) / 3, fc = shade(col, 0.9 + (k - 1) * 1.4);
+    tri(g, a, b, c, n, -1, fc, fc, fc, 0, 0, 0);
+  }
+}
+
+/* =====================================================================
+   Matrices (from Wildwood)
+   ===================================================================== */
+function mul4(out, a, b) {
+  for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) out[c * 4 + r] = a[r] * b[c * 4] + a[4 + r] * b[c * 4 + 1] + a[8 + r] * b[c * 4 + 2] + a[12 + r] * b[c * 4 + 3];
+}
+function mIdent() { const m = new Float32Array(16); m[0] = m[5] = m[10] = m[15] = 1; return m; }
+const IDENT = mIdent();
+function mT(x, y, z) { const m = mIdent(); m[12] = x; m[13] = y; m[14] = z; return m; }
+function mRx(a) { const m = mIdent(), c = Math.cos(a), s = Math.sin(a); m[5] = c; m[6] = s; m[9] = -s; m[10] = c; return m; }
+function mRy(a) { const m = mIdent(), c = Math.cos(a), s = Math.sin(a); m[0] = c; m[2] = -s; m[8] = s; m[10] = c; return m; }
+function mRz(a) { const m = mIdent(), c = Math.cos(a), s = Math.sin(a); m[0] = c; m[1] = s; m[4] = -s; m[5] = c; return m; }
+function mS(k) { const m = mIdent(); m[0] = m[5] = m[10] = k; return m; }
+function mS3(x, y, z) { const m = mIdent(); m[0] = x; m[5] = y; m[10] = z; return m; }
+function mChain(...ms) { let r = ms[0]; for (let i = 1; i < ms.length; i++) { const o = new Float32Array(16); mul4(o, r, ms[i]); r = o; } return r; }
+function perspective(out, fovy, aspect, near, far) {
+  const f = 1 / Math.tan(fovy / 2), nf = 1 / (near - far);
+  out.fill(0); out[0] = f / aspect; out[5] = f; out[10] = (far + near) * nf; out[11] = -1; out[14] = 2 * far * near * nf;
+}
+function ortho(out, l, r, b, t, n, f) {
+  out.fill(0); out[0] = 2 / (r - l); out[5] = 2 / (t - b); out[10] = -2 / (f - n);
+  out[12] = -(r + l) / (r - l); out[13] = -(t + b) / (t - b); out[14] = -(f + n) / (f - n); out[15] = 1;
+}
+function lookAt(out, eye, at, up) {
+  const f = norm3(at[0] - eye[0], at[1] - eye[1], at[2] - eye[2]);
+  const s = norm3(f[1] * up[2] - f[2] * up[1], f[2] * up[0] - f[0] * up[2], f[0] * up[1] - f[1] * up[0]);
+  const u = [s[1] * f[2] - s[2] * f[1], s[2] * f[0] - s[0] * f[2], s[0] * f[1] - s[1] * f[0]];
+  out[0] = s[0]; out[4] = s[1]; out[8] = s[2]; out[12] = -(s[0] * eye[0] + s[1] * eye[1] + s[2] * eye[2]);
+  out[1] = u[0]; out[5] = u[1]; out[9] = u[2]; out[13] = -(u[0] * eye[0] + u[1] * eye[1] + u[2] * eye[2]);
+  out[2] = -f[0]; out[6] = -f[1]; out[10] = -f[2]; out[14] = f[0] * eye[0] + f[1] * eye[1] + f[2] * eye[2];
+  out[3] = 0; out[7] = 0; out[11] = 0; out[15] = 1;
+}
+const planes = Array.from({ length: 6 }, () => new Float32Array(4));
+function extractPlanes(m) {
+  for (let i = 0; i < 3; i++) for (let s = 0; s < 2; s++) {
+    const p = planes[i * 2 + s], sign = s ? -1 : 1;
+    p[0] = m[3] + sign * m[i]; p[1] = m[7] + sign * m[4 + i]; p[2] = m[11] + sign * m[8 + i]; p[3] = m[15] + sign * m[12 + i];
+    const l = Math.hypot(p[0], p[1], p[2]); p[0] /= l; p[1] /= l; p[2] /= l; p[3] /= l;
+  }
+}
+function sphereVisible(x, y, z, r) { for (const p of planes) if (p[0] * x + p[1] * y + p[2] * z + p[3] < -r) return false; return true; }
+
+/* =====================================================================
+   The island mesh
+   ===================================================================== */
+let terrainMesh = null, isleGlow = null;
+function buildTerrain() {
+  TS = ISL.shape === 'chain' ? 720 : 620; TSTEP = 2 * TS / TN;
+  const W = TN + 1;
+  HGRID = new Float32Array(W * W); NYGRID = new Float32Array(W * W);
+  for (let j = 0; j < W; j++) for (let i = 0; i < W; i++) HGRID[j * W + i] = islandHeight(-TS + i * TSTEP, -TS + j * TSTEP);
+  const g = new Geo(W * W);
+  for (let j = 0; j < W; j++) for (let i = 0; i < W; i++) {
+    const x = -TS + i * TSTEP, z = -TS + j * TSTEP, h = HGRID[j * W + i];
+    const n = norm3(gridH(i - 1, j) - gridH(i + 1, j), 2 * TSTEP, gridH(i, j - 1) - gridH(i, j + 1));
+    NYGRID[j * W + i] = n[1];
+    const c = groundColor(x, z, h, n[1]);
+    g.v(x, h, z, n[0], n[1], n[2], -1, c[0], c[1], c[2], 0);
+  }
+  const idx = new Uint32Array(TN * TN * 6);
+  let k = 0;
+  for (let j = 0; j < TN; j++) for (let i = 0; i < TN; i++) {
+    const a = j * W + i, b = a + 1, c = a + W, d = c + 1;
+    idx[k++] = a; idx[k++] = c; idx[k++] = b; idx[k++] = b; idx[k++] = c; idx[k++] = d;
+  }
+  // the deep sea floor carries on out to the horizon, so you never see where the island's square ends
+  const F = 16000, fy = -36.3, fc = shade(groundColor(TS * 2, TS * 2, -36, 1), 1);
+  for (const [a, b, c] of [[[-F, -F], [F, -F], [F, F]], [[-F, -F], [F, F], [-F, F]]])
+    g.v(a[0], fy, a[1], 0, 1, 0, -1, fc[0], fc[1], fc[2], 0), g.v(b[0], fy, b[1], 0, 1, 0, -1, fc[0], fc[1], fc[2], 0), g.v(c[0], fy, c[1], 0, 1, 0, -1, fc[0], fc[1], fc[2], 0);
+  const idx2 = new Uint32Array(idx.length + 6); idx2.set(idx); for (let i = 0; i < 6; i++) idx2[idx.length + i] = W * W + i;
+  if (terrainMesh) freeMesh(terrainMesh);
+  terrainMesh = makeMesh(g, idx2);
+  // glowing bits that belong to the island itself (the volcano's lava)
+  if (isleGlow) { freeMesh(isleGlow); isleGlow = null; }
+  if (ISL.shape === 'volcano') {
+    const lg = new Geo(512), r = ISL.R * 0.06;
+    let lowest = 1e9; for (let a = 0; a < 6.28; a += 0.3) lowest = Math.min(lowest, groundAt(Math.cos(a) * r * 0.5, Math.sin(a) * r * 0.5));
+    const y = Math.max(groundAt(0, 0), lowest) + 1.2, N = 40;
+    for (let i = 0; i < N; i++) {
+      const a0 = i / N * 6.283, a1 = (i + 1) / N * 6.283;
+      tri(lg, [0, y, 0], [Math.cos(a0) * r, y, Math.sin(a0) * r], [Math.cos(a1) * r, y, Math.sin(a1) * r], [0, 1, 0], -1, [1, 0.75, 0.2], [1, 0.32, 0.05], [1, 0.32, 0.05], 0, 0, 0);
+    }
+    isleGlow = makeMesh(lg);
+  }
+}
+
+/* =====================================================================
+   Camera: it orbits a point on the ground. Fly with the sticks / WASD / mouse.
+   ===================================================================== */
+const FOVY = 55 * Math.PI / 180;
+const cam = { tx: 0, tz: 0, ty: 0, yaw: 0.7, pitch: 0.62, dist: 520 };
+const proj = new Float32Array(16), view = new Float32Array(16), vp = new Float32Array(16), lightVP = new Float32Array(16), lightView = new Float32Array(16), lightProj = new Float32Array(16);
+const SUN = norm3(0.5, 0.62, 0.32);
+let camEye = [0, 100, 0], camF = [0, 0, -1], camR = [1, 0, 0], camU = [0, 1, 0];
+function camLimits() { return { minD: 6, maxD: ISL.shape === 'chain' ? 1300 : 1000, edge: TS - 20 }; }
+function updateCamera(dt) {
+  const L = camLimits();
+  cam.dist = clamp(cam.dist, L.minD, L.maxD);
+  cam.pitch = clamp(cam.pitch, 0.08, 1.45);
+  cam.tx = clamp(cam.tx, -L.edge, L.edge); cam.tz = clamp(cam.tz, -L.edge, L.edge);
+  const want = Math.max(0, groundAt(cam.tx, cam.tz));
+  cam.ty += (want - cam.ty) * Math.min(1, dt * 6);
+  const cp = Math.cos(cam.pitch), sp = Math.sin(cam.pitch), sy = Math.sin(cam.yaw), cy = Math.cos(cam.yaw);
+  camF = [sy * cp, -sp, -cy * cp];
+  let ex = cam.tx - camF[0] * cam.dist, ey = cam.ty - camF[1] * cam.dist, ez = cam.tz - camF[2] * cam.dist;
+  const floor = Math.max(groundAt(ex, ez), 0) + 2.5;               // don't go under the ground or the sea
+  if (ey < floor) ey = floor;
+  camEye = [ex, ey, ez];
+  camF = norm3(cam.tx - ex, cam.ty - ey, cam.tz - ez);
+  camR = norm3(-camF[2], 0, camF[0]);
+  camU = [camR[1] * camF[2] - camR[2] * camF[1], camR[2] * camF[0] - camR[0] * camF[2], camR[0] * camF[1] - camR[1] * camF[0]];
+}
+// a ray from the camera through a point on the screen, onto the ground or the sea
+function screenRay(px, py) {
+  const ndcX = px / innerWidth * 2 - 1, ndcY = 1 - py / innerHeight * 2, t = Math.tan(FOVY / 2), a = innerWidth / innerHeight;
+  return norm3(camF[0] + camR[0] * ndcX * t * a + camU[0] * ndcY * t, camF[1] + camR[1] * ndcX * t * a + camU[1] * ndcY * t, camF[2] + camR[2] * ndcX * t * a + camU[2] * ndcY * t);
+}
+function rayHit(d) {
+  const o = camEye, surf = (x, z) => Math.max(groundAt(x, z), 0);
+  let prev = 0;
+  for (let t = 0.5; t < 3500; t += Math.max(0.4, t * 0.012)) {
+    const x = o[0] + d[0] * t, y = o[1] + d[1] * t, z = o[2] + d[2] * t;
+    if (y <= surf(x, z)) {
+      let lo = prev, hi = t;
+      for (let k = 0; k < 14; k++) { const m = (lo + hi) / 2; if (o[1] + d[1] * m <= surf(o[0] + d[0] * m, o[2] + d[2] * m)) hi = m; else lo = m; }
+      const hx = o[0] + d[0] * hi, hz = o[2] + d[2] * hi, gy = groundAt(hx, hz);
+      return { x: hx, z: hz, y: Math.max(gy, 0), water: gy < 0, depth: -gy };
+    }
+    prev = t;
+  }
+  return null;
+}
+
+/* =====================================================================
+   Sound (from Wildwood): Web Audio, started only after a click or key
+   ===================================================================== */
+let actx = null, sfxBus, musicBus, whiteBuf, brownBuf, waveGain, delayIn;
+function initAudio() {
+  if (!actx) {
+    try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+    const master = actx.createGain(); master.gain.value = 0.9; master.connect(actx.destination);
+    sfxBus = actx.createGain(); sfxBus.gain.value = settings.sfx ? 1 : 0; sfxBus.connect(master);
+    musicBus = actx.createGain(); musicBus.gain.value = settings.music ? 1 : 0; musicBus.connect(master);
+    const len = actx.sampleRate * 3;
+    whiteBuf = actx.createBuffer(1, len, actx.sampleRate); brownBuf = actx.createBuffer(1, len, actx.sampleRate);
+    const w = whiteBuf.getChannelData(0), br = brownBuf.getChannelData(0);
+    let last = 0;
+    for (let i = 0; i < len; i++) { w[i] = Math.random() * 2 - 1; last = (last + 0.02 * w[i]) / 1.02; br[i] = last * 3.5; }
+    // waves on the shore
+    const src = actx.createBufferSource(); src.buffer = brownBuf; src.loop = true;
+    const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 600;
+    waveGain = actx.createGain(); waveGain.gain.value = 0.05;
+    const lfo = actx.createOscillator(); lfo.frequency.value = 0.11;
+    const lfoG = actx.createGain(); lfoG.gain.value = 0.04;
+    lfo.connect(lfoG); lfoG.connect(waveGain.gain);
+    src.connect(f); f.connect(waveGain); waveGain.connect(sfxBus);
+    src.start(); lfo.start();
+    // music echo
+    delayIn = actx.createGain(); delayIn.gain.value = 0.35;
+    const dl = actx.createDelay(2); dl.delayTime.value = 0.5;
+    const fb = actx.createGain(); fb.gain.value = 0.3;
+    const lp = actx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2000;
+    delayIn.connect(dl); dl.connect(lp); lp.connect(fb); fb.connect(dl); lp.connect(musicBus);
+    music.nextT = actx.currentTime + 0.4;
+  }
+  if (actx.state === 'suspended') actx.resume().catch(() => {});
+}
+const audioOn = () => actx && actx.state === 'running';
+function setBus(bus, on) { if (actx && bus) bus.gain.setTargetAtTime(on ? 1 : 0, actx.currentTime, 0.1); }
+function noiseHit(type, freq, q, dur, vol, sweepTo) {
+  if (!audioOn() || !settings.sfx) return;
+  const t = actx.currentTime;
+  const src = actx.createBufferSource(); src.buffer = whiteBuf;
+  const f = actx.createBiquadFilter(); f.type = type; f.frequency.setValueAtTime(freq, t); f.Q.value = q;
+  if (sweepTo) f.frequency.exponentialRampToValueAtTime(sweepTo, t + dur);
+  const g = actx.createGain();
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  src.connect(f); f.connect(g); g.connect(sfxBus);
+  src.start(t, Math.random() * 2, dur + 0.05);
+}
+function tone(type, f0, f1, dur, vol, delay, lp) {
+  if (!audioOn() || !settings.sfx) return;
+  const t = actx.currentTime + (delay || 0);
+  const o = actx.createOscillator(); o.type = type;
+  o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  const g = actx.createGain();
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  let n = o;
+  if (lp) { const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; o.connect(f); n = f; }
+  n.connect(g); g.connect(sfxBus);
+  o.start(t); o.stop(t + dur + 0.05);
+}
+const SFX = {
+  click: () => tone('square', 520, 520, 0.05, 0.05),
+  place: () => { tone('sine', 380, 760, 0.14, 0.18); noiseHit('lowpass', 900, 0.7, 0.12, 0.12); },
+  big: () => { tone('sine', 160, 90, 0.35, 0.3); noiseHit('lowpass', 400, 0.7, 0.3, 0.2); },
+  erase: () => { noiseHit('bandpass', 2400, 1.2, 0.35, 0.18, 400); tone('triangle', 700, 260, 0.25, 0.08); },
+  undo: () => { tone('triangle', 660, 440, 0.12, 0.1); tone('triangle', 440, 330, 0.12, 0.08, 0.08); },
+  turn: () => tone('triangle', 900, 1100, 0.06, 0.06),
+  nope: () => tone('square', 200, 150, 0.12, 0.06),
+};
+function sfx(n) { if (SFX[n]) SFX[n](); }
+// gentle music: a soft plucked tune over slow chords, with an echo
+const music = { nextT: 0, step: 0 };
+const TUNE = [[0, 4, 7, 11], [5, 9, 12, 16], [7, 11, 14, 17], [4, 7, 11, 14]];
+function scheduleMusic() {
+  if (!audioOn() || !settings.music) return;
+  while (music.nextT < actx.currentTime + 0.3) {
+    const t = music.nextT, s = music.step, chord = TUNE[Math.floor(s / 8) % 4], base = 60;
+    const play = (midi, dur, vol, type, echo) => {
+      const o = actx.createOscillator(); o.type = type; o.frequency.value = 440 * Math.pow(2, (midi - 69) / 12);
+      const g = actx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(musicBus); if (echo) g.connect(delayIn); o.start(t); o.stop(t + dur + 0.05);
+    };
+    if (s % 8 === 0) for (const n of chord.slice(0, 3)) play(base - 12 + n, 3.6, 0.03, 'sine');
+    const r = mulberry32(s * 31 + 7)();
+    if (s % 2 === 0 || r < 0.35) play(base + 12 + chord[Math.floor(r * 4)], 0.7, 0.05, 'triangle', true);
+    music.step++; music.nextT += 0.5;
+  }
+}
+</script>
+<script>
+'use strict';
+/* PART-2: things to build (filled in next) */
+const CATS = [], CAT = {};
+function meshesFor() { return null; }
+</script>
+<script>
+'use strict';
+/* =====================================================================
+   Islands you've made: the list, one save per island
+   ===================================================================== */
+let islands = (() => {
+  const raw = readJSON(LIST_KEY);
+  if (!Array.isArray(raw)) return [];
+  return raw.filter(s => s && typeof s === 'object' && typeof s.id === 'string' && s.id.length < 40 && ISLE_BY_ID[s.type] && Number.isFinite(s.seed))
+    .map(s => ({ id: s.id, type: s.type, seed: s.seed | 0, name: typeof s.name === 'string' ? s.name.slice(0, 40) : ISLE_BY_ID[s.type].name, count: Number.isFinite(s.count) ? Math.max(0, s.count | 0) : 0, last: Number.isFinite(s.last) ? s.last : 0 }))
+    .slice(0, 200);
+})();
+function writeList() { writeJSON(LIST_KEY, islands); }
+writeList();
+
+let cur = null;            // the island being built: { id, type, seed, name }
+let objs = [];             // the things on it
+let dirty = false, saveT = 0;
+function saveIsland() {
+  if (!cur) return;
+  writeJSON(ISLE_PREFIX + cur.id, { type: cur.type, seed: cur.seed, objs: objs.map(o => [o.t, +o.hx.toFixed(2), +o.hz.toFixed(2), +o.r.toFixed(3), o.s]),
+    cam: { tx: +cam.tx.toFixed(1), tz: +cam.tz.toFixed(1), yaw: +cam.yaw.toFixed(3), pitch: +cam.pitch.toFixed(3), dist: +cam.dist.toFixed(1) } });
+  const m = islands.find(s => s.id === cur.id);
+  if (m) { m.count = objs.length; m.last = Date.now(); writeList(); }
+  dirty = false;
+}
+</script>
+<script>
+'use strict';
+/* =====================================================================
+   Drawing
+   ===================================================================== */
+let width = 0, height = 0, dpr = 1;
+function resize() {
+  dpr = Math.min(window.devicePixelRatio || 1, 2);                   // up to twice the pixels (Wildwood stops at 1.5)
+  const w = Math.floor(innerWidth * dpr), h = Math.floor(innerHeight * dpr);
+  if (w !== width || h !== height) { width = canvas.width = w; height = canvas.height = h; }
+}
+function setWorldUniforms(time) {
+  const u = progWorld.u;
+  gl.useProgram(progWorld.p);
+  gl.uniformMatrix4fv(u.uVP, false, vp);
+  gl.uniform1f(u.uTime, time);
+  gl.uniform3fv(u.uSun, SUN); gl.uniform3fv(u.uSkyH, ISL.sky[0]); gl.uniform3fv(u.uSkyZ, ISL.sky[1]);
+  gl.uniform3fv(u.uCam, camEye);
+  gl.uniform1f(u.uFogD, 1500); gl.uniform1f(u.uFogEnd, 3000);
+  gl.uniform3fv(u.uWater, ISL.water);
+  gl.uniform1f(u.uFlash, 0); gl.uniform1f(u.uEmit, 0); gl.uniform1f(u.uAlpha, 1);
+  gl.uniformMatrix4fv(u.uLightVP, false, lightVP);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, shadowTex); gl.uniform1i(u.uShadowMap, 0);
+  gl.uniform1f(u.uShadowOn, shadowOK ? 1 : 0);
+  gl.uniform1f(u.uTexel, 1 / SHADOW_N);
+}
+let drawProg = null;          // which program drawMesh feeds (the normal one, or the shadow one)
+function drawMesh(mesh, model, flash) {
+  if (!mesh) return;
+  if (drawProg === progDepth) gl.uniformMatrix4fv(progDepth.u.uModel, false, model);
+  else { gl.uniformMatrix4fv(progWorld.u.uModel, false, model); gl.uniform1f(progWorld.u.uFlash, flash || 0); }
+  gl.bindVertexArray(mesh.vao);
+  if (mesh.ibo) gl.drawElements(gl.TRIANGLES, mesh.count, mesh.idx32 ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT, 0);
+  else gl.drawArrays(gl.TRIANGLES, 0, mesh.count);
+}
+// the shadow map follows the camera: tight (sharp shadows) when you're close, wide when you're far away
+let shadowHalf = 100;
+function shadowPass(time) {
+  shadowHalf = clamp(cam.dist * 0.9 + 25, 35, 900);
+  const texel = shadowHalf * 2 / SHADOW_N;
+  // keep the centre on whole texels so shadows don't shimmer as you move
+  const c = [cam.tx, cam.ty, cam.tz];
+  lookAt(lightView, [c[0] + SUN[0] * 1000, c[1] + SUN[1] * 1000, c[2] + SUN[2] * 1000], c, [0, 1, 0]);
+  const sx = Math.round(lightView[12] / texel) * texel - lightView[12], sy = Math.round(lightView[13] / texel) * texel - lightView[13];
+  lightView[12] += sx; lightView[13] += sy;
+  ortho(lightProj, -shadowHalf, shadowHalf, -shadowHalf, shadowHalf, 1000 - shadowHalf - 300, 1000 + shadowHalf + 200);
+  mul4(lightVP, lightProj, lightView);
+  if (!shadowOK) return;
+  gl.bindFramebuffer(gl.FRAMEBUFFER, shadowFbo);
+  gl.viewport(0, 0, SHADOW_N, SHADOW_N);
+  gl.disable(gl.SCISSOR_TEST);
+  gl.clear(gl.DEPTH_BUFFER_BIT);
+  gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL);
+  gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(1.5, 3);
+  gl.useProgram(progDepth.p); drawProg = progDepth;
+  gl.uniformMatrix4fv(progDepth.u.uLVP, false, lightVP);
+  drawMesh(terrainMesh, IDENT);
+  drawThings(time, true);
+  gl.disable(gl.POLYGON_OFFSET_FILL);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  drawProg = progWorld;
+}
+function render(time) {
+  updateCameraMatrices();
+  shadowPass(time);
+  gl.viewport(0, 0, width, height);
+  gl.disable(gl.CULL_FACE); gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL);
+  gl.clearColor(ISL.sky[0][0], ISL.sky[0][1], ISL.sky[0][2], 1);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  // sky
+  gl.depthMask(false);
+  gl.useProgram(progSky.p);
+  gl.uniform3fv(progSky.u.uFwd, camF); gl.uniform3fv(progSky.u.uRight, camR); gl.uniform3fv(progSky.u.uUp, camU);
+  gl.uniform1f(progSky.u.uTanY, Math.tan(FOVY / 2)); gl.uniform1f(progSky.u.uAspect, width / height);
+  gl.uniform1f(progSky.u.uTime, time); gl.uniform3fv(progSky.u.uSun, SUN);
+  gl.uniform3fv(progSky.u.uSkyH, ISL.sky[0]); gl.uniform3fv(progSky.u.uSkyZ, ISL.sky[1]);
+  gl.bindVertexArray(emptyVao); gl.drawArrays(gl.TRIANGLES, 0, 3);
+  gl.depthMask(true);
+  // the island and everything on it
+  setWorldUniforms(time); drawProg = progWorld;
+  drawMesh(terrainMesh, IDENT);
+  if (isleGlow) { gl.uniform1f(progWorld.u.uEmit, 0.85 + Math.sin(time * 2) * 0.15); drawMesh(isleGlow, IDENT); gl.uniform1f(progWorld.u.uEmit, 0); }
+  drawThings(time, false);
+  // the sea
+  const W = 16000, wx = camEye[0], wz = camEye[2];
+  waterVerts.set([wx - W, 0, wz - W, wx + W, 0, wz - W, wx + W, 0, wz + W, wx - W, 0, wz - W, wx + W, 0, wz + W, wx - W, 0, wz + W]);
+  gl.useProgram(progWater.p);
+  const wu = progWater.u;
+  gl.uniformMatrix4fv(wu.uVP, false, vp); gl.uniform1f(wu.uTime, time); gl.uniform3fv(wu.uSun, SUN);
+  gl.uniform3fv(wu.uSkyH, ISL.sky[0]); gl.uniform3fv(wu.uSkyZ, ISL.sky[1]);
+  gl.uniform3fv(wu.uCam, camEye); gl.uniform1f(wu.uFogD, 1500); gl.uniform1f(wu.uFogEnd, 3000); gl.uniform3fv(wu.uWater, ISL.water);
+  gl.bindVertexArray(waterVao); gl.bindBuffer(gl.ARRAY_BUFFER, waterVbo); gl.bufferSubData(gl.ARRAY_BUFFER, 0, waterVerts);
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  gl.depthMask(false); gl.drawArrays(gl.TRIANGLES, 0, 6); gl.depthMask(true);
+  // the preview of what you're about to place (see-through), drawn over the water
+  gl.useProgram(progWorld.p);
+  drawCursor(time);
+  gl.disable(gl.BLEND);
+  gl.bindVertexArray(null);
+}
+function updateCameraMatrices() {
+  perspective(proj, FOVY, width / height, Math.max(0.3, cam.dist * 0.01), 22000);
+  lookAt(view, camEye, [camEye[0] + camF[0], camEye[1] + camF[1], camEye[2] + camF[2]], [0, 1, 0]);
+  mul4(vp, proj, view);
+  extractPlanes(vp);
+}
+function drawThings() {}
+function drawCursor() {}
+</script>
+<script>
+'use strict';
+/* =====================================================================
+   Menus, input and the main loop
+   ===================================================================== */
+const OVERLAYS = ['title', 'pick', 'saves', 'how', 'pause'];
+let state = 'title', shownAt = 0, howFrom = 'title';
+function show(id) {
+  OVERLAYS.forEach(o => $(o).classList.toggle('show', o === id));
+  shownAt = performance.now();
+  setPadSel(null);
+  if (id && pad.connected) setTimeout(ensureSel, 0);
+}
+function goMenu(id) {
+  if (id === 'pick') buildPick();
+  if (id === 'saves') buildSaves();
+  state = id; show(id);
+  $('hud').classList.toggle('show', false);
+}
+function toast(msg, ms = 2200) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('show'), ms);
+}
+function updateAudioToggles() {
+  document.querySelectorAll('.musicToggle').forEach(b => b.textContent = 'Music: ' + (settings.music ? 'On' : 'Off'));
+  document.querySelectorAll('.sfxToggle').forEach(b => b.textContent = 'Sounds: ' + (settings.sfx ? 'On' : 'Off'));
+}
+function buildPick() {
+  const grid = $('isleGrid'); grid.innerHTML = '';
+  for (const I of ISLANDS) {
+    const b = document.createElement('button'); b.className = 'isle';
+    b.innerHTML = `<div class="art" style="background:${I.art}">${I.icon}</div><div class="txt"><div class="name">${I.name}</div><div class="sub">${I.blurb}</div></div>`;
+    b.onclick = () => { sfx('click'); newIsland(I); };
+    grid.appendChild(b);
+  }
+}
+function buildSaves() {
+  const list = $('saveList'); list.innerHTML = '';
+  if (!islands.length) { list.innerHTML = '<p class="tagline">No islands yet. Make one with <b>New island</b>!</p>'; return; }
+  for (const s of islands.slice().sort((a, b) => b.last - a.last)) {
+    const I = ISLE_BY_ID[s.type], row = document.createElement('div'); row.className = 'saverow';
+    row.innerHTML = `<div class="ic">${I.icon}</div><div class="info"><b></b><span>${I.name} · ${s.count} thing${s.count === 1 ? '' : 's'}</span></div>`;
+    row.querySelector('b').textContent = s.name;
+    const play = document.createElement('button'); play.textContent = 'Play'; play.className = 'primary'; play.style.fontSize = '18px';
+    play.onclick = () => { sfx('click'); openIsland(s); };
+    const del = document.createElement('button'); del.textContent = 'Delete';
+    del.onclick = () => {
+      if (del.dataset.sure) { islands = islands.filter(x => x.id !== s.id); writeList(); try { localStorage.removeItem(ISLE_PREFIX + s.id); } catch (e) {} sfx('erase'); buildSaves(); if (pad.connected) ensureSel(); }
+      else { del.dataset.sure = '1'; del.textContent = 'Sure? Delete!'; del.style.borderColor = '#ff6b5b'; }
+    };
+    row.append(play, del); list.appendChild(row);
+  }
+}
+function newIsland(I) {
+  const id = 'i' + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36);
+  const n = islands.filter(s => s.type === I.id).length + 1;
+  const s = { id, type: I.id, seed: (Math.random() * 1e9) | 0, name: I.name + (n > 1 ? ' ' + n : ''), count: 0, last: Date.now() };
+  islands.push(s); writeList();
+  openIsland(s, true);
+}
+function openIsland(s, fresh) {
+  $('loading').classList.add('show');
+  show(null);
+  setTimeout(() => {          // let "Building your island…" show first
+    cur = s;
+    setIsland(ISLE_BY_ID[s.type], s.seed);
+    buildTerrain();
+    const data = fresh ? null : readJSON(ISLE_PREFIX + s.id);
+    loadThings(data, fresh);
+    const c = data && data.cam;
+    if (c && [c.tx, c.tz, c.yaw, c.pitch, c.dist].every(Number.isFinite)) Object.assign(cam, { tx: c.tx, tz: c.tz, yaw: c.yaw, pitch: c.pitch, dist: c.dist });
+    else Object.assign(cam, { tx: 0, tz: 0, yaw: 0.7, pitch: 0.62, dist: ISL.shape === 'chain' ? 1050 : 760 });
+    cam.ty = Math.max(0, groundAt(cam.tx, cam.tz));
+    s.last = Date.now(); writeList();
+    if (fresh) saveIsland();
+    $('isleName').textContent = s.name;
+    $('loading').classList.remove('show');
+    startPlay();
+    toast(ISLE_BY_ID[s.type].icon + ' ' + s.name, 2000);
+  }, 40);
+}
+function loadThings() {}
+function startPlay() {
+  initAudio();
+  state = 'play'; show(null);
+  $('hud').classList.add('show');
+  updateHint();
+  canvas.focus();
+}
+function openPause() { if (state !== 'play') return; saveIsland(); state = 'pause'; show('pause'); }
+function resume() { state = 'play'; show(null); $('hud').classList.add('show'); canvas.focus(); }
+function updateHint() {
+  $('hint').innerHTML = pad.connected
+    ? 'Left stick: move · Right stick: turn · LT / RT: zoom · A: build · X: eraser · B: undo · LB / RB: group · d-pad: pick and size · Y: turn it'
+    : 'WASD: move · Right mouse drag: turn · Wheel: zoom · Click: build · X: eraser · Z: undo · R: turn it';
+  $('hint').style.opacity = 1;
+  clearTimeout(updateHint.h); updateHint.h = setTimeout(() => $('hint').style.opacity = 0, 12000);
+}
+
+/* ---------------- controller (standard layout, from Wildwood) ---------------- */
+function deadzone(x, y, dz) {
+  const m = Math.hypot(x, y);
+  if (m < dz) return [0, 0];
+  const k = Math.min(1, (m - dz) / (1 - dz)) / m;
+  return [x * k, y * k];
+}
+const pad = { connected: false, lx: 0, ly: 0, rx: 0, ry: 0, lt: 0, rt: 0, btn: [], prev: [], gp: null, dir: null, navT: 0 };
+const isNintendo = gp => /057e|nintendo|pro controller|joy-?con/i.test(gp.id || '');
+function pollPad() {
+  const list = navigator.getGamepads ? Array.from(navigator.getGamepads()).filter(p => p && p.connected) : [];
+  const gp = list[0] || null;
+  pad.prev = pad.btn;
+  if (!gp) { pad.btn = []; pad.lx = pad.ly = pad.rx = pad.ry = pad.lt = pad.rt = 0; pad.gp = null; }
+  else {
+    pad.gp = gp;
+    [pad.lx, pad.ly] = deadzone(gp.axes[0] || 0, gp.axes[1] || 0, 0.15);
+    [pad.rx, pad.ry] = deadzone(gp.axes[2] || 0, gp.axes[3] || 0, 0.15);
+    pad.btn = gp.buttons.map(b => b.pressed);
+    if (isNintendo(gp)) { const b = pad.btn; [b[0], b[1]] = [b[1], b[0]]; [b[2], b[3]] = [b[3], b[2]]; }
+    pad.lt = gp.buttons[6] ? gp.buttons[6].value : 0; pad.rt = gp.buttons[7] ? gp.buttons[7].value : 0;
+  }
+  if (!!gp !== pad.connected) {
+    pad.connected = !!gp; pad.prev = pad.btn;
+    if (gp) { toast('🎮 Controller connected!' + (audioOn() ? '' : ' Click once to turn on sound.')); if (state !== 'play') ensureSel(); else updateHint(); }
+    else { toast('🎮 Controller disconnected'); setPadSel(null); if (state === 'play') openPause(); }
+    updatePadStatus();
+  }
+}
+const pressed = i => !!pad.btn[i] && !pad.prev[i];
+function updatePadStatus() {
+  const el = $('padStatus');
+  if (pad.connected) { el.textContent = '🎮 Controller ready! A to choose, B to go back.' + (audioOn() ? '' : ' Click the mouse once to turn on sound.'); el.classList.add('on'); }
+  else { el.textContent = 'Got an Xbox controller? Plug it in and press any button.'; el.classList.remove('on'); }
+}
+// menus with the d-pad / stick: move to the nearest button in that direction (as in Chicken Runner)
+let padSel = null;
+function activeOverlay() { return OVERLAYS.map(id => $(id)).find(o => o.classList.contains('show')) || null; }
+function navItems() { const ov = activeOverlay(); return ov ? [...ov.querySelectorAll('button, a.btn')].filter(b => !b.disabled && b.offsetParent !== null) : []; }
+function setPadSel(el) {
+  document.querySelectorAll('.padsel').forEach(e => e.classList.remove('padsel'));
+  padSel = el;
+  if (el) { el.classList.add('padsel'); try { el.focus({ preventScroll: true }); } catch (e) {} el.scrollIntoView({ block: 'nearest' }); }
+}
+function ensureSel() {
+  const items = navItems();
+  if (!items.length) { setPadSel(null); return null; }
+  if (!padSel || !items.includes(padSel)) setPadSel(items.find(b => b.classList.contains('primary')) || items.find(b => !b.classList.contains('back')) || items[0]);
+  return padSel;
+}
+function center(el) { const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }
+function moveSel(dx, dy) {
+  const cur0 = ensureSel(); if (!cur0) return;
+  const [cx, cy] = center(cur0), a = cur0.getBoundingClientRect();
+  let best = null, bestScore = Infinity;
+  for (const el of navItems()) {
+    if (el === cur0) continue;
+    const [x, y] = center(el), b = el.getBoundingClientRect();
+    const along = (x - cx) * dx + (y - cy) * dy;
+    if (along <= 4) continue;
+    const gap = dx ? Math.max(0, b.top - a.bottom, a.top - b.bottom) : Math.max(0, b.left - a.right, a.left - b.right);
+    const score = along + (gap > 0 ? 10000 + gap * 3 : 0) + Math.abs(dx ? y - cy : x - cx) * 0.1;
+    if (score < bestScore) { bestScore = score; best = el; }
+  }
+  if (best) { setPadSel(best); sfx('click'); }
+}
+function menuBack() {
+  if (state === 'pick' || state === 'saves') goMenu('title');
+  else if (state === 'how') { if (howFrom === 'pause') { state = 'pause'; show('pause'); } else goMenu('title'); }
+  else if (state === 'pause') resume();
+}
+function menuPad(dt) {
+  if (!pad.connected || performance.now() - shownAt < 350) return;
+  let dir = null;
+  const ax = pad.gp.axes[0] || 0, ay = pad.gp.axes[1] || 0;
+  if (pad.btn[12] || ay < -0.55) dir = 'up'; else if (pad.btn[13] || ay > 0.55) dir = 'down';
+  else if (pad.btn[14] || ax < -0.55) dir = 'left'; else if (pad.btn[15] || ax > 0.55) dir = 'right';
+  const step = d => moveSel(d === 'left' ? -1 : d === 'right' ? 1 : 0, d === 'up' ? -1 : d === 'down' ? 1 : 0);
+  if (dir !== pad.dir) { pad.dir = dir; pad.navT = 0.35; if (dir) step(dir); }
+  else if (dir) { pad.navT -= dt; if (pad.navT <= 0) { pad.navT = 0.14; step(dir); } }
+  if (pressed(0)) { const el = ensureSel(); if (el) el.click(); }
+  else if (pressed(1)) menuBack();
+  else if (pressed(9) && state === 'pause') resume();
+}
+
+/* ---------------- keyboard, mouse and touch ---------------- */
+const keys = new Set();
+let mouse = { x: innerWidth / 2, y: innerHeight / 2, active: false, rdrag: false, lastX: 0, lastY: 0 };
+let usingPad = false;
+addEventListener('keydown', e => {
+  initAudio();
+  if (state !== 'play') {
+    if (e.key === 'Escape') { e.preventDefault(); menuBack(); }
+    return;
+  }
+  if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.code)) e.preventDefault();
+  keys.add(e.code); usingPad = false;
+  if (e.code === 'Escape') { openPause(); return; }
+  if (!e.repeat) keyAction(e);
+});
+addEventListener('keyup', e => keys.delete(e.code));
+addEventListener('blur', () => { keys.clear(); mouse.rdrag = false; if (state === 'play') openPause(); });
+document.addEventListener('pointerdown', () => initAudio(), { capture: true });
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+canvas.addEventListener('pointerdown', e => {
+  if (state !== 'play') return;
+  usingPad = false;
+  mouse.x = e.clientX; mouse.y = e.clientY; mouse.active = true; mouse.lastX = e.clientX; mouse.lastY = e.clientY;
+  if (e.pointerType === 'touch') { touchDown(e); return; }
+  if (e.button === 2 || e.button === 1) { mouse.rdrag = true; try { canvas.setPointerCapture(e.pointerId); } catch (err) {} }
+  else if (e.button === 0) clickAction();
+});
+canvas.addEventListener('pointermove', e => {
+  if (e.pointerType === 'touch') { touchMove(e); return; }
+  mouse.x = e.clientX; mouse.y = e.clientY; mouse.active = true;
+  if (mouse.rdrag) { cam.yaw += (e.clientX - mouse.lastX) * 0.006; cam.pitch += (e.clientY - mouse.lastY) * 0.005; }
+  mouse.lastX = e.clientX; mouse.lastY = e.clientY;
+});
+canvas.addEventListener('pointerup', e => { if (e.pointerType === 'touch') { touchUp(e); return; } if (e.button === 2 || e.button === 1) mouse.rdrag = false; });
+canvas.addEventListener('pointerleave', e => { if (e.pointerType !== 'touch') mouse.active = false; });
+canvas.addEventListener('wheel', e => { if (state !== 'play') return; e.preventDefault(); cam.dist *= Math.pow(1.0015, e.deltaY); }, { passive: false });
+// touch: one finger drags the island along, two fingers pinch to zoom and twist to turn, a tap builds
+const touches = new Map();
+let touchMoved = false, pinch = null;
+function touchDown(e) {
+  touches.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t0: performance.now() });
+  try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+  touchMoved = touches.size > 1 ? true : false;
+  if (touches.size === 2) { const [a, b] = [...touches.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), ang: Math.atan2(b.y - a.y, b.x - a.x) }; }
+}
+function touchMove(e) {
+  const t = touches.get(e.pointerId); if (!t) return;
+  const dx = e.clientX - t.x, dy = e.clientY - t.y;
+  t.x = e.clientX; t.y = e.clientY;
+  if (Math.hypot(t.x - t.x0, t.y - t.y0) > 10) touchMoved = true;
+  if (touches.size === 1 && touchMoved) {
+    const k = cam.dist * 1.6 / innerHeight, sy = Math.sin(cam.yaw), cy = Math.cos(cam.yaw);
+    cam.tx -= (cy * dx + sy * dy * 1.4) * k; cam.tz -= (sy * dx - cy * dy * 1.4) * k;
+  } else if (touches.size === 2 && pinch) {
+    const [a, b] = [...touches.values()], d = Math.hypot(a.x - b.x, a.y - b.y), ang = Math.atan2(b.y - a.y, b.x - a.x);
+    cam.dist *= pinch.d / Math.max(10, d); cam.yaw -= ang - pinch.ang; pinch.d = d; pinch.ang = ang;
+  }
+}
+function touchUp(e) {
+  const t = touches.get(e.pointerId); touches.delete(e.pointerId);
+  if (touches.size < 2) pinch = null;
+  if (t && !touchMoved && touches.size === 0 && performance.now() - t.t0 < 400) { mouse.x = t.x; mouse.y = t.y; mouse.active = true; clickAction(); mouse.active = false; }
+}
+function keyAction() {}
+function clickAction() {}
+
+/* ---------------- each frame ---------------- */
+function updatePlay(dt) {
+  // fly the camera
+  const sy = Math.sin(cam.yaw), cy = Math.cos(cam.yaw);
+  let mx = pad.lx, my = -pad.ly;
+  if (keys.has('KeyW') || keys.has('ArrowUp')) my += 1;
+  if (keys.has('KeyS') || keys.has('ArrowDown')) my -= 1;
+  if (keys.has('KeyD') || keys.has('ArrowRight')) mx += 1;
+  if (keys.has('KeyA') || keys.has('ArrowLeft')) mx -= 1;
+  const ml = Math.hypot(mx, my); if (ml > 1) { mx /= ml; my /= ml; }
+  const sp = (cam.dist * 0.75 + 12) * ((keys.has('ShiftLeft') || keys.has('ShiftRight') || pad.btn[10]) ? 2 : 1);
+  cam.tx += (cy * mx + sy * my) * sp * dt; cam.tz += (sy * mx - cy * my) * sp * dt;
+  cam.yaw += pad.rx * Math.abs(pad.rx) * 2.4 * dt;
+  cam.pitch += pad.ry * Math.abs(pad.ry) * 1.6 * dt;
+  if (keys.has('KeyQ')) cam.yaw -= 1.6 * dt;
+  if (keys.has('KeyE')) cam.yaw += 1.6 * dt;
+  const zoom = pad.lt - pad.rt + (keys.has('PageDown') || keys.has('Minus') && false ? 1 : 0);
+  cam.dist *= Math.pow(2.2, zoom * dt);
+  if (pad.connected && (Math.abs(pad.lx) + Math.abs(pad.ly) + Math.abs(pad.rx) + Math.abs(pad.ry) + pad.lt + pad.rt > 0.05)) usingPad = true;
+  if (pressed(9) || pressed(8) && false) { openPause(); return; }
+  padActions();
+  updateCamera(dt);
+}
+function padActions() {}
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  const time = now / 1000;
+  pollPad();
+  if (state === 'play') updatePlay(dt);
+  else { menuPad(dt); if (!cur) { cam.yaw += dt * 0.04; } updateCamera(dt); }
+  updateLife(dt, time);
+  if (state === 'play' && dirty) { saveT += dt; if (saveT > 3) { saveT = 0; saveIsland(); } }
+  resize();
+  render(time);
+  scheduleMusic();
+  requestAnimationFrame(frame);
+}
+function updateLife() {}
+
+/* ---------------- wiring ---------------- */
+$('newBtn').onclick = () => { sfx('click'); goMenu('pick'); };
+$('loadBtn').onclick = () => { sfx('click'); goMenu('saves'); };
+$('howBtn').onclick = () => { sfx('click'); howFrom = 'title'; state = 'how'; show('how'); };
+$('pauseHowBtn').onclick = () => { sfx('click'); howFrom = 'pause'; state = 'how'; show('how'); };
+document.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { sfx('click'); menuBack(); });
+$('resumeBtn').onclick = () => { sfx('click'); resume(); };
+$('pauseMainBtn').onclick = () => { sfx('click'); saveIsland(); goMenu('title'); };
+$('menuBtn').onclick = () => { sfx('click'); openPause(); };
+document.querySelectorAll('.musicToggle').forEach(b => b.onclick = () => { initAudio(); settings.music = !settings.music; setBus(musicBus, settings.music); writeSettings(); updateAudioToggles(); });
+document.querySelectorAll('.sfxToggle').forEach(b => b.onclick = () => { initAudio(); settings.sfx = !settings.sfx; setBus(sfxBus, settings.sfx); writeSettings(); updateAudioToggles(); sfx('click'); });
+addEventListener('pointermove', () => { if (padSel) setPadSel(null); });
+addEventListener('beforeunload', () => { if (cur && state !== 'title') saveIsland(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden && state === 'play') openPause(); });
+
+// behind the title: a gently turning tropical island
+setIsland(ISLANDS[0], 12345);
+buildTerrain();
+Object.assign(cam, { tx: 0, tz: 0, yaw: 0.7, pitch: 0.5, dist: 820 });
+updateAudioToggles(); updatePadStatus();
+if (!islands.length) $('loadBtn').style.display = 'none';
+show('title');
+requestAnimationFrame(t => { last = t; requestAnimationFrame(frame); });
+</script>
+</body>
+</html>
