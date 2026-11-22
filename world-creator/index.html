@@ -140,6 +140,7 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,38px);lin
       <button class="musicToggle">Music: On</button>
       <button class="sfxToggle">Sounds: On</button>
       <button class="fightToggle">Fighting: On</button>
+      <button class="buildToggle">Towns: People build</button>
       <a class="btn full" href="../">All games</a>
     </div>
     <p id="padStatus">Got an Xbox controller? Plug it in and press any button.</p>
@@ -170,8 +171,8 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,38px);lin
       <div><b class="h">Nature</b>Paint land types: <b>forest, taiga, jungle, savanna, desert, swamp, mountain, path, cobblestone path</b> and <b>corrupted land</b>. Each one colours the ground and grows its own plants. Hold the button to keep painting. The land tools <b>raise</b> and <b>lower</b> the land, <b>flatten</b> it, or dig <b>shallow</b> or <b>deep water</b>. Single trees, rocks and flowers are in <b>Plants</b>.</div>
       <div><b class="h">Oops!</b>The <b>eraser</b> (X on the controller or keyboard) takes things away. <b>Undo</b> (B, or Z on the keyboard) takes back the last thing you did.</div>
       <div><b class="h">It's alive</b>People and creatures walk around by themselves. Birds and dragons fly, and dolphins swim in the sea. Monsters, zombies and the dragon attack; zombies turn what they bite into zombies; anything near a ghost runs away screaming. Turn <b>Fighting</b> off in the menu for calm building.</div>
-      <div><b class="h">Towns</b>Put down a <b>human, elf, dwarf</b> or <b>orc</b> (in People) and they found a town that keeps growing. Orcs fight everyone else; humans sometimes start wars; elves are archers. Open <b>🏰 Towns</b> (T, or View on the controller) to make a town keep the peace or go to war with everyone.</div>
-      <div><b class="h">Maps</b>Ten islands, plus four big maps: <b>Island Set</b> (seven islands, each a different land), <b>Pangea</b> (one giant supercontinent), <b>Sky Islands</b> (floating in the sky) and <b>Endless Ocean</b>. Or pick <b>🎲 Random</b>. New islands are much bigger than the first ones.</div>
+      <div><b class="h">Towns</b>Put down <b>humans, elves, dwarves</b> or <b>orcs</b> (in People). With <b>Towns: People build</b> (in the menu), once <b>10</b> of a kind are together they start building a town: the town hall takes about 2 minutes, then they build their own houses one at a time. With <b>Towns: Quick</b>, one person founds a whole town at once. Orcs fight everyone else; humans sometimes start wars; elves are archers. Open <b>🏰 Towns</b> (T, or View on the controller) to make a town keep the peace or go to war with everyone.</div>
+      <div><b class="h">Maps</b>Ten islands, plus four big maps: <b>Island Set</b> (seven islands, each a different land), <b>Pangea</b> (one giant supercontinent), <b>Sky Islands</b> (floating in the sky) and <b>Endless Ocean</b>. Or pick <b>🎲 Random</b>. New islands are much bigger than the first ones, and people and animals are smaller, so everything is more to scale.</div>
       <div><b class="h">Big monsters</b>Dragons, hydras and sea serpents are huge, and each island can have up to <b>3</b> of each.</div>
       <div><b class="h">Saving</b>Every island saves by itself. Find it again under <b>My islands</b>.</div>
     </div>
@@ -196,6 +197,7 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,38px);lin
       <button class="musicToggle">Music: On</button>
       <button class="sfxToggle">Sounds: On</button>
       <button class="fightToggle">Fighting: On</button>
+      <button class="buildToggle">Towns: People build</button>
       <a class="btn" href="../">All games</a>
     </div>
     <p class="tagline" style="font-size:14px">Your island saves by itself.</p>
@@ -223,8 +225,8 @@ const SAVE_KEY = 'worldcreator.v1', LIST_KEY = 'worldcreator.islands', ISLE_PREF
 function readJSON(k) { try { const v = JSON.parse(localStorage.getItem(k) || 'null'); return v; } catch (e) { try { localStorage.removeItem(k); } catch (e2) {} return null; } }
 function writeJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 const S0 = readJSON(SAVE_KEY) || {};
-const settings = { music: S0.music !== false, sfx: S0.sfx !== false, fight: S0.fight !== false };
-function writeSettings() { writeJSON(SAVE_KEY, { music: settings.music, sfx: settings.sfx, fight: settings.fight }); }
+const settings = { music: S0.music !== false, sfx: S0.sfx !== false, fight: S0.fight !== false, build: S0.build !== false };
+function writeSettings() { writeJSON(SAVE_KEY, { music: settings.music, sfx: settings.sfx, fight: settings.fight, build: settings.build }); }
 
 /* =====================================================================
    Noise (from Wildwood)
@@ -377,12 +379,13 @@ const SKY_VOID = -36;           // under and between the sky islands: open air d
 const ISLE_BY_ID = Object.fromEntries(ISLANDS.map(i => [i.id, i]));
 
 let ISL = ISLANDS[0], chainCenters = [], TS = 620, TN = 560, TSTEP = 2 * TS / TN, HGRID = null, NYGRID = null;
-// v 2 islands (everything made from now on) are much bigger than the first ones; old saved islands keep their old size
+// islands keep the size they were made at: v 1 (the first ones), v 2 (1.75 times as wide), v 3 (everything made from now on,
+// about 1.45 times as wide again as v 2, so the land is to scale with the smaller people and animals)
 function setIsland(def, seed, v) {
-  const big = v >= 2 || def.wide, k = big && !def.wide ? 1.75 : 1;
+  const big = v >= 2 || def.wide, sc = v >= 3 ? 1.45 : 1, k = (big && !def.wide ? 1.75 : 1) * sc;
   ISL = { ...def, R: def.R * k }; setWorldSeed(seed);
-  TS = def.wide ? 1250 : big ? 1100 : def.shape === 'chain' ? 720 : 620;
-  TN = big ? 900 : 560; TSTEP = 2 * TS / TN;
+  TS = (def.wide ? 1250 : big ? 1100 : def.shape === 'chain' ? 720 : 620) * sc;
+  TN = v >= 3 ? 1100 : big ? 900 : 560; TSTEP = 2 * TS / TN;
   chainCenters = [];
   const r = mulberry32(seed + 5), add = (n, dMin, dMax, rMin, rMax, gap, extra) => {
     for (let i = 0; i < n; i++) for (let t = 0; t < 60; t++) {
@@ -404,10 +407,10 @@ function setIsland(def, seed, v) {
       if (def.shape === 'sky') { c.base = 60 + r() * 90; c.I.shape = 'round'; c.I.peak *= 0.5; }
       return c;
     };
-    if (def.shape === 'set') { chainCenters.push(tag([0, 0, 230])); add(6, 520, 930, 160, 230, 110, tag); }
-    else { chainCenters.push(tag([0, 0, 170])); add(13, 260, 1050, 70, 170, 60, tag); }
+    if (def.shape === 'set') { chainCenters.push(tag([0, 0, 230 * sc])); add(6, 520 * sc, 930 * sc, 160 * sc, 230 * sc, 110 * sc, tag); }
+    else { chainCenters.push(tag([0, 0, 170 * sc])); add(13, 260 * sc, 1050 * sc, 70 * sc, 170 * sc, 60 * sc, tag); }
   } else if (def.shape === 'ocean') {
-    add(5, 200, 1050, 22, 42, 300, c => c);
+    add(5, 200 * sc, 1050 * sc, 22 * sc, 42 * sc, 300 * sc, c => c);
   }
 }
 // 0 in the middle of the land, 1 at the coast, more out at sea
@@ -951,7 +954,7 @@ function sphereVisible(x, y, z, r) { for (const p of planes) if (p[0] * x + p[1]
 /* =====================================================================
    The island mesh
    ===================================================================== */
-let terrainMesh = null, isleGlow = null, terrainGeo = null;
+let terrainMesh = null, isleGlow = null, terrainGeo = null, terrainRows = null;
 // one point of the island grid: its position, smooth normal and colour, written straight into the vertex buffer
 function terrainVert(i, j) {
   const W = TN + 1, k = j * W + i, x = -TS + i * TSTEP, z = -TS + j * TSTEP, h = HGRID[k];
@@ -1015,22 +1018,31 @@ function buildTerrain() {
   for (let j = 0; j < W; j++) for (let i = 0; i < W; i++) terrainVert(i, j);
   g.n = W * W;
   const isVoid = k => sky && HGRID[k] <= SKY_VOID + 0.5;
-  const idx = [];
-  for (let j = 0; j < TN; j++) for (let i = 0; i < TN; i++) {
-    const a = j * W + i, b = a + 1, c = a + W, d = c + 1;
-    for (const t of [[a, c, b], [b, c, d]]) {
-      const nv = isVoid(t[0]) + isVoid(t[1]) + isVoid(t[2]);
-      if (nv === 0 || nv === 3) idx.push(t[0], t[1], t[2]);     // (sky islands: no walls down from their edges to the sea floor)
+  const main = new Uint32Array(TN * TN * 6);
+  let n = 0;
+  terrainRows = new Uint32Array(TN + 1);                          // where each row of the grid starts (the shadow pass only draws nearby rows)
+  for (let j = 0; j < TN; j++) {
+    terrainRows[j] = n;
+    for (let i = 0; i < TN; i++) {
+      const a = j * W + i, b = a + 1, c = a + W, d = c + 1;
+      if (!sky) { main[n++] = a; main[n++] = c; main[n++] = b; main[n++] = b; main[n++] = c; main[n++] = d; continue; }
+      for (const t of [[a, c, b], [b, c, d]]) {
+        const nv = isVoid(t[0]) + isVoid(t[1]) + isVoid(t[2]);
+        if (nv === 0 || nv === 3) { main[n++] = t[0]; main[n++] = t[1]; main[n++] = t[2]; }   // (sky islands: no walls down from their edges to the sea floor)
+      }
     }
   }
+  terrainRows[TN] = n;
+  const idx = [];
   // the deep sea floor carries on out to the horizon, so you never see where the island's square ends
   const F = 16000, fy = -36.3, fc = shade(groundColor(TS * 2, TS * 2, -36, 1), 1);
   for (const [a, b, c] of [[[-F, -F], [F, -F], [F, F]], [[-F, -F], [F, F], [-F, F]]])
     g.v(a[0], fy, a[1], 0, 1, 0, -1, fc[0], fc[1], fc[2], 0), g.v(b[0], fy, b[1], 0, 1, 0, -1, fc[0], fc[1], fc[2], 0), g.v(c[0], fy, c[1], 0, 1, 0, -1, fc[0], fc[1], fc[2], 0);
   for (let i = 0; i < 6; i++) idx.push(W * W + i);
   if (sky) skyUndersides(g, idx, isVoid);
+  const all = new Uint32Array(n + idx.length); all.set(main.subarray(0, n)); all.set(idx, n);
   if (terrainMesh) freeMesh(terrainMesh);
-  terrainMesh = makeMesh(g, Uint32Array.from(idx));
+  terrainMesh = makeMesh(g, all);
   // glowing bits that belong to the island itself (the volcano's lava)
   if (isleGlow) { freeMesh(isleGlow); isleGlow = null; }
   if (ISL.shape === 'volcano') {
@@ -1084,7 +1096,7 @@ function replayLand(list) {
   for (const e of list.slice(0, 8000)) {
     if (!Array.isArray(e) || !['raise', 'lower', 'flatten', 'shallow', 'deep', 'biome'].includes(e[0]) || !e.slice(1, 6).every(Number.isFinite)) continue;
     const [mode, x, z, r, amt, target] = e;
-    if (Math.abs(x) > 2000 || Math.abs(z) > 2000 || r <= 0 || r > 60 || amt < 0 || amt > 5) continue;
+    if (Math.abs(x) > 3000 || Math.abs(z) > 3000 || r <= 0 || r > 60 || amt < 0 || amt > 5) continue;
     if (mode === 'biome') { if (!BIOME_IDS[target]) continue; paintBiome(BIOME_IDS[target], x, z, r, true); }
     else applyBrush(mode, x, z, r, amt, target, true);
     landEdits.push(e);
@@ -1127,7 +1139,7 @@ function screenRay(px, py) {
 function rayHit(d) {
   const o = camEye, surf = (x, z) => Math.max(groundAt(x, z), 0);
   let prev = 0;
-  for (let t = 0.5; t < 6000; t += Math.max(0.4, t * 0.012)) {
+  for (let t = 0.5; t < 9000; t += Math.max(0.4, t * 0.012)) {
     const x = o[0] + d[0] * t, y = o[1] + d[1] * t, z = o[2] + d[2] * t;
     if (y <= surf(x, z)) {
       let lo = prev, hi = t;
@@ -2298,7 +2310,9 @@ const SIZES = [0.5, 1, 1.75, 3], SIZE_NAMES = ['Small', 'Medium', 'Big', 'Giant'
 // the brush on the left: how many things go down at once, and how wide the land tools reach
 // some things are bigger (or smaller) than their size button says, and the biggest monsters are limited to 3 of each per island
 const GROW = { dragon: 2.2, hydra: 2, seaserpent: 2.2, troll: 0.62 }, ONLY3 = new Set(['dragon', 'hydra', 'seaserpent']);
-const sizeOf = d => SIZES[tool.size] * (GROW[d.id] || 1);
+// people, animals and monsters are 0.7 times the size they used to be (so the islands are more to scale), except the big monsters
+const SHRINK = 0.7, growOf = id => GROW[id] || (['people', 'creatures', 'mythical'].includes(CAT[id].cat) ? SHRINK : 1);
+const sizeOf = d => SIZES[tool.size] * growOf(d.id);
 const countOf = id => { let n = 0; for (const o of objs) if (o.t === id) n++; return n; };
 const BRUSH_N = [1, 2, 3, 6, 10], BRUSH_R = [0, 3, 5, 9, 14];
 const tool = { cat: 0, item: CATS.map(() => 0), size: 1, turn: 0, erase: false, brush: 0 };
@@ -2452,12 +2466,13 @@ function loadThings(data, fresh) {
   loadTowns(data && data.towns);
   if (fresh) { scatterStart(); return; }
   if (!data || !Array.isArray(data.objs)) return;
+  const shrinkOld = data.sz !== 2;                // islands saved before people and animals got smaller: shrink them to match
   for (const a of data.objs.slice(0, 3000)) {
     if (!Array.isArray(a) || !CAT[a[0]]) continue;
     const [t, x, z, r, s] = a;
-    if (![x, z, r, s].every(Number.isFinite) || Math.abs(x) > 2000 || Math.abs(z) > 2000) continue;
+    if (![x, z, r, s].every(Number.isFinite) || Math.abs(x) > 3000 || Math.abs(z) > 3000) continue;
     if (ONLY3.has(t) && countOf(t) >= 3) continue;
-    const o = makeObj(t, x, z, r, clamp(s, 0.25, 4 * (GROW[t] || 1))); settle(o); objs.push(o);
+    const o = makeObj(t, x, z, r, clamp(s * (shrinkOld && !GROW[t] ? growOf(t) : 1), 0.2, 4 * Math.max(1, GROW[t] || 1))); settle(o); objs.push(o);
     if (typeof a[5] === 'string' && TOWN[a[5]]) o.town = a[5];
     if (CAT[t].race) o.race = CAT[t].race;
   }
@@ -2475,7 +2490,7 @@ function scatterStart() {
       else if (h < (d.cat === 'plants' ? 0.9 : 0.4) || slopeAt(x, z) < (d.cat === 'plants' ? 0.72 : 0.8)) continue;
       if (id === 'palm' && h > 14) continue;
       if (ISL.shape === 'volcano' && Math.hypot(x, z) < ISL.R * 0.32 && d.cat === 'plants' && id !== 'rock') continue;
-      const o = makeObj(id, x, z, r() * 6.283, d.cat === 'plants' ? 0.75 + r() * 0.6 : GROW[id] || 1);
+      const o = makeObj(id, x, z, r() * 6.283, d.cat === 'plants' ? 0.75 + r() * 0.6 : growOf(id));
       settle(o); objs.push(o); made++;
     }
   };
@@ -2501,7 +2516,7 @@ function pickTarget(o, d) {
   o.tx = o.hx; o.tz = o.hz;
 }
 function updateLife(dt, time) {
-  updateTowns(dt); buildGrid(); ghostScares(dt); corruptSpawns(dt); updateFx(dt); updateArrows(dt);
+  updateSettlers(dt); updateTowns(dt); buildGrid(); ghostScares(dt); corruptSpawns(dt); updateFx(dt); updateArrows(dt);
   for (const o of objs.slice()) {                        // (a copy: things can be beaten while we go)
     if (o.gone) continue;
     const d = CAT[o.t];
@@ -2748,7 +2763,7 @@ function townName(race) {
   return pick(a) + pick(b) + ' ' + (towns.length + 1);
 }
 function makeTown(race, x, z, o = {}) {
-  const t = Object.assign({ id: 't' + (++townSeq) + Math.floor(Math.random() * 1e4).toString(36), race, name: townName(race), x, z, mode: 'normal', built: 0, growT: 2, folkT: 1, warT: 60 + Math.random() * 60, marchT: 10 }, o);
+  const t = Object.assign({ build: 1, id: 't' + (++townSeq) + Math.floor(Math.random() * 1e4).toString(36), race, name: townName(race), x, z, mode: 'normal', built: 0, growT: 2, folkT: 1, warT: 60 + Math.random() * 60, marchT: 10 }, o);
   towns.push(t); TOWN[t.id] = t;
   return t;
 }
@@ -2766,6 +2781,7 @@ function atWar(ia, ib) {
 }
 // founding: a centre building where you put them, and a few townsfolk
 function foundAt(hit, d) {
+  if (settings.build) return settleAt(hit, d);
   if (!canPlace(d, hit, 1)) { sfx('nope'); toast(`${d.icon} ${d.name}s need land to build a town`, 1500); return false; }
   const race = d.race, grp = group(false);
   const home = towns.find(t => t.race === race && Math.hypot(t.x - hit.x, t.z - hit.z) < 70);
@@ -2779,19 +2795,113 @@ function foundAt(hit, d) {
   for (let i = 0; i < Math.max(3, BRUSH_N[tool.brush]) && (home ? i < BRUSH_N[tool.brush] : true); i++) {
     const a = Math.random() * 6.283, x = t.x + Math.cos(a) * (6 + Math.random() * 4), z = t.z + Math.sin(a) * (6 + Math.random() * 4);
     if (groundAt(x, z) < 0.2) continue;
-    const o = addThing(pick(RACES[race].folk), x, z, Math.random() * 6.283, 1, grp);
+    const id = pick(RACES[race].folk), o = addThing(id, x, z, Math.random() * 6.283, growOf(id), grp);
     if (o) { o.race = race; o.town = t.id; o.hx = t.x; o.hz = t.z; made++; }
   }
   dirty = true; updateCount(); sfx('place');
   return made > 0 || !home;
 }
+/* ---- "People build" towns (the Towns option): you put down people, and once 10 of a kind are together they
+   build their own town. The centre takes about 2 minutes to go up, and then each house takes a while too. ---- */
+const TOWN_NEED = 10, CENTER_TIME = 120, HOUSE_TIME = 20;
+function settleAt(hit, d) {
+  if (!canPlace(d, hit, 1)) { sfx('nope'); toast(`${d.icon} ${d.name}s go on land`, 1500); return false; }
+  const race = d.race, grp = group(false), n = BRUSH_N[tool.brush], R = RACES[race];
+  const home = towns.find(t => t.race === race && Math.hypot(t.x - hit.x, t.z - hit.z) < 70);
+  let made = 0;
+  for (let k = 0; k < n * 6 && made < n; k++) {
+    const a = Math.random() * 6.283, q = made === 0 ? 0 : Math.sqrt(Math.random()) * (3 + n * 0.8), x = hit.x + Math.cos(a) * q, z = hit.z + Math.sin(a) * q;
+    if (groundAt(x, z) < 0.2) continue;
+    const id = made === 0 ? d.id : pick(R.folk), o = addThing(id, x, z, Math.random() * 6.283, sizeOf(CAT[id]), grp);
+    if (!o) break;
+    o.race = race; made++;
+    if (home) { o.town = home.id; o.hx = home.x; o.hz = home.z; }
+  }
+  if (!made) { sfx('nope'); return false; }
+  dirty = true; updateCount(); sfx('place');
+  if (!home && !grp.told) {
+    const near = objs.filter(o => o.race === race && !o.town && Math.hypot(o.x - hit.x, o.z - hit.z) < 60).length;
+    if (near < TOWN_NEED) toast(`${R.icon} ${near} ${R.name.toLowerCase()} here. ${TOWN_NEED} together can build a town!`, 2200);
+    grp.told = true;
+  }
+  return true;
+}
+let settleT = 0;
+function updateSettlers(dt) {
+  if ((settleT -= dt) > 0) return;
+  settleT = 1.5;
+  const free = objs.filter(o => o.race && !o.town && !o.gone && !o.march);
+  for (const o of free) {
+    const t = towns.find(t => t.race === o.race && Math.hypot(t.x - o.x, t.z - o.z) < 70);   // near a town of their own people: move in
+    if (t) { o.town = t.id; o.hx = t.x; o.hz = t.z; continue; }
+    let cx = 0, cz = 0, n = 0;                                    // otherwise drift toward others of their kind
+    for (const p of free) if (p.race === o.race && !p.town && Math.hypot(p.x - o.x, p.z - o.z) < 80) { cx += p.x; cz += p.z; n++; }
+    if (n > 1) { o.hx += (cx / n - o.hx) * 0.35; o.hz += (cz / n - o.hz) * 0.35; }
+  }
+  if (!settings.build) return;
+  for (const o of free) {
+    if (o.town) continue;
+    const crowd = free.filter(p => p.race === o.race && !p.town && Math.hypot(p.x - o.x, p.z - o.z) < 35);
+    if (crowd.length < TOWN_NEED) continue;
+    let x = crowd.reduce((s, p) => s + p.x, 0) / crowd.length, z = crowd.reduce((s, p) => s + p.z, 0) / crowd.length;
+    if (groundAt(x, z) < 0.4 || slopeAt(x, z) < 0.75) { x = o.x; z = o.z; }
+    const t = makeTown(o.race, x, z, { build: 0 });
+    for (const p of crowd) { p.town = t.id; p.hx = x; p.hz = z; }
+    placeCenter(t);
+    toast(`🔨 The ${RACES[t.race].name.toLowerCase()} are building ${t.name}!`, 2600);
+    [392, 523].forEach((f, i) => tone('triangle', f, f, 0.2, 0.08, i * 0.12));
+    if (state === 'towns') buildTownPanel();
+    break;
+  }
+}
+function placeCenter(t) {
+  const c = makeObj(RACES[t.race].center, t.x, t.z, Math.random() * 6.283, 1); c.town = t.id; c.build = t.build; settle(c); objs.push(c); updateCount(); dirty = true;
+  return c;
+}
+// the work going on in a town: the centre (and later each house) rises out of the ground while the townsfolk hammer
+function buildWork(t, dt) {
+  if (t.build < 1) {
+    let c = objs.find(o => o.town === t.id && o.t === RACES[t.race].center && !o.gone);
+    if (!c) c = placeCenter(t);
+    t.build = Math.min(1, t.build + dt / CENTER_TIME); c.build = t.build;
+    hammer(t, c, dt);
+    if (t.build >= 1) {
+      c.build = undefined; poof(c.x, c.y, c.z, 4, [0.85, 0.8, 0.7]);
+      toast(`🎉 ${t.name} is built! Now it will grow.`, 2600);
+      [523, 659, 784, 1046].forEach((f, i) => tone('triangle', f, f, 0.22, 0.08, i * 0.1));
+      t.growT = 6; dirty = true;
+    }
+    return true;
+  }
+  for (const b of objs) if (b.build !== undefined && b.town === t.id) {
+    b.build = Math.min(1, b.build + dt / HOUSE_TIME); hammer(t, b, dt);
+    if (b.build >= 1) { b.build = undefined; poof(b.x, b.y, b.z, 2, [0.85, 0.8, 0.7]); }
+  }
+  return false;
+}
+function hammer(t, b, dt) {
+  b.hamT = (b.hamT || 0) - dt;
+  if (b.hamT > 0) return;
+  b.hamT = 0.5 + Math.random() * 0.4;
+  const near = townFolk(t).filter(o => !o.march && !o.foe);
+  if (!near.length) return;
+  const w = pick(near), r = CAT[b.t].r * b.s + 1;                  // someone walks over and gets to work
+  if (Math.hypot(w.x - b.x, w.z - b.z) > r + 3) { const a = Math.random() * 6.283; w.tx = b.x + Math.cos(a) * r; w.tz = b.z + Math.sin(a) * r; w.wait = 0; }
+  else {
+    w.lunge = 1; w.r = Math.atan2(b.x - w.x, b.z - w.z);
+    if (near3(w)) tone('square', 900 + Math.random() * 200, 700, 0.05, 0.04);
+    if (Math.random() < 0.3) poof(b.x + (Math.random() - 0.5) * r, b.y, b.z + (Math.random() - 0.5) * r, 0.6, [0.8, 0.75, 0.65]);
+  }
+}
 // growing: new houses every few seconds, and more townsfolk as houses go up
 function growTown(t, dt) {
   const folk = townFolk(t), homes = townBuildings(t);
   if (!homes.length && !folk.length) { removeTown(t); return; }
+  if (buildWork(t, dt)) return;                     // (still building the town centre)
+  const slow = settings.build, done = homes.filter(b => b.build === undefined).length;
   t.growT -= dt;
   if (t.growT <= 0 && homes.length < 26 && objs.length < 2900) {
-    t.growT = 5 + homes.length * 0.6 + Math.random() * 3;
+    t.growT = (slow ? 12 + homes.length * 0.9 : 5 + homes.length * 0.6) + Math.random() * 3;
     const R = RACES[t.race], total = R.homes.reduce((s, h) => s + h[1], 0);
     let p = Math.random() * total, id = R.homes[0][0];
     for (const [hid, w] of R.homes) { p -= w; if (p < 0) { id = hid; break; } }
@@ -2799,7 +2909,8 @@ function growTown(t, dt) {
     for (let k = 0; k < 14; k++) {
       const a = Math.random() * 6.283, q = 7 + Math.random() * ring, x = t.x + Math.cos(a) * q, z = t.z + Math.sin(a) * q;
       if (groundAt(x, z) < 0.4 || slopeAt(x, z) < 0.78 || crowded(x, z, hd.r * 0.9 + 1.5)) continue;
-      const o = makeObj(id, x, z, Math.atan2(t.x - x, t.z - z), 1); o.town = t.id; settle(o); objs.push(o); pop.push({ o, t: 0 });
+      const o = makeObj(id, x, z, Math.atan2(t.x - x, t.z - z), 1); o.town = t.id; settle(o); objs.push(o);
+      if (slow) o.build = 0; else pop.push({ o, t: 0 });
       t.built++; updateCount(); dirty = true;
       if (near3(o)) noiseHit('lowpass', 500, 0.7, 0.2, 0.08);
       break;
@@ -2808,9 +2919,9 @@ function growTown(t, dt) {
   t.folkT -= dt;
   if (t.folkT <= 0) {
     t.folkT = 3.5 + Math.random() * 2;
-    if (folk.length < Math.min(40, 3 + homes.length * 2) && objs.length < 2900) {
+    if (folk.length < Math.min(40, (slow ? TOWN_NEED : 3) + done * 2) && objs.length < 2900) {
       const a = Math.random() * 6.283, x = t.x + Math.cos(a) * 5, z = t.z + Math.sin(a) * 5;
-      if (groundAt(x, z) > 0.2) { const o = makeObj(pick(RACES[t.race].folk), x, z, a, 1); o.race = t.race; o.town = t.id; settle(o); objs.push(o); pop.push({ o, t: 0 }); updateCount(); }
+      if (groundAt(x, z) > 0.2) { const id = pick(RACES[t.race].folk), o = makeObj(id, x, z, a, growOf(id)); o.race = t.race; o.town = t.id; settle(o); objs.push(o); pop.push({ o, t: 0 }); updateCount(); }
     }
   }
 }
@@ -2879,7 +2990,7 @@ function drawTownLabels() {
     const p = toScreen(t.x, groundAt(t.x, t.z) + 12, t.z); if (!p || p[2] > 1400) continue;
     const n = townFolk(t).length, war = towns.some(o => atWar(t.id, o.id));
     const el = labEl('wlab');
-    placeLab(el, p, 'wlab town', `${RACES[t.race].icon} ${t.name}<b>${n}</b>${t.mode === 'peace' ? ' 🕊️' : war ? ' ⚔️' : ''}`);
+    placeLab(el, p, 'wlab town', t.build < 1 ? `🔨 ${t.name}<b>${n}</b> ${Math.floor(t.build * 100)}%` : `${RACES[t.race].icon} ${t.name}<b>${n}</b>${t.mode === 'peace' ? ' 🕊️' : war ? ' ⚔️' : ''}`);
     el.style.color = ''; el.style.opacity = '1';
   }
 }
@@ -2892,7 +3003,7 @@ function buildTownPanel() {
     const row = document.createElement('div'); row.className = 'saverow';
     row.innerHTML = `<div class="ic">${RACES[t.race].icon}</div><div class="info"><b></b><span></span></div>`;
     row.querySelector('b').textContent = `${t.name} · ${n}`;
-    row.querySelector('span').textContent = t.mode === 'peace' ? 'Keeping the peace' : foes.length ? 'At war with ' + foes.join(', ') : 'At peace';
+    row.querySelector('span').textContent = t.build < 1 ? `Building the town: ${Math.floor(t.build * 100)}%` : t.mode === 'peace' ? 'Keeping the peace' : foes.length ? 'At war with ' + foes.join(', ') : 'At peace';
     const mk = (label, fn, on) => { const b = document.createElement('button'); b.textContent = label; if (on) b.className = 'primary', b.style.fontSize = '15px'; b.onclick = () => { fn(); sfx('click'); dirty = true; buildTownPanel(); if (pad.connected) ensureSel(); }; row.appendChild(b); };
     mk('🕊️ Make peace', () => { t.mode = 'peace'; for (const k of [...wars.keys()]) if (k.split('|').includes(t.id)) wars.delete(k); toast(`🕊️ ${t.name} is keeping the peace`, 1800); }, t.mode === 'peace');
     mk('⚔️ War with everyone', () => { t.mode = 'everyone'; toast(`⚔️ ${t.name} is at war with everyone!`, 1800); }, t.mode === 'everyone');
@@ -2901,13 +3012,13 @@ function buildTownPanel() {
     list.appendChild(row);
   }
 }
-function saveTowns() { return towns.map(t => ({ id: t.id, race: t.race, name: t.name, x: +t.x.toFixed(1), z: +t.z.toFixed(1), mode: t.mode, built: t.built })); }
+function saveTowns() { return towns.map(t => ({ id: t.id, race: t.race, name: t.name, x: +t.x.toFixed(1), z: +t.z.toFixed(1), mode: t.mode, built: t.built, build: +t.build.toFixed(3) })); }
 function loadTowns(list) {
   towns = []; TOWN = {}; wars = new Map();
   if (!Array.isArray(list)) return;
   for (const s of list.slice(0, 60)) {
     if (!s || typeof s.id !== 'string' || s.id.length > 30 || !RACES[s.race] || !Number.isFinite(s.x) || !Number.isFinite(s.z)) continue;
-    makeTown(s.race, s.x, s.z, { id: s.id, name: typeof s.name === 'string' ? s.name.slice(0, 30) : townName(s.race), mode: ['normal', 'peace', 'everyone'].includes(s.mode) ? s.mode : 'normal', built: Number.isFinite(s.built) ? s.built : 0 });
+    makeTown(s.race, s.x, s.z, { id: s.id, name: typeof s.name === 'string' ? s.name.slice(0, 30) : townName(s.race), mode: ['normal', 'peace', 'everyone'].includes(s.mode) ? s.mode : 'normal', built: Number.isFinite(s.built) ? s.built : 0, build: Number.isFinite(s.build) ? clamp(s.build, 0, 1) : 1 });
   }
 }
 let fx = [], texts = [], screamT = 0;
@@ -3051,7 +3162,7 @@ function corruptSpawns(dt) {
     const a = Math.random() * 6.283, q = Math.random() * r, x = cx + Math.cos(a) * q, z = cz + Math.sin(a) * q;
     if (groundAt(x, z) < 0.3) continue;
     const t = Math.random() < 0.55 ? 'skeleton' : Math.random() < 0.6 ? 'demon' : 'zombie';
-    const o = makeObj(t, x, z, Math.random() * 6.283, 1); settle(o); objs.push(o); pop.push({ o, t: 0 });
+    const o = makeObj(t, x, z, Math.random() * 6.283, growOf(t)); settle(o); objs.push(o); pop.push({ o, t: 0 });
     poof(x, o.y, z, 1, [0.45, 0.15, 0.5]); updateCount();
     if (near3(o)) tone('sawtooth', 120, 70, 0.6, 0.08, 0, 500);
     break;
@@ -3098,6 +3209,7 @@ function popScale(o) { const p = pop.find(q => q.o === o); if (!p) return 1; con
 function drawOne(o, time, shadow, flash) {
   const d = CAT[o.t], M = meshesFor(d), s = o.s * popScale(o);
   let base = mChain(mT(o.x, o.y + (o.bob || 0), o.z), mRy(o.r), mS(s));
+  if (o.build !== undefined) base = mChain(base, mS3(1, 0.04 + 0.96 * o.build, 1));   // still being built: it rises out of the ground
   if (o.tilt) base = mChain(base, mRz(o.tilt));
   if (o.pitch) base = mChain(base, mRx(o.pitch));
   if (o.bank) base = mChain(base, mRz(o.bank * 0.4));
@@ -3281,7 +3393,7 @@ let islands = (() => {
   const raw = readJSON(LIST_KEY);
   if (!Array.isArray(raw)) return [];
   return raw.filter(s => s && typeof s === 'object' && typeof s.id === 'string' && s.id.length < 40 && ISLE_BY_ID[s.type] && Number.isFinite(s.seed))
-    .map(s => ({ id: s.id, type: s.type, seed: s.seed | 0, name: typeof s.name === 'string' ? s.name.slice(0, 40) : ISLE_BY_ID[s.type].name, count: Number.isFinite(s.count) ? Math.max(0, s.count | 0) : 0, last: Number.isFinite(s.last) ? s.last : 0, v: s.v === 2 ? 2 : 1 }))
+    .map(s => ({ id: s.id, type: s.type, seed: s.seed | 0, name: typeof s.name === 'string' ? s.name.slice(0, 40) : ISLE_BY_ID[s.type].name, count: Number.isFinite(s.count) ? Math.max(0, s.count | 0) : 0, last: Number.isFinite(s.last) ? s.last : 0, v: s.v === 3 ? 3 : s.v === 2 ? 2 : 1 }))
     .slice(0, 200);
 })();
 function writeList() { writeJSON(LIST_KEY, islands); }
@@ -3292,7 +3404,7 @@ let objs = [];             // the things on it
 let dirty = false, saveT = 0;
 function saveIsland() {
   if (!cur) return;
-  writeJSON(ISLE_PREFIX + cur.id, { type: cur.type, seed: cur.seed, land: landEdits, towns: saveTowns(), objs: objs.map(o => o.town ? [o.t, +o.hx.toFixed(2), +o.hz.toFixed(2), +o.r.toFixed(3), o.s, o.town] : [o.t, +o.hx.toFixed(2), +o.hz.toFixed(2), +o.r.toFixed(3), o.s]),
+  writeJSON(ISLE_PREFIX + cur.id, { type: cur.type, seed: cur.seed, sz: 2, land: landEdits, towns: saveTowns(), objs: objs.map(o => o.town ? [o.t, +o.hx.toFixed(2), +o.hz.toFixed(2), +o.r.toFixed(3), o.s, o.town] : [o.t, +o.hx.toFixed(2), +o.hz.toFixed(2), +o.r.toFixed(3), o.s]),
     cam: { tx: +cam.tx.toFixed(1), tz: +cam.tz.toFixed(1), yaw: +cam.yaw.toFixed(3), pitch: +cam.pitch.toFixed(3), dist: +cam.dist.toFixed(1) } });
   const m = islands.find(s => s.id === cur.id);
   if (m) { m.count = objs.length; m.last = Date.now(); writeList(); }
@@ -3355,7 +3467,11 @@ function shadowPass(time) {
   gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(1.5, 3);
   gl.useProgram(progDepth.p); drawProg = progDepth;
   gl.uniformMatrix4fv(progDepth.u.uLVP, false, lightVP);
-  drawMesh(terrainMesh, IDENT);
+  { // only the rows of the island that are inside the shadow area
+    const j0 = clamp(Math.floor((cam.tz - shadowHalf * 1.6 + TS) / TSTEP), 0, TN), j1 = clamp(Math.ceil((cam.tz + shadowHalf * 1.6 + TS) / TSTEP), 0, TN);
+    gl.uniformMatrix4fv(progDepth.u.uModel, false, IDENT); gl.bindVertexArray(terrainMesh.vao);
+    if (terrainRows[j1] > terrainRows[j0]) gl.drawElements(gl.TRIANGLES, terrainRows[j1] - terrainRows[j0], gl.UNSIGNED_INT, terrainRows[j0] * 4);
+  }
   drawThings(time, true);
   gl.disable(gl.POLYGON_OFFSET_FILL);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -3476,6 +3592,7 @@ function toast(msg, ms = 2200) {
 }
 function updateAudioToggles() {
   document.querySelectorAll('.fightToggle').forEach(b => b.textContent = 'Fighting: ' + (settings.fight ? 'On' : 'Off'));
+  document.querySelectorAll('.buildToggle').forEach(b => b.textContent = 'Towns: ' + (settings.build ? 'People build' : 'Quick'));
   document.querySelectorAll('.musicToggle').forEach(b => b.textContent = 'Music: ' + (settings.music ? 'On' : 'Off'));
   document.querySelectorAll('.sfxToggle').forEach(b => b.textContent = 'Sounds: ' + (settings.sfx ? 'On' : 'Off'));
 }
@@ -3512,7 +3629,7 @@ function buildSaves() {
 function newIsland(I) {
   const id = 'i' + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36);
   const n = islands.filter(s => s.type === I.id).length + 1;
-  const s = { id, type: I.id, seed: (Math.random() * 1e9) | 0, name: I.name + (n > 1 ? ' ' + n : ''), count: 0, last: Date.now(), v: 2 };
+  const s = { id, type: I.id, seed: (Math.random() * 1e9) | 0, name: I.name + (n > 1 ? ' ' + n : ''), count: 0, last: Date.now(), v: 3 };
   islands.push(s); writeList();
   openIsland(s, true);
 }
@@ -3771,6 +3888,7 @@ function openTowns() { if (state !== 'play') return; saveIsland(); state = 'town
 document.querySelectorAll('.musicToggle').forEach(b => b.onclick = () => { initAudio(); settings.music = !settings.music; setBus(musicBus, settings.music); writeSettings(); updateAudioToggles(); });
 document.querySelectorAll('.sfxToggle').forEach(b => b.onclick = () => { initAudio(); settings.sfx = !settings.sfx; setBus(sfxBus, settings.sfx); writeSettings(); updateAudioToggles(); sfx('click'); });
 document.querySelectorAll('.fightToggle').forEach(b => b.onclick = () => { settings.fight = !settings.fight; writeSettings(); updateAudioToggles(); sfx('click'); toast(settings.fight ? '⚔️ Fighting is on: monsters and enemies attack' : '🕊️ Fighting is off: everyone gets along', 2000); });
+document.querySelectorAll('.buildToggle').forEach(b => b.onclick = () => { settings.build = !settings.build; writeSettings(); updateAudioToggles(); sfx('click'); toast(settings.build ? '🔨 People build their own towns: put down 10 of a kind together' : '🏰 Quick towns: one person starts a whole town', 2400); });
 addEventListener('pointermove', () => { if (padSel) setPadSel(null); });
 addEventListener('beforeunload', () => { if (cur && state !== 'title') saveIsland(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden && state === 'play') openPause(); });

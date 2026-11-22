@@ -37,19 +37,19 @@ Plus four big maps:
 
 **🎲 Random** picks any of them. Each new island gets its own random seed, so two Tropical Paradises are different shapes. Islands start with a few animals but no plants: you paint them on (Island Set, Pangea and Sky Islands start with their land types already coloured in).
 
-**Size:** islands made now are much bigger than the first ones: about 1¾ times as wide (around 3 times the land), on a 900×900 grid over 2.2 km (2.5 km for the big maps). Islands saved before this change keep their old size, so nothing on them moves.
+**Size:** islands made now are much bigger than the first ones: about 2½ times as wide (around 6 times the land; the Big Forest is about 2.6 km² of land), on a 1100×1100 grid over 3.2 km (3.6 km for the big maps). Islands keep the size they were made at (`v` in the list: 1 = the first ones, 2 = 1¾ times as wide, 3 = now), so nothing on an old island moves.
 
 ## Things to build
 
 - **Nature:** land types you paint on (hold the button to keep painting): **forest, taiga, jungle, savanna, desert, swamp, mountain, path, cobblestone path** and **corrupted land**. Each colours the ground and grows its own plants (each an ordinary thing you can erase). Mountains also raise the land, swamps dig little ponds, paths flatten the ground and clear plants away, and corrupted land is dark purple with dark crystals: skeletons, demons and zombies climb out of it (up to 4 near each patch). Plus land tools: **raise land, lower land, flatten, shallow water** and **deep water** (the sea is at 0 m, so anything dug below that fills with water).
 - **Plants:** oak, pine, snowy pine, palm, jungle tree, acacia, autumn tree, willow, old dead tree, bush, flowers, reeds, rock, cactus, giant mushroom, lollipop tree, candy cane, gumdrop, pumpkin, snowman, dark crystal.
 - **Buildings:** little hut, cottage, big house, barn, castle (walls, four towers with flags, a gate and a keep), watch tower, windmill (the blades turn), lighthouse (the lamp glows), tent, well, fence, campfire (flickers), gold statue, market stall, sailboat (goes on deep water and bobs).
-- **People:** **human, elf, dwarf, orc**. Each one founds a town (see Towns). The older people (villager, farmer, knight, king, queen, wizard, kid, pirate, builder) still work on islands that have them.
+- **People:** **human, elf, dwarf, orc**. They build towns (see Towns). The older people (villager, farmer, knight, king, queen, wizard, kid, pirate, builder) still work on islands that have them.
 - **Mythical:** **dragon** (Wildwood's, full size: walks on its folded wings, flies off to circle now and then, bendy neck and tail, a jaw with teeth that rears back and lunges; it attacks on sight and comes down out of the sky to do it), **sea serpent** (Wildwood's Leviathan at about 0.9x: horns, two pairs of wings, a body that follows its head, rears up to bite), unicorn, phoenix (glows), goblin, skeleton, zombie, demon (wings, glowing eyes), troll (smaller than before), minotaur, hydra (big, with three swaying heads), ghost (see-through).
 - **Creatures:** dog, cat, sheep, cow, horse, deer, bear, polar bear, fox, goat, pig, camel, bunny, squirrel, lizard, frog, crocodile (Wildwood's, with its jaw and swishing tail), crab, chicken, penguin, dinosaur, bluebird, parrot, seagull, dolphin, whale, shark.
 - **Weapons:** sword in a stone, weapon rack, big shield, bow and arrows, battle axe, cannon, catapult, suit of armor, treasure chest.
 
-Four sizes: Small (½), Medium, Big (1¾) and Giant (3×). Dragons, hydras and sea serpents are about twice as big as their size says, and an island can only have **3 of each**; trolls are a bit smaller than their size says. New things face the camera; **Turn** adds 45° each press. Land things only go on land, and the sailboat, dolphin, whale and shark only go in deep water (the circle turns red if it can't go there). Birds and dragons can go anywhere. Frogs and crocodiles can walk into shallow water. Up to 3,000 things per island.
+Four sizes: Small (½), Medium, Big (1¾) and Giant (3×). People, creatures and mythical creatures are 0.7 times what their size says (so the islands are more to scale), except dragons, hydras and sea serpents, which are about twice as big, and trolls (0.62). An island can only have **3** dragons, **3** hydras and **3** sea serpents. Islands saved before people got smaller shrink their people and animals to match when they load. New things face the camera; **Turn** adds 45° each press. Land things only go on land, and the sailboat, dolphin, whale and shark only go in deep water (the circle turns red if it can't go there). Birds and dragons can go anywhere. Frogs and crocodiles can walk into shallow water. Up to 3,000 things per island.
 
 ## The brush
 
@@ -66,7 +66,8 @@ The **Brush** panel on the left picks how many things go down at once: **1, 2, 3
 
 ## Towns
 
-- Putting down a human, elf, dwarf or orc founds a town at once (or joins one of its own people's towns within 70 m): a centre building (human town hall with a clock tower, elf tree hall with glowing lanterns, dwarf mountain hall with fires, orc war camp with banners) and a few townsfolk.
+- **Towns: People build** (the default; change it on the title screen or in the menu): putting down humans, elves, dwarves or orcs just puts down people (the brush puts down 1 to 10). People who aren't in a town drift toward others of their kind. Once **10** of a kind are within 35 m of each other they start a town: the centre building rises out of the ground over **2 minutes** while they walk over and hammer at it (its label shows 🔨 and how far along it is). Then the town grows on its own, slower than Quick towns: each new house rises over 20 seconds, and new people only come when houses are finished. People put down within 70 m of a town of their own kind move in.
+- **Towns: Quick**: putting down a human, elf, dwarf or orc founds a town at once (or joins one of its own people's towns within 70 m): a centre building (human town hall with a clock tower, elf tree hall with glowing lanterns, dwarf mountain hall with fires, orc war camp with banners) and a few townsfolk.
 - Every few seconds the town builds a house in its own style (human cottages, houses, barns, wells and market stalls; elf houses on stilts and towers; dwarf stone houses and forges; orc huts and watch towers), up to 26, and gets more people (2 per house, up to 40). Its name and population float above it, like **Brook Creek 17**, with ⚔️ when it's at war and 🕊️ when it's keeping the peace.
 - **Orc towns** are at war with every town that isn't orc. Now and then a **human town** declares war on another human, elf or dwarf town for a minute or so. Towns at war send half their people marching to the enemy every 20 or so seconds; with nobody left to fight, they knock the enemy's buildings down. A town with no buildings and nobody left is gone.
 - The **🏰 Towns** panel (button at the top, T on the keyboard, View on the controller) lists every town with its population and who it's at war with, and has **🕊️ Make peace** (it never fights, and nobody marches on it), **⚔️ War with everyone**, **Normal** and **📍 Go there**.
@@ -92,9 +93,9 @@ The **Brush** panel on the left picks how many things go down at once: **1, 2, 3
 
 `localStorage` keys (all start with `worldcreator`):
 
-- `worldcreator.v1`: music and sound settings.
-- `worldcreator.islands`: the list of islands: `{ id, type, seed, name, count, last, v }` (`v` 2 = the bigger size; missing = an old, smaller island). Broken entries are dropped on load.
-- `worldcreator.island.<id>`: one island: its type and seed, the camera, its towns (`{ id, race, name, x, z, mode, built }`), the land changes (each brush stroke, replayed on load), and the things on it as `[type, x, z, turn, size, town]` (where you put them, not where they've wandered to). Unknown types, bad numbers and positions far off the map are dropped on load, and sizes are kept between ¼ and 4.
+- `worldcreator.v1`: settings: music, sounds, fighting, and how towns are made (`build`: true = People build).
+- `worldcreator.islands`: the list of islands: `{ id, type, seed, name, count, last, v }` (`v` is the island size: 3 = now, 2 = the middle size, missing = the first, smallest ones). Broken entries are dropped on load.
+- `worldcreator.island.<id>`: one island: its type and seed, the camera, its towns (`{ id, race, name, x, z, mode, built, build }`, where `build` is how far the town centre is built, 0 to 1), `sz: 2` once its people and animals are the new smaller size, the land changes (each brush stroke, replayed on load), and the things on it as `[type, x, z, turn, size, town]` (where you put them, not where they've wandered to). Unknown types, bad numbers and positions far off the map are dropped on load, and sizes are kept between ¼ and 4.
 
 **My islands** lists them with Play and Delete (Delete asks twice). The island saves a few seconds after each change, when you open the menu, and when you leave the page.
 
