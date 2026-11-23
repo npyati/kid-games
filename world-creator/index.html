@@ -198,7 +198,7 @@ canvas.inspecting{cursor:zoom-in}
       <div><b class="h">Kings, queens and battles</b>Once a town starts to grow it crowns a <b>king</b>, a <b>queen</b> or both. They train soldiers who guard the town and send them to battle. Tap the <b>🪄 Battle wand</b> (in People) on one town, then on another, and they go to war. The <b>🕊️ Peace wand</b> does the opposite: the two towns become friends and never fight (even orcs). Bears, polar bears, foxes, crocodiles, sharks and dinosaurs are hungry: they hunt people and other animals. When a town has nobody left, its town hall explodes and it has fallen.</div>
       <div><b class="h">Farms and caves</b>Towns plant <b>crop fields</b>: farmers walk out, hoe the ground and bring in the harvest (40 gold each time), and barns come with cows, sheep, pigs or chickens. New islands start with trees and plants that fit them, and some have <b>caves</b> that animals (or goblins) come out of.</div>
       <div><b class="h">Treasure</b>The <b>💰 Treasure</b> group has gold bags (small, medium, big and huge), treasure chests, a pile of gold, a golden crown, giant gems and gold dragon and hydra statues. Put treasure near a town and it goes into the town's gold: gold bags get spent right away, and the rest stays in the town. Bigger treasure is worth more.</div>
-      <div><b class="h">Inspect</b>Press <b>🔍 Inspect</b> (I on the keyboard, or press X twice on the controller): nothing gets built while you're inspecting. Click a person, an animal, a monster or a town. People and animals have a name, an age, a personality, a job and a story of what's happened to them. Towns show how much money they have, their rulers, whether they're at war, at peace or neutral, and their history. One year goes by every 2 minutes.</div>
+      <div><b class="h">Inspect</b>Press <b>🔍 Inspect</b> (I on the keyboard, or press X twice on the controller): nothing gets built while you're inspecting. Click a person, an animal, a monster or a town. People and animals have a name, an age, a personality, a job and a story of what's happened to them. Towns show how much money they have, their rulers, whether they're at war, at peace or neutral, and their history. One year goes by every 2 minutes. Kids are born in the towns and grow up; only people 18 or older can have a job (farmer, builder, soldier, king or queen) or go to war.</div>
       <div><b class="h">Big monsters</b>Dragons, hydras and sea serpents are huge, and each island can have up to <b>3</b> of each.</div>
       <div><b class="h">Saving</b>Every island saves by itself. Find it again under <b>My islands</b>.</div>
     </div>
@@ -2694,7 +2694,7 @@ function loadThings(data, fresh) {
       else if (ex.s === 1) o.soldier = true;
     }
     if (ex && typeof ex === 'object') {
-      for (const k of ['nm', 'tr', 'lk', 'bi', 'zb', 'gn']) if (typeof ex[k] === 'string') o[k] = ex[k].slice(0, 30);
+      for (const k of ['nm', 'tr', 'lk', 'bi', 'zb', 'gn', 'mv']) if (typeof ex[k] === 'string') o[k] = ex[k].slice(0, 30);
       if (typeof ex.cl === 'string') o.claimed = ex.cl.slice(0, 30);
       if (Number.isFinite(ex.ag)) o.ag = clamp(ex.ag, 0, 5000);
       for (const k of ['ki', 'ba', 'to', 'wa', 'sc', 'an', 'hv', 'fromCave']) if (Number.isFinite(ex[k])) o[k] = clamp(ex[k] | 0, 0, 99999);
@@ -3053,7 +3053,7 @@ function foundAt(hit, d) {
     const a = Math.random() * 6.283, x = t.x + Math.cos(a) * (6 + Math.random() * 4), z = t.z + Math.sin(a) * (6 + Math.random() * 4);
     if (groundAt(x, z) < 0.2) continue;
     const id = pick(RACES[race].folk), o = addThing(id, x, z, Math.random() * 6.283, growOf(id), grp);
-    if (o) { o.race = race; o.town = t.id; o.hx = t.x; o.hz = t.z; made++; }
+    if (o) { o.race = race; o.town = t.id; o.hx = t.x; o.hz = t.z; made++; lifeInfo(o); }
   }
   dirty = true; updateCount(); sfx('place');
   return made > 0 || !home;
@@ -3071,7 +3071,7 @@ function settleAt(hit, d) {
     if (groundAt(x, z) < 0.2) continue;
     const id = made === 0 ? d.id : pick(R.folk), o = addThing(id, x, z, Math.random() * 6.283, sizeOf(CAT[id]), grp);
     if (!o) break;
-    o.race = race; made++;
+    o.race = race; made++; lifeInfo(o);
     if (home) { o.town = home.id; o.hx = home.x; o.hz = home.z; }
   }
   if (!made) { sfx('nope'); return false; }
@@ -3140,7 +3140,7 @@ function hammer(t, b, dt) {
   b.hamT = (b.hamT || 0) - dt;
   if (b.hamT > 0) return;
   b.hamT = 0.5 + Math.random() * 0.4;
-  const near = townFolk(t).filter(o => !o.march && !o.foe && !o.farmer);
+  const near = townFolk(t).filter(o => !o.march && !o.foe && !o.farmer && adult(o));
   if (!near.length) return;
   const w = pick(near), r = CAT[b.t].r * b.s + 1;                  // someone walks over and gets to work
   if (Math.hypot(w.x - b.x, w.z - b.z) > r + 3) { const a = Math.random() * 6.283; w.tx = b.x + Math.cos(a) * r; w.tz = b.z + Math.sin(a) * r; w.wait = 0; }
@@ -3183,7 +3183,7 @@ function growTown(t, dt) {
     t.folkT = 3.5 + Math.random() * 2;
     if (folk.length < Math.min(40, (slow ? TOWN_NEED : 3) + done * 2) && objs.length < 2900) {
       const a = Math.random() * 6.283, x = t.x + Math.cos(a) * 5, z = t.z + Math.sin(a) * 5;
-      if (groundAt(x, z) > 0.2) { const id = pick(RACES[t.race].folk), o = makeObj(id, x, z, a, growOf(id)); o.race = t.race; o.town = t.id; o.bi = t.name; o.ag = 0; settle(o); objs.push(o); pop.push({ o, t: 0 }); updateCount(); }
+      if (groundAt(x, z) > 0.2) { const id = pick(RACES[t.race].folk), o = makeObj(id, x, z, a, growOf(id)); o.race = t.race; o.town = t.id; if (Math.random() < 0.5) { o.bi = t.name; o.ag = 0; } else { o.mv = t.name; o.ag = 18 + Math.random() * 25; } lifeInfo(o); settle(o); objs.push(o); pop.push({ o, t: 0 }); updateCount(); }
     }
   }
 }
@@ -3236,7 +3236,7 @@ function updateTowns(dt) {
       const enemies = towns.filter(o => atWar(t.id, o.id)).sort((a, b) => Math.hypot(a.x - t.x, a.z - t.z) - Math.hypot(b.x - t.x, b.z - t.z));
       const e = enemies[0];
       if (e && Math.hypot(e.x - t.x, e.z - t.z) < 1200) {
-        const free = townFolk(t).filter(o => !o.march && !o.ruler), army = free.filter(o => o.soldier);
+        const free = townFolk(t).filter(o => !o.march && !o.ruler && adult(o)), army = free.filter(o => o.soldier);
         const go = army.length >= 2 ? army : free.slice(0, Math.max(2, Math.floor(free.length / 2))), n = go.length;   // kings and queens send their army; without one, half the town goes
         go.forEach(o => { o.march = e.id; o.marchT = 0; o.ba = (o.ba || 0) + 1; });
         if (n) townLog(t, `Sent ${n} ${army.length >= 2 ? 'soldiers' : 'people'} to fight ${e.name}.`);
@@ -3329,7 +3329,7 @@ const RULER_NAMES = {
 };
 const rulerTitle = o => (o.ruler === 'king' ? 'King ' : 'Queen ') + o.rname;
 function crownRulers(t, folk) {
-  const civ = folk.filter(o => !o.soldier && !o.march).sort((a, b) => !!a.farmer - !!b.farmer);
+  const civ = folk.filter(o => !o.soldier && !o.march && adult(o)).sort((a, b) => !!a.farmer - !!b.farmer);
   if (!civ.length) return;
   const roll = Math.random(), kinds = roll < 0.35 ? ['king'] : roll < 0.7 ? ['queen'] : ['king', 'queen'];
   const names = [];
@@ -3354,9 +3354,9 @@ function townRule(t, folk, homes, done, dt) {
   t.armyT = (t.armyT === undefined ? 6 : t.armyT) - dt;
   if (t.armyT > 0) return;
   t.armyT = 8 + Math.random() * 4;
-  const sol = folk.filter(o => o.soldier), want = Math.floor(folk.length * 0.45);
+  const sol = folk.filter(o => o.soldier), want = Math.floor(folk.filter(adult).length * 0.4);   // (about 4 in 10 grown-ups)
   if (sol.length < want) {
-    const c = folk.find(o => !o.soldier && !o.ruler && !o.march && !o.farmer);   // (farmers keep farming)
+    const c = folk.find(o => !o.soldier && !o.ruler && !o.march && !o.farmer && adult(o));   // (farmers keep farming)
     if (c) { c.soldier = true; c.maxHp = c.hp = statOf(c)[0] * 1.6 * c.s; if (near3(c)) say(c, `For ${rulers[0].ruler === 'king' ? 'the King' : 'the Queen'}!`, '#ffd23f'); }
   }
   const ring = 16 + Math.sqrt(homes.length) * 6.5;                     // soldiers keep watch in a ring around the town
@@ -3374,6 +3374,7 @@ function fallTown(t, homes) {
 // a crown on kings and queens, and a helmet, sword and shield on soldiers
 let gearMeshes = null;
 function drawGear(o, shadow) {
+  if (o.race && o.ag < 18) return;
   if (!gearMeshes) {
     const cr = new Geo(4096), qn = new Geo(4096), sd = new Geo(4096);
     const crown = (g, gem) => { cyl(g, [0, 0, 0], [0, 0.12, 0], 0.15, 0.16, COL.gold, 20, false); for (let i = 0; i < 6; i++) { const a = i / 6 * 6.283; coneS(g, Math.cos(a) * 0.14, 0.1, Math.sin(a) * 0.14, 0.04, 0.12, COL.gold, 8); } orb(g, 0, 0.07, 0.155, 0.035, 0.035, 0.02, gem, { lo: true }); };
@@ -3658,6 +3659,7 @@ function drawDisasters(time) {
    (island time: one year goes by every 2 minutes)
    ===================================================================== */
 const YEAR = 120;
+const adult = o => !(o.ag < 18);          // only people 18 or older can have a job, fight or be crowned
 const FIRST_NAMES = {
   human: ['Tom', 'Ada', 'Ben', 'Lily', 'Sam', 'Nell', 'Will', 'Rosie', 'Jack', 'Mae', 'Finn', 'Ivy', 'Hugh', 'Elsie', 'Ned', 'Poppy', 'Alfie', 'Daisy', 'Owen', 'Hazel'],
   elf: ['Aerin', 'Lirien', 'Faelan', 'Ilyra', 'Thandor', 'Nimue', 'Elandor', 'Sylwen', 'Caladh', 'Mireth', 'Arannis', 'Liriel'],
@@ -3685,7 +3687,7 @@ function lifeInfo(o) {                    // fill in the name, age and personali
     else o.nm = pick(PET_NAMES);
   }
   if (o.ag === undefined) {
-    const r = AGE_RANGE[o.t] || (o.ruler ? [35, 75] : o.race || d.cat === 'people' ? [16, 70] : [1, 10]);
+    const r = AGE_RANGE[o.t] || (o.ruler ? [35, 75] : o.race || d.cat === 'people' ? [18, 70] : [1, 10]);
     o.ag = r[0] + Math.random() * (r[1] - r[0]);
   }
   if (!o.tr) o.tr = pick(TRAITS);
@@ -3760,10 +3762,10 @@ function fillInspect() {
         + `<p class="istory">${t ? `Built by the ${RACES[t.race].name.toLowerCase()} of ${esc(t.name)}.` : 'You put it here.'}</p>`;
     } else {
       lifeInfo(o);
-      const t = o.town && TOWN[o.town], kind = o.race ? CAT[o.race].name : d.name, job = o.ruler ? (o.ruler === 'king' ? 'King' : 'Queen') + ' of ' + (t ? t.name : 'nowhere') : o.soldier ? 'Soldier' : o.farmer && !o.farmer.gone ? 'Farmer' : o.race && t ? JOBS[o.race][hashStr(o.nm + o.t) % JOBS[o.race].length] : null;
+      const t = o.town && TOWN[o.town], kind = o.race ? CAT[o.race].name : d.name, job = o.ruler ? (o.ruler === 'king' ? 'King' : 'Queen') + ' of ' + (t ? t.name : 'nowhere') : o.soldier ? 'Soldier' : o.farmer && !o.farmer.gone ? 'Farmer' : (o.race || d.cat === 'people') && !adult(o) ? `None yet (${o.ag < 5 ? 'a baby' : 'a kid'}: jobs are for 18 and up)` : o.race && t ? JOBS[o.race][hashStr(o.nm + o.t) % JOBS[o.race].length] : null;
       const title = o.ruler ? rulerTitle(o) : o.nm;
       head = `${o.ruler ? '👑' : d.icon} ${esc(title)}`;
-      const doing = o.farmer && !o.farmer.gone && !o.foe && !o.march ? 'Working in the fields' : o.held ? (o.held.tor ? 'Flying around in a tornado!' : 'Being swept away by a wave!') : o.fleeT > 0 ? 'Running away!' : o.march && TOWN[o.march] ? 'Marching to battle against ' + esc(TOWN[o.march].name) : o.foe && !o.foe.gone ? 'Fighting ' + esc(o.foe.nm || CAT[o.foe.t].name.toLowerCase()) : o.flying ? 'Flying' : o.moving ? 'Walking around' : 'Resting';
+      const doing = o.race && !adult(o) && !o.held && !(o.fleeT > 0) ? (o.ag < 3 ? 'Toddling around' : 'Playing') : o.farmer && !o.farmer.gone && !o.foe && !o.march ? 'Working in the fields' : o.held ? (o.held.tor ? 'Flying around in a tornado!' : 'Being swept away by a wave!') : o.fleeT > 0 ? 'Running away!' : o.march && TOWN[o.march] ? 'Marching to battle against ' + esc(TOWN[o.march].name) : o.foe && !o.foe.gone ? 'Fighting ' + esc(o.foe.nm || CAT[o.foe.t].name.toLowerCase()) : o.flying ? 'Flying' : o.moving ? 'Walking around' : 'Resting';
       body = row('Kind', esc(kind)) + row('Age', yearsTxt(o.ag) + ' old') + (job ? row('Job', esc(job)) : '') + (t ? row('Home', esc(t.name)) : '')
         + row('Personality', esc(o.tr)) + row('Likes', esc(o.lk))
         + (o.hp !== undefined && o.maxHp ? row('Health', Math.max(0, Math.round(o.hp / o.maxHp * 100)) + '%') : row('Health', '100%'))
@@ -3771,7 +3773,7 @@ function fillInspect() {
       // the story so far
       const he = d.cat === 'mythical' && !['unicorn', 'phoenix'].includes(o.t) ? 'it' : o.gn === 'f' ? 'she' : 'he';
       const He = he[0].toUpperCase() + he.slice(1), bits = [];
-      bits.push(o.bi ? `${esc(o.nm)} was born in ${esc(o.bi)}.` : o.race ? `${esc(o.nm)} came to the island with the first ${CAT[o.race].name.toLowerCase()}s.` : `${esc(o.nm)} is a ${esc(o.tr)} ${esc(d.name.toLowerCase())} who loves ${esc(o.lk)}.`);
+      bits.push(o.bi ? `${esc(o.nm)} was born in ${esc(o.bi)}.` : o.mv ? `${esc(o.nm)} lives in ${esc(o.mv)}.` : o.race ? `${esc(o.nm)} came to the island with the first ${CAT[o.race].name.toLowerCase()}s.` : `${esc(o.nm)} is a ${esc(o.tr)} ${esc(d.name.toLowerCase())} who loves ${esc(o.lk)}.`);
       if (o.ruler) bits.push(`${He} was crowned ruler of ${t ? esc(t.name) : 'a town'}.`);
       if (o.soldier) bits.push(`${He} joined the army to guard ${t ? esc(t.name) : 'the town'}.`);
       if (o.hv) bits.push(`${He} has brought in ${o.hv === 1 ? 'a harvest' : o.hv + ' harvests'}.`);
@@ -3784,6 +3786,9 @@ function fillInspect() {
       if (o.wa) bits.push(`${He} survived a tsunami.`);
       if (o.sc) bits.push(`${He} has run away screaming from a ghost ${o.sc === 1 ? 'once' : o.sc + ' times'}.`);
       if (o.fac === 'predator' && !o.ki) bits.push(`${He} is hungry and on the lookout for something to eat.`);
+      if (o.mv) bits.push(`${He} moved to ${esc(o.mv)} as a grown-up.`);
+      if (o.race && o.bi && o.bi !== 'a cave' && !adult(o)) bits.push(`${He} will be old enough for a job in ${yearsTxt(18 - o.ag)}.`);
+      else if (o.race && o.bi && o.bi !== 'a cave' && o.ag >= 18 && o.ag < 30) bits.push(`${He} grew up in ${esc(o.bi)}.`);
       if (bits.length < 3 && o.race) bits.push(`${He} is ${/^[aeiou]/.test(o.tr) ? 'an' : 'a'} ${esc(o.tr)} ${o.race === 'elf' ? 'elf' : o.race} who loves ${esc(o.lk)}.`);
       body += `<p class="istory">${bits.join(' ')}</p>`;
     }
@@ -3818,7 +3823,7 @@ function townFarm(t, folk, homes, dt) {
     if (f.t !== 'field' || f.build !== undefined) continue;
     if (f.grow === undefined) f.grow = Math.random() * 0.3;
     let w = f.worker && !f.worker.gone && f.worker.farmer === f ? f.worker : null;
-    if (!w) { w = folk.find(o => !o.soldier && !o.ruler && !o.march && !o.farmer && !o.foe); if (w) { w.farmer = f; f.worker = w; } }
+    if (!w) { w = folk.find(o => !o.soldier && !o.ruler && !o.march && !o.farmer && !o.foe && adult(o)); if (w) { w.farmer = f; f.worker = w; } }
     if (!w) { f.grow = Math.min(1, f.grow + dt / 300); continue; }              // nobody to look after it: it grows slowly by itself
     const fr = CAT.field.r * f.s, dist = Math.hypot(w.x - f.x, w.z - f.z);
     w.hx = f.x; w.hz = f.z;
@@ -3978,7 +3983,7 @@ function fightStep(o, d, dt, time) {
     o.y = groundY(o, d); o.tx = undefined;
     return true;
   }
-  if (!attacks(o.fac) || d.move === 'fly') return false;
+  if (!attacks(o.fac) || d.move === 'fly' || (o.race && !adult(o))) return false;   // (kids don't fight)
   if (o.foe && (o.foe.gone || !hostile(o, o.foe))) o.foe = null;
   o.lookT = (o.lookT || Math.random() * 0.5) - dt;
   if (!o.foe && o.lookT <= 0) {
@@ -4086,7 +4091,7 @@ function ringMesh(col) {
 }
 function popScale(o) { const p = pop.find(q => q.o === o); if (!p) return 1; const t = p.t / 0.45; return Math.min(1.15, Math.sin(t * Math.PI * 0.62) * 1.18 + 0.02); }
 function drawOne(o, time, shadow, flash) {
-  const d = CAT[o.t], M = meshesFor(d), s = o.s * popScale(o);
+  const d = CAT[o.t], M = meshesFor(d), s = o.s * popScale(o) * (o.race && o.ag < 18 ? 0.5 + 0.5 * o.ag / 18 : 1);   // kids grow up
   let base = mChain(mT(o.x, o.y + (o.bob || 0), o.z), mRy(o.r), mS(s));
   if (o.build !== undefined) base = mChain(base, mS3(1, 0.04 + 0.96 * o.build, 1));   // still being built: it rises out of the ground
   if (o.tilt) base = mChain(base, mRz(o.tilt));
@@ -4293,7 +4298,7 @@ let dirty = false, saveT = 0;
 function saveObj(o) {
   const a = [o.t, +o.hx.toFixed(2), +o.hz.toFixed(2), +o.r.toFixed(3), o.s], x = {};
   if (o.ruler) { x.k = o.ruler; x.n = o.rname; } else if (o.soldier) x.s = 1;
-  for (const k of ['nm', 'tr', 'lk', 'bi', 'zb', 'gn']) if (typeof o[k] === 'string') x[k] = o[k];
+  for (const k of ['nm', 'tr', 'lk', 'bi', 'zb', 'gn', 'mv']) if (typeof o[k] === 'string') x[k] = o[k];
   if (o.ag !== undefined) x.ag = +o.ag.toFixed(2);
   for (const k of ['ki', 'ba', 'to', 'wa', 'sc', 'an', 'hv', 'fromCave']) if (o[k]) x[k] = o[k];
   if (o.claimed) x.cl = o.claimed;
