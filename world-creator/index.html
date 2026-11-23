@@ -195,7 +195,7 @@ canvas.inspecting{cursor:zoom-in}
       <div><b class="h">Towns</b>Put down <b>humans, elves, dwarves</b> or <b>orcs</b> (in People). With <b>Towns: People build</b> (in the menu), once <b>10</b> of a kind are together they start building a town: the town hall takes about 2 minutes, then they build their own houses one at a time. With <b>Towns: Quick</b>, one person founds a whole town at once. Orcs fight everyone else; humans sometimes start wars; elves are archers. Open <b>🏰 Towns</b> (T, or View on the controller) to make a town keep the peace or go to war with everyone.</div>
       <div><b class="h">Maps</b>Ten islands, plus four big maps: <b>Island Set</b> (seven islands, each a different land), <b>Pangea</b> (one giant supercontinent), <b>Sky Islands</b> (floating in the sky) and <b>Endless Ocean</b>. Or pick <b>🎲 Random</b>. New islands are much bigger than the first ones, and people and animals are smaller, so everything is more to scale.</div>
       <div><b class="h">Disasters</b>The <b>Disasters</b> group has a <b>tornado</b> (picks things up and throws them), a <b>tsunami</b> (a wave rolls in from the nearest sea), a <b>bomb</b>, a <b>sprinkle bomb</b> (lots of little bombs) and an <b>earthquake</b> (cracks the ground and knocks buildings down). The size buttons make them bigger. <b>Undo</b> puts things back.</div>
-      <div><b class="h">Kings, queens and battles</b>Once a town starts to grow it crowns a <b>king</b>, a <b>queen</b> or both. Their town hall becomes a <b>castle</b>, and they live inside it in fancy robes, coming out for a walk now and then and whenever their town is at war. A <b>golden crown</b> treasure near the town makes their crowns grander. They train soldiers who guard the town and send them to battle. Tap the <b>🪄 Battle wand</b> (in People) on one town, then on another, and they go to war. The <b>🕊️ Peace wand</b> does the opposite: the two towns become friends and never fight (even orcs). Bears, polar bears, foxes, crocodiles, sharks and dinosaurs are hungry: they hunt people and other animals. When a town has nobody left, its town hall explodes and it has fallen.</div>
+      <div><b class="h">Kings, queens and battles</b>Once a town starts to grow it crowns a <b>king</b>, a <b>queen</b> or both. Their town hall becomes a <b>castle</b>, and they live inside it in fancy robes, coming out for a walk now and then and whenever their town is at war. A <b>golden crown</b> treasure near the town makes their crowns grander. They train soldiers in armour who stand guard around the town and go to battle. Ordinary townsfolk never fight: they run from danger. Tap the <b>🪄 Battle wand</b> (in People) on one town, then on another, and they go to war. The <b>🕊️ Peace wand</b> does the opposite: the two towns become friends and never fight (even orcs). Bears, polar bears, foxes, crocodiles, sharks and dinosaurs are hungry: they hunt people and other animals. When a town has nobody left, its town hall explodes and it has fallen.</div>
       <div><b class="h">Farms and caves</b>Towns plant <b>crop fields</b>: farmers walk out, hoe the ground and bring in the harvest (40 gold each time), and barns come with cows, sheep, pigs or chickens. New islands start with trees and plants that fit them, and some have <b>caves</b> that animals (or goblins) come out of.</div>
       <div><b class="h">Treasure</b>The <b>💰 Treasure</b> group has gold bags (small, medium, big and huge), treasure chests, a pile of gold, a golden crown, giant gems and gold dragon and hydra statues. Put treasure near a town and it goes into the town's gold: gold bags get spent right away, and the rest stays in the town. Bigger treasure is worth more.</div>
       <div><b class="h">Inspect</b>Press <b>🔍 Inspect</b> (I on the keyboard, or press X twice on the controller): nothing gets built while you're inspecting. Click a person, an animal, a monster or a town. People and animals have a name, an age, a personality, a job and a story of what's happened to them. Towns show how much money they have, their rulers, whether they're at war, at peace or neutral, and their history. One year goes by every 2 minutes. Making water washes away the trees, plants and buildings it covers (treasure stays, sunken!), and land creatures that end up in the water swim slowly back to shore. Kids are born in the towns and grow up; only people 18 or older can have a job (farmer, builder, soldier, king or queen) or go to war.</div>
@@ -2811,7 +2811,7 @@ birdDef('fairy', 'Fairy', '🧚', g => {
 const SIZES = [0.5, 1, 1.75, 3], SIZE_NAMES = ['Small', 'Medium', 'Big', 'Giant'], SIZE_SHORT = ['S', 'M', 'L', 'XL'];
 // the brush on the left: how many things go down at once, and how wide the land tools reach
 // some things are bigger (or smaller) than their size button says, and the biggest monsters are limited to 3 of each per island
-const GROW = { dragon: 2.6, hydra: 1.6, seaserpent: 2.2, troll: 0.62, fairy: 1, griffin: 1.2 };
+const GROW = { dragon: 2.6, hydra: 1.6, seaserpent: 2.2, troll: 0.62, fairy: 1, griffin: 1.2 }, ONLY3 = new Set(['dragon', 'hydra', 'seaserpent']);
 const AUTO_MAX = 6000;                  // towns, caves and spawning stop adding things by themselves past this many (you can place as many as you like)
 // people, animals and monsters are 0.7 times the size they used to be (so the islands are more to scale), except the big monsters
 const SHRINK = 0.7, growOf = id => GROW[id] || (['people', 'creatures', 'mythical'].includes(CAT[id].cat) ? SHRINK : 1);
@@ -2867,6 +2867,7 @@ function placeAt(hit) {
   if (d.tool === 'biome') return biomeAt(hit, d);
   if (d.race) return foundAt(hit, d);                 // humans, elves, dwarves and orcs found a town
   let n = BRUSH_N[tool.brush];
+  if (ONLY3.has(d.id)) { n = Math.min(n, 3 - countOf(d.id)); if (n <= 0) { if (!curGroup) { sfx('nope'); toast(d.icon + ' Only 3 ' + d.name.toLowerCase() + 's on each island!', 1800); } return false; } }
   const face = Math.atan2(camEye[0] - hit.x, camEye[2] - hit.z);
   const grp = group(false);
   let made = 0;
@@ -2995,6 +2996,7 @@ function loadThings(data, fresh) {
     if (!Array.isArray(a) || !CAT[a[0]]) continue;
     const [t, x, z, r, s] = a;
     if (![x, z, r, s].every(Number.isFinite) || Math.abs(x) > 3000 || Math.abs(z) > 3000) continue;
+    if (ONLY3.has(t) && countOf(t) >= 3) continue;
     const o = makeObj(t, x, z, r, clamp(s * (shrinkOld && !GROW[t] ? growOf(t) : 1) * (oldDragons && t === 'dragon' && s >= 1.1 ? 2.6 / 2.2 : 1), 0.2, 4 * Math.max(1, GROW[t] || 1))); settle(o); objs.push(o);
     if (typeof a[5] === 'string' && TOWN[a[5]]) o.town = a[5];
     const ex = a[6];
@@ -3062,6 +3064,43 @@ function scatterStart() {
 /* =====================================================================
    Life: people and animals wander, birds and dragons circle, fish swim
    ===================================================================== */
+// buildings people can't walk through (not crop fields: farmers work in those). Built once a frame into its own grid.
+let bgrid = new Map();
+function buildBGrid() {
+  bgrid = new Map();
+  for (const o of objs) {
+    const d = CAT[o.t];
+    if (o.gone || d.move || d.cat !== 'build' || o.t === 'field' || d.r * o.s < 1.2 || o.build !== undefined) continue;
+    const R = isCastle(o) ? 12.3 * CASTLE_K * o.s * 0.92 : d.r * o.s * 0.85;
+    const c0 = Math.floor((o.x - R) / 24), c1 = Math.floor((o.x + R) / 24), d0 = Math.floor((o.z - R) / 24), d1 = Math.floor((o.z + R) / 24);
+    for (let i = c0; i <= c1; i++) for (let j = d0; j <= d1; j++) { const k = i + ',' + j; let l = bgrid.get(k); if (!l) bgrid.set(k, l = []); l.push([o.x, o.z, R]); }
+  }
+}
+function inBuilding(x, z, pad) {
+  const l = bgrid.get(Math.floor(x / 24) + ',' + Math.floor(z / 24));
+  if (l) for (const [bx, bz, R] of l) if (Math.hypot(x - bx, z - bz) < R + pad) return [bx, bz, R];
+  return null;
+}
+// does a step from where o is to (nx, nz) walk into a building? (you can always walk out of one you're already in)
+function bumps(o, d, nx, nz) {
+  if (d.move !== 'walk' || o.ruler || d.r * o.s > 3) return false;     // (kings and queens use the castle gate; dragons and other huge things just stomp about)
+  const b = inBuilding(nx, nz, d.r * o.s * 0.5);
+  return !!b && Math.hypot(nx - b[0], nz - b[1]) < Math.hypot(o.x - b[0], o.z - b[1]);
+}
+// take a step at speed sp, turning a little left or right to get around a building in the way; false if there's no way
+function walkStep(o, d, sp, dt, turn) {
+  for (const da of [0, 0.6, -0.6, 1.2, -1.2, 1.9, -1.9]) {
+    const r = o.r + da * (o.side || 1), nx = o.x + Math.sin(r) * sp * dt, nz = o.z + Math.cos(r) * sp * dt;
+    const ok = d.move === 'swim' ? groundAt(nx, nz) < -Math.max(1.2, d.h * o.s * 0.6) : landOK(d, nx, nz);
+    if (!ok) { if (da === 0) return false; continue; }
+    if (bumps(o, d, nx, nz)) continue;
+    if (da !== 0) o.r += clamp(da * (o.side || 1), -turn * dt * 2, turn * dt * 2); else if (Math.random() < 0.01) o.side = Math.random() < 0.5 ? 1 : -1;
+    o.x = nx; o.z = nz; o.moving = true; o.phase += sp * dt / Math.max(0.15, ((d.legs && d.legs.len) || 0.8) * o.s) * 1.4;
+    return true;
+  }
+  o.moving = false;
+  return false;
+}
 function landOK(d, x, z) {
   const h = groundAt(x, z);
   if (d.amph) return h > -3;
@@ -3071,7 +3110,7 @@ function pickTarget(o, d) {
   const roam = (d.cat === 'people' ? 22 : 30) * Math.max(1, o.s);
   for (let k = 0; k < 8; k++) {
     const a = Math.random() * 6.283, r = 4 + Math.random() * roam, x = o.hx + Math.cos(a) * r, z = o.hz + Math.sin(a) * r;
-    if (d.move === 'swim' ? groundAt(x, z) < -Math.max(2, d.h * o.s) && (d.r * o.s < 2 || !objs.some(q => q !== o && CAT[q.t].place === 'water' && Math.hypot(q.x - x, q.z - z) < (d.r * o.s + CAT[q.t].r * q.s))) : landOK(d, x, z)) { o.tx = x; o.tz = z; return; }
+    if (d.move === 'swim' ? groundAt(x, z) < -Math.max(2, d.h * o.s) && (d.r * o.s < 2 || !objs.some(q => q !== o && CAT[q.t].place === 'water' && Math.hypot(q.x - x, q.z - z) < (d.r * o.s + CAT[q.t].r * q.s))) : landOK(d, x, z) && !(d.move === 'walk' && inBuilding(x, z, 1))) { o.tx = x; o.tz = z; return; }
   }
   o.tx = o.hx; o.tz = o.hz;
 }
@@ -3145,7 +3184,7 @@ function splash(x, z, size, count = 8) {
   if (ripples.length < 160) ripples.push({ x, z, t: 0, life: 1.6, r0: size * 0.6 });
 }
 function updateLife(dt, time) {
-  updateSettlers(dt); updateTowns(dt); levelTowns(dt); buildGrid(); ghostScares(dt); corruptSpawns(dt); updateFx(dt); updateArrows(dt); updateDisasters(dt, time); caveSpawns(dt);
+  updateSettlers(dt); updateTowns(dt); levelTowns(dt); buildGrid(); buildBGrid(); ghostScares(dt); corruptSpawns(dt); updateFx(dt); updateArrows(dt); updateDisasters(dt, time); caveSpawns(dt);
   for (const o of objs.slice()) {                        // (a copy: things can be beaten while we go)
     if (o.ag !== undefined) o.ag += dt / YEAR;          // one year every 2 minutes
     if (o.gone || o.held) continue;                      // (caught in a tornado or a wave)
@@ -3155,6 +3194,7 @@ function updateLife(dt, time) {
     if (d.move === 'walk' && !d.amph && swimStep(o, d, dt)) continue;   // fell in the water: swim back to land
     if (d.update && d.update(o, dt, time)) continue;     // the dragon flying, the sea serpent's body
     if (fightStep(o, d, dt, time)) continue;             // chasing, fighting or running away
+    if (o.soldier && o.post && !o.march && o.town && d.move === 'walk') { guardStep(o, d, dt); continue; }   // standing guard
     if (d.move === 'float') { o.bob = Math.sin(time * 1.3 + o.phase) * 0.15 * o.s; o.tilt = Math.sin(time * 0.9 + o.phase) * 0.05; continue; }
     if (d.move === 'fly') {
       const rad = (d.alt > 20 ? 45 : 14) * Math.max(1, o.s);
@@ -3177,10 +3217,7 @@ function updateLife(dt, time) {
         let dy = Math.atan2(dx, dz) - o.r; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
         o.r += clamp(dy, -3 * dt, 3 * dt);
         const sp = d.speed * Math.sqrt(o.s) * Math.max(0.2, Math.cos(dy));
-        const nx = o.x + Math.sin(o.r) * sp * dt, nz = o.z + Math.cos(o.r) * sp * dt;
-        const ok = d.move === 'swim' ? groundAt(nx, nz) < -Math.max(1.2, d.h * o.s * 0.6) : landOK(d, nx, nz);
-        if (ok) { o.x = nx; o.z = nz; o.moving = true; o.phase += sp * dt / Math.max(0.15, ((d.legs && d.legs.len) || 0.8) * o.s) * 1.4; }
-        else { o.tx = undefined; o.wait = 0.3; o.moving = false; }
+        if (!walkStep(o, d, sp, dt, 3)) { o.tx = undefined; o.wait = 0.3; o.moving = false; }
       }
     }
     if (d.move === 'swim') {
@@ -3213,7 +3250,7 @@ function updateLife(dt, time) {
 // [health, damage, reach, how far it sees] at Medium size
 const STATS = {
   skeleton: [10, 2, 1.4, 22], zombie: [9, 1.6, 1.3, 18], demon: [22, 4, 1.8, 26], troll: [45, 6, 2.6, 22], minotaur: [35, 5, 2.2, 24],
-  griffin: [70 / 3, 5, 2.4, 20], fairy: [2, 0, 0, 0], yeti: [40, 5.5, 2.4, 20], dragon: [90, 8, 4.5, 40], hydra: [143.75, 6, 4, 24], seaserpent: [100, 6, 5, 22], goblin: [7, 1.5, 1.2, 20],
+  griffin: [70 / 3, 5, 2.4, 20], fairy: [2, 0, 0, 0], yeti: [40, 5.5, 2.4, 20], dragon: [900, 24, 4.5, 40], hydra: [1437.5, 18, 4, 24], seaserpent: [1000, 18, 5, 22], goblin: [7, 1.5, 1.2, 20],
   knight: [100 / 7, 3.5, 1.6, 20], king: [14, 2.5, 1.4, 18], pirate: [12, 2.6, 1.5, 18],
   lion: [26, 4.5, 1.8, 18], tiger: [26, 4.5, 1.8, 18], wolf: [12, 2.5, 1.4, 16], bear: [24, 4, 1.8, 16], polarbear: [28, 4.5, 1.9, 16], fox: [6, 1.4, 1.0, 12], croc: [20, 4, 1.8, 10], shark: [18, 4, 2.0, 14], dino: [40, 6, 2.6, 20],
   human: [10, 2, 1.4, 18], elf: [9, 2.2, 1.6, 24], dwarf: [13, 2.5, 1.4, 16], orc: [13, 2.8, 1.5, 22], animal: [5, 0, 0, 0],
@@ -3234,9 +3271,11 @@ function maxHpOf(o) { return o.maxHp || (CAT[o.t].move ? statOf(o)[0] : 25) * o.
 function healthTxt(o) { const max = maxHpOf(o), hp = o.hp === undefined ? max : Math.max(0, o.hp); return `❤️ ${Math.min(Math.round(max * 10), Math.ceil(hp * 10 - 0.001)).toLocaleString()} / ${Math.max(1, Math.round(max * 10)).toLocaleString()}`; }
 function statOf(o) { return STATS[CAT[o.t].id] || STATS[o.fac] || STATS.animal; }
 const attacks = f => f && f !== 'animal' && f !== 'ghost';
+const isCiv = o => !!o.race && !o.soldier && !o.ruler;     // ordinary townsfolk
 function hostile(a, b) {
   const fa = a.fac, fb = b.fac;
   if (a.inside || b.inside) return false;
+  if (isCiv(a) || (isCiv(b) && a.race)) return false;          // townsfolk never start fights, and soldiers don't go after other towns' townsfolk
   if (!fa || !fb || fa === 'ghost' || fb === 'ghost' || a === b) return false;
   if (fa === 'predator') return fb !== 'predator' && !(fb === 'animal' && CAT[b.t].r * b.s > CAT[a.t].r * a.s * 1.3);   // hungry animals go after people and other animals (but not ones much bigger than them, like elephants)
   if (fb === 'predator') return fa !== 'animal';                // people and monsters fight back; other animals just run
@@ -3569,9 +3608,17 @@ function growTown(t, dt) {
   t.folkT -= dt;
   if (t.folkT <= 0) {
     t.folkT = 3.5 + Math.random() * 2;
-    if (folk.length < Math.min(40, (slow ? TOWN_NEED : 3) + done * 2) && objs.length < AUTO_MAX) {
-      const a = Math.random() * 6.283, x = t.x + Math.cos(a) * 5, z = t.z + Math.sin(a) * 5;
-      if (groundAt(x, z) > 0.2) { const id = pick(RACES[t.race].folk), o = makeObj(id, x, z, a, growOf(id)); o.race = t.race; o.town = t.id; if (Math.random() < 0.5) { o.bi = t.name; o.ag = 0; } else { o.mv = t.name; o.ag = 18 + Math.random() * 25; } lifeInfo(o); settle(o); objs.push(o); pop.push({ o, t: 0 }); updateCount(); }
+    const kids = folk.filter(o => o.ag < 18).length, room = folk.length < Math.min(40, (slow ? TOWN_NEED : 3) + done * 2);
+    const baby = folk.length >= 4 && kids < folk.length * 0.32 && folk.length < 60;        // a town always has kids: babies keep being born, even when it's full
+    if ((room || baby) && objs.length < AUTO_MAX) {
+      const a = Math.random() * 6.283, q = CAT[RACES[t.race].center].r * (t.castle ? 1.45 : 1) + 2.5, x = t.x + Math.cos(a) * q, z = t.z + Math.sin(a) * q;   // (just outside the town hall)
+      if (groundAt(x, z) > 0.2) { const id = pick(RACES[t.race].folk), o = makeObj(id, x, z, a, growOf(id)); o.race = t.race; o.town = t.id; if (baby || Math.random() < 0.5) { o.bi = t.name; o.ag = 0; } else { o.mv = t.name; o.ag = 18 + Math.random() * 25; } lifeInfo(o); settle(o); objs.push(o); pop.push({ o, t: 0 }); updateCount(); }
+    }
+    for (const o of folk) if (o.ag >= 85 && !o.march && !o.foe && Math.random() < 0.15) {    // the very old move away to a quiet cottage by the sea
+      poof(o.x, o.y + 1, o.z, 0.8, [0.9, 0.9, 0.85]); o.gone = true; const i = objs.indexOf(o); if (i >= 0) objs.splice(i, 1); updateCount(); dirty = true;
+      townLog(t, `${o.ruler ? rulerTitle(o) : esc(o.nm || 'Someone')} moved away to a quiet cottage by the sea, aged ${Math.floor(o.ag)}.`);
+      if (o.ruler && near3(o)) toast(`👑 ${rulerTitle(o)} of ${t.name} has retired to the seaside.`, 2400);
+      break;
     }
   }
 }
@@ -3793,7 +3840,7 @@ function townRule(t, folk, homes, done, dt) {
     if (c) { c.soldier = true; c.maxHp = c.hp = statOf(c)[0] * 1.6 * c.s; if (near3(c)) say(c, `For ${rulers[0].ruler === 'king' ? 'the King' : 'the Queen'}!`, '#ffd23f'); }
   }
   const ring = 16 + Math.sqrt(homes.length) * 6.5;                     // soldiers keep watch in a ring around the town
-  folk.filter(o => o.soldier && !o.march).forEach((o, i, all) => { const a = i / all.length * 6.283 + 0.4; o.hx = t.x + Math.cos(a) * ring; o.hz = t.z + Math.sin(a) * ring; });
+  folk.filter(o => o.soldier && !o.march).forEach((o, i, all) => { const a = i / all.length * 6.283 + 0.4; o.hx = t.x + Math.cos(a) * ring; o.hz = t.z + Math.sin(a) * ring; o.post = [o.hx, o.hz, Math.atan2(Math.cos(a), Math.sin(a))]; });
 }
 // the last person is gone: the town centre blows up, and everyone hears about it
 function fallTown(t, homes) {
@@ -3838,12 +3885,20 @@ function buildGear() {
   };
   const mk = fn => { const g = new Geo(8192); fn(g); return makeMesh(g); };
   const sd = new Geo(4096);
-  orb(sd, 0, 0, 0, 0.2, 0.17, 0.21, COL.iron, { cutBelow: -0.02 }); cyl(sd, [0, 0.16, -0.02], [0, 0.3, -0.12], 0.025, 0.02, [0.8, 0.15, 0.15], 8);
+  orb(sd, 0, 0.17, 0, 0.228, 0.19, 0.238, COL.iron, { cutBelow: 0.13 }); cyl(sd, [0, 0.13, 0], [0, 0.15, 0], 0.235, 0.235, shade(COL.iron, 0.8), 18); cyl(sd, [0, 0.35, -0.02], [0, 0.48, -0.13], 0.025, 0.02, [0.8, 0.15, 0.15], 8);   // helmet (sitting over the hair), rim and plume
   orb(sd, -0.36, -0.75, 0.12, 0.05, 0.24, 0.2, [0.55, 0.12, 0.12]); orb(sd, -0.39, -0.75, 0.12, 0.02, 0.08, 0.07, COL.gold, { lo: true });   // shield
   cyl(sd, [0.33, -1.0, 0.18], [0.33, -0.45, 0.32], 0.025, 0.012, COL.iron, 8); cyl(sd, [0.26, -1.0, 0.17], [0.4, -1.0, 0.19], 0.02, 0.02, COL.darkwood, 6);   // sword
   gearMeshes = {
     king: mk(g => crown(g, GEMS[0], false)), queen: mk(g => crown(g, GEMS[2], false)), kingG: mk(g => crown(g, GEMS[0], true)), queenG: mk(g => crown(g, GEMS[2], true)),
-    robeking: mk(g => robe(g, [0.62, 0.08, 0.13])), robequeen: mk(g => robe(g, [0.42, 0.16, 0.62])), soldier: makeMesh(sd) };
+    robeking: mk(g => robe(g, [0.62, 0.08, 0.13])), robequeen: mk(g => robe(g, [0.42, 0.16, 0.62])), soldier: makeMesh(sd),
+    armor: mk(g => {                                     // a soldier's armour: breastplate, shoulder guards, a belt and plates over the hips
+      const IR = [0.72, 0.74, 0.8], DK = shade(IR, 0.75);
+      orb(g, 0, 1.24, 0.01, 0.275, 0.35, 0.2, IR, { cutBelow: 0.98 });
+      cyl(g, [0, 1.35, 0.17], [0, 1.05, 0.2], 0.012, 0.012, DK, 5);                                         // the ridge down the front
+      for (const s of [-1, 1]) { orb(g, s * 0.29, 1.47, 0, 0.12, 0.085, 0.13, IR); orb(g, s * 0.3, 1.41, 0, 0.11, 0.05, 0.12, DK, { lo: true }); }
+      cyl(g, [0, 0.95, 0], [0, 1.02, 0], 0.235, 0.235, [0.35, 0.22, 0.12], 16); orb(g, 0, 0.985, 0.235, 0.04, 0.035, 0.015, COL.gold, { lo: true });   // belt and buckle
+      cyl(g, [0, 0.96, 0], [0, 0.78, 0], 0.23, 0.26, DK, 14, false);                                       // hip plates
+    }) };
 }
 function drawGear(o, shadow) {
   if ((o.race && o.ag < 18) || o.swim) return;
@@ -3855,7 +3910,7 @@ function drawGear(o, shadow) {
     drawMesh(gearMeshes['robe' + o.ruler], mChain(base, mS(k)), 0);
     drawMesh(gearMeshes[o.ruler + (grand ? 'G' : '')], mChain(base, mT(0, 1.93 * k, 0), mS(k)), 0);
   }
-  else if (o.soldier) drawMesh(gearMeshes.soldier, mChain(base, mT(0, top - 0.14, 0), mS(d.h / 1.9)), 0);
+  else if (o.soldier) { drawMesh(gearMeshes.armor, mChain(base, mS(k)), 0); drawMesh(gearMeshes.soldier, mChain(base, mT(0, top - 0.14, 0), mS(d.h / 1.9)), 0); }
 }
 function drawRulerLabels() {
   let n = 0;
@@ -4443,18 +4498,14 @@ function landHit(o, f, arrow) {
   f.hitT = 0.25; if (!arrow) o.lunge = 1;
   if (o.t === 'zombie' && CAT[f.t].move !== 'swim') { defeat(f, o); return; }   // one zombie bite makes another zombie
   if (near3(o)) { noiseHit('lowpass', 900, 0.8, 0.12, 0.09); if (o.t === 'dragon' || o.t === 'troll' || o.t === 'hydra') tone('sawtooth', 110, 60, 0.3, 0.08, 0, 500); }
-  if (attacks(f.fac) && hostile(f, o)) { if (!f.foe || f.foe.gone) f.foe = o; }
+  if (attacks(f.fac) && !isCiv(f) && hostile(f, o)) { if (!f.foe || f.foe.gone) f.foe = o; }
   else { f.fleeT = 2.5; f.fleeFrom = { x: o.x, z: o.z }; }
   if (f.hp <= 0) defeat(f, o);
 }
 function stepToward(o, d, tx, tz, sp, dt) {
   let dy = Math.atan2(tx - o.x, tz - o.z) - o.r; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
   o.r += clamp(dy, -4 * dt, 4 * dt);
-  const nx = o.x + Math.sin(o.r) * sp * dt, nz = o.z + Math.cos(o.r) * sp * dt;
-  const ok = d.move === 'swim' ? groundAt(nx, nz) < -Math.max(1.2, d.h * o.s * 0.6) : landOK(d, nx, nz);
-  if (ok) { o.x = nx; o.z = nz; o.moving = true; o.phase += sp * dt / Math.max(0.15, ((d.legs && d.legs.len) || 0.8) * o.s) * 1.4; }
-  else o.moving = false;
-  return ok;
+  return walkStep(o, d, sp, dt, 4);
 }
 function groundY(o, d) { return d.move === 'swim' ? (-0.35 * d.h + (d.lift || 0)) * o.s : Math.max(groundAt(o.x, o.z), d.amph ? -0.2 * o.s : -10); }
 // one creature's fighting (or running away) this frame; true means it's busy and won't wander
@@ -4469,6 +4520,15 @@ function fightStep(o, d, dt, time) {
     if (!stepToward(o, d, o.x + ax / L * 10, o.z + az / L * 10, d.speed * Math.sqrt(o.s) * 1.9, dt)) o.r += 1.5 * dt * 3;
     o.y = groundY(o, d); o.tx = undefined;
     return true;
+  }
+  if (isCiv(o)) {                                      // townsfolk (and kids) run from monsters and hungry animals that come close
+    o.lookT = (o.lookT || Math.random() * 0.5) - dt;
+    if (o.lookT <= 0) {
+      o.lookT = 0.5 + Math.random() * 0.3; let th = null, bd = 11 * Math.sqrt(o.s);
+      near(o.x, o.z, bd, c => { if (c !== o && !c.gone && attacks(c.fac) && hostile(c, o)) { const dd = Math.hypot(c.x - o.x, c.z - o.z); if (dd < bd) { bd = dd; th = c; } } });
+      if (th) { o.fleeT = 2.5; o.fleeFrom = { x: th.x, z: th.z }; if (near3(o) && Math.random() < 0.3) say(o, pick(['Run!', 'Help!', 'Eek!']), '#ffd23f'); return true; }
+    }
+    return false;
   }
   if (!attacks(o.fac) || d.move === 'fly' || (o.race && !adult(o))) return false;   // (kids don't fight)
   if (o.foe && (o.foe.gone || !hostile(o, o.foe))) o.foe = null;
@@ -4501,6 +4561,16 @@ function fightStep(o, d, dt, time) {
   return true;
 }
 const pick = a => a[Math.floor(Math.random() * a.length)];
+// a soldier on guard: stands at their post looking out from the town, and every so often paces a couple of steps to one side and back
+function guardStep(o, d, dt) {
+  const [px, pz, face] = o.post;
+  o.paceT = (o.paceT === undefined ? Math.random() * 10 : o.paceT) - dt;
+  if (o.paceT <= 0) { o.paceT = 7 + Math.random() * 9; o.pace = o.pace ? 0 : (Math.random() < 0.5 ? -1 : 1) * 2.2; }
+  const tx = px + Math.cos(face) * (o.pace || 0), tz = pz - Math.sin(face) * (o.pace || 0), dist = Math.hypot(tx - o.x, tz - o.z);
+  if (dist > 0.35) { if (!stepToward(o, d, tx, tz, d.speed * Math.sqrt(o.s) * (dist > 6 ? 1.2 : 0.6), dt) && dist > 6) { o.hx = o.x; o.hz = o.z; o.post = [o.x, o.z, face]; } }
+  else { o.moving = false; let dy = face - o.r; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); o.r += clamp(dy, -2 * dt, 2 * dt); }
+  o.y = groundY(o, d); o.tx = undefined;
+}
 // ghosts: anything alive that comes near runs away screaming
 function ghostScares(dt) {
   screamT -= dt;
