@@ -3203,7 +3203,7 @@ function updateLife(dt, time) {
 // [health, damage, reach, how far it sees] at Medium size
 const STATS = {
   skeleton: [10, 2, 1.4, 22], zombie: [9, 1.6, 1.3, 18], demon: [22, 4, 1.8, 26], troll: [45, 6, 2.6, 22], minotaur: [35, 5, 2.2, 24],
-  griffin: [30, 5, 2, 20], yeti: [40, 5.5, 2.4, 20], dragon: [90, 8, 4.5, 40], hydra: [60, 6, 4, 24], seaserpent: [60, 6, 5, 22], goblin: [7, 1.5, 1.2, 20],
+  griffin: [40, 5, 2, 20], fairy: [2, 0, 0, 0], yeti: [40, 5.5, 2.4, 20], dragon: [90, 8, 4.5, 40], hydra: [135, 6, 4, 24], seaserpent: [100, 6, 5, 22], goblin: [7, 1.5, 1.2, 20],
   knight: [20, 3.5, 1.6, 20], king: [14, 2.5, 1.4, 18], pirate: [12, 2.6, 1.5, 18],
   lion: [26, 4.5, 1.8, 18], tiger: [26, 4.5, 1.8, 18], wolf: [12, 2.5, 1.4, 16], bear: [24, 4, 1.8, 16], polarbear: [28, 4.5, 1.9, 16], fox: [6, 1.4, 1.0, 12], croc: [20, 4, 1.8, 10], shark: [18, 4, 2.0, 14], dino: [40, 6, 2.6, 20],
   human: [10, 2, 1.4, 18], elf: [9, 2.2, 1.6, 24], dwarf: [13, 2.5, 1.4, 16], orc: [13, 2.8, 1.5, 22], animal: [5, 0, 0, 0],
@@ -3221,7 +3221,7 @@ function facOf(o) {
   return 'animal';
 }
 function maxHpOf(o) { return o.maxHp || (CAT[o.t].move ? statOf(o)[0] : 25) * o.s; }
-function healthTxt(o) { const max = maxHpOf(o), hp = o.hp === undefined ? max : Math.max(0, o.hp); return `❤️ ${Math.ceil(hp * 10).toLocaleString()} / ${Math.max(1, Math.round(max * 10)).toLocaleString()}`; }
+function healthTxt(o) { const max = maxHpOf(o), hp = o.hp === undefined ? max : Math.max(0, o.hp); return `❤️ ${Math.min(Math.round(max * 10), Math.ceil(hp * 10 - 0.001)).toLocaleString()} / ${Math.max(1, Math.round(max * 10)).toLocaleString()}`; }
 function statOf(o) { return STATS[CAT[o.t].id] || STATS[o.fac] || STATS.animal; }
 const attacks = f => f && f !== 'animal' && f !== 'ghost';
 function hostile(a, b) {
