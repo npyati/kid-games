@@ -84,6 +84,10 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,38px);lin
 #tools button{padding:6px 10px;font-size:14px}
 #tools button.on{border-color:#ff8a7a;color:#ffb3a8;background:#4a1f3a}
 #tools .lab{font-size:13px;color:var(--muted)}
+canvas.inspecting{cursor:zoom-in}
+#palette.inspecting #items{opacity:.35}
+#inspBanner{position:absolute;left:50%;top:66px;transform:translateX(-50%);background:rgba(21,18,63,.88);border:3px solid #5ec8ff;border-radius:14px;padding:6px 14px;font-size:16px;display:none;z-index:5;pointer-events:none;text-align:center;max-width:calc(100vw - 40px)}
+#inspBanner.show{display:block}
 #inspect{position:absolute;right:max(12px,env(safe-area-inset-right,0px));top:70px;width:min(340px,calc(100vw - 24px));max-height:calc(100vh - 250px);overflow:auto;background:rgba(21,18,63,.92);border:3px solid var(--edge);border-radius:16px;padding:10px 14px;box-sizing:border-box;display:none;z-index:6}
 #inspect.show{display:block}
 #inspect .itop{display:flex;align-items:center;gap:8px}
@@ -126,6 +130,7 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,38px);lin
   </div>
   <div id="hint"></div>
   <div id="cross"></div>
+  <div id="inspBanner">🔍 Inspecting: click on anyone or anything to see all about it. Press <b>🔍 Inspect</b> again to go back to building.</div>
   <div id="inspect"><div class="itop"><h3 id="inspHead"></h3><button id="inspClose">✕</button></div><div id="inspBody"></div></div>
   <div id="brushPanel"><div class="lab">Brush</div><div id="brushes"></div></div>
   <div id="palette">
@@ -191,8 +196,9 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,38px);lin
       <div><b class="h">Maps</b>Ten islands, plus four big maps: <b>Island Set</b> (seven islands, each a different land), <b>Pangea</b> (one giant supercontinent), <b>Sky Islands</b> (floating in the sky) and <b>Endless Ocean</b>. Or pick <b>🎲 Random</b>. New islands are much bigger than the first ones, and people and animals are smaller, so everything is more to scale.</div>
       <div><b class="h">Disasters</b>The <b>Disasters</b> group has a <b>tornado</b> (picks things up and throws them), a <b>tsunami</b> (a wave rolls in from the nearest sea), a <b>bomb</b>, a <b>sprinkle bomb</b> (lots of little bombs) and an <b>earthquake</b> (cracks the ground and knocks buildings down). The size buttons make them bigger. <b>Undo</b> puts things back.</div>
       <div><b class="h">Kings, queens and battles</b>Once a town starts to grow it crowns a <b>king</b>, a <b>queen</b> or both. They train soldiers who guard the town and send them to battle. Tap the <b>🪄 Battle wand</b> (in People) on one town, then on another, and they go to war. The <b>🕊️ Peace wand</b> does the opposite: the two towns become friends and never fight (even orcs). Bears, polar bears, foxes, crocodiles, sharks and dinosaurs are hungry: they hunt people and other animals. When a town has nobody left, its town hall explodes and it has fallen.</div>
+      <div><b class="h">Farms and caves</b>Towns plant <b>crop fields</b>: farmers walk out, hoe the ground and bring in the harvest (40 gold each time), and barns come with cows, sheep, pigs or chickens. New islands start with trees and plants that fit them, and some have <b>caves</b> that animals (or goblins) come out of.</div>
       <div><b class="h">Treasure</b>The <b>💰 Treasure</b> group has gold bags (small, medium, big and huge), treasure chests, a pile of gold, a golden crown, giant gems and gold dragon and hydra statues. Put treasure near a town and it goes into the town's gold: gold bags get spent right away, and the rest stays in the town. Bigger treasure is worth more.</div>
-      <div><b class="h">Inspect</b>Press <b>🔍 Inspect</b> (I on the keyboard, or press X twice on the controller) and tap a person, an animal, a monster or a town. People and animals have a name, an age, a personality, a job and a story of what's happened to them. Towns show how much money they have, their rulers, whether they're at war, at peace or neutral, and their history. One year goes by every 2 minutes.</div>
+      <div><b class="h">Inspect</b>Press <b>🔍 Inspect</b> (I on the keyboard, or press X twice on the controller): nothing gets built while you're inspecting. Click a person, an animal, a monster or a town. People and animals have a name, an age, a personality, a job and a story of what's happened to them. Towns show how much money they have, their rulers, whether they're at war, at peace or neutral, and their history. One year goes by every 2 minutes.</div>
       <div><b class="h">Big monsters</b>Dragons, hydras and sea serpents are huge, and each island can have up to <b>3</b> of each.</div>
       <div><b class="h">Saving</b>Every island saves by itself. Find it again under <b>My islands</b>.</div>
     </div>
@@ -2688,10 +2694,10 @@ function loadThings(data, fresh) {
       else if (ex.s === 1) o.soldier = true;
     }
     if (ex && typeof ex === 'object') {
-      for (const k of ['nm', 'tr', 'lk', 'bi', 'zb']) if (typeof ex[k] === 'string') o[k] = ex[k].slice(0, 30);
+      for (const k of ['nm', 'tr', 'lk', 'bi', 'zb', 'gn']) if (typeof ex[k] === 'string') o[k] = ex[k].slice(0, 30);
       if (typeof ex.cl === 'string') o.claimed = ex.cl.slice(0, 30);
       if (Number.isFinite(ex.ag)) o.ag = clamp(ex.ag, 0, 5000);
-      for (const k of ['ki', 'ba', 'to', 'wa', 'sc']) if (Number.isFinite(ex[k])) o[k] = clamp(ex[k] | 0, 0, 99999);
+      for (const k of ['ki', 'ba', 'to', 'wa', 'sc', 'an', 'hv', 'fromCave']) if (Number.isFinite(ex[k])) o[k] = clamp(ex[k] | 0, 0, 99999);
     }
     if (CAT[t].race) o.race = CAT[t].race;
   }
@@ -2713,7 +2719,33 @@ function scatterStart() {
       settle(o); objs.push(o); made++;
     }
   };
-  // (islands start with no plants: you paint them on with Nature, or place them one by one with Plants)
+  // trees and plants that fit the island (fewer per square metre on the big islands, so there's room to build)
+  const NATURE_CAP = 900, f = Math.min(2.2, Math.pow(ISL.shape === 'chain' ? ISL.R / 150 : ISL.R / 365, 2));
+  if (ISL.nature.length) {
+    const total = ISL.nature.reduce((a, b) => a + b[1], 0), k = Math.min(f, NATURE_CAP / total);
+    for (const [id, n] of ISL.nature) if (CAT[id]) tryPlace(id, Math.round(n * k));
+  } else if (ISL.wide) {                      // the big maps: each spot grows the plants of its own land type
+    const W = TN + 1;
+    for (let k = 0, made = 0; k < NATURE_CAP * 6 && made < NATURE_CAP * (ISL.shape === 'ocean' ? 0.05 : 1); k++) {
+      const x = (r() * 2 - 1) * R, z = (r() * 2 - 1) * R, h = groundAt(x, z);
+      if (h < 0.9 || slopeAt(x, z) < 0.72) continue;
+      const i = clamp(Math.round((x + TS) / TSTEP), 0, TN), j = clamp(Math.round((z + TS) / TSTEP), 0, TN), b = BGRID[j * W + i];
+      const B = b ? BIOMES[BIOME_IDS[b - 1]] : { plants: [['palm', 3], ['bush', 2], ['flowers', 1]], per: 120 };
+      if (!B.plants || !B.plants.length || r() > 60 / (B.per || 100)) continue;
+      const tot = B.plants.reduce((a, q) => a + q[1], 0); let pk = r() * tot, id = B.plants[0][0];
+      for (const [pid, w] of B.plants) { pk -= w; if (pk < 0) { id = pid; break; } }
+      if (id === 'palm' && h > 14) continue;
+      const o = makeObj(id, x, z, r() * 6.283, 0.75 + r() * 0.6); settle(o); objs.push(o); made++;
+    }
+  }
+  // caves, on islands with hills or mountains
+  const nCaves = { forest: 3, snow: 4, desert: 2, volcano: 3, cliffs: 4, autumn: 3, pangea: 6, set: 3, swamp: 1, candy: 1, tropical: 1, chain: 1 }[ISL.id] || 0;
+  for (let k = 0, made = 0; k < 4000 && made < nCaves; k++) {
+    const x = (r() * 2 - 1) * R, z = (r() * 2 - 1) * R, h = groundAt(x, z), sl = slopeAt(x, z);
+    if (h < 4 || sl > 0.93 || sl < 0.62 || objs.some(o => o.t === 'cave' && Math.hypot(o.x - x, o.z - z) < 150)) continue;
+    const gx = groundAt(x + 3, z) - groundAt(x - 3, z), gz = groundAt(x, z + 3) - groundAt(x, z - 3);   // the door faces down the hill
+    const o = makeObj('cave', x, z, Math.atan2(-gx, -gz), 1.2 + r() * 0.8); settle(o); o.y -= 1; objs.push(o); made++;
+  }
   for (const [id, n] of ISL.critters) if (CAT[id]) tryPlace(id, n);
   updateCount();
 }
@@ -2735,7 +2767,7 @@ function pickTarget(o, d) {
   o.tx = o.hx; o.tz = o.hz;
 }
 function updateLife(dt, time) {
-  updateSettlers(dt); updateTowns(dt); buildGrid(); ghostScares(dt); corruptSpawns(dt); updateFx(dt); updateArrows(dt); updateDisasters(dt, time);
+  updateSettlers(dt); updateTowns(dt); buildGrid(); ghostScares(dt); corruptSpawns(dt); updateFx(dt); updateArrows(dt); updateDisasters(dt, time); caveSpawns(dt);
   for (const o of objs.slice()) {                        // (a copy: things can be beaten while we go)
     if (o.ag !== undefined) o.ag += dt / YEAR;          // one year every 2 minutes
     if (o.gone || o.held) continue;                      // (caught in a tornado or a wave)
@@ -2879,13 +2911,13 @@ function findFoe(o) {
    a town keep the peace, or go to war with everyone.
    ===================================================================== */
 const RACES = {
-  human: { name: 'Humans', icon: '🧑', center: 'townhall', homes: [['cottage', 4], ['house', 2], ['barn', 1], ['well', 1], ['stall', 1]], folk: ['human', 'human2', 'human3'],
+  human: { name: 'Humans', icon: '🧑', center: 'townhall', homes: [['cottage', 4], ['house', 2], ['field', 3], ['barn', 1], ['windmill', 0.6], ['well', 1], ['stall', 1]], folk: ['human', 'human2', 'human3'],
     names: [['Brook', 'Oak', 'Mill', 'River', 'Stone', 'Green', 'Fair', 'Ash', 'Elm', 'Maple', 'Clover', 'Honey', 'Willow', 'Apple'], ['Creek', 'Hollow', 'Ford', 'Hill', 'Vale', 'Haven', 'Meadow', 'Bend', 'Field', 'Crossing']] },
-  elf: { name: 'Elves', icon: '🧝', center: 'elftree', homes: [['elfhouse', 4], ['elftower', 1]], folk: ['elf', 'elf2'],
+  elf: { name: 'Elves', icon: '🧝', center: 'elftree', homes: [['elfhouse', 4], ['field', 1.5], ['elftower', 1]], folk: ['elf', 'elf2'],
     names: [['Silver', 'Moon', 'Star', 'Dawn', 'Mist', 'Glimmer', 'Sun', 'Dew', 'Fern', 'Lark'], ['leaf', 'glade', 'shade', 'song', 'light', 'wood', 'vale', 'brook']] },
-  dwarf: { name: 'Dwarves', icon: '🧔', center: 'dwarfhall', homes: [['dwarfhouse', 4], ['forge', 1]], folk: ['dwarf', 'dwarf2'],
+  dwarf: { name: 'Dwarves', icon: '🧔', center: 'dwarfhall', homes: [['dwarfhouse', 4], ['field', 1.5], ['forge', 1]], folk: ['dwarf', 'dwarf2'],
     names: [['Iron', 'Stone', 'Copper', 'Granite', 'Deep', 'Gold', 'Anvil', 'Boulder', 'Coal', 'Hammer'], ['hold', 'forge', 'delve', 'peak', 'hall', 'gate', 'mine', 'rock']] },
-  orc: { name: 'Orcs', icon: '👹', center: 'warcamp', homes: [['orchut', 4], ['orctower', 1]], folk: ['orc', 'orc2'],
+  orc: { name: 'Orcs', icon: '👹', center: 'warcamp', homes: [['orchut', 4], ['field', 1.5], ['barn', 0.5], ['orctower', 1]], folk: ['orc', 'orc2'],
     names: [['Mud', 'Grub', 'Snarl', 'Bog', 'Thunder', 'Rust', 'Grumble', 'Fang', 'Stomp', 'Grit'], ['tusk', 'maw', 'pit', 'crag', 'camp', 'fang', 'gut', 'skull']] },
 };
 // the four peoples (the ones you place found towns; the others are townsfolk who look a bit different)
@@ -3108,7 +3140,7 @@ function hammer(t, b, dt) {
   b.hamT = (b.hamT || 0) - dt;
   if (b.hamT > 0) return;
   b.hamT = 0.5 + Math.random() * 0.4;
-  const near = townFolk(t).filter(o => !o.march && !o.foe);
+  const near = townFolk(t).filter(o => !o.march && !o.foe && !o.farmer);
   if (!near.length) return;
   const w = pick(near), r = CAT[b.t].r * b.s + 1;                  // someone walks over and gets to work
   if (Math.hypot(w.x - b.x, w.z - b.z) > r + 3) { const a = Math.random() * 6.283; w.tx = b.x + Math.cos(a) * r; w.tz = b.z + Math.sin(a) * r; w.wait = 0; }
@@ -3128,6 +3160,7 @@ function growTown(t, dt) {
   if (buildWork(t, dt)) return;                     // (still building the town centre)
   const slow = settings.build, done = homes.filter(b => b.build === undefined).length;
   townRule(t, folk, homes, done, dt);
+  townFarm(t, folk, homes, dt);
   t.growT -= dt;
   if (t.growT <= 0 && homes.length < 26 && objs.length < 2900) {
     t.growT = (slow ? 12 + homes.length * 0.9 : 5 + homes.length * 0.6) + Math.random() * 3;
@@ -3296,13 +3329,13 @@ const RULER_NAMES = {
 };
 const rulerTitle = o => (o.ruler === 'king' ? 'King ' : 'Queen ') + o.rname;
 function crownRulers(t, folk) {
-  const civ = folk.filter(o => !o.soldier && !o.march);
+  const civ = folk.filter(o => !o.soldier && !o.march).sort((a, b) => !!a.farmer - !!b.farmer);
   if (!civ.length) return;
   const roll = Math.random(), kinds = roll < 0.35 ? ['king'] : roll < 0.7 ? ['queen'] : ['king', 'queen'];
   const names = [];
   kinds.forEach((k, i) => {
     const o = civ[i]; if (!o) return;
-    o.ruler = k; o.rname = pick(RULER_NAMES[t.race][k === 'king' ? 0 : 1]); o.nm = o.rname; o.hx = t.x; o.hz = t.z;
+    o.ruler = k; o.rname = pick(RULER_NAMES[t.race][k === 'king' ? 0 : 1]); o.nm = o.rname; o.gn = k === 'queen' ? 'f' : 'm'; o.hx = t.x; o.hz = t.z;
     o.maxHp = o.hp = (statOf(o)[0] * 2.5) * o.s;
     names.push(rulerTitle(o));
   });
@@ -3323,7 +3356,7 @@ function townRule(t, folk, homes, done, dt) {
   t.armyT = 8 + Math.random() * 4;
   const sol = folk.filter(o => o.soldier), want = Math.floor(folk.length * 0.45);
   if (sol.length < want) {
-    const c = folk.find(o => !o.soldier && !o.ruler && !o.march);
+    const c = folk.find(o => !o.soldier && !o.ruler && !o.march && !o.farmer);   // (farmers keep farming)
     if (c) { c.soldier = true; c.maxHp = c.hp = statOf(c)[0] * 1.6 * c.s; if (near3(c)) say(c, `For ${rulers[0].ruler === 'king' ? 'the King' : 'the Queen'}!`, '#ffd23f'); }
   }
   const ring = 16 + Math.sqrt(homes.length) * 6.5;                     // soldiers keep watch in a ring around the town
@@ -3642,11 +3675,13 @@ const AGE_RANGE = { dragon: [120, 900], hydra: [300, 1000], seaserpent: [200, 80
 const hashStr = s => { let h = 7; for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); };
 function lifeInfo(o) {                    // fill in the name, age and personality the first time someone looks
   const d = CAT[o.t];
+  if (!o.gn) o.gn = o.ruler ? (o.ruler === 'queen' ? 'f' : 'm') : o.t === 'human3' ? 'f' : Math.random() < 0.5 ? 'f' : 'm';
   if (o.ruler && o.rname) o.nm = o.rname;
+  const byGn = list => pick(list.filter((n, i) => (i % 2 === 1) === (o.gn === 'f')));
   if (!o.nm) {
-    if (o.race) o.nm = pick(FIRST_NAMES[o.race]);
+    if (o.race) o.nm = byGn(FIRST_NAMES[o.race]);
     else if (d.cat === 'mythical' && !['unicorn', 'phoenix'].includes(o.t)) o.nm = pick(BEAST_NAMES[0]) + pick(BEAST_NAMES[1]);
-    else if (d.cat === 'people') o.nm = pick(FIRST_NAMES.human);
+    else if (d.cat === 'people') o.nm = byGn(FIRST_NAMES.human);
     else o.nm = pick(PET_NAMES);
   }
   if (o.ag === undefined) {
@@ -3673,18 +3708,16 @@ function townGold(t, folk, homes, dt) {          // towns get richer as they gro
 const yearsTxt = y => y < 1 ? 'less than a year' : Math.floor(y) === 1 ? '1 year' : Math.floor(y) + ' years';
 let inspected = null, inspectT = 0;
 function inspectAt(hit) {
-  if (!hit) return false;
-  let best = null, bd = Infinity;
-  for (const o of objs) {                                         // people and animals first, since they're small and move
-    const d = CAT[o.t]; if (!d.move || o.gone) continue;
-    const dist = Math.hypot(o.x - hit.x, o.z - hit.z), reach = d.r * o.s + 2 + cam.dist * 0.015;
-    if (dist < reach && dist < bd) { bd = dist; best = o; }
+  const [px, py] = inspectPoint(), o = pickOnScreen(px, py);
+  if (o) {
+    const t = o.town && TOWN[o.town];
+    if (t && o.t === RACES[t.race].center) { openInspect({ town: t }); return true; }      // the town hall shows the whole town
+    openInspect({ obj: o }); return true;
   }
-  if (!best) { const t = townNear(hit.x, hit.z, 45); if (t) { openInspect({ town: t }); return true; } }
-  if (!best) best = eraseTarget(hit);
-  if (!best) { sfx('nope'); toast('🔍 Tap a person, an animal, a monster or a town', 1500); return false; }
-  openInspect({ obj: best });
-  return true;
+  const t = hit && townNear(hit.x, hit.z, 45);
+  if (t) { openInspect({ town: t }); return true; }
+  sfx('nope'); toast('🔍 Click on a person, an animal, a monster, a building or a town', 1500);
+  return false;
 }
 function openInspect(what) { inspected = what; inspectT = 0; sfx('click'); $('inspect').classList.add('show'); fillInspect(); }
 function closeInspect() { inspected = null; $('inspect').classList.remove('show'); }
@@ -3707,7 +3740,7 @@ function fillInspect() {
     const pals = [...t.friends].map(id => TOWN[id] && TOWN[id].name).filter(Boolean);
     const status = t.build < 1 ? `🔨 Still being built (${Math.floor(t.build * 100)}%)` : foes.length ? '⚔️ At war with ' + foes.map(esc).join(', ') : t.mode === 'peace' ? '🕊️ Keeping the peace' : pals.length ? '🤝 At peace' : '😐 Neutral';
     head = `${R.icon} ${esc(t.name)}`;
-    body = row('People', `${R.name}`) + row('Population', folk.length) + row('Soldiers', sol) + row('Buildings', homes.length)
+    body = row('People', `${R.name}`) + row('Population', folk.length) + row('Soldiers', sol) + row('Buildings', homes.length) + row('Farms', `${homes.filter(b => b.t === 'field').length} field${homes.filter(b => b.t === 'field').length === 1 ? '' : 's'} · ${t.harvests || 0} harvest${t.harvests === 1 ? '' : 's'}`)
       + row('Money', `🪙 ${Math.floor(t.gold || 0).toLocaleString()} gold`)
       + row('Rulers', rulers.length ? rulers.map(o => '👑 ' + esc(rulerTitle(o))).join('<br>') : 'Nobody yet')
       + row('Status', status) + (pals.length ? row('Friends', pals.map(esc).join(', ')) : '')
@@ -3720,25 +3753,30 @@ function fillInspect() {
       const t = o.town && TOWN[o.town];
       head = `${d.icon} ${esc(d.name)}`;
       body = row('What it is', CATS.find(c => c.id === d.cat) ? CATS.find(c => c.id === d.cat).name.replace(/s$/, '') : 'Thing')
+        + (o.t === 'field' ? row('Crops', o.grow === undefined ? 'Growing' : o.grow > 0.75 ? 'Ripe! 🌾' : Math.floor(o.grow * 100) + '% grown') + (o.worker && !o.worker.gone ? row('Farmer', esc(o.worker.nm || 'someone')) : '') : '')
+        + (o.t === 'cave' ? row('Lives inside', (CAVE_KINDS[ISL.id] || []).map(k => CAT[k].name.toLowerCase() + 's').join(', ') || 'Nobody') : '')
         + (t ? row('Belongs to', esc(t.name)) : '') + (d.value ? row('Worth', `🪙 ${Math.round(d.value * o.s).toLocaleString()} gold`) : '') + (o.claimed && TOWN[o.claimed] ? row('In the treasury of', esc(TOWN[o.claimed].name)) : d.value ? row('Owner', 'Nobody yet: put it near a town') : '') + (o.build !== undefined ? row('Building', Math.floor(o.build * 100) + '%') : '')
         + (o.hp !== undefined ? row('Health', Math.max(0, Math.round(o.hp / o.maxHp * 100)) + '%') : '')
         + `<p class="istory">${t ? `Built by the ${RACES[t.race].name.toLowerCase()} of ${esc(t.name)}.` : 'You put it here.'}</p>`;
     } else {
       lifeInfo(o);
-      const t = o.town && TOWN[o.town], kind = o.race ? CAT[o.race].name : d.name, job = o.ruler ? (o.ruler === 'king' ? 'King' : 'Queen') + ' of ' + (t ? t.name : 'nowhere') : o.soldier ? 'Soldier' : o.race && t ? JOBS[o.race][hashStr(o.nm + o.t) % JOBS[o.race].length] : null;
+      const t = o.town && TOWN[o.town], kind = o.race ? CAT[o.race].name : d.name, job = o.ruler ? (o.ruler === 'king' ? 'King' : 'Queen') + ' of ' + (t ? t.name : 'nowhere') : o.soldier ? 'Soldier' : o.farmer && !o.farmer.gone ? 'Farmer' : o.race && t ? JOBS[o.race][hashStr(o.nm + o.t) % JOBS[o.race].length] : null;
       const title = o.ruler ? rulerTitle(o) : o.nm;
       head = `${o.ruler ? '👑' : d.icon} ${esc(title)}`;
-      const doing = o.held ? (o.held.tor ? 'Flying around in a tornado!' : 'Being swept away by a wave!') : o.fleeT > 0 ? 'Running away!' : o.march && TOWN[o.march] ? 'Marching to battle against ' + esc(TOWN[o.march].name) : o.foe && !o.foe.gone ? 'Fighting ' + esc(o.foe.nm || CAT[o.foe.t].name.toLowerCase()) : o.flying ? 'Flying' : o.moving ? 'Walking around' : 'Resting';
+      const doing = o.farmer && !o.farmer.gone && !o.foe && !o.march ? 'Working in the fields' : o.held ? (o.held.tor ? 'Flying around in a tornado!' : 'Being swept away by a wave!') : o.fleeT > 0 ? 'Running away!' : o.march && TOWN[o.march] ? 'Marching to battle against ' + esc(TOWN[o.march].name) : o.foe && !o.foe.gone ? 'Fighting ' + esc(o.foe.nm || CAT[o.foe.t].name.toLowerCase()) : o.flying ? 'Flying' : o.moving ? 'Walking around' : 'Resting';
       body = row('Kind', esc(kind)) + row('Age', yearsTxt(o.ag) + ' old') + (job ? row('Job', esc(job)) : '') + (t ? row('Home', esc(t.name)) : '')
         + row('Personality', esc(o.tr)) + row('Likes', esc(o.lk))
         + (o.hp !== undefined && o.maxHp ? row('Health', Math.max(0, Math.round(o.hp / o.maxHp * 100)) + '%') : row('Health', '100%'))
         + row('Doing', doing);
       // the story so far
-      const he = o.ruler === 'queen' || o.t === 'human3' ? 'she' : o.race || d.cat === 'people' ? 'he' : 'it';
+      const he = d.cat === 'mythical' && !['unicorn', 'phoenix'].includes(o.t) ? 'it' : o.gn === 'f' ? 'she' : 'he';
       const He = he[0].toUpperCase() + he.slice(1), bits = [];
       bits.push(o.bi ? `${esc(o.nm)} was born in ${esc(o.bi)}.` : o.race ? `${esc(o.nm)} came to the island with the first ${CAT[o.race].name.toLowerCase()}s.` : `${esc(o.nm)} is a ${esc(o.tr)} ${esc(d.name.toLowerCase())} who loves ${esc(o.lk)}.`);
       if (o.ruler) bits.push(`${He} was crowned ruler of ${t ? esc(t.name) : 'a town'}.`);
       if (o.soldier) bits.push(`${He} joined the army to guard ${t ? esc(t.name) : 'the town'}.`);
+      if (o.hv) bits.push(`${He} has brought in ${o.hv === 1 ? 'a harvest' : o.hv + ' harvests'}.`);
+      if (o.fromCave) bits.push(`${He} came out of a cave.`);
+      if (o.farm && TOWN[o.farm]) bits.push(`${He} lives on a farm in ${esc(TOWN[o.farm].name)}.`);
       if (o.ba) bits.push(`${He} has marched into battle ${o.ba === 1 ? 'once' : o.ba + ' times'}.`);
       if (o.ki) bits.push(o.fac === 'predator' ? `${He} has caught ${o.ki} ${o.ki === 1 ? 'meal' : 'meals'}.` : o.t === 'zombie' ? `${He} has bitten ${o.ki} ${o.ki === 1 ? 'victim' : 'victims'}.` : `${He} has beaten ${o.ki} ${o.ki === 1 ? 'enemy' : 'enemies'}.`);
       if (o.zb) bits.push(`${He} used to be a ${esc(o.zb)}, until a zombie bit ${he === 'it' ? 'it' : he === 'she' ? 'her' : 'him'}.`);
@@ -3752,7 +3790,112 @@ function fillInspect() {
   }
   $('inspHead').innerHTML = head; $('inspBody').innerHTML = body;
 }
-function toggleInspect() { tool.inspect = !tool.inspect; if (tool.inspect) tool.erase = tool.inspect = false; sfx('click'); fillItems(); toast(tool.inspect ? '🔍 Inspect: tap a person, an animal, a monster or a town' : '🔨 Building again', 1500); if (!tool.inspect) closeInspect(); }
+function toggleInspect() { tool.inspect = !tool.inspect; if (tool.inspect) tool.erase = false; sfx('click'); fillItems(); if (!tool.inspect) { closeInspect(); toast('🔨 Back to building', 1200); } }
+/* =====================================================================
+   Farms: towns plant crop fields, farmers hoe and harvest them (for gold), and barns come with animals
+   ===================================================================== */
+const SOIL = [0.42, 0.28, 0.16], SOIL2 = [0.33, 0.21, 0.12];
+let cropMeshes = null;
+function fieldDraw(o, base, time, flash) {
+  const M = meshesFor(CAT.field);
+  drawMesh(M.body, base, flash);
+  if (!cropMeshes) {
+    const mk = (stalk, head) => { const g = new Geo(16384); for (let r = 0; r < 6; r++) for (let i = 0; i < 12; i++) { const x = -3.3 + i * 0.6 + (r % 2) * 0.3, z = -2.5 + r * 1.0; cyl(g, [x, 0.12, z], [x + 0.03, 0.95, z], 0.035, 0.025, stalk, 5, false); orb(g, x + 0.03, 1.0, z, 0.08, 0.17, 0.08, head, { lo: true }); } return makeMesh(g); };
+    cropMeshes = { green: mk([0.35, 0.62, 0.2], [0.45, 0.72, 0.25]), ripe: mk([0.82, 0.68, 0.3], [0.95, 0.8, 0.3]) };
+  }
+  const gr = o.grow === undefined ? 0.6 : o.grow;
+  if (gr > 0.05) drawMesh(gr > 0.75 ? cropMeshes.ripe : cropMeshes.green, mChain(base, mS3(1, 0.1 + 0.9 * gr, 1)), flash);
+}
+def('field', 'build', 'Crop field', '🌾', { r: 4.4, h: 1.2, draw: fieldDraw, body: g => {
+  box(g, 0, -0.1, 0, 8, 0.2, 6, SOIL);
+  for (let r = 0; r < 6; r++) box(g, 0, 0.08, -2.5 + r * 1.0, 7.6, 0.08, 0.45, SOIL2);                  // furrows
+  for (const [x, z] of [[-4, -3], [4, -3], [-4, 3], [4, 3], [0, -3], [0, 3], [-4, 0], [4, 0]]) cyl(g, [x, 0, z], [x, 0.9, z], 0.07, 0.07, COL.wood, 8);
+  for (const [a, b] of [[[-4, -3], [4, -3]], [[-4, 3], [4, 3]], [[-4, -3], [-4, 3]], [[4, -3], [4, 3]]]) cyl(g, [a[0], 0.65, a[1]], [b[0], 0.65, b[1]], 0.04, 0.04, COL.wood, 6, false);
+} });
+function townFarm(t, folk, homes, dt) {
+  for (const o of folk) if (o.farmer && (o.farmer.gone || o.march || o.soldier || o.ruler)) { if (o.farmer.worker === o) o.farmer.worker = null; o.farmer = null; }
+  for (const f of homes) {
+    if (f.t !== 'field' || f.build !== undefined) continue;
+    if (f.grow === undefined) f.grow = Math.random() * 0.3;
+    let w = f.worker && !f.worker.gone && f.worker.farmer === f ? f.worker : null;
+    if (!w) { w = folk.find(o => !o.soldier && !o.ruler && !o.march && !o.farmer && !o.foe); if (w) { w.farmer = f; f.worker = w; } }
+    if (!w) { f.grow = Math.min(1, f.grow + dt / 300); continue; }              // nobody to look after it: it grows slowly by itself
+    const fr = CAT.field.r * f.s, dist = Math.hypot(w.x - f.x, w.z - f.z);
+    w.hx = f.x; w.hz = f.z;
+    if (dist > fr + 1.5) { if (w.tx === undefined || Math.hypot(w.tx - f.x, w.tz - f.z) > fr) { const a = Math.random() * 6.283; w.tx = f.x + Math.cos(a) * fr * 0.5; w.tz = f.z + Math.sin(a) * fr * 0.5; w.wait = 0; } }
+    else {
+      f.grow = Math.min(1, f.grow + dt / 60);                                     // about a minute from planting to harvest
+      f.hoeT = (f.hoeT || 0) - dt;
+      if (f.hoeT <= 0) {
+        f.hoeT = 1.2 + Math.random();
+        w.lunge = 1; w.moving = false;
+        if (Math.random() < 0.35) poof(w.x + Math.sin(w.r) * 0.6, w.y, w.z + Math.cos(w.r) * 0.6, 0.4, SOIL);
+        if (Math.random() < 0.3) { const a = Math.random() * 6.283, q = Math.random() * fr * 0.6; w.tx = f.x + Math.cos(a) * q; w.tz = f.z + Math.sin(a) * q; w.wait = 0; }
+      }
+    }
+    if (f.grow >= 1) {
+      f.grow = 0; t.gold = (t.gold || 0) + 40; t.harvests = (t.harvests || 0) + 1; w.hv = (w.hv || 0) + 1;
+      poof(f.x, f.y + 0.6, f.z, 2.2, [0.95, 0.8, 0.3]);
+      if (near3(f)) { say(w, pick(['Harvest time!', 'What a crop!', 'Wheat for everyone!', 'Yum!']), '#ffd23f'); tone('triangle', 784, 988, 0.15, 0.05); }
+      if (t.harvests % 5 === 1) townLog(t, 'Brought in the harvest (+40 gold).');
+      dirty = true;
+    }
+  }
+  for (const b of homes) if (b.t === 'barn' && b.build === undefined && !b.an && objs.length < 2900) {   // a new barn comes with its animals
+    b.an = 1;
+    const kind = pick(['cow', 'sheep', 'pig', 'chicken']);
+    for (let i = 0; i < 3; i++) {
+      const a = Math.random() * 6.283, x = b.x + Math.cos(a) * 10, z = b.z + Math.sin(a) * 10;
+      if (groundAt(x, z) < 0.3) continue;
+      const o = makeObj(kind, x, z, a, growOf(kind)); o.farm = t.id; settle(o); objs.push(o); pop.push({ o, t: 0 });
+    }
+    updateCount(); townLog(t, `Built a barn and got some ${CAT[kind].name.toLowerCase()}s.`);
+  }
+}
+
+/* =====================================================================
+   Caves: some islands start with a few, and animals (or goblins) live in them and wander out
+   ===================================================================== */
+def('cave', 'build', 'Cave', '🕳️', { r: 5, h: 6, big: true, body: g => {
+  rockShape(g, 0, 0, -1, 5.2, 4.2, 4.6, COL.stone2, 21); rockShape(g, -3.2, 0, 0.5, 2.6, 2.6, 2.4, shade(COL.stone2, 0.9), 22); rockShape(g, 3.2, 0, 0.5, 2.6, 2.8, 2.4, shade(COL.stone2, 0.95), 23);
+  orb(g, 0, 1.4, 2.45, 1.6, 1.9, 0.9, [0.05, 0.04, 0.05], { cutBelow: 0 });                 // the dark way in
+  orb(g, 0, 1.4, 2.2, 2.0, 2.3, 0.8, shade(COL.stone2, 0.7), { cutBelow: 0 });
+  for (let i = 0; i < 5; i++) cyl(g, [-1.1 + i * 0.55, 3.15, 2.6], [-1.1 + i * 0.55 + 0.05, 2.5 - (i % 2) * 0.3, 2.65], 0.13, 0.01, shade(COL.stone2, 0.8), 6);   // pointy rocks over the door
+} });
+const CAVE_KINDS = { forest: ['bear', 'fox'], snow: ['polarbear'], desert: ['lizard', 'goblin'], volcano: ['goblin', 'troll'], candy: ['bunny'], swamp: ['croc', 'frog'],
+  cliffs: ['goat', 'bear'], autumn: ['fox', 'bear'], pangea: ['bear', 'dino'], set: ['bear', 'goblin'], tropical: ['crab'], chain: ['crab'], sky: ['goat'], ocean: [] };
+let caveT = 0;
+function caveSpawns(dt) {
+  if ((caveT -= dt) > 0) return;
+  caveT = 12 + Math.random() * 8;
+  const caves = objs.filter(o => o.t === 'cave'), kinds = CAVE_KINDS[ISL.id] || ['bear'];
+  if (!caves.length || !kinds.length || objs.length > 2900) return;
+  const c = pick(caves);
+  if (objs.filter(o => o.fromCave && Math.hypot(o.x - c.x, o.z - c.z) < 60).length >= 3) return;
+  const kind = pick(kinds), a = c.r, x = c.x + Math.sin(a) * 4.5 * c.s, z = c.z + Math.cos(a) * 4.5 * c.s;   // out of the door
+  if (groundAt(x, z) < 0.3) return;
+  const o = makeObj(kind, x, z, a, growOf(kind)); o.fromCave = 1; o.bi = 'a cave'; settle(o); objs.push(o); pop.push({ o, t: 0 }); updateCount();
+}
+
+/* =====================================================================
+   Inspect: pick what's under the mouse on the screen (not the ground behind it)
+   ===================================================================== */
+function pickOnScreen(px, py) {
+  const k = (innerHeight / 2) / Math.tan(FOVY / 2);
+  let best = null, bs = Infinity;
+  for (const o of objs) {
+    if (o.gone) continue;
+    const d = CAT[o.t], h = d.h * o.s, p = toScreen(o.x, o.y + h * 0.5, o.z);
+    if (!p || p[2] > 1800) continue;
+    const rad = Math.max(12, Math.max(d.r * o.s, h * 0.5) / p[2] * k), dist = Math.hypot(p[0] - px, p[1] - py);
+    if (dist > rad + 10) continue;
+    const score = dist / (rad + 10) + (d.move ? 0 : 0.7) + p[2] * 0.0004;     // people and animals first, then whatever is closest
+    if (score < bs) { bs = score; best = o; }
+  }
+  return best;
+}
+function inspectPoint() { return mouse.active && !usingPad ? [mouse.x, mouse.y] : [innerWidth / 2, innerHeight / 2]; }
+let inspHover = null;
 let fx = [], texts = [], screamT = 0;
 function poof(x, y, z, size, col) {
   for (let i = 0; i < 10; i++) { const a = Math.random() * 6.283, sp = 1 + Math.random() * 2; fx.push({ x, y: y + size * 0.6, z, vx: Math.cos(a) * sp, vy: 1 + Math.random() * 2, vz: Math.sin(a) * sp, t: 0, life: 0.9 + Math.random() * 0.4, r: size * (0.25 + Math.random() * 0.25), col }); }
@@ -3980,7 +4123,7 @@ function drawOne(o, time, shadow, flash) {
   }
 }
 function drawThings(time, shadow) {
-  const hot = !shadow && tool.erase && cursor ? eraseTarget(cursor) : null;
+  const hot = shadow ? null : tool.inspect ? inspHover : tool.erase && cursor ? eraseTarget(cursor) : null;
   for (const o of objs) {
     const d = CAT[o.t], r = d.r * o.s + d.h * o.s, cy = o.y + d.h * o.s * 0.5;
     if (shadow) { if (Math.abs(o.x - cam.tx) > shadowHalf + r || Math.abs(o.z - cam.tz) > shadowHalf + r) continue; }
@@ -4003,7 +4146,7 @@ function drawGhosts(time) {
 }
 // the circle where the next thing will go, and a see-through preview of it
 function drawCursor(time) {
-  if (state !== 'play' || !cursor) return;
+  if (state !== 'play' || !cursor || tool.inspect) return;     // (inspecting: just the pointer, nothing gets built)
   const d = selectedDef(), s = sizeOf(d);
   let ok, ringR, col;
   if (tool.inspect) { ok = true; ringR = 1.6 + cam.dist * 0.012; col = [0.4, 0.8, 1]; }
@@ -4054,6 +4197,7 @@ function fillItems() {
   if (sel) sel.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   $('eraseBtn').classList.toggle('on', tool.erase);
   $('inspectBtn').classList.toggle('on', !!tool.inspect);
+  canvas.classList.toggle('inspecting', !!tool.inspect); $('palette').classList.toggle('inspecting', !!tool.inspect); $('inspBanner').classList.toggle('show', !!tool.inspect);
   $('sizeLab').textContent = SIZE_SHORT[tool.size];
 }
 function setCat(i) { tool.cat = (i + CATS.length) % CATS.length; tool.erase = tool.inspect = false; fillItems(); }
@@ -4149,9 +4293,9 @@ let dirty = false, saveT = 0;
 function saveObj(o) {
   const a = [o.t, +o.hx.toFixed(2), +o.hz.toFixed(2), +o.r.toFixed(3), o.s], x = {};
   if (o.ruler) { x.k = o.ruler; x.n = o.rname; } else if (o.soldier) x.s = 1;
-  for (const k of ['nm', 'tr', 'lk', 'bi', 'zb']) if (typeof o[k] === 'string') x[k] = o[k];
+  for (const k of ['nm', 'tr', 'lk', 'bi', 'zb', 'gn']) if (typeof o[k] === 'string') x[k] = o[k];
   if (o.ag !== undefined) x.ag = +o.ag.toFixed(2);
-  for (const k of ['ki', 'ba', 'to', 'wa', 'sc']) if (o[k]) x[k] = o[k];
+  for (const k of ['ki', 'ba', 'to', 'wa', 'sc', 'an', 'hv', 'fromCave']) if (o[k]) x[k] = o[k];
   if (o.claimed) x.cl = o.claimed;
   const has = Object.keys(x).length;
   if (o.town || has) a.push(o.town || 0);
@@ -4646,6 +4790,7 @@ function updatePlay(dt) {
   updateCamera(dt);
   applyShake(dt);
   updateCursor();
+  if (tool.inspect) { const [px, py] = inspectPoint(); inspHover = pickOnScreen(px, py); } else inspHover = null;
   padActions(dt);
   if (mouse.ldown && !usingPad && state === "play") holdBuild(dt);
 }
