@@ -323,7 +323,7 @@ const ISLANDS = [
     shape: 'round', R: 360, lift: 10, hills: 9, peak: 26, beach: 0.18,
     sand: [0.95, 0.86, 0.62], grass: [0.36, 0.7, 0.28], grass2: [0.2, 0.55, 0.22], rock: [0.52, 0.48, 0.42], snowH: 999,
     sky: [[0.78, 0.9, 0.96], [0.22, 0.55, 0.92]], water: [0.02, 0.36, 0.4],
-    nature: [['palm', 110], ['bush', 40], ['flowers', 40], ['rock', 18]], critters: [['parrot', 4], ['crab', 5], ['dolphin', 3], ['seaturtle', 2], ['fish', 6], ['monkey', 3]] },
+    nature: [['palm', 110], ['bush', 40], ['flowers', 40], ['rock', 18]], critters: [['parrot', 4], ['crab', 5], ['dolphin', 3], ['seaturtle', 2], ['fish', 6], ['monkey', 3], ['mermaid', 2]] },
   { id: 'forest', name: 'Big Forest', icon: '🌲', blurb: 'Rolling green hills covered in pine trees and oaks.', art: 'linear-gradient(#8cc3ea,#3f8a3a 60%,#2a6a2e)',
     shape: 'round', R: 380, lift: 18, hills: 16, peak: 34, beach: 0.07,
     sand: [0.83, 0.77, 0.58], grass: [0.3, 0.6, 0.24], grass2: [0.18, 0.44, 0.17], rock: [0.48, 0.46, 0.43], snowH: 999,
@@ -333,7 +333,7 @@ const ISLANDS = [
     shape: 'round', R: 370, lift: 16, hills: 14, peak: 90, beach: 0.06, snowAll: true,
     sand: [0.82, 0.84, 0.88], grass: [0.93, 0.95, 0.99], grass2: [0.82, 0.88, 0.96], rock: [0.5, 0.52, 0.58], snowH: 0,
     sky: [[0.86, 0.9, 0.96], [0.42, 0.6, 0.86]], water: [0.05, 0.22, 0.32],
-    nature: [['snowpine', 170], ['rock', 30], ['snowman', 6]], critters: [['penguin', 8], ['polarbear', 2], ['wolf', 2]] },
+    nature: [['snowpine', 170], ['rock', 30], ['snowman', 6]], critters: [['penguin', 8], ['polarbear', 2], ['wolf', 2], ['yeti', 1]] },
   { id: 'desert', name: 'Desert Dunes', icon: '🏜️', blurb: 'Golden sand dunes, cactuses and rocky mesas.', art: 'linear-gradient(#f5b36b,#f0c77d 55%,#c98f4f)',
     shape: 'dunes', R: 370, lift: 8, hills: 6, peak: 30, beach: 0.1,
     sand: [0.94, 0.78, 0.5], grass: [0.9, 0.72, 0.44], grass2: [0.84, 0.64, 0.38], rock: [0.74, 0.44, 0.27], snowH: 999,
@@ -348,7 +348,7 @@ const ISLANDS = [
     shape: 'candy', R: 350, lift: 10, hills: 8, peak: 26, beach: 0.12,
     sand: [1.0, 0.86, 0.72], grass: [1.0, 0.62, 0.82], grass2: [0.62, 0.92, 0.82], rock: [0.74, 0.58, 1.0], snowH: 999,
     sky: [[1.0, 0.88, 0.95], [0.7, 0.6, 0.98]], water: [0.25, 0.42, 0.6],
-    nature: [['lollipop', 90], ['candycane', 40], ['gumdrop', 40], ['flowers', 30]], critters: [['unicorn', 4], ['bunny', 6]] },
+    nature: [['lollipop', 90], ['candycane', 40], ['gumdrop', 40], ['flowers', 30]], critters: [['unicorn', 4], ['bunny', 6], ['pegasus', 2], ['fairy', 4]] },
   { id: 'swamp', name: 'Misty Swamp', icon: '🐸', blurb: 'Low muddy land, lots of little ponds and droopy willows.', art: 'linear-gradient(#a8b89a,#4f6b2a 60%,#3d5a3a)',
     shape: 'swamp', R: 380, lift: 3, hills: 1.6, peak: 6, beach: 0.05,
     sand: [0.42, 0.38, 0.26], grass: [0.34, 0.46, 0.2], grass2: [0.26, 0.36, 0.17], rock: [0.4, 0.4, 0.36], snowH: 999,
@@ -358,7 +358,7 @@ const ISLANDS = [
     shape: 'cliffs', R: 360, lift: 30, hills: 24, peak: 0, beach: 0.02,
     sand: [0.6, 0.56, 0.5], grass: [0.42, 0.6, 0.3], grass2: [0.32, 0.5, 0.25], rock: [0.55, 0.52, 0.5], snowH: 999,
     sky: [[0.82, 0.88, 0.94], [0.32, 0.52, 0.82]], water: [0.03, 0.24, 0.32],
-    nature: [['pine', 60], ['rock', 60], ['bush', 40]], critters: [['goat', 6], ['bird', 6], ['eagle', 2]] },
+    nature: [['pine', 60], ['rock', 60], ['bush', 40]], critters: [['goat', 6], ['bird', 6], ['eagle', 2], ['griffin', 1]] },
   { id: 'chain', name: 'Island Chain', icon: '🏖️', blurb: 'Lots of little islands with sea in between.', art: 'linear-gradient(#5fd0f0,#2aa6c4 50%,#f2dc9a 51%,#1fb6c1 75%)',
     shape: 'chain', R: 150, lift: 9, hills: 7, peak: 18, beach: 0.2,
     sand: [0.95, 0.87, 0.64], grass: [0.4, 0.72, 0.3], grass2: [0.24, 0.58, 0.24], rock: [0.52, 0.48, 0.42], snowH: 999,
@@ -384,7 +384,7 @@ const ISLANDS = [
     shape: 'sky', wide: true, R: 150, lift: 8, hills: 8, peak: 22, beach: 0,
     sand: [0.9, 0.84, 0.66], grass: [0.4, 0.72, 0.32], grass2: [0.26, 0.58, 0.26], rock: [0.5, 0.46, 0.42], snowH: 999,
     sky: [[0.9, 0.95, 1.0], [0.4, 0.64, 0.96]], water: [0.06, 0.34, 0.52],
-    nature: [], critters: [['bird', 6], ['parrot', 4], ['phoenix', 1], ['unicorn', 3], ['bunny', 4], ['seagull', 4]] },
+    nature: [], critters: [['bird', 6], ['parrot', 4], ['phoenix', 1], ['unicorn', 3], ['bunny', 4], ['seagull', 4], ['pegasus', 2], ['fairy', 3]] },
   { id: 'ocean', name: 'Endless Ocean', icon: '🌊', blurb: 'Deep blue sea as far as you can see, with coral shallows and a few tiny rocky islets.', art: 'linear-gradient(#8fd0f5,#2a8fd0 45%,#0f5c96 75%,#0a3f6e)',
     shape: 'ocean', wide: true, R: 30, lift: 4, hills: 4, peak: 6, beach: 0.25,
     sand: [0.93, 0.86, 0.66], grass: [0.4, 0.66, 0.3], grass2: [0.28, 0.54, 0.24], rock: [0.5, 0.48, 0.45], snowH: 999,
@@ -1705,7 +1705,7 @@ personDef('builder', 'Builder', '👷', { shirt: [1, 0.6, 0.12], pants: [0.3, 0.
 // four legs: body along z, head at +z
 function quadDef(id, name, icon, o) {
   const H = o.H, L = o.L, W = o.W, legLen = o.legLen || H * 0.85;
-  return def(id, o.cat || 'creatures', name, icon, { r: Math.max(L, W) * 0.7, h: H + (o.headY || 0.4), move: o.move || 'walk', speed: o.speed || 1.6, place: o.place || 'land', amph: o.amph, hop: o.hop,
+  return def(id, o.cat || 'creatures', name, icon, { r: Math.max(L, W) * 0.7, h: H + (o.headY || 0.4), move: o.move || 'walk', speed: o.speed || 1.6, place: o.place || 'land', amph: o.amph, hop: o.hop, wings: o.wings,
     body: g => { orb(g, 0, H, 0, W, o.bodyH || W * 0.95, L / 2, o.col, { bump: o.fluffy ? 0.05 : 0 }); if (o.belly) orb(g, 0, H - W * 0.3, 0.05, W * 0.85, W * 0.6, L * 0.4, o.belly); o.head(g); if (o.tail) o.tail(g); if (o.extra) o.extra(g); },
     legs: { at: [[-W * 0.55, H - W * 0.3, L * 0.3], [W * 0.55, H - W * 0.3, L * 0.3], [-W * 0.55, H - W * 0.3, -L * 0.3], [W * 0.55, H - W * 0.3, -L * 0.3]], amp: o.hop ? 0.25 : 0.5, gait: o.hop ? 'hop' : 'quad', len: legLen,
       make: g => { cyl(g, [0, 0.05, 0], [0, -(H - W * 0.3) + 0.06, 0], o.legR || W * 0.22, (o.legR || W * 0.22) * 0.8, o.legCol || o.col, 10); orb(g, 0, -(H - W * 0.3) + 0.05, 0.02, (o.legR || W * 0.22) * 1.05, 0.06, (o.legR || W * 0.22) * 1.25, o.hoof || shade(o.legCol || o.col, 0.6), { lo: true }); } } });
@@ -1831,7 +1831,7 @@ function fin(g, a, b, c, th, col) {
   }
 }
 // swimmers with a tail that really swims: segments that bend one after another (up and down for dolphins, side to side for sharks and fish)
-function swimDef(id, name, icon, body, o) { return def(id, 'creatures', name, icon, Object.assign({ move: 'swim', place: 'water', body, draw: o.segs ? swimmerDraw : undefined }, o)); }
+function swimDef(id, name, icon, body, o) { return def(id, o.cat || 'creatures', name, icon, Object.assign({ move: 'swim', place: 'water', body, draw: o.segs ? swimmerDraw : undefined }, o)); }
 function swimmerDraw(o, base, time, flash) {
   const d = CAT[o.t], M = meshesFor(d);
   if (!M.segs) M.segs = d.segs.map(sg => { const g = new Geo(4096); sg.make(g); return makeMesh(g); });
@@ -2738,13 +2738,68 @@ birdDef('phoenix', 'Phoenix', '🔥', g => {
   for (let i = 0; i < 5; i++) cyl(g, [0, 0, -0.5], [(i - 2) * 0.25, -0.2 - Math.abs(i - 2) * 0.1, -1.8], 0.08, 0.01, i % 2 ? [1, 0.85, 0.25] : [1, 0.3, 0.08], 8);
   for (let i = 0; i < 3; i++) cyl(g, [0, 0.35, 0.5], [(i - 1) * 0.12, 0.7, 0.35 - i * 0.05], 0.03, 0.005, [1, 0.85, 0.25], 6);
 }, featherWing([1, 0.4, 0.1], [1, 0.85, 0.25], 1.6, 0.6), { r: 1.2, h: 1, speed: 8, alt: 22, amp: 0.7, rate: 4, wingAt: [0.25, 0.1, 0.1], cat: 'mythical', glowAll: true });
+// five more mythical creatures: griffin, pegasus, mermaid, yeti and fairy
+const shiftY = (g, from, dy) => { for (let i = from; i < g.n; i++) g.f[i * 5 + 1] += dy; };   // move the shapes made since 'from' up or down
+const GRIF = [0.8, 0.6, 0.34], GRIW = [0.96, 0.94, 0.88];
+quadDef('griffin', 'Griffin', '🪶', { cat: 'mythical', L: 1.6, H: 1.0, W: 0.42, bodyH: 0.44, col: GRIF, legR: 0.1, hoof: [0.95, 0.75, 0.2], speed: 2.4, head: g => {
+  orb(g, 0, 1.08, 0.5, 0.4, 0.42, 0.36, GRIW, { bump: 0.04 });                                 // feathery chest
+  cyl(g, [0, 1.2, 0.6], [0, 1.58, 0.82], 0.2, 0.16, GRIW, 12); orb(g, 0, 1.68, 0.92, 0.21, 0.21, 0.25, GRIW);   // eagle neck and head
+  cyl(g, [0, 1.66, 1.12], [0, 1.52, 1.36], 0.08, 0.012, [0.98, 0.78, 0.18], 10);                 // hooked beak
+  for (const s of [-1, 1]) coneS(g, s * 0.1, 1.84, 0.82, 0.05, 0.16, GRIW, 6);                    // ear tufts
+  eyes(g, 0.11, 1.73, 1.08, 0.04);
+}, tail: g => { cyl(g, [0, 1.05, -0.78], [0, 0.6, -1.05], 0.04, 0.03, GRIF, 8); orb(g, 0, 0.56, -1.07, 0.08, 0.12, 0.08, [0.45, 0.3, 0.15], { lo: true }); },
+  wings: { at: [0.3, 1.35, 0.25], amp: 0.35, rate: 4, make: featherWing([0.6, 0.42, 0.22], [0.95, 0.92, 0.85], 1.3, 0.5) } });
+const PEG = [0.97, 0.97, 1], PEGM = [[0.75, 0.85, 1], [0.85, 0.8, 1], [0.95, 0.95, 1]];
+birdDef('pegasus', 'Pegasus', '🐴', g => {                                                         // built standing like a horse, then moved down so it flies level
+  const n0 = g.n;
+  orb(g, 0, 1.25, 0, 0.44, 0.5, 0.85, PEG); horseHead(g, PEG, PEGM);
+  for (const s of [-1, 1]) {
+    cyl(g, [s * 0.24, 1.05, 0.5], [s * 0.26, 0.72, 0.78], 0.09, 0.08, PEG, 10); cyl(g, [s * 0.26, 0.72, 0.78], [s * 0.26, 0.5, 0.6], 0.08, 0.07, PEG, 10);   // front legs tucked up
+    orb(g, s * 0.26, 0.47, 0.58, 0.08, 0.06, 0.09, [0.85, 0.85, 0.9], { lo: true });
+    cyl(g, [s * 0.24, 1.05, -0.5], [s * 0.26, 0.75, -1.0], 0.1, 0.08, PEG, 10); cyl(g, [s * 0.26, 0.75, -1.0], [s * 0.26, 0.6, -1.35], 0.08, 0.07, PEG, 10);   // back legs stretched out
+    orb(g, s * 0.26, 0.58, -1.38, 0.08, 0.06, 0.09, [0.85, 0.85, 0.9], { lo: true });
+  }
+  for (let i = 0; i < 4; i++) cyl(g, [(i - 1.5) * 0.04, 1.35, -0.8], [(i - 1.5) * 0.08, 1.0, -1.45], 0.05, 0.02, PEGM[i % 3], 6);   // flowing tail
+  shiftY(g, n0, -1.25);
+}, featherWing(PEG, [0.72, 0.84, 1], 1.5, 0.55), { r: 1.2, h: 1.5, speed: 6, alt: 16, amp: 0.55, rate: 3, wingAt: [0.3, 0.28, 0.3], cat: 'mythical' });
+const MER = [0.18, 0.68, 0.62], MERL = [0.4, 0.88, 0.8], MERH = [0.85, 0.3, 0.25];
+swimDef('mermaid', 'Mermaid', '🧜', g => {                                                         // swims on her front, head up out of the water
+  orb(g, 0, 0.04, 0.32, 0.2, 0.16, 0.3, COL.skin); orb(g, 0, 0.06, 0.42, 0.21, 0.15, 0.13, [0.72, 0.4, 0.85]);
+  orb(g, 0, 0, 0.02, 0.2, 0.16, 0.24, MER);                                                       // hips, where the tail starts
+  cyl(g, [0, 0.08, 0.6], [0, 0.15, 0.72], 0.06, 0.06, COL.skin, 8); orb(g, 0, 0.24, 0.84, 0.16, 0.17, 0.16, COL.skin);
+  orb(g, 0, 0.31, 0.79, 0.17, 0.13, 0.17, MERH, { cutBelow: 0.24 }); orb(g, 0, 0.18, 0.5, 0.15, 0.07, 0.42, MERH);   // long hair down her back
+  eyes(g, 0.06, 0.27, 0.97, 0.03); orb(g, 0, 0.19, 0.99, 0.035, 0.01, 0.015, [0.8, 0.3, 0.35], { lo: true });
+  for (const s of [-1, 1]) { cyl(g, [s * 0.2, 0.08, 0.55], [s * 0.32, 0.02, 0.12], 0.05, 0.04, COL.skin, 8); orb(g, s * 0.32, 0.02, 0.1, 0.045, 0.045, 0.05, COL.skin, { lo: true }); }
+  orb(g, 0.12, 0.34, 0.8, 0.05, 0.05, 0.05, [1, 0.6, 0.7], { lo: true });                          // a flower in her hair
+}, { r: 0.9, h: 0.6, lift: 0.2, speed: 2.6, beat: 3.2, jumps: true, cat: 'mythical', segs: [
+  { p: [0, 0, -0.15], axis: 'x', amp: 0.14, make: g => { cyl(g, [0, 0, -0.1], [0, 0, -0.75], 0.19, 0.11, MER, 14); for (let i = 0; i < 5; i++) orb(g, 0, 0.13 - i * 0.012, -0.2 - i * 0.12, 0.08, 0.04, 0.05, MERL, { lo: true }); } },
+  { p: [0, 0, -0.72], axis: 'x', amp: 0.36, make: g => { cyl(g, [0, 0, -0.7], [0, 0, -0.98], 0.11, 0.05, MER, 12); for (const s of [-1, 1]) fin(g, [0, 0, -0.92], [s * 0.06, 0, -1.02], [s * 0.42, 0.06, -1.3], 0.03, MERL); } },
+] });
+const YETI = [0.95, 0.96, 0.98], YETS = [0.55, 0.68, 0.86];
+mythPerson('yeti', 'Yeti', '❄️', { k: 1.55, skin: YETS, shirt: YETI, sleeve: YETI, pants: YETI, legCol: YETI, shoes: [0.5, 0.62, 0.82], hair: YETI, speed: 1.2, extra: (g, k, y) => {
+  orb(g, 0, y + 1.15 * k, 0, 0.36 * k, 0.48 * k, 0.28 * k, YETI, { bump: 0.05 }); for (const s of [-1, 1]) { orb(g, s * 0.3 * k, y + 1.45 * k, 0, 0.17 * k, 0.15 * k, 0.17 * k, YETI); orb(g, s * 0.12 * k, y + 0.7 * k, 0, 0.15 * k, 0.24 * k, 0.15 * k, YETI); }   // big shaggy body, shoulders and thighs
+  for (const s of [-1, 1]) for (let i = 0; i < 3; i++) orb(g, s * (0.28 + i * 0.025) * k, y + (1.3 - i * 0.16) * k, 0.02 * k, 0.1 * k, 0.12 * k, 0.1 * k, YETI, { lo: true });   // furry arms
+  for (let i = 0; i < 12; i++) { const a = i / 12 * 6.283; orb(g, Math.cos(a) * 0.24 * k, y + (1.0 + (i % 3) * 0.18) * k, Math.sin(a) * 0.16 * k, 0.1 * k, 0.12 * k, 0.1 * k, YETI, { lo: true }); }   // shaggy fur
+  for (const s of [-1, 1]) { orb(g, s * 0.17 * k, y + 1.78 * k, -0.02 * k, 0.07 * k, 0.15 * k, 0.12 * k, YETI, { lo: true }); coneS(g, s * 0.12 * k, y + 1.98 * k, 0, 0.04 * k, 0.12 * k, [0.85, 0.9, 1], 6); }   // fluffy cheeks, little icy horns
+  orb(g, 0, y + 1.7 * k, 0.17 * k, 0.07 * k, 0.025 * k, 0.02 * k, [0.15, 0.18, 0.3], { lo: true });
+  for (const s of [-1, 1]) coneS(g, s * 0.035 * k, y + 1.71 * k, 0.185 * k, 0.012 * k, -0.035 * k, COL.white, 4);
+} });
+const FAIRY = [1, 0.55, 0.8], FAIRW = [[0.75, 0.9, 1], [0.95, 0.75, 1]];
+birdDef('fairy', 'Fairy', '🧚', g => {
+  cyl(g, [0, -0.28, 0], [0, 0.02, 0], 0.13, 0.05, FAIRY, 12); orb(g, 0, 0.06, 0, 0.06, 0.08, 0.05, FAIRY);   // petal dress
+  for (const s of [-1, 1]) { cyl(g, [s * 0.04, -0.26, 0], [s * 0.04, -0.4, 0.02], 0.018, 0.015, COL.skin, 6); cyl(g, [s * 0.05, 0.1, 0], [s * 0.12, -0.02, 0.05], 0.016, 0.014, COL.skin, 6); }
+  orb(g, 0, 0.21, 0, 0.075, 0.08, 0.075, COL.skin); orb(g, 0, 0.25, -0.01, 0.08, 0.06, 0.08, [1, 0.85, 0.35], { cutBelow: 0.21 }); orb(g, 0, 0.17, -0.04, 0.07, 0.1, 0.04, [1, 0.85, 0.35]);
+  eyes(g, 0.03, 0.22, 0.065, 0.016);
+  cyl(g, [0.12, -0.02, 0.05], [0.18, 0.12, 0.14], 0.008, 0.008, [0.9, 0.9, 0.95], 4); orb(g, 0.18, 0.13, 0.14, 0.035, 0.035, 0.035, [1, 0.95, 0.4], { lo: true });   // her wand
+}, g => { const A = FAIRW[0], B = FAIRW[1]; tri(g, [0, 0, 0.02], [0.3, 0.12, 0.2], [0.32, 0.06, -0.04], [0, 1, 0], 0, A, B, A, 0, 0, 0); tri(g, [0, 0, -0.02], [0.24, -0.04, -0.06], [0.14, -0.08, -0.22], [0, 1, 0], 0, A, A, B, 0, 0, 0); },
+  { r: 0.3, h: 0.5, speed: 2.4, alt: 4, amp: 0.8, rate: 16, wingAt: [0.03, 0.08, -0.05], cat: 'mythical', glowAll: true });
 /* =====================================================================
    Placing, erasing and undo
    ===================================================================== */
 const SIZES = [0.5, 1, 1.75, 3], SIZE_NAMES = ['Small', 'Medium', 'Big', 'Giant'], SIZE_SHORT = ['S', 'M', 'L', 'XL'];
 // the brush on the left: how many things go down at once, and how wide the land tools reach
 // some things are bigger (or smaller) than their size button says, and the biggest monsters are limited to 3 of each per island
-const GROW = { dragon: 2.6, hydra: 1.6, seaserpent: 2.2, troll: 0.62 }, ONLY3 = new Set(['dragon', 'hydra', 'seaserpent']);
+const GROW = { dragon: 2.6, hydra: 1.6, seaserpent: 2.2, troll: 0.62, fairy: 1 }, ONLY3 = new Set(['dragon', 'hydra', 'seaserpent']);
 // people, animals and monsters are 0.7 times the size they used to be (so the islands are more to scale), except the big monsters
 const SHRINK = 0.7, growOf = id => GROW[id] || (['people', 'creatures', 'mythical'].includes(CAT[id].cat) ? SHRINK : 1);
 const sizeOf = d => SIZES[tool.size] * growOf(d.id);
@@ -3126,6 +3181,7 @@ function updateLife(dt, time) {
         if (o.jump) { o.jump += dt; const t = o.jump / 1.3; o.y += Math.sin(Math.PI * t) * 2.5 * o.s; o.pitch = -Math.cos(Math.PI * t) * 0.6; if (t >= 1) { o.jump = 0; o.pitch = 0; } }
       }
       if (d.fin) o.y = -0.55 * o.s;
+      if (d.lift) o.y += d.lift * o.s;   // the mermaid swims with her head and back out of the water
     } else {
       o.y = Math.max(groundAt(o.x, o.z), d.amph ? -0.2 * o.s : -10);
       if (d.hop && o.moving) o.y += Math.abs(Math.sin(o.phase * 0.5)) * 0.25 * o.s;
@@ -3147,12 +3203,12 @@ function updateLife(dt, time) {
 // [health, damage, reach, how far it sees] at Medium size
 const STATS = {
   skeleton: [10, 2, 1.4, 22], zombie: [9, 1.6, 1.3, 18], demon: [22, 4, 1.8, 26], troll: [45, 6, 2.6, 22], minotaur: [35, 5, 2.2, 24],
-  dragon: [90, 8, 4.5, 40], hydra: [60, 6, 4, 24], seaserpent: [60, 6, 5, 22], goblin: [7, 1.5, 1.2, 20],
+  griffin: [30, 5, 2, 20], yeti: [40, 5.5, 2.4, 20], dragon: [90, 8, 4.5, 40], hydra: [60, 6, 4, 24], seaserpent: [60, 6, 5, 22], goblin: [7, 1.5, 1.2, 20],
   knight: [20, 3.5, 1.6, 20], king: [14, 2.5, 1.4, 18], pirate: [12, 2.6, 1.5, 18],
   lion: [26, 4.5, 1.8, 18], tiger: [26, 4.5, 1.8, 18], wolf: [12, 2.5, 1.4, 16], bear: [24, 4, 1.8, 16], polarbear: [28, 4.5, 1.9, 16], fox: [6, 1.4, 1.0, 12], croc: [20, 4, 1.8, 10], shark: [18, 4, 2.0, 14], dino: [40, 6, 2.6, 20],
   human: [10, 2, 1.4, 18], elf: [9, 2.2, 1.6, 24], dwarf: [13, 2.5, 1.4, 16], orc: [13, 2.8, 1.5, 22], animal: [5, 0, 0, 0],
 };
-const FACTION = { skeleton: 'undead', zombie: 'undead', demon: 'monster', minotaur: 'monster', dragon: 'monster', hydra: 'monster', seaserpent: 'monster',
+const FACTION = { skeleton: 'undead', zombie: 'undead', demon: 'monster', yeti: 'monster', griffin: 'predator', minotaur: 'monster', dragon: 'monster', hydra: 'monster', seaserpent: 'monster',
   troll: 'orcfriend', goblin: 'orcfriend', ghost: 'ghost',
   lion: 'predator', tiger: 'predator', wolf: 'predator', bear: 'predator', polarbear: 'predator', fox: 'predator', croc: 'predator', shark: 'predator', dino: 'predator' };
 const PEOPLE_FACS = new Set(['human', 'elf', 'dwarf']);
@@ -3164,6 +3220,8 @@ function facOf(o) {
   if (d.cat === 'people') return 'human';
   return 'animal';
 }
+function maxHpOf(o) { return o.maxHp || (CAT[o.t].move ? statOf(o)[0] : 25) * o.s; }
+function healthTxt(o) { const max = maxHpOf(o), hp = o.hp === undefined ? max : Math.max(0, o.hp); return `❤️ ${Math.ceil(hp * 10).toLocaleString()} / ${Math.max(1, Math.round(max * 10)).toLocaleString()}`; }
 function statOf(o) { return STATS[CAT[o.t].id] || STATS[o.fac] || STATS.animal; }
 const attacks = f => f && f !== 'animal' && f !== 'ghost';
 function hostile(a, b) {
@@ -3987,7 +4045,8 @@ const TRAITS = ['brave', 'shy', 'grumpy', 'cheerful', 'curious', 'sleepy', 'boss
 const LIKES = ['apples', 'sunny days', 'naps', 'singing', 'the sea', 'stories', 'shiny things', 'thunderstorms', 'flowers', 'mud', 'adventures', 'quiet mornings', 'snacks', 'the moon'];
 const JOBS = { human: ['farmer', 'baker', 'blacksmith', 'fisher', 'builder', 'shopkeeper', 'shepherd', 'carpenter'], elf: ['archer', 'gardener', 'singer', 'healer', 'scout', 'weaver'],
   dwarf: ['miner', 'blacksmith', 'brewer', 'stonemason', 'jeweller', 'tunnel digger'], orc: ['hunter', 'drummer', 'cook', 'scout', 'boar tamer', 'axe sharpener'] };
-const AGE_RANGE = { dragon: [120, 900], hydra: [300, 1000], seaserpent: [200, 800], phoenix: [500, 1500], unicorn: [40, 200], ghost: [150, 600], skeleton: [80, 400],
+const GENTLE_MYTH = ['unicorn', 'phoenix', 'pegasus', 'mermaid', 'fairy'];   // these get proper names and are 'he' or 'she'
+const AGE_RANGE = { dragon: [120, 900], hydra: [300, 1000], seaserpent: [200, 800], phoenix: [500, 1500], unicorn: [40, 200], pegasus: [10, 120], griffin: [20, 150], mermaid: [16, 300], yeti: [30, 300], fairy: [10, 500], ghost: [150, 600], skeleton: [80, 400],
   zombie: [20, 90], demon: [100, 999], troll: [60, 250], minotaur: [40, 160], goblin: [8, 40], dino: [5, 30], dog: [1, 12], cat: [1, 14] };
 const hashStr = s => { let h = 7; for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); };
 function lifeInfo(o) {                    // fill in the name, age and personality the first time someone looks
@@ -3997,7 +4056,8 @@ function lifeInfo(o) {                    // fill in the name, age and personali
   const byGn = list => pick(list.filter((n, i) => (i % 2 === 1) === (o.gn === 'f')));
   if (!o.nm) {
     if (o.race) o.nm = byGn(FIRST_NAMES[o.race]);
-    else if (d.cat === 'mythical' && !['unicorn', 'phoenix'].includes(o.t)) o.nm = pick(BEAST_NAMES[0]) + pick(BEAST_NAMES[1]);
+    else if (o.t === 'mermaid' || o.t === 'fairy') o.nm = byGn(FIRST_NAMES.elf);
+    else if (d.cat === 'mythical' && !GENTLE_MYTH.includes(o.t)) o.nm = pick(BEAST_NAMES[0]) + pick(BEAST_NAMES[1]);
     else if (d.cat === 'people') o.nm = byGn(FIRST_NAMES.human);
     else o.nm = pick(PET_NAMES);
   }
@@ -4073,7 +4133,7 @@ function fillInspect() {
         + (o.t === 'field' ? row('Crops', o.grow === undefined ? 'Growing' : o.grow > 0.75 ? 'Ripe! 🌾' : Math.floor(o.grow * 100) + '% grown') + (o.worker && !o.worker.gone ? row('Farmer', esc(o.worker.nm || 'someone')) : '') : '')
         + (o.t === 'cave' ? row('Lives inside', (CAVE_KINDS[ISL.id] || []).map(k => CAT[k].name.toLowerCase() + 's').join(', ') || 'Nobody') : '')
         + (t ? row('Belongs to', esc(t.name)) : '') + (d.value ? row('Worth', `🪙 ${Math.round(d.value * o.s).toLocaleString()} gold`) : '') + (o.claimed && TOWN[o.claimed] ? row('In the treasury of', esc(TOWN[o.claimed].name)) : d.value ? row('Owner', 'Nobody yet: put it near a town') : '') + (o.build !== undefined ? row('Building', Math.floor(o.build * 100) + '%') : '')
-        + (o.hp !== undefined ? row('Health', Math.max(0, Math.round(o.hp / o.maxHp * 100)) + '%') : '')
+        + (o.hp !== undefined ? row('Health', healthTxt(o)) : '')
         + `<p class="istory">${t ? `Built by the ${RACES[t.race].name.toLowerCase()} of ${esc(t.name)}.` : 'You put it here.'}</p>`;
     } else {
       lifeInfo(o);
@@ -4083,10 +4143,10 @@ function fillInspect() {
       const doing = o.race && !adult(o) && !o.held && !(o.fleeT > 0) ? (o.ag < 3 ? 'Toddling around' : 'Playing') : o.farmer && !o.farmer.gone && !o.foe && !o.march ? 'Working in the fields' : o.held ? (o.held.tor ? 'Flying around in a tornado!' : 'Being swept away by a wave!') : o.fleeT > 0 ? 'Running away!' : o.march && TOWN[o.march] ? 'Marching to battle against ' + esc(TOWN[o.march].name) : o.foe && !o.foe.gone ? 'Fighting ' + esc(o.foe.nm || CAT[o.foe.t].name.toLowerCase()) : o.flying ? 'Flying' : o.moving ? 'Walking around' : 'Resting';
       body = row('Kind', esc(kind)) + row('Age', yearsTxt(o.ag) + ' old') + (job ? row('Job', esc(job)) : '') + (t ? row('Home', esc(t.name)) : '')
         + row('Personality', esc(o.tr)) + row('Likes', esc(o.lk))
-        + (o.hp !== undefined && o.maxHp ? row('Health', Math.max(0, Math.round(o.hp / o.maxHp * 100)) + '%') : row('Health', '100%'))
+        + row('Health', healthTxt(o))
         + row('Doing', doing);
       // the story so far
-      const he = d.cat === 'mythical' && !['unicorn', 'phoenix'].includes(o.t) ? 'it' : o.gn === 'f' ? 'she' : 'he';
+      const he = d.cat === 'mythical' && !GENTLE_MYTH.includes(o.t) ? 'it' : o.gn === 'f' ? 'she' : 'he';
       const He = he[0].toUpperCase() + he.slice(1), bits = [];
       bits.push(o.bi ? `${esc(o.nm)} was born in ${esc(o.bi)}.` : o.mv ? `${esc(o.nm)} lives in ${esc(o.mv)}.` : o.race ? `${esc(o.nm)} came to the island with the first ${CAT[o.race].name.toLowerCase()}s.` : `${esc(o.nm)} is a ${esc(o.tr)} ${esc(d.name.toLowerCase())} who loves ${esc(o.lk)}.`);
       if (o.ruler) bits.push(`${He} was crowned ruler of ${t ? esc(t.name) : 'a town'}.`);
@@ -4284,7 +4344,7 @@ function stepToward(o, d, tx, tz, sp, dt) {
   else o.moving = false;
   return ok;
 }
-function groundY(o, d) { return d.move === 'swim' ? -0.35 * d.h * o.s : Math.max(groundAt(o.x, o.z), d.amph ? -0.2 * o.s : -10); }
+function groundY(o, d) { return d.move === 'swim' ? (-0.35 * d.h + (d.lift || 0)) * o.s : Math.max(groundAt(o.x, o.z), d.amph ? -0.2 * o.s : -10); }
 // one creature's fighting (or running away) this frame; true means it's busy and won't wander
 function fightStep(o, d, dt, time) {
   if (o.hitT > 0) o.hitT -= dt;
