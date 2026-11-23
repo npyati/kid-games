@@ -363,7 +363,7 @@ const ISLANDS = [
     shape: 'chain', R: 150, lift: 9, hills: 7, peak: 18, beach: 0.2,
     sand: [0.95, 0.87, 0.64], grass: [0.4, 0.72, 0.3], grass2: [0.24, 0.58, 0.24], rock: [0.52, 0.48, 0.42], snowH: 999,
     sky: [[0.78, 0.9, 0.96], [0.24, 0.56, 0.92]], water: [0.02, 0.38, 0.42],
-    nature: [['palm', 70], ['oak', 20], ['bush', 30], ['flowers', 30]], critters: [['seagull', 6], ['dolphin', 4], ['whale', 1]] },
+    nature: [['palm', 70], ['oak', 20], ['bush', 30], ['flowers', 30]], critters: [['seagull', 6], ['dolphin', 4]] },
   { id: 'autumn', name: 'Autumn Valley', icon: '🍂', blurb: 'Hills full of orange, red and yellow trees.', art: 'linear-gradient(#f5c27a,#d9682e 55%,#8a5a2e)',
     shape: 'round', R: 370, lift: 16, hills: 14, peak: 40, beach: 0.07,
     sand: [0.86, 0.76, 0.56], grass: [0.62, 0.62, 0.3], grass2: [0.5, 0.48, 0.22], rock: [0.5, 0.46, 0.42], snowH: 999,
@@ -379,7 +379,7 @@ const ISLANDS = [
     shape: 'pangea', wide: true, R: 940, lift: 14, hills: 14, peak: 30, beach: 0.03,
     sand: [0.9, 0.82, 0.6], grass: [0.34, 0.6, 0.26], grass2: [0.22, 0.46, 0.19], rock: [0.5, 0.47, 0.43], snowH: 999,
     sky: [[0.8, 0.88, 0.95], [0.28, 0.52, 0.88]], water: [0.03, 0.26, 0.38],
-    nature: [], critters: [['deer', 6], ['dino', 4], ['camel', 3], ['polarbear', 2], ['parrot', 4], ['whale', 2], ['dolphin', 4], ['elephant', 3], ['giraffe', 3], ['zebra', 4], ['lion', 2], ['kangaroo', 3]] },
+    nature: [], critters: [['deer', 6], ['dino', 4], ['camel', 3], ['polarbear', 2], ['parrot', 4], ['dolphin', 4], ['elephant', 3], ['giraffe', 3], ['zebra', 4], ['lion', 2], ['kangaroo', 3]] },
   { id: 'sky', name: 'Sky Islands', icon: '☁️', blurb: 'Islands floating high in the sky, with rocky bottoms and the ocean far below.', art: 'linear-gradient(#bfe3ff,#e8f4ff 55%,#4aa0d8 85%,#2a78b0)',
     shape: 'sky', wide: true, R: 150, lift: 8, hills: 8, peak: 22, beach: 0,
     sand: [0.9, 0.84, 0.66], grass: [0.4, 0.72, 0.32], grass2: [0.26, 0.58, 0.26], rock: [0.5, 0.46, 0.42], snowH: 999,
@@ -389,7 +389,7 @@ const ISLANDS = [
     shape: 'ocean', wide: true, R: 30, lift: 4, hills: 4, peak: 6, beach: 0.25,
     sand: [0.93, 0.86, 0.66], grass: [0.4, 0.66, 0.3], grass2: [0.28, 0.54, 0.24], rock: [0.5, 0.48, 0.45], snowH: 999,
     sky: [[0.8, 0.9, 0.97], [0.24, 0.52, 0.9]], water: [0.02, 0.3, 0.46],
-    nature: [], critters: [['dolphin', 8], ['whale', 3], ['shark', 3], ['seagull', 6], ['seaturtle', 4], ['fish', 10]] },
+    nature: [], critters: [['dolphin', 8], ['shark', 3], ['seagull', 6], ['seaturtle', 4], ['fish', 10]] },
 ];
 // each island in an Island Set (and each sky island) gets a land type, which picks its shape and ground colour
 const SET_BIOMES = {
@@ -1830,7 +1830,7 @@ function fin(g, a, b, c, th, col) {
     tri(g, p, q, Q, en, -1, col, col, col, 0, 0, 0); tri(g, p, Q, P, en, -1, col, col, col, 0, 0, 0);
   }
 }
-// swimmers with a tail that really swims: segments that bend one after another (up and down for dolphins and whales, side to side for sharks and fish)
+// swimmers with a tail that really swims: segments that bend one after another (up and down for dolphins, side to side for sharks and fish)
 function swimDef(id, name, icon, body, o) { return def(id, 'creatures', name, icon, Object.assign({ move: 'swim', place: 'water', body, draw: o.segs ? swimmerDraw : undefined }, o)); }
 function swimmerDraw(o, base, time, flash) {
   const d = CAT[o.t], M = meshesFor(d);
@@ -1857,17 +1857,6 @@ swimDef('dolphin', 'Dolphin', '🐬', g => {
 }, { r: 1.2, h: 1, speed: 4.5, jumps: true, beat: 5, segs: [
   { p: [0, 0, -0.85], axis: 'x', amp: 0.16, make: g => { cyl(g, [0, 0.02, -0.8], [0, 0.05, -1.55], 0.3, 0.12, DOL, 14); orb(g, 0, -0.06, -1.0, 0.22, 0.2, 0.3, DOLB, { lo: true }); } },
   { p: [0, 0.05, -1.5], axis: 'x', amp: 0.38, make: g => { cyl(g, [0, 0.05, -1.45], [0, 0.05, -1.72], 0.12, 0.07, DOL, 12); for (const s of [-1, 1]) fin(g, [0, 0.05, -1.55], [s * 0.1, 0.05, -1.8], [s * 0.6, 0.05, -1.98], 0.035, DOL); } },
-] });
-const WHA = [0.26, 0.36, 0.52];
-swimDef('whale', 'Whale', '🐋', g => {
-  orb(g, 0, 0, 0, 2.0, 1.7, 5.5, WHA, { grad: true }); orb(g, 0, -0.6, 0.6, 1.7, 1.1, 4.5, [0.82, 0.84, 0.86]); eyes(g, 1.6, 0.0, 3.4, 0.15);
-  for (let i = -3; i <= 3; i++) cyl(g, [i * 0.22, -1.62, 3.6], [i * 0.3, -1.55, -1.5], 0.05, 0.05, [0.7, 0.72, 0.75], 6, false);   // the grooves under the chin
-  for (const s of [-1, 1]) fin(g, [s * 1.7, -0.5, 2.2], [s * 1.75, -0.5, 1.0], [s * 3.6, -1.2, 0.3], 0.12, WHA);
-  fin(g, [0, 1.5, -2.6], [0, 1.35, -3.6], [0, 2.0, -3.9], 0.1, WHA);
-  orb(g, 0, 1.68, 1.6, 0.25, 0.08, 0.15, [0.12, 0.15, 0.2], { lo: true });                      // the blowhole
-}, { r: 5, h: 3, speed: 2.5, beat: 1.6, segs: [
-  { p: [0, 0, -4.6], axis: 'x', amp: 0.09, make: g => cyl(g, [0, 0, -4.8], [0, 0.3, -7.6], 1.0, 0.3, WHA, 16) },
-  { p: [0, 0.3, -7.4], axis: 'x', amp: 0.26, make: g => { for (const s of [-1, 1]) fin(g, [0, 0.3, -7.3], [s * 0.3, 0.3, -7.9], [s * 2.6, 0.4, -8.7], 0.12, WHA); } },
 ] });
 const SHK = [0.45, 0.52, 0.6], SHKB = [0.93, 0.93, 0.92];
 swimDef('shark', 'Shark', '🦈', g => {
@@ -3999,7 +3988,7 @@ const LIKES = ['apples', 'sunny days', 'naps', 'singing', 'the sea', 'stories', 
 const JOBS = { human: ['farmer', 'baker', 'blacksmith', 'fisher', 'builder', 'shopkeeper', 'shepherd', 'carpenter'], elf: ['archer', 'gardener', 'singer', 'healer', 'scout', 'weaver'],
   dwarf: ['miner', 'blacksmith', 'brewer', 'stonemason', 'jeweller', 'tunnel digger'], orc: ['hunter', 'drummer', 'cook', 'scout', 'boar tamer', 'axe sharpener'] };
 const AGE_RANGE = { dragon: [120, 900], hydra: [300, 1000], seaserpent: [200, 800], phoenix: [500, 1500], unicorn: [40, 200], ghost: [150, 600], skeleton: [80, 400],
-  zombie: [20, 90], demon: [100, 999], troll: [60, 250], minotaur: [40, 160], goblin: [8, 40], whale: [10, 80], dino: [5, 30], dog: [1, 12], cat: [1, 14] };
+  zombie: [20, 90], demon: [100, 999], troll: [60, 250], minotaur: [40, 160], goblin: [8, 40], dino: [5, 30], dog: [1, 12], cat: [1, 14] };
 const hashStr = s => { let h = 7; for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); };
 function lifeInfo(o) {                    // fill in the name, age and personality the first time someone looks
   const d = CAT[o.t];

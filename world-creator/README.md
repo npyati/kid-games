@@ -1,6 +1,6 @@
 # World Creator
 
-A 3D island builder. Pick one of ten islands or four big maps, then fly a camera around it and fill it with trees, buildings, people, creatures and mythical monsters, then set off tornadoes, tsunamis, bombs and earthquakes. People and animals walk around on their own, birds and dragons fly, and dolphins and whales swim in the sea.
+A 3D island builder. Pick one of ten islands or four big maps, then fly a camera around it and fill it with trees, buildings, people, creatures and mythical monsters, then set off tornadoes, tsunamis, bombs and earthquakes. People and animals walk around on their own, birds and dragons fly, and dolphins, sharks and fish swim in the sea.
 
 **Play it:** https://npyati.github.io/kid-games/world-creator/
 
@@ -24,7 +24,7 @@ A 3D island builder. Pick one of ten islands or four big maps, then fly a camera
 | Candy Land | pink and mint ground, round gumdrop hills, pink sky | lollipop trees, candy canes, gumdrops, flowers; unicorns, bunnies |
 | Misty Swamp | low and flat with lots of ponds | willows, reeds, mushrooms; frogs, crocodiles |
 | Rocky Cliffs | flat-topped terraces with steep cliffs down to the sea | pines, rocks, bushes; goats, birds |
-| Island Chain | a big island and up to six small ones | palms, oaks, flowers; seagulls, dolphins, a whale |
+| Island Chain | a big island and up to six small ones | palms, oaks, flowers; seagulls, dolphins |
 | Autumn Valley | hills full of orange, red and yellow trees | autumn trees, pines, pumpkins; deer, foxes, squirrels |
 
 Plus four big maps:
@@ -32,9 +32,9 @@ Plus four big maps:
 | Map | What it's like | Animals it starts with |
 |---|---|---|
 | Island Set | seven islands, each a different land type (forest, desert, snowy taiga, jungle, savanna, swamp, mountains), shaped to match | deer, camels, penguins, parrots, frogs, goats, dolphins, seagulls |
-| Pangea | one giant supercontinent with a warm sea cutting in from the east: snowy taiga north and south, a big desert in the middle with savanna around it, jungles by the warm sea, forests, and a long mountain range | deer, dinosaurs, camels, polar bears, parrots, whales, dolphins, elephants, giraffes, zebras, lions, kangaroos |
+| Pangea | one giant supercontinent with a warm sea cutting in from the east: snowy taiga north and south, a big desert in the middle with savanna around it, jungles by the warm sea, forests, and a long mountain range | deer, dinosaurs, camels, polar bears, parrots, dolphins, elephants, giraffes, zebras, lions, kangaroos |
 | Sky Islands | 14 islands floating 60–150 m up, each a different land type, with rocky points hanging underneath and the ocean far below | birds, parrots, a phoenix, unicorns, bunnies, seagulls |
-| Endless Ocean | open sea to the horizon with a rolling sea floor, coral shallows and five tiny islets | dolphins, whales, sharks, seagulls, sea turtles, tropical fish |
+| Endless Ocean | open sea to the horizon with a rolling sea floor, coral shallows and five tiny islets | dolphins, sharks, seagulls, sea turtles, tropical fish |
 
 **🎲 Random** picks any of them. Each new island gets its own random seed, so two Tropical Paradises are different shapes. New islands start with trees and plants that fit them (up to 900: pines and oaks in the Big Forest, snowy pines on the Snowy Mountains, cactuses in the desert, lollipop trees in Candy Land, and on the big maps each land type grows its own), and islands with hills get a few **caves** (up to 6 on Pangea). Animals that fit the island come out of the caves now and then, up to 3 near each cave: bears and foxes in the forest, polar bears in the snow, goblins and trolls on the volcano, crocodiles and frogs in the swamp and so on. Caves are also in Buildings. Island Set, Pangea and Sky Islands start with their land types already coloured in.
 
@@ -47,7 +47,7 @@ Plus four big maps:
 - **Buildings:** little hut, cottage, big house, barn, castle (walls, four towers with flags, a gate and a keep), watch tower, windmill (the blades turn), lighthouse (the lamp glows), tent, well, fence, campfire (flickers), gold statue, market stall, sailboat (goes on deep water and bobs).
 - **People:** **human, elf, dwarf, orc**. They build towns (see Towns). Plus the **🪄 Battle wand** (see Towns). The older people (villager, farmer, knight, king, queen, wizard, kid, pirate, builder) still work on islands that have them.
 - **Mythical:** **dragon** (Wildwood's, full size: walks on its folded wings, flies off to circle now and then, bendy neck and tail, a jaw with teeth that rears back and lunges; it attacks on sight and comes down out of the sky to do it), **sea serpent** (Wildwood's Leviathan at about 0.9x: horns, two pairs of wings, a body that follows its head, rears up to bite), unicorn, phoenix (glows), goblin, skeleton, zombie, demon (wings, glowing eyes), troll (smaller than before), minotaur, hydra (built like the dragon but smooth and high-detail: three long bendy necks, each head looking about on its own with curling horns, glowing slit eyes, teeth and a jaw that opens; the biting head rears back and lunges while the others hiss; armoured plates and spikes down its back, clawed legs, and a swishing tail with a spiked club), ghost (see-through).
-- **Creatures:** dog, cat, sheep, cow, horse, deer, bear, polar bear, fox, goat, pig, camel, bunny, squirrel, lizard, frog, crocodile (Wildwood's, with its jaw and swishing tail), crab, chicken, penguin, dinosaur, bluebird, parrot, seagull, dolphin, whale, shark, plus lion, tiger, wolf, elephant, giraffe, zebra, panda, raccoon, hippo, turtle, llama, kangaroo, monkey, flamingo, duck, owl, eagle, butterfly, sea turtle and tropical fish. Lions, tigers and wolves are hungry hunters like bears (but they leave animals much bigger than them, like elephants, alone). Hippos, turtles and ducks can walk into shallow water.
+- **Creatures:** dog, cat, sheep, cow, horse, deer, bear, polar bear, fox, goat, pig, camel, bunny, squirrel, lizard, frog, crocodile (Wildwood's, with its jaw and swishing tail), crab, chicken, penguin, dinosaur, bluebird, parrot, seagull, dolphin, shark, plus lion, tiger, wolf, elephant, giraffe, zebra, panda, raccoon, hippo, turtle, llama, kangaroo, monkey, flamingo, duck, owl, eagle, butterfly, sea turtle and tropical fish. Lions, tigers and wolves are hungry hunters like bears (but they leave animals much bigger than them, like elephants, alone). Hippos, turtles and ducks can walk into shallow water.
 - **Disasters** (this group replaced Weapons; weapons already on old islands stay there):
   - **Tornado:** a spinning grey funnel that wanders for about 20 seconds (longer when bigger). It picks up people, animals and plants, spins them up and throws them 25–50 m (plants break apart; anyone thrown into the sea is gone), and tears buildings down. Dragons, hydras and other huge things just get hurt. Up to 3 at a time.
   - **Tsunami:** finds the nearest open sea and sends a wave 90 m wide (bigger with size) rolling in at 30 m/s, past where you tapped. It knocks buildings and plants down and carries people and animals along, then puts them down (if that's in the sea, they're gone). Up to 2 at a time.
@@ -56,7 +56,7 @@ Plus four big maps:
   - **Earthquake:** a crack opens across the ground and the land buckles, the screen (and controller) shakes for 6 seconds, buildings fall down and people run.
   - The size buttons make them all bigger. **Undo** puts back everything a disaster wrecked and the land it changed.
 
-Four sizes: Small (½), Medium, Big (1¾) and Giant (3×). People, creatures and mythical creatures are 0.7 times what their size says (so the islands are more to scale), except dragons, hydras and sea serpents, which are about twice as big, and trolls (0.62). An island can only have **3** dragons, **3** hydras and **3** sea serpents. Islands saved before people got smaller shrink their people and animals to match when they load. New things face the camera; **Turn** adds 45° each press. Land things only go on land, and the sailboat and sea creatures only go in deep water with room to swim: a sea creature can't go on top of another one, and a whale needs open water about 30 m across (so not in a little pond). The circle turns red if it can't go there. Birds and dragons can go anywhere. Frogs and crocodiles can walk into shallow water. Up to 3,000 things per island.
+Four sizes: Small (½), Medium, Big (1¾) and Giant (3×). People, creatures and mythical creatures are 0.7 times what their size says (so the islands are more to scale), except dragons, hydras and sea serpents, which are about twice as big, and trolls (0.62). An island can only have **3** dragons, **3** hydras and **3** sea serpents. Islands saved before people got smaller shrink their people and animals to match when they load. New things face the camera; **Turn** adds 45° each press. Land things only go on land, and the sailboat and sea creatures only go in deep water with room to swim: a sea creature can't go on top of another one. The circle turns red if it can't go there. Birds and dragons can go anywhere. Frogs and crocodiles can walk into shallow water. Up to 3,000 things per island.
 
 ## Inspect
 
@@ -102,7 +102,7 @@ A little band made in Web Audio (no recordings), in a room with reverb: a harp (
 
 - People and land animals wander within about 20–30 m of where you put them (further for big ones), stopping now and then, and never walk into the sea or up cliffs. Legs swing as they walk; bunnies, squirrels and frogs hop.
 - Birds and dragons circle where you put them (dragons fly higher and wider) and flap their wings.
-- Dolphins swim and leap out of the water now and then; whales, sharks, sea turtles and fish swim. Their tails really swim: dolphins and whales beat their tails up and down, sharks and fish swish theirs side to side, and sea turtles flap their front flippers. The shark's tall fin shows above the water.
+- Dolphins swim and leap out of the water now and then; sharks, sea turtles and fish swim. Their tails really swim: dolphins beat their tails up and down, sharks and fish swish theirs side to side, and sea turtles flap their front flippers. The shark's tall fin shows above the water.
 - **Making water washes things away:** Shallow water, Deep water and Lower land remove the trees, plants, buildings and rocks the water now covers (with a splash). Creatures, boats and treasure stay (sunken treasure!). Undo brings it all back.
 - **Land creatures swim:** a person or land animal that ends up in the water (dug out from under it, dropped by a tornado or washed off by a wave) swims slowly to the nearest land, then walks again. People do a front crawl (lying forward, arms windmilling over the water, rolling with each stroke, legs kicking); animals do a doggy paddle (nose up, rocking, all four legs paddling). Swimmers leave ripples and little splashes, wade the last bit in shallow water, and don't fight while swimming. If their home spot is now under water, they live where they climbed out.
 - The windmill's blades turn, campfires flicker, the lighthouse lamp, wizard's staff and treasure glow, and the sailboat bobs.
