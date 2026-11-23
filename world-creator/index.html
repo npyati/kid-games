@@ -184,13 +184,14 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,38px);lin
       <div><b class="h">Fly the camera</b><b>Controller:</b> left stick moves, right stick turns and tilts, LT zooms out, RT zooms in. <b>Keyboard and mouse:</b> WASD or the arrow keys move, hold the right mouse button and drag to turn, mouse wheel zooms, Q / E turn.</div>
       <div><b class="h">Build</b>Pick a group and a thing at the bottom, then press <b>A</b> or <b>click</b> to put it down where the circle is. Hold the button and move to keep going. <b>Controller:</b> LB / RB change group, d-pad left / right pick a thing, click the right stick to change its size, Y turns it. <b>Keyboard:</b> number keys or Tab change group, [ and ] pick a thing, R turns it, - and + change its size.</div>
       <div><b class="h">Brush</b>The brush on the left side puts down <b>1, 2, 3, 6 or 10</b> things at a time, and makes the circle bigger for painting land. <b>Controller:</b> d-pad up / down. <b>Keyboard:</b> C (Shift+C for smaller).</div>
-      <div><b class="h">Nature</b>Paint land types: <b>forest, taiga, jungle, savanna, desert, swamp, mountain, path, cobblestone path, corrupted land</b> and glowing <b>lava</b> (it burns what's on it, and nobody walks onto it). Each one colours the ground and grows its own plants. Hold the button to keep painting. The land tools <b>raise</b> and <b>lower</b> the land, <b>flatten</b> it, or dig <b>shallow</b> or <b>deep water</b>. Single trees, rocks and flowers are in <b>Plants</b>.</div>
+      <div><b class="h">Nature</b>Paint land types: <b>forest, taiga, jungle, savanna, desert, swamp, mountain, path, cobblestone path, corrupted land</b> and glowing <b>lava</b> (it burns what's on it, and nobody walks onto it). Each one colours the ground and grows its own plants. Hold the button to keep painting. The land tools <b>raise</b> and <b>lower</b> the land, <b>flatten</b> it, or dig <b>shallow</b> or <b>deep water</b>. Trees and plants grow by themselves on the land types you paint.</div>
       <div><b class="h">Oops!</b>The <b>eraser</b> (X on the controller or keyboard) takes things away. <b>Undo</b> (B, or Z on the keyboard) takes back the last thing you did.</div>
       <div><b class="h">It's alive</b>People and creatures walk around by themselves. Birds and dragons fly, and dolphins swim in the sea. Monsters, zombies and the dragon attack; zombies turn what they bite into zombies; anything near a ghost runs away screaming. Turn <b>Fighting</b> off in the menu for calm building.</div>
       <div><b class="h">Towns</b>Put down <b>humans, elves, dwarves</b> or <b>orcs</b> (in People). With <b>Towns: People build</b> (in the menu), once <b>10</b> of a kind are together they start building a town: the town hall takes about 2 minutes, then they build their own houses one at a time. With <b>Towns: Quick</b>, one person founds a whole town at once. Orcs fight everyone else; humans sometimes start wars; elves are archers. Open <b>🏰 Towns</b> (T, or View on the controller) to make a town keep the peace or go to war with everyone.</div>
       <div><b class="h">Maps</b>Ten islands, plus four big maps: <b>Island Set</b> (seven islands, each a different land), <b>Pangea</b> (one giant supercontinent), <b>Sky Islands</b> (floating in the sky) and <b>Endless Ocean</b>. Or pick <b>🎲 Random</b>. New islands are much bigger than the first ones, and people and animals are smaller, so everything is more to scale.</div>
       <div><b class="h">Disasters</b>The <b>Disasters</b> group has a <b>tornado</b> (picks things up and throws them), a <b>tsunami</b> (a wave rolls in from the nearest sea), a <b>bomb</b>, a <b>sprinkle bomb</b> (lots of little bombs) and an <b>earthquake</b> (cracks the ground and knocks buildings down). The size buttons make them bigger. <b>Undo</b> puts things back.</div>
       <div><b class="h">Kings, queens and battles</b>Once a town starts to grow it crowns a <b>king</b>, a <b>queen</b> or both. They train soldiers who guard the town and send them to battle. Tap the <b>🪄 Battle wand</b> (in People) on one town, then on another, and they go to war. The <b>🕊️ Peace wand</b> does the opposite: the two towns become friends and never fight (even orcs). Bears, polar bears, foxes, crocodiles, sharks and dinosaurs are hungry: they hunt people and other animals. When a town has nobody left, its town hall explodes and it has fallen.</div>
+      <div><b class="h">Treasure</b>The <b>💰 Treasure</b> group has gold bags (small, medium, big and huge), treasure chests, a pile of gold, a golden crown, giant gems and gold dragon and hydra statues. Put treasure near a town and it goes into the town's gold: gold bags get spent right away, and the rest stays in the town. Bigger treasure is worth more.</div>
       <div><b class="h">Inspect</b>Press <b>🔍 Inspect</b> (I on the keyboard, or press X twice on the controller) and tap a person, an animal, a monster or a town. People and animals have a name, an age, a personality, a job and a story of what's happened to them. Towns show how much money they have, their rulers, whether they're at war, at peace or neutral, and their history. One year goes by every 2 minutes.</div>
       <div><b class="h">Big monsters</b>Dragons, hydras and sea serpents are huge, and each island can have up to <b>3</b> of each.</div>
       <div><b class="h">Saving</b>Every island saves by itself. Find it again under <b>My islands</b>.</div>
@@ -1280,7 +1281,7 @@ const COL = {
 };
 const CATS = [
   { id: 'nature', name: 'Nature', icon: '🏞️', items: [] },
-  { id: 'plants', name: 'Plants', icon: '🌳', items: [] },
+  { id: 'treasure', name: 'Treasure', icon: '💰', items: [] },
   { id: 'build', name: 'Buildings', icon: '🏠', items: [] },
   { id: 'people', name: 'People', icon: '🧑', items: [] },
   { id: 'creatures', name: 'Creatures', icon: '🐾', items: [] },
@@ -1816,10 +1817,87 @@ def('armor', 'weapons', 'Suit of armor', '🤺', { r: 0.6, h: 2.2, body: g => {
   personBody(g, { y0: 0.1, shirt: [0.72, 0.74, 0.78], pants: [0.6, 0.62, 0.66], skin: [0.6, 0.62, 0.66], hair: null, extra: (gg, k, y) => { orb(gg, 0, y + 1.82, 0, 0.22, 0.24, 0.22, [0.74, 0.76, 0.8]); box(gg, 0, y + 1.8, 0.2, 0.26, 0.04, 0.04, COL.dark); orb(gg, 0, y + 2.08, -0.05, 0.05, 0.12, 0.16, COL.red, { lo: true }); } });
   for (const x of [-0.1, 0.1]) cyl(g, [x, 0.1, 0], [x, 0.96, 0], 0.09, 0.09, [0.6, 0.62, 0.66], 10);
 } });
-def('chest', 'weapons', 'Treasure chest', '💰', { r: 0.8, h: 1.2, body: g => {
+def('chest', 'treasure', 'Treasure chest', '💰', { r: 0.8, h: 1.2, value: 300, body: g => {
   box(g, 0, -0.05, 0, 1.1, 0.6, 0.7, COL.wood); for (const x of [-0.4, 0.4]) box(g, x, -0.05, 0, 0.08, 0.62, 0.72, COL.gold);
   box(g, 0, 0.55, -0.32, 1.12, 0.65, 0.1, shade(COL.wood, 1.1));
 }, glow: { flicker: 'pulse', make: g => { for (let i = 0; i < 9; i++) orb(g, -0.35 + (i % 3) * 0.35, 0.58 + Math.floor(i / 3) * 0.05, -0.2 + Math.floor(i / 3) * 0.2, 0.13, 0.06, 0.13, COL.gold, { lo: true }); orb(g, 0.1, 0.7, 0.1, 0.07, 0.07, 0.07, [0.4, 0.9, 1], { lo: true }); } } });
+
+/* ---------------- treasure (put it near a town and it goes into the town's gold) ---------------- */
+const GOLD = [1.0, 0.78, 0.22], GOLD2 = [0.85, 0.6, 0.12];
+function gem(g, x, y, z, r, h, col) {                  // a big cut gem: a flat table on top, sloping crown, pointed bottom, flat faces
+  const N = 10, top = [], mid = [], tip = [x, y, z], tableY = y + h, girdleY = y + h * 0.62;
+  for (let i = 0; i < N; i++) { const a = i / N * 6.283; top.push([x + Math.cos(a) * r * 0.55, tableY, z + Math.sin(a) * r * 0.55]); mid.push([x + Math.cos(a + 0.314) * r, girdleY, z + Math.sin(a + 0.314) * r]); }
+  const c = [x, tableY, z], f = (a, b, d, k) => { const n = faceN(a, b, d), cc = shade(col, k); tri(g, a, b, d, n, 0, cc, cc, cc, 0, 0, 0); };
+  for (let i = 0; i < N; i++) {
+    const j = (i + 1) % N;
+    f(c, top[j], top[i], 1.15);
+    f(top[i], top[j], mid[i], 1.0); f(top[j], mid[j], mid[i], 0.9);
+    f(mid[i], mid[j], tip, i % 2 ? 0.7 : 0.8);
+  }
+}
+function coins(g, x, y, z, n, spread, seed) {
+  const r = mulberry32(seed);
+  for (let i = 0; i < n; i++) { const a = r() * 6.283, q = Math.sqrt(r()) * spread; cyl(g, [x + Math.cos(a) * q, y, z + Math.sin(a) * q], [x + Math.cos(a) * q + (r() - 0.5) * 0.02, y + 0.03, z + Math.sin(a) * q], 0.09, 0.09, r() < 0.5 ? GOLD : GOLD2, 12); }
+}
+function goldBag(g, k) {
+  const SACK = [0.62, 0.45, 0.25];
+  orb(g, 0, 0.42 * k, 0, 0.42 * k, 0.42 * k, 0.4 * k, SACK, { bump: 0.06, cutBelow: 0 });
+  cyl(g, [0, 0.78 * k, 0], [0, 0.92 * k, 0], 0.12 * k, 0.16 * k, SACK, 14);
+  cyl(g, [0, 0.8 * k, 0], [0, 0.84 * k, 0], 0.15 * k, 0.15 * k, [0.45, 0.28, 0.12], 14);
+  for (const s of [-1, 1]) orb(g, s * 0.1 * k, 0.97 * k, 0, 0.09 * k, 0.05 * k, 0.07 * k, SACK, { lo: true });
+  orb(g, 0, 0.45 * k, 0.39 * k, 0.16 * k, 0.16 * k, 0.03 * k, GOLD, { lo: true });              // a gold coin sewn on the front
+  coins(g, 0, 0.01, 0.15 * k, Math.round(4 * k), 0.55 * k, 7);
+}
+const tdef = (id, name, icon, value, o) => def(id, 'treasure', name, icon, Object.assign({ value }, o));
+tdef('bag_s', 'Small gold bag', '👝', 50, { r: 0.4, h: 0.5, body: g => goldBag(g, 0.55) });
+tdef('bag_m', 'Medium gold bag', '💰', 150, { r: 0.6, h: 0.8, body: g => goldBag(g, 0.85) });
+tdef('bag_l', 'Big gold bag', '💰', 400, { r: 0.8, h: 1.1, body: g => goldBag(g, 1.2) });
+tdef('bag_xl', 'Huge gold bag', '💰', 1000, { r: 1.2, h: 1.6, body: g => goldBag(g, 1.8) });
+tdef('bigchest', 'Big treasure chest', '🧰', 1200, { r: 1.5, h: 2.0, body: g => {
+  box(g, 0, 0, 0, 2.2, 1.1, 1.4, COL.wood); for (const x of [-0.8, 0, 0.8]) box(g, x, 0, 0, 0.12, 1.12, 1.42, COL.gold);
+  box(g, 0, 0.98, -0.62, 2.24, 1.2, 0.14, shade(COL.wood, 1.1)); box(g, 0, 0.45, 0.71, 0.22, 0.3, 0.04, COL.gold);
+  coins(g, 0, 0.01, 1.1, 14, 0.8, 3);
+}, glow: { flicker: 'pulse', make: g => {
+  for (let i = 0; i < 20; i++) orb(g, -0.8 + (i % 5) * 0.4, 1.05 + Math.floor(i / 5) * 0.06, -0.45 + Math.floor(i / 5) * 0.28, 0.2, 0.09, 0.18, GOLD, { lo: true });
+  gem(g, -0.4, 1.15, 0.2, 0.15, 0.25, [0.9, 0.1, 0.2]); gem(g, 0.45, 1.15, -0.1, 0.13, 0.22, [0.2, 0.8, 0.35]); gem(g, 0.1, 1.2, 0.35, 0.12, 0.2, [0.3, 0.5, 1]);
+} } });
+tdef('goldpile', 'Pile of gold', '🪙', 600, { r: 1.3, h: 1.0, body: g => { coins(g, 0, 0.01, 0, 26, 1.4, 11); }, glow: { flicker: 'pulse', make: g => {
+  orb(g, 0, 0, 0, 1.1, 0.75, 1.0, GOLD, { bump: 0.12, cutBelow: 0 }); for (let i = 0; i < 9; i++) { const a = i * 0.7; cyl(g, [Math.cos(a) * 0.5, 0.5 + (i % 3) * 0.1, Math.sin(a) * 0.5], [Math.cos(a) * 0.5 + 0.03, 0.53 + (i % 3) * 0.1, Math.sin(a) * 0.5], 0.12, 0.12, GOLD2, 12); }
+} } });
+tdef('goldcrown', 'Golden crown', '👑', 800, { r: 0.8, h: 1.4, body: g => {
+  cyl(g, [0, 0, 0], [0, 0.7, 0], 0.5, 0.45, [0.45, 0.1, 0.15], 18); orb(g, 0, 0.75, 0, 0.62, 0.18, 0.62, [0.7, 0.12, 0.2]);     // a velvet cushion on a stand
+}, glow: { flicker: 'pulse', make: g => {
+  cyl(g, [0, 0.85, 0], [0, 1.15, 0], 0.32, 0.34, GOLD, 24, false);
+  for (let i = 0; i < 8; i++) { const a = i / 8 * 6.283; coneS(g, Math.cos(a) * 0.33, 1.1, Math.sin(a) * 0.33, 0.07, 0.25, GOLD, 8); orb(g, Math.cos(a) * 0.33, 1.38, Math.sin(a) * 0.33, 0.045, 0.045, 0.045, GOLD, { lo: true }); }
+  for (let i = 0; i < 4; i++) { const a = i / 4 * 6.283 + 0.4; orb(g, Math.cos(a) * 0.34, 0.98, Math.sin(a) * 0.34, 0.06, 0.06, 0.03, [[0.9, 0.1, 0.2], [0.2, 0.5, 1], [0.2, 0.8, 0.35], [0.9, 0.1, 0.2]][i], { lo: true }); }
+} } });
+for (const [id, name, icon, col, value] of [['ruby', 'Giant ruby', '🔴', [0.92, 0.08, 0.2], 1500], ['emerald', 'Giant emerald', '🟢', [0.15, 0.85, 0.4], 1500],
+  ['sapphire', 'Giant sapphire', '🔵', [0.2, 0.45, 1.0], 1500], ['diamond', 'Giant diamond', '💎', [0.85, 0.95, 1.0], 2500]])
+  tdef(id, name, icon, value, { r: 1.0, h: 2.2, body: g => { rockShape(g, 0, 0.15, 0, 0.9, 0.3, 0.8, COL.stone2, 5); }, glow: { flicker: 'pulse', make: g => gem(g, 0, 0.35, 0, 0.75, 1.7, col) } });
+function statueBase(g) { box(g, 0, 0, 0, 2.6, 0.5, 2.6, COL.stone2); box(g, 0, 0.5, 0, 2.2, 0.3, 2.2, shade(COL.stone2, 1.1)); }
+tdef('dragonstatue', 'Gold dragon statue', '🐉', 3000, { r: 1.6, h: 4.2, big: true, body: g => { statueBase(g);
+  const y = 0.8;
+  orb(g, 0, y + 0.9, -0.2, 0.6, 0.75, 0.9, GOLD);                                         // sitting up, chest out
+  for (const s of [-1, 1]) { orb(g, s * 0.45, y + 0.35, -0.45, 0.32, 0.38, 0.5, GOLD2); orb(g, s * 0.3, y + 0.18, 0.45, 0.14, 0.18, 0.22, GOLD2); }
+  cyl(g, [0, y + 1.4, 0.2], [0, y + 2.3, 0.45], 0.3, 0.22, GOLD, 16); orb(g, 0, y + 2.45, 0.6, 0.3, 0.26, 0.42, GOLD); orb(g, 0, y + 2.38, 0.98, 0.18, 0.14, 0.22, GOLD2);
+  for (const s of [-1, 1]) { cyl(g, [s * 0.15, y + 2.65, 0.45], [s * 0.3, y + 3.05, 0.15], 0.07, 0.01, GOLD2, 10); orb(g, s * 0.16, y + 2.55, 0.86, 0.05, 0.05, 0.04, [0.9, 0.1, 0.15], { lo: true }); }
+  for (const s of [-1, 1]) { const S = [s * 0.4, y + 1.4, -0.3], E = [s * 1.3, y + 2.4, -0.4], T = [s * 1.9, y + 1.9, -0.7], B = [s * 0.6, y + 0.8, -0.9];
+    tri(g, S, E, T, faceN(S, E, T), 0, GOLD, GOLD, GOLD2, 0, 0, 0); tri(g, S, T, B, faceN(S, T, B), 0, GOLD, GOLD2, GOLD2, 0, 0, 0); tri(g, S, T, E, faceN(S, T, E), 0, GOLD, GOLD2, GOLD, 0, 0, 0); tri(g, S, B, T, faceN(S, B, T), 0, GOLD, GOLD2, GOLD2, 0, 0, 0);
+    cyl(g, S, E, 0.06, 0.04, GOLD2, 8); cyl(g, E, T, 0.04, 0.01, GOLD2, 8); }
+  let p = [0, y + 0.3, -0.9]; for (let i = 0; i < 6; i++) { const q = [Math.sin(i * 0.8) * 0.5, y + 0.15, -1.1 - i * 0.18 + Math.cos(i * 0.8) * 0.2]; cyl(g, p, q, 0.22 - i * 0.03, 0.2 - i * 0.03, GOLD, 12); p = q; }
+} });
+tdef('hydrastatue', 'Gold hydra statue', '🐲', 3000, { r: 1.6, h: 4.2, big: true, body: g => { statueBase(g);
+  const y = 0.8;
+  orb(g, 0, y + 0.6, 0, 0.8, 0.55, 0.95, GOLD); for (const [x, z] of [[-0.5, 0.5], [0.5, 0.5], [-0.5, -0.5], [0.5, -0.5]]) cyl(g, [x, y + 0.4, z], [x, y, z + 0.1], 0.18, 0.15, GOLD2, 10);
+  for (let i = 0; i < 3; i++) {
+    const sx = (i - 1) * 0.35, ex = (i - 1) * 0.9, top = i === 1 ? 3.0 : 2.6;
+    const pts = [[sx, y + 0.8, 0.5], [sx * 1.6, y + 1.5, 0.7], [ex, y + 2.2, 0.75], [ex, y + top - 0.25, 0.95]];
+    for (let k = 0; k < 3; k++) cyl(g, pts[k], pts[k + 1], 0.2 - k * 0.03, 0.17 - k * 0.03, GOLD, 12);
+    orb(g, ex, y + top - 0.2, 1.1, 0.2, 0.17, 0.3, GOLD); orb(g, ex, y + top - 0.27, 1.32, 0.12, 0.08, 0.16, GOLD2);
+    for (const s of [-1, 1]) cyl(g, [ex + s * 0.1, y + top - 0.05, 1.0], [ex + s * 0.2, y + top + 0.2, 0.8], 0.04, 0.005, GOLD2, 8);
+  }
+  cyl(g, [0, y + 0.55, -0.9], [0, y + 0.2, -1.8], 0.3, 0.05, GOLD, 12);
+} });
 
 /* =====================================================================
    From Wildwood, exactly: the dragon (bendy neck and tail, jaw with teeth, wings it walks on
@@ -2611,6 +2689,7 @@ function loadThings(data, fresh) {
     }
     if (ex && typeof ex === 'object') {
       for (const k of ['nm', 'tr', 'lk', 'bi', 'zb']) if (typeof ex[k] === 'string') o[k] = ex[k].slice(0, 30);
+      if (typeof ex.cl === 'string') o.claimed = ex.cl.slice(0, 30);
       if (Number.isFinite(ex.ag)) o.ag = clamp(ex.ag, 0, 5000);
       for (const k of ['ki', 'ba', 'to', 'wa', 'sc']) if (Number.isFinite(ex[k])) o[k] = clamp(ex[k] | 0, 0, 99999);
     }
@@ -3083,7 +3162,29 @@ function removeTown(t) {
   dirty = true; if (state === 'towns') buildTownPanel();
 }
 // wars: humans start one now and then; towns at war march an army at their enemy
+// treasure put down near a town (within 90 m) adds to its gold: gold bags get spent, the rest stays in the town
+let treasureT = 0;
+function claimTreasure(dt) {
+  if ((treasureT -= dt) > 0 || !towns.length) return;
+  treasureT = 1.5;
+  const got = new Map();
+  for (const o of objs.slice()) {
+    const d = CAT[o.t];
+    if (!d.value || o.claimed || o.gone || o.held) continue;
+    const t = townNear(o.x, o.z, 90); if (!t) continue;
+    const v = Math.round(d.value * o.s);
+    t.gold = (t.gold || 0) + v; got.set(t, (got.get(t) || 0) + v);
+    if (d.id.startsWith('bag_')) { poof(o.x, o.y + 0.5, o.z, 1, GOLD); const i = objs.indexOf(o); if (i >= 0) objs.splice(i, 1); o.gone = true; updateCount(); }
+    else { o.claimed = t.id; poof(o.x, o.y + 1, o.z, 1.2, GOLD); }
+  }
+  for (const [t, v] of got) {
+    toast(`💰 ${t.name} got ${v.toLocaleString()} gold!`, 2200); townLog(t, `Found treasure worth ${v} gold.`);
+    if (near3(t)) [1320, 1760, 2093].forEach((f, i) => tone('triangle', f, f, 0.12, 0.05, i * 0.07));
+    dirty = true;
+  }
+}
 function updateTowns(dt) {
+  claimTreasure(dt);
   for (const t of towns.slice()) growTown(t, dt);
   if (!settings.fight) { for (const o of objs) if (o.march) { o.march = null; o.hx = TOWN[o.town] ? TOWN[o.town].x : o.x; o.hz = TOWN[o.town] ? TOWN[o.town].z : o.z; } return; }
   for (const [k, w] of [...wars]) { w.t -= dt; if (w.t <= 0) { wars.delete(k); const [a, b] = k.split('|').map(id => TOWN[id]); if (a && b) { toast(`🕊️ ${a.name} and ${b.name} made peace`, 2200); townLog(a, `Made peace with ${b.name}.`); townLog(b, `Made peace with ${a.name}.`); } } }
@@ -3619,7 +3720,7 @@ function fillInspect() {
       const t = o.town && TOWN[o.town];
       head = `${d.icon} ${esc(d.name)}`;
       body = row('What it is', CATS.find(c => c.id === d.cat) ? CATS.find(c => c.id === d.cat).name.replace(/s$/, '') : 'Thing')
-        + (t ? row('Belongs to', esc(t.name)) : '') + (o.build !== undefined ? row('Building', Math.floor(o.build * 100) + '%') : '')
+        + (t ? row('Belongs to', esc(t.name)) : '') + (d.value ? row('Worth', `🪙 ${Math.round(d.value * o.s).toLocaleString()} gold`) : '') + (o.claimed && TOWN[o.claimed] ? row('In the treasury of', esc(TOWN[o.claimed].name)) : d.value ? row('Owner', 'Nobody yet: put it near a town') : '') + (o.build !== undefined ? row('Building', Math.floor(o.build * 100) + '%') : '')
         + (o.hp !== undefined ? row('Health', Math.max(0, Math.round(o.hp / o.maxHp * 100)) + '%') : '')
         + `<p class="istory">${t ? `Built by the ${RACES[t.race].name.toLowerCase()} of ${esc(t.name)}.` : 'You put it here.'}</p>`;
     } else {
@@ -4051,6 +4152,7 @@ function saveObj(o) {
   for (const k of ['nm', 'tr', 'lk', 'bi', 'zb']) if (typeof o[k] === 'string') x[k] = o[k];
   if (o.ag !== undefined) x.ag = +o.ag.toFixed(2);
   for (const k of ['ki', 'ba', 'to', 'wa', 'sc']) if (o[k]) x[k] = o[k];
+  if (o.claimed) x.cl = o.claimed;
   const has = Object.keys(x).length;
   if (o.town || has) a.push(o.town || 0);
   if (has) a.push(x);
