@@ -219,7 +219,7 @@ body.two.playing .locator{display:block}
       <div id="howClaude" hidden><b>🎤 Ask Claude (at home only)</b>Hold V, or LB + RB together on a controller (L + R on Nintendo), and say what should happen: "spawn ten wolves in front of me", "build a tower", "make me giant". Let go and Claude makes it happen. Press T to type instead. Big ideas take a little longer.</div>
       <div><b>Bosses</b>Dragonlings live in forest camps: leave them alone and they'll leave you alone. Crocodiles lurk in rivers. Sharks swim in the ocean, but only bother you in the water. Goats (leave them alone!) and ice ogres live in the icy mountains. Goblins camp in open fields. Ogres roam the forests. Giant snakes hide in marshes. The Leviathan lives in big lakes. Dragons sleep in volcanoes on mountaintops, ringed by tall black spikes. They walk on their folded wings, and they can fly!</div>
     </div>
-    <p id="padStatus">Plug in an Xbox or Nintendo Switch Pro controller and press any button.</p>
+    <p id="padStatus">Got an Xbox, PlayStation or Nintendo Switch Pro controller? Connect it to the computer (cable or Bluetooth), then press a button on it. Works best in Chrome or Edge. Not showing up? Close Steam, which can hide controllers, and try unplugging it and plugging it back in.</p>
   </div>
 </div>
 <div id="bars"></div>
@@ -1791,8 +1791,29 @@ function readPad(pd, gp) {
   pd.lt = gp.buttons[6] ? gp.buttons[6].value : 0;
 }
 // the first controller is player 1's, the second one is player 2's
+// Finding the controllers. Some computers also list other things as "gamepads" (headsets, wireless receivers, drawing
+// tablets, steering wheels), sometimes before the real controller, so: keep only things that look like controllers,
+// then ones with the standard layout. Pads that only arrived
+// through the "gamepadconnected" event (some browsers) are used too.
+const padEvt = {}, padPresses = {};
+let padActive = -1;
+addEventListener('gamepadconnected', e => { padEvt[e.gamepad.index] = e.gamepad; });
+addEventListener('gamepaddisconnected', e => { delete padEvt[e.gamepad.index]; if (padActive === e.gamepad.index) padActive = -1; });
+function realPads() {
+  let raw = [];
+  try { raw = navigator.getGamepads ? Array.from(navigator.getGamepads() || []) : []; } catch (e) { raw = []; }
+  if (!raw.some(p => p)) raw = Object.values(padEvt);
+  const list = raw.filter(p => p && p.connected !== false && p.buttons && p.buttons.length >= 6 && p.axes && p.axes.length >= 2);
+  for (const p of list) {
+    let n = 0; for (const b of p.buttons) if (b && (b.pressed || b.value > 0.6)) n++;
+    if (n > (padPresses[p.index] || 0)) padActive = p.index;      // a new button press: this is the one being used
+    padPresses[p.index] = n;
+  }
+  if (!list.some(p => p.index === padActive)) padActive = -1;
+  return list.sort((a, b) => (b.index === padActive) - (a.index === padActive) || (b.mapping === 'standard') - (a.mapping === 'standard') || b.buttons.length - a.buttons.length);
+}
 function pollPad() {
-  const list = navigator.getGamepads ? Array.from(navigator.getGamepads()).filter(p => p && p.connected) : [];
+  const list = realPads().sort((a, b) => a.index - b.index);   // (player 1 and 2 keep their own controllers)
   const g0 = list[0] || null, g1 = list[1] || null;
   readPad(pad1, g0); readPad(pad2, g1);
   // (also when one controller is swapped for another, so the button names follow the new one)
@@ -2192,7 +2213,7 @@ function padChanged(gp) {
     document.getElementById('howPad').innerHTML = controllerHelp({ nintendo: nin });
     setSel(sel);
   } else {
-    padStatus.textContent = 'Plug in an Xbox or Nintendo Switch Pro controller and press any button.';
+    padStatus.textContent = 'Got an Xbox, PlayStation or Nintendo Switch Pro controller? Connect it to the computer (cable or Bluetooth), then press a button on it. Works best in Chrome or Edge. Not showing up? Close Steam, which can hide controllers, and try unplugging it and plugging it back in.';
     padStatus.classList.remove('on');
     toast('Controller disconnected');
     if (state === 'play') openMenu();
