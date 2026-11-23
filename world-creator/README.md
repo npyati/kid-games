@@ -99,6 +99,8 @@ The **Brush** panel on the left picks how many things go down at once: **1, 2, 3
 - People and land animals wander within about 20–30 m of where you put them (further for big ones), stopping now and then, and never walk into the sea or up cliffs. Legs swing as they walk; bunnies, squirrels and frogs hop.
 - Birds and dragons circle where you put them (dragons fly higher and wider) and flap their wings.
 - Dolphins swim and leap out of the water now and then; whales and sharks swim (the shark's fin shows above the water).
+- **Making water washes things away:** Shallow water, Deep water and Lower land remove the trees, plants, buildings and rocks the water now covers (with a splash). Creatures, boats and treasure stay (sunken treasure!). Undo brings it all back.
+- **Land creatures swim:** a person or land animal that ends up in the water (dug out from under it, dropped by a tornado or washed off by a wave) swims slowly to the nearest land, then walks again. People do a front crawl (lying forward, arms windmilling over the water, rolling with each stroke, legs kicking); animals do a doggy paddle (nose up, rocking, all four legs paddling). Swimmers leave ripples and little splashes, wade the last bit in shallow water, and don't fight while swimming. If their home spot is now under water, they live where they climbed out.
 - The windmill's blades turn, campfires flicker, the lighthouse lamp, wizard's staff and treasure glow, and the sailboat bobs.
 - Things you place pop in with a little bounce.
 

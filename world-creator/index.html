@@ -198,7 +198,7 @@ canvas.inspecting{cursor:zoom-in}
       <div><b class="h">Kings, queens and battles</b>Once a town starts to grow it crowns a <b>king</b>, a <b>queen</b> or both. They train soldiers who guard the town and send them to battle. Tap the <b>🪄 Battle wand</b> (in People) on one town, then on another, and they go to war. The <b>🕊️ Peace wand</b> does the opposite: the two towns become friends and never fight (even orcs). Bears, polar bears, foxes, crocodiles, sharks and dinosaurs are hungry: they hunt people and other animals. When a town has nobody left, its town hall explodes and it has fallen.</div>
       <div><b class="h">Farms and caves</b>Towns plant <b>crop fields</b>: farmers walk out, hoe the ground and bring in the harvest (40 gold each time), and barns come with cows, sheep, pigs or chickens. New islands start with trees and plants that fit them, and some have <b>caves</b> that animals (or goblins) come out of.</div>
       <div><b class="h">Treasure</b>The <b>💰 Treasure</b> group has gold bags (small, medium, big and huge), treasure chests, a pile of gold, a golden crown, giant gems and gold dragon and hydra statues. Put treasure near a town and it goes into the town's gold: gold bags get spent right away, and the rest stays in the town. Bigger treasure is worth more.</div>
-      <div><b class="h">Inspect</b>Press <b>🔍 Inspect</b> (I on the keyboard, or press X twice on the controller): nothing gets built while you're inspecting. Click a person, an animal, a monster or a town. People and animals have a name, an age, a personality, a job and a story of what's happened to them. Towns show how much money they have, their rulers, whether they're at war, at peace or neutral, and their history. One year goes by every 2 minutes. Kids are born in the towns and grow up; only people 18 or older can have a job (farmer, builder, soldier, king or queen) or go to war.</div>
+      <div><b class="h">Inspect</b>Press <b>🔍 Inspect</b> (I on the keyboard, or press X twice on the controller): nothing gets built while you're inspecting. Click a person, an animal, a monster or a town. People and animals have a name, an age, a personality, a job and a story of what's happened to them. Towns show how much money they have, their rulers, whether they're at war, at peace or neutral, and their history. One year goes by every 2 minutes. Making water washes away the trees, plants and buildings it covers (treasure stays, sunken!), and land creatures that end up in the water swim slowly back to shore. Kids are born in the towns and grow up; only people 18 or older can have a job (farmer, builder, soldier, king or queen) or go to war.</div>
       <div><b class="h">Big monsters</b>Dragons, hydras and sea serpents are huge, and each island can have up to <b>3</b> of each.</div>
       <div><b class="h">Saving</b>Every island saves by itself. Find it again under <b>My islands</b>.</div>
     </div>
@@ -1308,6 +1308,7 @@ function meshesFor(d) {
   const m = {}, mk = fn => { if (!fn) return null; const g = new Geo(4096); fn(g); return makeMesh(g); };
   m.body = mk(d.body);
   m.leg = d.legs ? mk(d.legs.make) : null;
+  m.swimBody = mk(d.swimBody); m.arm = d.arm ? mk(d.arm.make) : null;
   m.wing = d.wings ? mk(d.wings.make) : null;
   m.spin = d.spin ? mk(d.spin.make) : null;
   m.glow = d.glow ? mk(d.glow.make) : null;
@@ -1578,7 +1579,7 @@ function personBody(g, o) {
   orb(g, 0, y + 0.93 * k, 0, 0.21 * k, 0.13 * k, 0.15 * k, o.pants);
   if (o.dress) cyl(g, [0, y + 0.3 * k, 0], [0, y + 1.15 * k, 0], 0.42 * k, 0.2 * k, o.dress, 20);
   const handY = o.raise ? 2.1 : 0.98;
-  for (const s of [-1, 1]) {
+  for (const s of (o.noArms ? [] : [-1, 1])) {
     const hand = o.armsOut ? [s * 0.22 * k, y + 1.42 * k, 0.55 * k] : s > 0 && o.raise ? [0.42 * k, y + handY * k, 0.05 * k] : [s * 0.34 * k, y + 0.95 * k, 0.06 * k];
     cyl(g, [s * 0.27 * k, y + 1.47 * k, 0], hand, 0.075 * k, 0.065 * k, o.sleeve || sh, 10);
     orb(g, hand[0], hand[1], hand[2], 0.07 * k, 0.07 * k, 0.07 * k, sk, { lo: true });
@@ -1593,7 +1594,8 @@ function personBody(g, o) {
 }
 function personDef(id, name, icon, o) {
   const k = o.k || 1;
-  return def(id, o.cat || 'people', name, icon, { r: 0.5 * k, h: 1.9 * k, move: 'walk', speed: o.speed || 1.3, body: g => personBody(g, o), wings: o.wings, hidden: o.hidden, race: o.race,
+  return def(id, o.cat || 'people', name, icon, { r: 0.5 * k, h: 1.9 * k, move: 'walk', speed: o.speed || 1.3, body: g => personBody(g, o),
+    swimBody: g => personBody(g, Object.assign({}, o, { noArms: true })), arm: { at: 1.47 * k, x: 0.27 * k, make: g => { cyl(g, [0, 0, 0], [0, -0.55 * k, 0.02 * k], 0.075 * k, 0.065 * k, o.sleeve || o.shirt, 10); orb(g, 0, -0.58 * k, 0.02 * k, 0.07 * k, 0.07 * k, 0.07 * k, o.skin || COL.skin, { lo: true }); } }, wings: o.wings, hidden: o.hidden, race: o.race,
     legs: { at: [[-0.1 * k, 0.86 * k, 0], [0.1 * k, 0.86 * k, 0]], amp: 0.6, gait: 'biped', len: 0.86 * k,
       make: g => { cyl(g, [0, 0.02, 0], [0, -0.78 * k, 0], 0.085 * k, 0.07 * k, o.legCol || o.pants, 10); orb(g, 0, -0.81 * k, 0.05 * k, 0.08 * k, 0.06 * k, 0.13 * k, o.shoes || COL.darkwood, { lo: true }); } },
     glow: o.glow });
@@ -2594,11 +2596,26 @@ function landAt(hit, d) {
   group(true);
   const e = [m, +hit.x.toFixed(1), +hit.z.toFixed(1), r, +amt.toFixed(2), +target.toFixed(2)];
   applyBrush(m, hit.x, hit.z, r, amt, target);
+  if (m === 'shallow' || m === 'deep' || m === 'lower') drown(hit.x, hit.z, r);
   if (landEdits.length < 8000) landEdits.push(e); else toast('That\'s a lot of land changes! Some won\'t be saved.', 2000);
   dirty = true; repeatT = 0;
   if (Math.random() < 0.35) noiseHit('lowpass', m === 'shallow' || m === 'deep' ? 900 : 300, 0.7, 0.25, 0.12);
   lastPaint = { x: hit.x, z: hit.z, target };
   return true;
+}
+// things that can't be underwater (trees, plants, buildings, rocks) wash away when water covers them.
+// Boats, swimmers and treasure (sunken treasure!) can stay; land creatures start swimming instead.
+function canBeUnderwater(d) { return !!(d.move || d.place === 'water' || d.value); }
+function drown(x, z, r) {
+  const grp = group(true); let n = 0;
+  for (let i = objs.length - 1; i >= 0; i--) {
+    const o = objs[i], d = CAT[o.t];
+    if (canBeUnderwater(d) || Math.abs(o.x - x) > r + 4 || Math.abs(o.z - z) > r + 4) continue;
+    if (groundAt(o.x, o.z) > -0.35) continue;                          // still (mostly) on dry land
+    objs.splice(i, 1); grp.dels.push(o); n++;
+    if (n < 12) splash(o.x, o.z, Math.min(2.5, 0.6 + d.r * o.s * 0.35));
+  }
+  if (n) { updateCount(); if (Math.random() < 0.6) noiseHit('bandpass', 700, 0.9, 0.3, 0.1); }
 }
 // painting a land type: its colour, its land changes, and its plants
 function paintBiome(id, x, z, r, quiet) {
@@ -2766,6 +2783,75 @@ function pickTarget(o, d) {
   }
   o.tx = o.hx; o.tz = o.hz;
 }
+const kidK = o => o.race && o.ag < 18 ? 0.5 + 0.5 * o.ag / 18 : 1;
+function swimDepth(d) { return d.arm ? 0.22 * d.h : d.legs && d.legs.at && d.legs.gait !== 'biped' ? d.legs.at[0][1] * 1.15 : 0.45 * d.h; }   // how far under the water it floats
+function findShore(o, d) {
+  for (let rr = 2; rr < 420; rr += rr < 40 ? 2 : 8) {
+    const a0 = Math.random() * 6.283;
+    for (let k = 0; k < 20; k++) {
+      const a = a0 + k / 20 * 6.283, x = o.x + Math.cos(a) * rr, z = o.z + Math.sin(a) * rr;
+      if (landOK(d, x, z) && landOK(d, o.x + Math.cos(a) * (rr + 2), o.z + Math.sin(a) * (rr + 2))) return { x: o.x + Math.cos(a) * (rr + 2), z: o.z + Math.sin(a) * (rr + 2) };
+    }
+  }
+  return null;
+}
+function swimStep(o, d, dt) {
+  const g = groundAt(o.x, o.z), ss = o.s * kidK(o);
+  if (g > 0.2 || landOK(d, o.x, o.z)) {                      // back on land: walk again
+    if (o.wet) {
+      o.wet = 0; o.swim = 0; o.shore = null; o.tx = undefined; o.wait = 0.4; o.pitch = 0; o.tilt = 0;
+      if (groundAt(o.hx, o.hz) < 0.2) { o.hx = o.x; o.hz = o.z; }   // home is under water now: live here instead
+      if (d.cat === 'people' && near3(o) && Math.random() < 0.5) say(o, pick(['Phew!', 'Made it!', 'Land!', 'So wet!']), '#bfe8ff');
+    }
+    return false;
+  }
+  o.wet = 1;
+  if ((o.shoreT = (o.shoreT || 0) - dt) <= 0 || !o.shore) { o.shoreT = 2.5; const sh = findShore(o, d); if (sh) o.shore = sh; }
+  if (g > -0.3 * d.h * ss) {                                 // shallow: wade out
+    if (o.swim) { o.swim = 0; splash(o.x, o.z, 0.4 * Math.max(1, d.h * ss)); }
+    o.fleeT = 0; o.foe = null; o.pitch = 0; o.tilt = 0;
+    if (o.shore) {
+      let dy = Math.atan2(o.shore.x - o.x, o.shore.z - o.z) - o.r; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
+      o.r += clamp(dy, -2.5 * dt, 2.5 * dt);
+      const sp = d.speed * Math.sqrt(o.s) * 0.5 * Math.max(0.25, Math.cos(dy));
+      o.x += Math.sin(o.r) * sp * dt; o.z += Math.cos(o.r) * sp * dt; o.moving = true;
+      o.phase += sp * dt / Math.max(0.15, ((d.legs && d.legs.len) || 0.8) * o.s) * 1.4;
+    } else o.moving = false;
+    o.y = g;
+    if ((o.ripT = (o.ripT || 0) - dt) <= 0) { o.ripT = 0.5; if (near3(o) && ripples.length < 160) ripples.push({ x: o.x, z: o.z, t: 0, life: 1.5, r0: Math.max(0.3, d.r * ss * 0.8) }); }
+    return true;
+  }
+  if (!o.swim) {
+    o.swim = 1; o.ripT = 0; o.strokeN = Math.floor(o.phase / Math.PI);
+    splash(o.x, o.z, Math.min(2, 0.5 + d.h * ss * 0.3));
+    if (d.cat === 'people' && near3(o) && Math.random() < 0.6) say(o, pick(['Splash!', 'Glub glub!', 'I have to swim!', 'Brrr, cold!']), '#bfe8ff');
+  }
+  o.fleeT = 0; o.foe = null; o.moving = true;
+  o.phase += dt * (d.arm ? 3.2 : 4.5);                       // arm strokes for people, paddling legs for animals
+  if (o.shore) {
+    let dy = Math.atan2(o.shore.x - o.x, o.shore.z - o.z) - o.r; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
+    o.r += clamp(dy, -1.6 * dt, 1.6 * dt);
+    const surge = d.arm ? 0.55 + 0.45 * Math.abs(Math.sin(o.phase)) : 0.85 + 0.15 * Math.sin(o.phase * 2);   // a push with every stroke
+    const sp = Math.min(1.6, d.speed * Math.sqrt(o.s)) * 0.5 * surge * Math.max(0.25, Math.cos(dy));
+    o.x += Math.sin(o.r) * sp * dt; o.z += Math.cos(o.r) * sp * dt;
+  }
+  o.y = Math.max(g, -swimDepth(d) * ss + Math.sin(o.phase * (d.arm ? 2 : 1)) * 0.04 * ss);
+  o.pitch = 0; o.tilt = 0;
+  // ripples behind and little splashes from the strokes
+  if ((o.ripT -= dt) <= 0) { o.ripT = 0.65; if (near3(o) && ripples.length < 160) ripples.push({ x: o.x, z: o.z, t: 0, life: 1.8, r0: Math.max(0.35, d.r * ss * 0.9) }); }
+  const n = Math.floor(o.phase / Math.PI);
+  if (n !== o.strokeN) {
+    o.strokeN = n;
+    if (near3(o)) { const side = n % 2 ? 1 : -1, f = d.arm ? 0.9 : 0.5, sx = Math.cos(o.r) * side * 0.3 * d.h * ss * (d.arm ? 0.3 : 0.6);
+      splash(o.x + Math.sin(o.r) * f * d.h * ss + sx, o.z + Math.cos(o.r) * f * d.h * ss - Math.sin(o.r) * side * 0.3 * d.h * ss * (d.arm ? 0.3 : 0.6), 0.25 * Math.max(0.6, d.h * ss), 3); }
+  }
+  return true;
+}
+let ripples = [];
+function splash(x, z, size, count = 8) {
+  for (let i = 0; i < count; i++) { const a = Math.random() * 6.283, sp = (0.6 + Math.random() * 1.6) * Math.sqrt(size); fx.push({ x, y: 0.05, z, vx: Math.cos(a) * sp, vy: (2 + Math.random() * 2.5) * Math.sqrt(size), vz: Math.sin(a) * sp, t: 0, life: 0.55 + Math.random() * 0.3, r: size * (0.08 + Math.random() * 0.08), col: [0.85, 0.95, 1], grav: 1 }); }
+  if (ripples.length < 160) ripples.push({ x, z, t: 0, life: 1.6, r0: size * 0.6 });
+}
 function updateLife(dt, time) {
   updateSettlers(dt); updateTowns(dt); buildGrid(); ghostScares(dt); corruptSpawns(dt); updateFx(dt); updateArrows(dt); updateDisasters(dt, time); caveSpawns(dt);
   for (const o of objs.slice()) {                        // (a copy: things can be beaten while we go)
@@ -2773,6 +2859,7 @@ function updateLife(dt, time) {
     if (o.gone || o.held) continue;                      // (caught in a tornado or a wave)
     const d = CAT[o.t];
     if (!d.move) continue;
+    if (d.move === 'walk' && !d.amph && swimStep(o, d, dt)) continue;   // fell in the water: swim back to land
     if (d.update && d.update(o, dt, time)) continue;     // the dragon flying, the sea serpent's body
     if (fightStep(o, d, dt, time)) continue;             // chasing, fighting or running away
     if (d.move === 'float') { o.bob = Math.sin(time * 1.3 + o.phase) * 0.15 * o.s; o.tilt = Math.sin(time * 0.9 + o.phase) * 0.05; continue; }
@@ -3374,7 +3461,7 @@ function fallTown(t, homes) {
 // a crown on kings and queens, and a helmet, sword and shield on soldiers
 let gearMeshes = null;
 function drawGear(o, shadow) {
-  if (o.race && o.ag < 18) return;
+  if ((o.race && o.ag < 18) || o.swim) return;
   if (!gearMeshes) {
     const cr = new Geo(4096), qn = new Geo(4096), sd = new Geo(4096);
     const crown = (g, gem) => { cyl(g, [0, 0, 0], [0, 0.12, 0], 0.15, 0.16, COL.gold, 20, false); for (let i = 0; i < 6; i++) { const a = i / 6 * 6.283; coneS(g, Math.cos(a) * 0.14, 0.1, Math.sin(a) * 0.14, 0.04, 0.12, COL.gold, 8); } orb(g, 0, 0.07, 0.155, 0.035, 0.035, 0.02, gem, { lo: true }); };
@@ -4053,16 +4140,25 @@ function corruptSpawns(dt) {
   }
 }
 function updateFx(dt) {
-  for (const p of fx) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt; p.vx *= 0.96; p.vz *= 0.96; }
+  for (const p of fx) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt; p.vx *= 0.96; p.vz *= 0.96; if (p.grav) { p.vy -= 14 * dt; if (p.y < -0.1) p.t = p.life; } }
+  for (const q of ripples) q.t += dt;
+  ripples = ripples.filter(q => q.t < q.life);
   fx = fx.filter(p => p.t < p.life);
   for (const t of texts) { t.t += dt; t.y += dt * 0.8; }
   texts = texts.filter(t => t.t < 1.6);
 }
-let puffMesh = null, arrowMesh = null;
+let puffMesh = null, arrowMesh = null, rippleMesh = null;
 function drawFx() {
   if (arrows.length) {
     if (!arrowMesh) { const g = new Geo(512); cyl(g, [0, 0, -0.45], [0, 0, 0.35], 0.025, 0.025, COL.plank, 6); coneS(g, 0, 0, 0, 0.001, 0.001, COL.iron); cyl(g, [0, 0, 0.35], [0, 0, 0.5], 0.06, 0.001, COL.iron, 6); tri(g, [0, 0, -0.45], [0, 0.1, -0.3], [0, 0, -0.25], [1, 0, 0], 0, COL.red, COL.red, COL.red, 0, 0, 0); tri(g, [0, 0, -0.45], [0.1, 0, -0.3], [0, 0, -0.25], [0, 1, 0], 0, COL.red, COL.red, COL.red, 0, 0, 0); arrowMesh = makeMesh(g); }
     for (const a of arrows) drawMesh(arrowMesh, mChain(mT(a.x, a.y, a.z), mRy(Math.atan2(a.vx || 0, a.vz || 1)), mRx(-Math.atan2(a.vy || 0, Math.hypot(a.vx || 0, a.vz || 1))), mS(1.4)), 0);
+  }
+  if (ripples.length) {
+    if (!rippleMesh) { const g = new Geo(1024), N = 40, c = [0.88, 0.96, 1]; for (let i = 0; i < N; i++) { const a0 = i / N * 6.283, a1 = (i + 1) / N * 6.283, c0 = Math.cos(a0), s0 = Math.sin(a0), c1 = Math.cos(a1), s1 = Math.sin(a1);
+      tri(g, [c0 * 0.95, 0, s0 * 0.95], [c0, 0, s0], [c1, 0, s1], [0, 1, 0], -1, c, c, c, 0, 0, 0); tri(g, [c0 * 0.95, 0, s0 * 0.95], [c1, 0, s1], [c1 * 0.95, 0, s1 * 0.95], [0, 1, 0], -1, c, c, c, 0, 0, 0); } rippleMesh = makeMesh(g); }
+    gl.uniform1f(progWorld.u.uEmit, 0.5);
+    for (const q of ripples) { const k = q.t / q.life, R = q.r0 + q.t * 1.5; gl.uniform1f(progWorld.u.uAlpha, 0.38 * (1 - k)); drawMesh(rippleMesh, mChain(mT(q.x, 0.03, q.z), mS3(R, 1, R)), 0); }
+    gl.uniform1f(progWorld.u.uAlpha, 1); gl.uniform1f(progWorld.u.uEmit, 0);
   }
   if (!fx.length) return;
   if (!puffMesh) { const g = new Geo(2048); orb(g, 0, 0, 0, 1, 1, 1, [1, 1, 1], { lo: true }); puffMesh = makeMesh(g); }
@@ -4100,7 +4196,21 @@ function drawOne(o, time, shadow, flash) {
   const far = !shadow && Math.hypot(o.x - camEye[0], o.y - camEye[1], o.z - camEye[2]) > 260 + 40 * o.s;
   if (o.hitT > 0) flash = Math.max(flash || 0, 0.6);                   // flashes when it gets hit
   if (!d.draw && (o.windup > 0 || o.lunge > 0)) base = mChain(base, mT(0, 0, (o.lunge || 0) * 0.3), mRx(o.windup > 0 ? -0.15 : (o.lunge || 0) * 0.12));
+  if (o.swim) {
+    if (d.arm) base = mChain(base, mT(0, 0, -0.42 * d.h), mRx(1.25), mRy(Math.sin(o.phase) * 0.38));   // front crawl: lying forward, rolling with each stroke
+    else base = mChain(base, mRx(-0.12 + Math.sin(o.phase * 0.5) * 0.05), mRz(Math.sin(o.phase * 0.5) * 0.07));   // doggy paddle: nose up, rocking
+  }
   if (d.draw) { d.draw(o, base, time, flash, shadow); return; }        // Wildwood's dragon, sea serpent and crocodile, and the hydra
+  if (o.swim) {
+    drawMesh(M.swimBody || M.body, base, flash);
+    if (M.arm) for (const i of [0, 1]) drawMesh(M.arm, mChain(base, mT((i ? 1 : -1) * d.arm.x, d.arm.at, 0), mRx(o.phase + i * Math.PI)), flash);   // arms windmill over the top
+    if (M.leg && !far) d.legs.at.forEach((q, i) => {
+      const a = d.arm ? Math.sin(o.phase * 3 + i * Math.PI) * 0.35 - 0.1 : Math.sin(o.phase + (i === 0 || i === 3 ? 0 : Math.PI) + (i < 2 ? 0 : 0.8)) * 0.85 - 0.25;   // flutter kick / paddling paws
+      drawMesh(M.leg, mChain(base, mT(q[0], q[1], q[2]), mRx(a)), flash);
+    });
+    if (M.wing) { const W = d.wings; drawMesh(M.wing, mChain(base, mT(W.at[0], W.at[1], W.at[2]), mRz(0.1)), flash); drawMesh(M.wing, mChain(base, mT(-W.at[0], W.at[1], W.at[2]), mS3(-1, 1, 1), mRz(0.1)), flash); }
+    return;
+  }
   if (d.move === 'walk' && o.moving && !d.hop) base = mChain(base, mT(0, Math.abs(Math.sin(o.phase)) * 0.03, 0));
   if (d.glowAll && !shadow) gl.uniform1f(progWorld.u.uEmit, 0.55 + Math.sin(time * 9 + o.phase) * 0.15);   // the phoenix glows all over
   drawMesh(M.body, base, flash);
