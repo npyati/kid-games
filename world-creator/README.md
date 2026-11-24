@@ -81,6 +81,8 @@ The **Brush** panel on the left picks how many things go down at once: **1, 2, 3
 
 ## Towns
 
+**Buildings never go inside each other.** Each building has a round footprint (a castle has a bigger one), and a town only puts up a new building where it fits clear of the others. If a town building ends up overlapping another (say the town hall grew into a castle around it), it moves to a free spot in the town within a couple of seconds. Buildings you place can't go on top of another building either (the circle turns red, and a message says there's no room); fences, campfires and boats don't count, so fences still join up.
+
 Town buildings sit on **level ground**: when a town builds on a hill (or the land under a building changes later), the ground under the building is smoothed flat, like a little terrace, so nothing sinks into the hill. These changes are saved with the island's other land changes.
 
 - **Towns: People build** (the default; change it on the title screen or in the menu): putting down humans, elves, dwarves or orcs just puts down people (the brush puts down 1 to 10). People who aren't in a town drift toward others of their kind. Once **10** of a kind are within 35 m of each other they start a town: the centre building rises out of the ground over **2 minutes** while they walk over and hammer at it (its label shows 🔨 and how far along it is). Then the town grows on its own, slower than Quick towns: each new house rises over 20 seconds, and new people only come when houses are finished. People put down within 70 m of a town of their own kind move in.
