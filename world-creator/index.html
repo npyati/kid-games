@@ -73,8 +73,9 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,38px);lin
 @media (max-height:560px){#brushes button{width:44px;height:40px;font-size:11px}#brushPanel .lab{display:none}}
 #cross.show{display:block}
 #palette{position:absolute;left:50%;bottom:max(10px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(980px,calc(100vw - 20px));background:rgba(21,18,63,.86);border:3px solid var(--edge);border-radius:18px;padding:8px;box-sizing:border-box;display:flex;flex-direction:column;gap:6px}
-#cats{display:flex;gap:4px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin}
-#cats button{padding:6px 4px;font-size:13px;flex:1;min-width:max-content}
+#cats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+@media (max-width:700px){#cats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+#cats button{padding:6px 4px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #cats button.on{border-color:var(--sun);color:var(--sun);background:#2a2470}
 #items{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:thin}
 #items button{flex:none;padding:5px 8px;font-size:13px;min-width:76px;display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1.1}
@@ -194,6 +195,7 @@ canvas.inspecting{cursor:zoom-in}
       <div><b class="h">It's alive</b>People and creatures walk around by themselves. Birds and dragons fly, and dolphins swim in the sea. Monsters, zombies and the dragon attack; zombies turn what they bite into zombies; anything near a ghost runs away screaming. Turn <b>Fighting</b> off in the menu for calm building.</div>
       <div><b class="h">Towns</b>Put down <b>humans, elves, dwarves</b> or <b>orcs</b> (in People). With <b>Towns: People build</b> (in the menu), once <b>10</b> of a kind are together they start building a town: the town hall takes about 2 minutes, then they build their own houses one at a time. With <b>Towns: Quick</b>, one person founds a whole town at once. Orcs fight everyone else; humans sometimes start wars; elves are archers. Open <b>🏰 Towns</b> (T, or View on the controller) to make a town keep the peace or go to war with everyone.</div>
       <div><b class="h">Maps</b>Ten islands, plus four big maps: <b>Island Set</b> (seven islands, each a different land), <b>Pangea</b> (one giant supercontinent), <b>Sky Islands</b> (floating in the sky) and <b>Endless Ocean</b>. Or pick <b>🎲 Random</b>. New islands are much bigger than the first ones, and people and animals are smaller, so everything is more to scale.</div>
+      <div><b class="h">Legendary</b>The <b>⭐ Legendary</b> group has <b>Cerberus</b> (a three-headed dog that bites with one head while the others snarl), the <b>ice dragon</b> (its frost freezes things and puts out fires), the <b>lightning dragon</b> (lightning bolts that jump from one thing to the next), the <b>water dragon</b> (a water jet that pushes things back and puts out fires), the <b>golden dragon</b> (golden fire, and the toughest of all) and the <b>Roc</b>, a giant eagle.</div>
       <div><b class="h">Conspiracy Theories</b>The <b>🛸 Conspiracy Theories</b> group has the <b>Loch Ness Monster</b> (in deep water, with a very long neck and a jaw full of teeth), the <b>Kraken</b> (in deep water: its tentacles wrap around whatever it catches and lift it out of the water), <b>Bigfoot</b>, the <b>Alien</b> (with a blaster that shoots glowing bolts) and the <b>Chupacabra</b>.</div>
       <div><b class="h">Fire and rain</b>In a fight, a <b>dragon</b> sometimes breathes fire instead of biting. Its fire burns what it hits and sets fires where it lands: fires burn trees, plants and buildings down slowly, hurt anyone standing in them, can spread to plants nearby, and burn out after about a minute. With Fighting off, a dragon just breathes fire at the sky now and then. The <b>✨ Special effects</b> group has <b>🌧️ Rain</b>: a dark cloud rains for 20 seconds (bigger with size) and puts out every fire under it.</div>
       <div><b class="h">Disasters</b>The <b>Disasters</b> group has a <b>tornado</b> (picks things up and throws them), a <b>tsunami</b> (a wave rolls in from the nearest sea), a <b>bomb</b>, a <b>sprinkle bomb</b> (lots of little bombs) and an <b>earthquake</b> (cracks the ground and knocks buildings down). The size buttons make them bigger. <b>Undo</b> puts things back.</div>
@@ -201,7 +203,7 @@ canvas.inspecting{cursor:zoom-in}
       <div><b class="h">Farms and caves</b>Towns plant <b>crop fields</b>: farmers walk out, hoe the ground and bring in the harvest (40 gold each time), and barns come with cows, sheep, pigs or chickens. New islands start with trees and plants that fit them, and some have <b>caves</b> that animals (or goblins) come out of.</div>
       <div><b class="h">Treasure</b>The <b>💰 Treasure</b> group has gold bags (small, medium, big and huge), treasure chests, a pile of gold, a golden crown, giant gems and gold dragon and hydra statues. Put treasure near a town and it goes into the town's gold: gold bags get spent right away, and the rest stays in the town. Bigger treasure is worth more.</div>
       <div><b class="h">Inspect</b>Press <b>🔍 Inspect</b> (I on the keyboard, or press X twice on the controller): nothing gets built while you're inspecting. Click a person, an animal, a monster or a town. People and animals have a name, an age, a personality, a job and a story of what's happened to them. Towns show how much money they have, their rulers, whether they're at war, at peace or neutral, and their history. One year goes by every 2 minutes. Making water washes away the trees, plants and buildings it covers (treasure stays, sunken!), and land creatures that end up in the water swim slowly back to shore. Kids are born in the towns and grow up; only people 18 or older can have a job (farmer, builder, soldier, king or queen) or go to war.</div>
-      <div><b class="h">Big monsters</b>Dragons, hydras and sea serpents are huge, and each island can have up to <b>3</b> of each.</div>
+      <div><b class="h">Big monsters</b>Dragons (of every kind), hydras, sea serpents, Loch Ness Monsters and Krakens are huge, and each island can have up to <b>3</b> of each.</div>
       <div><b class="h">Saving</b>Every island saves by itself. Find it again under <b>My islands</b>.</div>
     </div>
   </div>
@@ -1364,6 +1366,7 @@ const CATS = [
   { id: 'creatures', name: 'Creatures', icon: '🐾', items: [] },
   { id: 'mythical', name: 'Mythical', icon: '🐉', items: [] },
   { id: 'disasters', name: 'Disasters', icon: '🌪️', items: [] },
+  { id: 'legendary', name: 'Legendary', icon: '⭐', items: [] },
   { id: 'conspiracy', name: 'Conspiracy Theories', icon: '🛸', items: [] },
   { id: 'effects', name: 'Special effects', icon: '✨', items: [] },
 ];
@@ -2281,9 +2284,9 @@ function crocModel() {
 }
 const DRAGON_HEAD0 = [0, 4.75, 4.3], DRAGON_NECK0 = [0, 3.2, 2.0];
 const WING_L1 = 1.6, WING_L2 = 4.45;
-function dragonModel() {
+function dragonModel(pal = {}) {
   const g = new Geo(4096), r = mulberry32(23);
-  const RED = [0.66, 0.12, 0.1], DARK = [0.36, 0.06, 0.06], BELLY = [0.95, 0.68, 0.28], HORN = [0.95, 0.9, 0.75], EYE = [1.0, 0.85, 0.1];
+  const RED = pal.main || [0.66, 0.12, 0.1], DARK = pal.dark || [0.36, 0.06, 0.06], BELLY = pal.belly || [0.95, 0.68, 0.28], HORN = pal.horn || [0.95, 0.9, 0.75], EYE = pal.eye || [1.0, 0.85, 0.1];
   const B = (x, y, z, rx, ry, rz, c, j) => blob(g, x, y, z, rx, ry, rz, c, r, j === undefined ? 0.12 : j, -1, 0);
   B(0, 2.6, 0, 1.15, 1.2, 2.8, RED);                 // slimmer body
   B(0, 2.2, 0.3, 0.92, 0.8, 2.2, BELLY);
@@ -2308,7 +2311,7 @@ function dragonModel() {
     const top = 2.6 + 1.15 * Math.sqrt(Math.max(0, 1 - (z / 2.8) ** 2));
     tube(g, [0, top - 0.2, z], [0, top + 0.75, z - 0.25], 0.22, 0.02, 4, DARK, r, false);
   }
-  for (const z of [-2.0, -1.2, -0.4, 0.4, 1.2, 2.0]) tube(g, [0, 3.4, z], [0, 3.95, z], 0.2, 0.01, 5, [0.95, 0.95, 0.95], r, false);   // white spikes down the back
+  for (const z of [-2.0, -1.2, -0.4, 0.4, 1.2, 2.0]) tube(g, [0, 3.4, z], [0, 3.95, z], 0.2, 0.01, 5, pal.spike || [0.95, 0.95, 0.95], r, false);   // white spikes down the back
   // the tail is drawn in moving pieces (see drawDragonTail): red on top, yellow underneath, spikes on top
   const tsg = new Geo(512); blob(tsg, 0, 0.08, 0, 1, 0.8, 1.15, RED, r, 0.06, -1, 0); blob(tsg, 0, -0.28, 0, 0.92, 0.56, 1.08, BELLY, r, 0.03, 1, 0);
   const tbg = new Geo(768); blob(tbg, 0, 0.08, 0, 1, 0.8, 1.15, shade(RED, 0.82), r, 0.06, -1, 0); blob(tbg, 0, -0.28, 0, 0.92, 0.56, 1.08, BELLY, r, 0.03, 1, 0);
@@ -2347,14 +2350,14 @@ function dragonModel() {
   const SH = [0, 0, 0], E = [2.5, 1.3, 0.3], T = [5.6, 0.7, -0.6], F1 = [4.3, -0.4, -2.4], F2 = [2.6, -0.7, -3.1], BK = [0.4, -0.3, -2.3];
   tube(wg, SH, E, 0.22, 0.16, 5, DARK, r, false); tube(wg, E, T, 0.16, 0.05, 5, DARK, r, false);
   tube(wg, E, F1, 0.1, 0.04, 4, DARK, r, false); tube(wg, E, F2, 0.1, 0.04, 4, DARK, r, false);
-  const M = [0.58, 0.16, 0.13];
+  const M = pal.wing || [0.58, 0.16, 0.13];
   for (const [p, q] of [[E, T], [T, F1], [F1, F2], [F2, BK]]) tri(wg, SH, p, q, faceN(SH, p, q), 0, M, shade(M, 1.1), shade(M, 0.9), 0, 0, 0);
   // the wing folded down into a front leg (wing-walking), in two bones so the elbow bends while the knuckle stays planted.
   // Each bone is built along +y from its joint; +x is out to the side, +z is backward (see drawWingLegs).
   const wua = new Geo(512);                                             // upper arm: shoulder -> elbow
   tube(wua, [0, 0, 0], [0, WING_L1, 0], 0.32, 0.25, 6, RED, r, false);
   blob(wua, 0, WING_L1, 0, 0.3, 0.3, 0.3, RED, r, 0.08, -1, 0);
-  const wfa = new Geo(1024), L2 = WING_L2, SAIL = [0.5, 0.13, 0.11];   // forearm: elbow -> knuckle, with the folded wing along it
+  const wfa = new Geo(1024), L2 = WING_L2, SAIL = pal.sail || [0.5, 0.13, 0.11];   // forearm: elbow -> knuckle, with the folded wing along it
   const WT = [[0.35, L2 - 5.0, 1.0], [0.45, L2 - 4.4, 1.8], [0.35, L2 - 3.4, 2.3]], Wk = [0, L2, 0];
   for (const [p, q] of [[[0, 0, 0], WT[0]], [WT[0], WT[1]], [WT[1], WT[2]]]) tri(wfa, Wk, p, q, faceN(Wk, p, q), 0, SAIL, shade(SAIL, 1.12), shade(SAIL, 0.88), 0, 0, 0);
   tube(wfa, [0, 0, 0], Wk, 0.26, 0.2, 6, shade(RED, 0.92), r, false);
@@ -2363,11 +2366,11 @@ function dragonModel() {
   tube(wfa, [0, L2 - 0.1, -0.3], [0.05, L2 - 0.05, -1.0], 0.1, 0.01, 4, HORN, r, false);   // thumb claw
   for (const sd of [-1, 0, 1]) tube(wfa, [sd * 0.2, L2 + 0.1, -0.3], [sd * 0.25, L2 + 0.2, -0.62], 0.08, 0.01, 4, HORN, r, false);
   // the wing skin stretched out to the side of the forearm, so you can see it from the front (two-sided)
-  const wsl = new Geo(256), SK = [0.58, 0.16, 0.13];
+  const wsl = new Geo(256), SK = pal.wing || [0.58, 0.16, 0.13];
   const SP = [[0, 0, 0], [1.0, L2 * 0.25, 0.05], [1.35, L2 * 0.6, 0.05], [0.7, L2 * 0.95, 0.05]];
   const two = (p, q, w) => { const n = faceN(p, q, w); tri(wsl, p, q, w, n, 0, SK, shade(SK, 1.12), shade(SK, 0.88), 0, 0, 0); tri(wsl, p, w, q, [-n[0], -n[1], -n[2]], 0, SK, shade(SK, 0.88), shade(SK, 1.12), 0, 0, 0); };
   two(SP[0], SP[1], SP[2]); two(SP[0], SP[2], Wk); two(SP[2], SP[3], Wk);
-  for (let i = 0; i < 3; i++) tube(wsl, SP[0], SP[i + 1], 0.07, 0.03, 4, [0.2, 0.05, 0.05], r, false);
+  for (let i = 0; i < 3; i++) tube(wsl, SP[0], SP[i + 1], 0.07, 0.03, 4, shade(DARK, 0.6), r, false);
   return { body: makeMesh(g), head: makeMesh(hg), leg: makeMesh(lg), wing: makeMesh(wg), wingArmU: makeMesh(wua), wingArmF: makeMesh(wfa), wingSail: makeMesh(wsl), jaw: makeMesh(jg),
     tailSeg: makeMesh(tsg), tailBand: makeMesh(tbg), tailTube: makeMesh(ttg), tailSpade: makeMesh(tspg) };
 }
@@ -2494,7 +2497,7 @@ function dragonUpdate(o, dt, time) {
 }
 function dragonDraw(o, base0, time, flash) {
   wwModels();
-  const sp = WW.dragon, m = sp.model;
+  const sp = dragonSpec(o.t), m = sp.model;
   const a = o.ww || (o.ww = { sp, head: null, legPhase: 0, swipeT: 0, swipeSide: 1, wingW: 1, lastT: time });
   const dt = Math.min(0.1, Math.max(0, time - a.lastT)); a.lastT = time;
   a.legPhase = o.phase; a.dead = false; a.asleep = false; a.alerted = !!o.foe; a.windup = o.windup || 0; a.lunge = o.lunge || 0; a.fireT = 0; a.roarT = o.roarT || 0;
@@ -2529,7 +2532,8 @@ function dragonDraw(o, base0, time, flash) {
   }
   if (ww > 0.03) drawWingLegs(a, body, wa, ww, flash);
 }
-def('dragon', 'mythical', 'Dragon', '🐉', { r: 2.2, h: 3.2, move: 'walk', speed: 2.2, update: dragonUpdate, draw: dragonDraw, legs: { len: 0.8 } });
+def('dragon', 'mythical', 'Dragon', '🐉', { r: 2.2, h: 3.2, move: 'walk', speed: 2.2, update: dragonUpdate, draw: dragonDraw, legs: { len: 0.8 }, breath: 'fire' });
+const DRAGONS = new Set(['dragon', 'icedragon', 'stormdragon', 'waterdragon', 'golddragon']);
 
 // the sea serpent: Wildwood's Leviathan, smaller. Its body follows its head in pieces.
 function serpentUpdate(o, dt, time) {
@@ -2811,6 +2815,117 @@ birdDef('fairy', 'Fairy', '🧚', g => {
   cyl(g, [0.12, -0.02, 0.05], [0.18, 0.12, 0.14], 0.008, 0.008, [0.9, 0.9, 0.95], 4); orb(g, 0.18, 0.13, 0.14, 0.035, 0.035, 0.035, [1, 0.95, 0.4], { lo: true });   // her wand
 }, g => { const A = FAIRW[0], B = FAIRW[1]; tri(g, [0, 0, 0.02], [0.3, 0.12, 0.2], [0.32, 0.06, -0.04], [0, 1, 0], 0, A, B, A, 0, 0, 0); tri(g, [0, 0, -0.02], [0.24, -0.04, -0.06], [0.14, -0.08, -0.22], [0, 1, 0], 0, A, A, B, 0, 0, 0); },
   { r: 0.3, h: 0.5, speed: 2.4, alt: 4, amp: 0.8, rate: 16, wingAt: [0.03, 0.08, -0.05], cat: 'mythical', glowAll: true });
+/* ---------------- Legendary: Cerberus, the ice, lightning, water and golden dragons, and the Roc ---------------- */
+// the dragons: Wildwood's dragon in new colours, each with its own breath
+const DRAGON_PAL = {
+  icedragon: { main: [0.62, 0.82, 0.95], dark: [0.3, 0.5, 0.75], belly: [0.92, 0.97, 1], horn: [0.85, 0.95, 1], eye: [0.4, 0.9, 1], wing: [0.55, 0.78, 0.95], sail: [0.5, 0.72, 0.92], spike: [0.7, 0.95, 1] },
+  stormdragon: { main: [0.3, 0.2, 0.48], dark: [0.15, 0.1, 0.27], belly: [0.95, 0.85, 0.3], horn: [1, 0.92, 0.4], eye: [1, 1, 0.5], wing: [0.36, 0.26, 0.58], sail: [0.32, 0.22, 0.52], spike: [1, 0.9, 0.3] },
+  waterdragon: { main: [0.12, 0.42, 0.62], dark: [0.06, 0.25, 0.4], belly: [0.55, 0.9, 0.85], horn: [0.8, 0.95, 0.95], eye: [0.5, 1, 0.9], wing: [0.2, 0.6, 0.7], sail: [0.15, 0.5, 0.62], spike: [0.6, 0.95, 0.9] },
+  golddragon: { main: [0.92, 0.7, 0.18], dark: [0.65, 0.45, 0.08], belly: [1, 0.92, 0.55], horn: [1, 0.97, 0.8], eye: [1, 0.35, 0.1], wing: [0.95, 0.78, 0.3], sail: [0.9, 0.7, 0.25], spike: [1, 1, 0.85] },
+};
+function dragonSpec(t) {
+  wwModels();
+  if (t === 'dragon' || !DRAGON_PAL[t]) return WW.dragon;
+  if (!WW[t]) { let model; hiDetail(() => { model = dragonModel(DRAGON_PAL[t]); }); WW[t] = Object.assign({}, WW.dragon, { model }); }
+  return WW[t];
+}
+for (const [id, name, breath] of [['icedragon', 'Ice dragon', 'ice'], ['stormdragon', 'Lightning dragon', 'lightning'], ['waterdragon', 'Water dragon', 'water'], ['golddragon', 'Golden dragon', 'gold']])
+  def(id, 'legendary', name, { ice: '❄️', lightning: '⚡', water: '💧', gold: '👑' }[breath], { r: 2.2, h: 3.2, move: 'walk', speed: 2.2, update: dragonUpdate, draw: dragonDraw, legs: { len: 0.8 }, breath });
+
+// Cerberus: a huge black three-headed dog. Each head looks about on its own; to bite, one head rears back and lunges
+// while the other two snarl (just like the hydra), with red eyes, spiked collars, and a snake for a tail.
+const CB = [0.17, 0.15, 0.16], CB2 = [0.1, 0.09, 0.1], CB_TOOTH = [0.95, 0.93, 0.85], CB_MOUTH = [0.55, 0.1, 0.12], CB_SNAKE = [0.2, 0.33, 0.18];
+const CB_NECK0 = [[-0.62, 2.75, 1.75], [0, 3.0, 1.95], [0.62, 2.75, 1.75]], CB_HEAD0 = [[-1.2, 3.55, 2.65], [0, 3.95, 2.9], [1.2, 3.55, 2.65]];
+const CB_LEGS = [[-0.75, 1.75, 1.15], [0.75, 1.75, 1.15], [-0.75, 1.75, -1.25], [0.75, 1.75, -1.25]];
+let CBM = null;
+function cerberusModels() {
+  if (CBM) return CBM;
+  const mk = fn => { const g = new Geo(8192); fn(g); return makeMesh(g); };
+  CBM = {
+    body: mk(g => {
+      orb(g, 0, 2.05, -0.2, 1.0, 0.95, 1.9, CB, { grad: true, bump: 0.04 }); orb(g, 0, 2.25, 1.2, 1.15, 1.1, 1.0, CB, { grad: true, bump: 0.04 });
+      for (const s of [-1, 1]) { orb(g, s * 0.75, 2.05, -1.25, 0.55, 0.8, 0.78, CB); orb(g, s * 0.8, 2.15, 1.1, 0.55, 0.8, 0.66, CB); }
+      for (let i = 0; i < 16; i++) { const a = i / 16 * 6.283; orb(g, Math.sin(a) * 1.05, 2.5 + Math.cos(a * 2) * 0.2, 1.55 + Math.cos(a) * 0.45, 0.32, 0.3, 0.3, CB2, { lo: true }); }   // a shaggy mane round the chest
+      for (let i = 0; i < 7; i++) coneS(g, 0, 2.9 - i * 0.02, 0.9 - i * 0.45, 0.1, 0.3, CB2, 6);                // ridge of spines down the back
+    }),
+    leg: mk(g => { cyl(g, [0, 0, 0], [0, -0.9, 0.1], 0.38, 0.3, CB, 12); cyl(g, [0, -0.9, 0.1], [0, -1.62, 0], 0.28, 0.22, CB, 12); orb(g, 0, -1.68, 0.15, 0.3, 0.15, 0.36, CB2);
+      for (let c = -1.5; c <= 1.5; c++) cyl(g, [c * 0.12, -1.72, 0.42], [c * 0.14, -1.78, 0.62], 0.05, 0.005, CB_TOOTH, 5); }),
+    head: mk(g => {
+      orb(g, 0, 0.1, 0.15, 0.42, 0.4, 0.45, CB, { grad: true }); orb(g, 0, -0.02, 0.62, 0.26, 0.22, 0.42, CB2);
+      orb(g, 0, 0.08, 0.98, 0.1, 0.07, 0.07, [0.04, 0.04, 0.04]); orb(g, 0, -0.13, 0.6, 0.22, 0.04, 0.36, CB_MOUTH, { lo: true });
+      for (const s of [-1, 1]) {
+        cyl(g, [s * 0.24, 0.38, 0.0], [s * 0.34, 0.85, -0.12], 0.13, 0.01, CB, 6);                              // pointed ears
+        orb(g, s * 0.18, 0.28, 0.42, 0.14, 0.06, 0.12, CB2);                                                    // angry brows
+        for (let i = 0; i < 5; i++) coneS(g, s * (0.2 - i * 0.022), -0.12, 0.45 + i * 0.11, 0.035, i === 0 ? -0.16 : -0.08, CB_TOOTH, 5);   // fangs
+      }
+    }),
+    eyes: mk(g => { for (const s of [-1, 1]) orb(g, s * 0.2, 0.22, 0.5, 0.075, 0.06, 0.05, [1, 0.15, 0.08], { lo: true }); }),
+    jaw: mk(g => { orb(g, 0, -0.08, 0.4, 0.24, 0.09, 0.42, CB2); orb(g, 0, 0, 0.38, 0.18, 0.04, 0.34, [0.8, 0.3, 0.35]);
+      for (const s of [-1, 1]) for (let i = 0; i < 4; i++) coneS(g, s * (0.17 - i * 0.025), 0.0, 0.38 + i * 0.12, 0.028, 0.08, CB_TOOTH, 5); }),
+    collar: mk(g => { cyl(g, [0, -0.12, 0], [0, 0.12, 0], 0.56, 0.56, [0.35, 0.2, 0.12], 18); for (let i = 0; i < 10; i++) { const a = i / 10 * 6.283; cyl(g, [Math.cos(a) * 0.55, 0, Math.sin(a) * 0.55], [Math.cos(a) * 0.85, 0, Math.sin(a) * 0.85], 0.07, 0.005, [0.78, 0.78, 0.82], 6); } }),
+    snakeHead: mk(g => { orb(g, 0, 0, 0.12, 0.16, 0.12, 0.24, CB_SNAKE); for (const s of [-1, 1]) orb(g, s * 0.09, 0.07, 0.22, 0.035, 0.035, 0.03, [1, 0.85, 0.1], { lo: true }); cyl(g, [0, -0.03, 0.34], [0, -0.03, 0.46], 0.015, 0.01, [0.85, 0.2, 0.3], 4); }),
+  };
+  return CBM;
+}
+function cerberusDraw(o, base, time, flash) {
+  const M = cerberusModels(), T = cTube(CB), J = cBall(CB);
+  const st = o.cb || (o.cb = { heads: CB_HEAD0.map(p => ({ x: p[0], y: p[1], z: p[2], yaw: 0, pitch: 0, open: 0 })), lastT: time, atk: 1, wasWind: false });
+  const dt = Math.min(0.1, Math.max(0, time - st.lastT)); st.lastT = time;
+  const wind = (o.windup || 0) > 0, lunge = o.lunge || 0;
+  if (wind && !st.wasWind) st.atk = Math.floor(Math.random() * 3);           // a different head bites each time
+  st.wasWind = wind;
+  drawMesh(M.body, base, flash);
+  CB_LEGS.forEach((p, i) => drawMesh(M.leg, mChain(base, mT(p[0], p[1], p[2]), mRx(o.moving ? Math.sin(o.phase + (i === 0 || i === 3 ? 0 : Math.PI)) * 0.5 : 0)), flash));
+  st.heads.forEach((h, i) => {
+    const h0 = CB_HEAD0[i], ph = o.phase + i * 2.1, me = st.atk === i, angry = !!o.foe;
+    const want = { x: h0[0] + Math.sin(time * 0.8 + ph) * 0.18, y: h0[1] + Math.sin(time * 1.0 + ph * 1.3) * 0.15, z: h0[2] + Math.sin(time * 0.6 + ph) * 0.12,
+      yaw: (i - 1) * 0.4 + Math.sin(time * 0.5 + ph) * 0.35, pitch: 0.12 + Math.sin(time * 0.7 + ph) * 0.1,
+      open: 0.08 + Math.max(0, Math.sin(time * 0.9 + ph * 1.7)) * (angry ? 0.45 : 0.25) };
+    if (me && wind) { want.y += 0.5; want.z -= 0.6; want.pitch = -0.3; want.open = 0.9; }
+    if (me && lunge > 0) { const k = Math.min(1, lunge * 1.6); want.y -= 1.0 * k; want.z += 1.3 * k; want.pitch = 0.5; want.open = lunge > 0.6 ? 0.05 : 0.7; }
+    if (!me && (wind || lunge > 0)) { want.z += 0.25; want.open = 0.7; want.pitch = -0.05; }            // the others snarl
+    const kk = 1 - Math.exp(-dt * (me && lunge > 0 ? 14 : 5));
+    for (const key of ['x', 'y', 'z', 'yaw', 'pitch', 'open']) h[key] += (want[key] - h[key]) * kk;
+    // the neck: a short thick curve from the chest to the head, with a spiked collar
+    const fwd = [Math.sin(h.yaw) * Math.cos(h.pitch), -Math.sin(h.pitch), Math.cos(h.yaw) * Math.cos(h.pitch)];
+    const P0 = CB_NECK0[i], P1 = [P0[0] * 1.3, P0[1] + 0.6, P0[2] + 0.3], P3 = [h.x, h.y - 0.05, h.z], P2 = [P3[0] - fwd[0] * 0.6, P3[1] - fwd[1] * 0.6, P3[2] - fwd[2] * 0.6];
+    const bez = t => [0, 1, 2].map(j => (1 - t) ** 3 * P0[j] + 3 * (1 - t) ** 2 * t * P1[j] + 3 * (1 - t) * t * t * P2[j] + t ** 3 * P3[j]);
+    let prev = P0;
+    for (let k = 1; k <= 6; k++) { const p = bez(k / 6), r = 0.5 - 0.12 * (k / 6); drawMesh(J, mChain(base, mT(prev[0], prev[1], prev[2]), mS(r)), flash); drawMesh(T, mChain(base, segM(prev, p, r)), flash); prev = p; }
+    { const a = bez(0.3), b = bez(0.4), L = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]) || 1, d = [(b[0] - a[0]) / L, (b[1] - a[1]) / L, (b[2] - a[2]) / L]; drawMesh(M.collar, mChain(base, segM(a, [a[0] + d[0], a[1] + d[1], a[2] + d[2]], 1)), flash); }
+    const headM = mChain(base, mT(h.x, h.y, h.z), mRy(h.yaw), mRx(h.pitch));
+    drawMesh(M.head, headM, flash);
+    setEmit(0.9); drawMesh(M.eyes, headM, flash); setEmit(0);
+    drawMesh(M.jaw, mChain(headM, mT(0, -0.14, 0.15), mRx(h.open * 0.75)), flash);
+  });
+  // a snake for a tail, swaying and looking about
+  const S = cTube(CB_SNAKE), SB = cBall(CB_SNAKE);
+  let x = 0, y = 2.3, z = -2.0, ang = 0, prev = [x, y, z];
+  for (let i = 0; i < 9; i++) {
+    ang += Math.sin(time * 1.8 - i * 0.6 + o.phase) * 0.16;
+    x += Math.sin(ang) * 0.42; z -= Math.cos(ang) * 0.35; y += 0.16 - i * 0.012;
+    const p = [x, y, z], r = 0.28 - i * 0.022;
+    drawMesh(SB, mChain(base, mT(prev[0], prev[1], prev[2]), mS(r)), flash); drawMesh(S, mChain(base, segM(prev, p, r)), flash); prev = p;
+  }
+  drawMesh(M.snakeHead, mChain(base, mT(x, y, z), mRy(Math.PI + Math.sin(time * 0.9 + o.phase) * 0.6), mRx(-0.3)), flash);
+}
+def('cerberus', 'legendary', 'Cerberus', '🐶', { r: 2, h: 4.2, move: 'walk', speed: 1.8, big: true, draw: cerberusDraw, legs: { len: 1.7 } });
+
+// the Roc: a giant golden eagle with a white head and crest, huge wings and great talons
+const ROC = [0.55, 0.36, 0.16], ROCD = [0.36, 0.22, 0.1], ROCW = [0.97, 0.95, 0.9], ROCG = [0.98, 0.78, 0.2];
+birdDef('roc', 'Roc', '🦅', g => {
+  orb(g, 0, 0, 0, 0.75, 0.7, 1.7, ROC, { grad: true }); orb(g, 0, -0.2, 0.25, 0.6, 0.5, 1.2, shade(ROC, 1.15));
+  orb(g, 0, 0.35, 1.55, 0.5, 0.5, 0.55, ROCW); orb(g, 0, 0.2, 1.15, 0.6, 0.55, 0.4, ROCW);                    // white head and neck ruff
+  for (let i = 0; i < 5; i++) cyl(g, [(i - 2) * 0.12, 0.7, 1.4], [(i - 2) * 0.2, 1.15 + Math.abs(i - 2) * -0.1, 0.95], 0.08, 0.01, ROCW, 5);   // crest feathers
+  cyl(g, [0, 0.3, 1.95], [0, 0.05, 2.45], 0.2, 0.05, ROCG, 10); cyl(g, [0, 0.05, 2.45], [0, -0.2, 2.35], 0.05, 0.01, ROCG, 6);   // hooked golden beak
+  for (const s of [-1, 1]) { orb(g, s * 0.3, 0.5, 1.85, 0.1, 0.09, 0.08, [1, 0.7, 0.1], { lo: true }); orb(g, s * 0.34, 0.5, 1.9, 0.04, 0.06, 0.04, COL.black, { lo: true }); cyl(g, [s * 0.22, 0.65, 1.75], [s * 0.42, 0.6, 2.0], 0.06, 0.03, shade(ROCW, 0.85), 5); }   // fierce eyes and brows
+  for (let i = 0; i < 7; i++) { const a = (i - 3) * 0.22; tri(g, [0, 0.05, -1.5], [Math.sin(a) * 1.6 - 0.2, 0.0, -1.5 - Math.cos(a) * 1.6], [Math.sin(a) * 1.6 + 0.2, 0.0, -1.5 - Math.cos(a) * 1.6], [0, 1, 0], 0, ROC, i % 2 ? ROCD : ROCW, ROCD, 0, 0, 0); }   // a fanned tail
+  for (const s of [-1, 1]) { cyl(g, [s * 0.35, -0.5, 0.2], [s * 0.4, -1.1, 0.4], 0.14, 0.1, ROCG, 8); for (let c = -1; c <= 1; c++) cyl(g, [s * 0.4, -1.1, 0.4], [s * 0.4 + c * 0.15, -1.3, 0.7], 0.05, 0.005, CB2, 5); }   // legs and talons
+}, g => {
+  tri(g, [0, 0, 0.9], [3.8, 0.1, 0.4], [0, 0, -0.8], [0, 1, 0], 0, ROC, ROCD, ROC, 0, 0, 0); tri(g, [3.8, 0.1, 0.4], [5.2, 0.05, -0.3], [0, 0, -0.8], [0, 1, 0], 0, ROCD, ROCD, ROC, 0, 0, 0);
+  for (let i = 0; i < 5; i++) { const x = 3.2 + i * 0.45; tri(g, [x, 0.05, 0.2 - i * 0.15], [x + 0.6, 0.0, -0.6 - i * 0.12], [x - 0.15, 0.03, -0.5 - i * 0.12], [0, 1, 0], 0, ROCD, [0.2, 0.12, 0.06], ROCD, 0, 0, 0); }   // the long finger feathers at the wingtip
+  tri(g, [0.8, 0.06, 0.6], [3.2, 0.12, 0.25], [1.8, 0.08, 0.0], [0, 1, 0], 0, ROCG, ROCG, ROCG, 0, 0, 0);                                       // a golden band
+}, { r: 2.5, h: 1.5, speed: 10, alt: 34, amp: 0.45, rate: 2.2, wingAt: [0.55, 0.25, 0.3], cat: 'legendary' });
 /* ---------------- Conspiracy Theories: Loch Ness Monster, Kraken, Bigfoot, Alien, Chupacabra ---------------- */
 // a matrix that stretches the unit tube (radius 1, from y=0 to y=1) from point a to point b with radius r, all in the world
 function segM(a, b, r) {
@@ -3031,10 +3146,10 @@ bipedDef('chupacabra', 'Chupacabra', '🐺', { cat: 'conspiracy', r: 0.7, h: 2.4
 const SIZES = [0.5, 1, 1.75, 3], SIZE_NAMES = ['Small', 'Medium', 'Big', 'Giant'], SIZE_SHORT = ['S', 'M', 'L', 'XL'];
 // the brush on the left: how many things go down at once, and how wide the land tools reach
 // some things are bigger (or smaller) than their size button says, and the biggest monsters are limited to 3 of each per island
-const GROW = { dragon: 2.6, hydra: 1.6, seaserpent: 2.2, troll: 0.62, fairy: 1, griffin: 1.2, nessie: 1.6, kraken: 1.4, chupacabra: 1 }, ONLY3 = new Set(['dragon', 'hydra', 'seaserpent', 'nessie', 'kraken']);
+const GROW = { dragon: 2.6, icedragon: 2.6, stormdragon: 2.6, waterdragon: 2.6, golddragon: 2.6, cerberus: 1.6, roc: 1, hydra: 1.6, seaserpent: 2.2, troll: 0.62, fairy: 1, griffin: 1.2, nessie: 1.6, kraken: 1.4, chupacabra: 1 }, ONLY3 = new Set(['dragon', 'icedragon', 'stormdragon', 'waterdragon', 'golddragon', 'hydra', 'seaserpent', 'nessie', 'kraken']);
 const AUTO_MAX = 6000;                  // towns, caves and spawning stop adding things by themselves past this many (you can place as many as you like)
 // people, animals and monsters are 0.7 times the size they used to be (so the islands are more to scale), except the big monsters
-const SHRINK = 0.7, growOf = id => GROW[id] || (['people', 'creatures', 'mythical', 'conspiracy'].includes(CAT[id].cat) ? SHRINK : 1);
+const SHRINK = 0.7, growOf = id => GROW[id] || (['people', 'creatures', 'mythical', 'conspiracy', 'legendary'].includes(CAT[id].cat) ? SHRINK : 1);
 const sizeOf = d => SIZES[tool.size] * growOf(d.id);
 const countOf = id => { let n = 0; for (const o of objs) if (o.t === id) n++; return n; };
 const BRUSH_N = [1, 2, 3, 6, 10], BRUSH_R = [0, 3, 5, 9, 14];
@@ -3243,7 +3358,7 @@ function settle(o) { const d = CAT[o.t]; o.y = d.move === 'swim' || d.move === '
    Loading and the starting nature on a new island
    ===================================================================== */
 function loadThings(data, fresh) {
-  objs = []; undoStack = []; arrows = []; fx = []; texts = []; flames = []; fires = []; rains = [];
+  objs = []; undoStack = []; arrows = []; fx = []; texts = []; flames = []; fires = []; rains = []; bolts = [];
   loadTowns(data && data.towns);
   if (fresh) { scatterStart(); return; }
   if (!data || !Array.isArray(data.objs)) return;
@@ -3445,6 +3560,7 @@ function updateLife(dt, time) {
     if (o.ag !== undefined) o.ag += dt / YEAR;          // one year every 2 minutes
     if (o.held && o.held.kraken && (o.held.kraken.gone || !o.held.kraken.grabs || !o.held.kraken.grabs.includes(o))) { o.held = null; o.tx = undefined; settle(o); }
     if (o.gone || o.held) continue;                      // (caught in a tornado or a wave)
+    if (o.frozenT > 0) { o.frozenT -= dt; o.moving = false; o.foe = null; continue; }   // (frozen solid by an ice dragon)
     if (o.inside) continue;                              // (a king or queen inside the castle)
     const d = CAT[o.t];
     if (!d.move) continue;
@@ -3509,12 +3625,12 @@ function updateLife(dt, time) {
 const STATS = {
   skeleton: [10, 2, 1.4, 22], zombie: [9, 1.6, 1.3, 18], demon: [22, 4, 1.8, 26], troll: [45, 6, 2.6, 22], minotaur: [35, 5, 2.2, 24],
   nessie: [1250, 25, 8, 30], kraken: [19500 / 14, 15, 18, 26], bigfoot: [40, 5.5, 2.4, 20], alien: [100 / 7, 3, 1.4, 22], chupacabra: [60, 6, 1.6, 20],
-  griffin: [70 / 3, 5, 2.4, 20], fairy: [2, 0, 0, 0], yeti: [40, 5.5, 2.4, 20], dragon: [900, 24, 4.5, 40], hydra: [1437.5, 18, 4, 24], seaserpent: [1000, 18, 5, 22], goblin: [7, 1.5, 1.2, 20],
+  griffin: [70 / 3, 5, 2.4, 20], fairy: [2, 0, 0, 0], yeti: [40, 5.5, 2.4, 20], dragon: [900, 24, 4.5, 40], icedragon: [900, 24, 4.5, 40], stormdragon: [900, 24, 4.5, 40], waterdragon: [900, 24, 4.5, 40], golddragon: [25000 / 26, 26, 4.5, 40], cerberus: [625, 16, 3.5, 24], roc: [900, 0, 0, 0], hydra: [1437.5, 18, 4, 24], seaserpent: [1000, 18, 5, 22], goblin: [7, 1.5, 1.2, 20],
   knight: [100 / 7, 3.5, 1.6, 20], king: [14, 2.5, 1.4, 18], pirate: [12, 2.6, 1.5, 18],
   lion: [26, 4.5, 1.8, 18], tiger: [26, 4.5, 1.8, 18], wolf: [12, 2.5, 1.4, 16], bear: [24, 4, 1.8, 16], polarbear: [28, 4.5, 1.9, 16], fox: [6, 1.4, 1.0, 12], croc: [20, 4, 1.8, 10], shark: [18, 4, 2.0, 14], dino: [40, 6, 2.6, 20],
   human: [10, 2, 1.4, 18], elf: [9, 2.2, 1.6, 24], dwarf: [13, 2.5, 1.4, 16], orc: [13, 2.8, 1.5, 22], animal: [5, 0, 0, 0],
 };
-const FACTION = { skeleton: 'undead', zombie: 'undead', demon: 'monster', yeti: 'monster', griffin: 'predator', nessie: 'monster', kraken: 'monster', bigfoot: 'monster', alien: 'monster', chupacabra: 'predator', minotaur: 'monster', dragon: 'monster', hydra: 'monster', seaserpent: 'monster',
+const FACTION = { icedragon: 'monster', stormdragon: 'monster', waterdragon: 'monster', golddragon: 'monster', cerberus: 'monster', skeleton: 'undead', zombie: 'undead', demon: 'monster', yeti: 'monster', griffin: 'predator', nessie: 'monster', kraken: 'monster', bigfoot: 'monster', alien: 'monster', chupacabra: 'predator', minotaur: 'monster', dragon: 'monster', hydra: 'monster', seaserpent: 'monster',
   troll: 'orcfriend', goblin: 'orcfriend', ghost: 'ghost',
   lion: 'predator', tiger: 'predator', wolf: 'predator', bear: 'predator', polarbear: 'predator', fox: 'predator', croc: 'predator', shark: 'predator', dino: 'predator' };
 const PEOPLE_FACS = new Set(['human', 'elf', 'dwarf']);
@@ -3567,7 +3683,7 @@ function near(x, z, r, fn) {
 }
 function reachable(a, b) {
   const db = CAT[b.t], da = CAT[a.t];
-  if (db.move === 'fly' && !(b.t === 'dragon' && !b.flying)) return false;   // you can't hit things up in the air
+  if (db.move === 'fly' && !(DRAGONS.has(b.t) && !b.flying)) return false;   // you can't hit things up in the air
   if (da.move === 'swim') return groundAt(b.x, b.z) < 1.5;                   // sea serpents get things at the water's edge
   if (db.move === 'swim') return da.amph || groundAt(b.x, b.z) > -1.5;
   return true;
@@ -4351,7 +4467,7 @@ function updateDisasters(dt, time) {
         if (o.gone || o.held || o.inside) continue;
         const dist = Math.hypot(o.x - dz.x, o.z - dz.z), d = CAT[o.t];
         if (dist > R * 1.4) continue;
-        const huge = d.r * o.s > 5 || o.t === 'dragon' || o.t === 'hydra' || o.t === 'seaserpent';
+        const huge = d.r * o.s > 5 || DRAGONS.has(o.t) || o.t === 'hydra' || o.t === 'seaserpent' || o.t === 'cerberus';
         if (huge || (!d.move && d.cat === 'build')) { wreck(o, (huge ? 6 : 40) * dz.k * dt, dz, [0.55, 0.45, 0.35]); continue; }
         if (dist < R && d.move !== 'swim') { o.held = { tor: dz, a: Math.atan2(o.z - dz.z, o.x - dz.x), rr: Math.max(1, dist), h: 0 }; o.to = (o.to || 0) + 1; if (d.move && Math.random() < 0.5) say(o, pick(['WHOAAA!', 'Help!', 'Wheee!']), '#ffffff'); }
       }
@@ -4372,7 +4488,7 @@ function updateDisasters(dt, time) {
         }
         if (u > dz.front - 6 && u < dz.front + 2) {
           if (!d.move || d.cat === 'build') wreck(o, 45, dz, [0.75, 0.88, 1]);
-          else if (o.t === 'dragon' || o.t === 'hydra') wreck(o, 15, dz, null);
+          else if (DRAGONS.has(o.t) || o.t === 'hydra' || o.t === 'cerberus') wreck(o, 15, dz, null);
           else { o.held = { wave: dz }; o.wa = (o.wa || 0) + 1; if (Math.random() < 0.4) say(o, pick(['Glub!', 'AAAH!', 'Splash!']), '#bfe8ff'); }
         }
       }
@@ -4476,7 +4592,7 @@ const LIKES = ['apples', 'sunny days', 'naps', 'singing', 'the sea', 'stories', 
 const JOBS = { human: ['farmer', 'baker', 'blacksmith', 'fisher', 'builder', 'shopkeeper', 'shepherd', 'carpenter'], elf: ['archer', 'gardener', 'singer', 'healer', 'scout', 'weaver'],
   dwarf: ['miner', 'blacksmith', 'brewer', 'stonemason', 'jeweller', 'tunnel digger'], orc: ['hunter', 'drummer', 'cook', 'scout', 'boar tamer', 'axe sharpener'] };
 const GENTLE_MYTH = ['unicorn', 'phoenix', 'pegasus', 'mermaid', 'fairy'];   // these get proper names and are 'he' or 'she'
-const AGE_RANGE = { dragon: [120, 900], hydra: [300, 1000], seaserpent: [200, 800], phoenix: [500, 1500], unicorn: [40, 200], nessie: [500, 1500], kraken: [300, 1000], bigfoot: [20, 200], alien: [50, 400], chupacabra: [5, 40], pegasus: [10, 120], griffin: [20, 150], mermaid: [16, 300], yeti: [30, 300], fairy: [10, 500], ghost: [150, 600], skeleton: [80, 400],
+const AGE_RANGE = { dragon: [120, 900], icedragon: [120, 900], stormdragon: [120, 900], waterdragon: [120, 900], golddragon: [500, 2000], cerberus: [300, 3000], roc: [50, 500], hydra: [300, 1000], seaserpent: [200, 800], phoenix: [500, 1500], unicorn: [40, 200], nessie: [500, 1500], kraken: [300, 1000], bigfoot: [20, 200], alien: [50, 400], chupacabra: [5, 40], pegasus: [10, 120], griffin: [20, 150], mermaid: [16, 300], yeti: [30, 300], fairy: [10, 500], ghost: [150, 600], skeleton: [80, 400],
   zombie: [20, 90], demon: [100, 999], troll: [60, 250], minotaur: [40, 160], goblin: [8, 40], dino: [5, 30], dog: [1, 12], cat: [1, 14] };
 const hashStr = s => { let h = 7; for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); };
 function lifeInfo(o) {                    // fill in the name, age and personality the first time someone looks
@@ -4489,7 +4605,7 @@ function lifeInfo(o) {                    // fill in the name, age and personali
     else if (o.t === 'mermaid' || o.t === 'fairy') o.nm = byGn(FIRST_NAMES.elf);
     else if (o.t === 'nessie') o.nm = 'Nessie';
     else if (o.t === 'alien') o.nm = pick(['Zorb', 'Blip', 'Xylo', 'Quark', 'Nebulo', 'Glorp', 'Zib', 'Orbo', 'Vrrp', 'Kweeble']) + '-' + (1 + Math.floor(Math.random() * 99));
-    else if (d.cat === 'conspiracy') o.nm = pick(BEAST_NAMES[0]) + pick(BEAST_NAMES[1]);
+    else if (d.cat === 'conspiracy' || d.cat === 'legendary') o.nm = pick(BEAST_NAMES[0]) + pick(BEAST_NAMES[1]);
     else if (d.cat === 'mythical' && !GENTLE_MYTH.includes(o.t)) o.nm = pick(BEAST_NAMES[0]) + pick(BEAST_NAMES[1]);
     else if (d.cat === 'people') o.nm = byGn(FIRST_NAMES.human);
     else o.nm = pick(PET_NAMES);
@@ -4579,7 +4695,7 @@ function fillInspect() {
         + row('Health', healthTxt(o))
         + row('Doing', doing);
       // the story so far
-      const he = (d.cat === 'mythical' && !GENTLE_MYTH.includes(o.t)) || (d.cat === 'conspiracy' && o.t !== 'alien') ? 'it' : o.gn === 'f' ? 'she' : 'he';
+      const he = (d.cat === 'mythical' && !GENTLE_MYTH.includes(o.t)) || (d.cat === 'conspiracy' && o.t !== 'alien') || d.cat === 'legendary' ? 'it' : o.gn === 'f' ? 'she' : 'he';
       const He = he[0].toUpperCase() + he.slice(1), bits = [];
       bits.push(o.bi ? `${esc(o.nm)} was born in ${esc(o.bi)}.` : o.mv ? `${esc(o.nm)} lives in ${esc(o.mv)}.` : o.race ? `${esc(o.nm)} came to the island with the first ${CAT[o.race].name.toLowerCase()}s.` : d.cat === 'people' ? `${esc(o.nm)} is a ${esc(o.tr)} ${esc(d.name.toLowerCase())} who loves ${esc(o.lk)}.` : `${esc(o.nm)} is ${/^[aeiou]/i.test(d.name) ? 'an' : 'a'} ${esc(d.name.toLowerCase())} living on the island.`);
       if (o.ruler) bits.push(`${He} was crowned ruler of ${t ? esc(t.name) : 'a town'}.`);
@@ -4714,12 +4830,23 @@ let fx = [], texts = [], screamT = 0;
    Dragons breathe fire now and then in a fight: a cone of flame that burns what it hits and sets fires where it lands.
    Fires burn trees, plants and buildings down slowly, hurt anyone standing in them (with Fighting on), can spread a little
    to plants nearby, and burn out by themselves after about a minute. Rain (in Special effects) puts out every fire under it. */
-let flames = [], fires = [], rains = [];
+let flames = [], fires = [], rains = [], bolts = [];
+// a lightning dragon's bolt: hits what it's aimed at hard, then jumps to up to two things nearby; it can set plants on fire
+function lightningStrike(o, m, dmg) {
+  const f = o.foe && !o.foe.gone ? o.foe : null;
+  if (!f) return;
+  const hit = [f];
+  fireHurt(f, dmg * 1.3, o, ['Zap!', 'Bzzt!', 'Ow!']);
+  for (const v of objs) { if (hit.length >= 3) break; if (v !== f && !v.gone && CAT[v.t].move && !DRAGONS.has(v.t) && Math.hypot(v.x - f.x, v.z - f.z) < 7) hit.push(v); }
+  for (let i = 1; i < hit.length; i++) { const v = hit[i]; bolts.push({ a: [f.x, f.y + CAT[f.t].h * f.s * 0.5, f.z], b: [v.x, v.y + CAT[v.t].h * v.s * 0.5, v.z], t: 0, life: 0.2, w: 0.06 * Math.sqrt(o.s) }); fireHurt(v, dmg * 0.6, o, ['Zap!', 'Bzzt!']); }
+  for (const v of objs) if (!v.gone && !CAT[v.t].move && (CAT[v.t].cat === 'plants' || CAT[v.t].cat === 'nature') && Math.hypot(v.x - f.x, v.z - f.z) < 4 && Math.random() < 0.15) startFire(v.x, v.z, v);
+  if (near3(o)) { noiseHit('lowpass', 200, 0.6, 1.0, 0.25, 60); noiseHit('highpass', 3000, 0.6, 0.15, 0.12); }
+}
 const FIRE_DZ = { kind: 'fire' };
 function fireSound() { noiseHit('lowpass', 900, 0.5, 1.8, 0.3, 350); noiseHit('bandpass', 2500, 0.6, 1.6, 0.1); }
 const rainR = () => 18 * Math.sqrt(SIZES[tool.size]);
 const rainOver = (x, z) => rains.some(r => Math.hypot(r.x - x, r.z - z) < r.R);
-const fireProof = o => o.t === 'dragon' || o.t === 'phoenix' || o.t === 'demon';
+const fireProof = o => DRAGONS.has(o.t) || o.t === 'phoenix' || o.t === 'demon';
 // set a fire at (x, z); on a thing (a tree, a building), it burns that thing
 function startFire(x, z, on) {
   if (fires.length >= 140 || rainOver(x, z) || groundAt(x, z) < 0.1 || lavaAt(x, z)) return null;
@@ -4732,7 +4859,7 @@ function startFire(x, z, on) {
   return f;
 }
 // fire (or a dragon's breath) hurting something
-function fireHurt(v, dmg, by) {
+function fireHurt(v, dmg, by, words) {
   if (v.gone || v.inside || v.held || fireProof(v)) return;
   const d = CAT[v.t];
   if (!d.move) {                                     // trees, plants and buildings burn down slowly (without flashing like something being hit)
@@ -4745,7 +4872,7 @@ function fireHurt(v, dmg, by) {
   if (!settings.fight) { if (!(v.fleeT > 0)) { v.fleeT = 1.5; v.fleeFrom = by ? { x: by.x, z: by.z } : { x: v.x + Math.random() - 0.5, z: v.z + Math.random() - 0.5 }; } return; }
   if (v.hp === undefined) { v.maxHp = v.hp = statOf(v)[0] * v.s; }
   v.hp -= dmg; v.hitT = 0.25;
-  if (!v.foe && !(v.fleeT > 0)) { v.fleeT = 1.5; v.fleeFrom = by ? { x: by.x, z: by.z } : { x: v.x + Math.random() - 0.5, z: v.z + Math.random() - 0.5 }; if (Math.random() < 0.3) say(v, pick(['Hot!', 'Ow!', 'Fire!']), '#ffb347'); }
+  if (!v.foe && !(v.fleeT > 0)) { v.fleeT = 1.5; v.fleeFrom = by ? { x: by.x, z: by.z } : { x: v.x + Math.random() - 0.5, z: v.z + Math.random() - 0.5 }; if (Math.random() < 0.3) say(v, pick(words || ['Hot!', 'Ow!', 'Fire!']), '#ffb347'); }
   if (v.hp <= 0) defeat(v, by);
 }
 function mouthOf(o) {
@@ -4778,30 +4905,44 @@ function updateFire(dt) {
     let d;
     if (o.fireSky || !o.fireAt) d = norm3(Math.sin(o.r), 1.1, Math.cos(o.r));
     else d = norm3(o.fireAt[0] - m[0], o.fireAt[1] - m[1], o.fireAt[2] - m[2]);
-    const L = 14 * Math.sqrt(o.s), spd = L * 1.15;
-    o.fireAcc = (o.fireAcc || 0) + dt * 50;
+    const L = 14 * Math.sqrt(o.s), spd = L * 1.15, kind = CAT[o.t].breath || 'fire';
+    if (kind === 'lightning') { o.boltT = (o.boltT || 0) - dt; if (o.boltT <= 0) { o.boltT = 0.09; const e = o.fireSky || !o.fireAt ? [m[0] + d[0] * L, m[1] + d[1] * L, m[2] + d[2] * L] : o.fireAt; bolts.push({ a: m, b: e, t: 0, life: 0.12, w: 0.09 * Math.sqrt(o.s) }); if (Math.random() < 0.3 && near3(o)) noiseHit('highpass', 2500, 0.6, 0.12, 0.08); } }
+    o.fireAcc = (o.fireAcc || 0) + dt * (kind === 'lightning' ? 0 : 50);
     while (o.fireAcc >= 1) {
       o.fireAcc -= 1; const j = () => (Math.random() - 0.5) * 0.22;
-      flames.push({ x: m[0], y: m[1], z: m[2], vx: (d[0] + j()) * spd, vy: (d[1] + j()) * spd, vz: (d[2] + j()) * spd, t: 0, life: 0.95 + Math.random() * 0.3, m: Math.random() * 3 | 0, k: 0.65 * Math.sqrt(o.s), breath: !o.fireSky });
+      flames.push({ x: m[0], y: m[1], z: m[2], vx: (d[0] + j()) * spd, vy: (d[1] + j()) * spd, vz: (d[2] + j()) * spd, t: 0, life: (kind === 'water' ? 1.3 : 0.95) + Math.random() * 0.3, m: Math.random() * 3 | 0, k: (kind === 'water' ? 0.45 : 0.65) * Math.sqrt(o.s), breath: !o.fireSky, kind });
     }
     if (o.fireSky || !settings.fight) continue;
     o.fireTick = (o.fireTick || 0) - dt;
     if (o.fireTick > 0) continue;
     o.fireTick = 0.25;
     const dmg = statOf(o)[1] * 0.3 * Math.sqrt(o.s);
-    for (const v of objs.slice()) {                    // everything in the cone of fire
+    if (kind === 'lightning') { lightningStrike(o, m, dmg); continue; }
+    if (kind === 'ice' || kind === 'water') for (const f of fires) {                 // ice and water put out the fires they hit
+      const px = f.x - m[0], pz = f.z - m[2], t = px * d[0] + pz * d[2];
+      if (t > 0 && t < L * 1.1 && Math.hypot(px - d[0] * t, pz - d[2] * t) < 2.5 + t * 0.15) { f.t = f.life; poof(f.x, Math.max(groundAt(f.x, f.z), 0) + 0.5, f.z, 0.8 + f.r * 0.3, [0.9, 0.9, 0.95]); }
+    }
+    for (const v of objs.slice()) {                    // everything in the cone of fire (or ice, or water)
       if (v === o || v.gone) continue;
       const px = v.x - m[0], py = v.y + CAT[v.t].h * v.s * 0.4 - m[1], pz = v.z - m[2];
       const t = px * d[0] + py * d[1] + pz * d[2];
       if (t < 0 || t > L) continue;
       const off = Math.hypot(px - d[0] * t, py - d[1] * t, pz - d[2] * t), R = 1.2 + t * 0.12 + CAT[v.t].r * v.s * 0.5;
       if (off > R) continue;
+      if (kind === 'ice' || kind === 'water') {
+        if (!CAT[v.t].move || DRAGONS.has(v.t)) continue;
+        fireHurt(v, dmg * (kind === 'ice' ? 0.8 : 0.7), o, kind === 'ice' ? ['Brr!', 'So cold!', 'Brrr!'] : ['Splash!', 'Glub!', 'Whoa!']);
+        if (kind === 'ice' && !v.gone && settings.fight) { v.frozenT = 3; v.fleeT = 0; }
+        if (kind === 'water' && !v.gone && CAT[v.t].move === 'walk' && CAT[v.t].r * v.s < 3) { const pl = Math.hypot(d[0], d[2]) || 1; v.x += d[0] / pl * 1.2; v.z += d[2] / pl * 1.2; settle(v); }   // pushed back by the jet
+        continue;
+      }
       fireHurt(v, CAT[v.t].move ? dmg : dmg * 0.5, o);
       if (!CAT[v.t].move && !v.gone && Math.random() < 0.5) startFire(v.x, v.z, v);
     }
     const t = Math.min(L, Math.hypot(o.fireAt[0] - m[0], o.fireAt[2] - m[2]));   // and the ground where it lands catches fire
     const gx = m[0] + d[0] / Math.hypot(d[0], d[2]) * t, gz = m[2] + d[2] / Math.hypot(d[0], d[2]) * t;
-    if (Math.random() < 0.6) startFire(gx + (Math.random() - 0.5) * 3, gz + (Math.random() - 0.5) * 3, null);
+    if (kind === 'fire' || kind === 'gold') { if (Math.random() < 0.6) startFire(gx + (Math.random() - 0.5) * 3, gz + (Math.random() - 0.5) * 3, null); }
+    else if (kind === 'water' && Math.random() < 0.5) splash(gx, gz, 1.5, 8);
   }
   // fires burning
   const near = (x, z) => Math.hypot(x - camEye[0], z - camEye[2]) < 320;
@@ -4846,15 +4987,19 @@ function updateFire(dt) {
   for (const f of flames) {
     f.t += dt; const k = Math.exp(-dt * 0.9);
     if (f.smoke) { f.x += f.vx * dt; f.y += f.vy * dt; f.z += f.vz * dt; continue; }
-    f.vx *= k; f.vz *= k; f.vy = f.vy * k + dt * 2;
+    f.vx *= k; f.vz *= k; f.vy = f.kind === 'water' ? f.vy - dt * 9 : f.kind === 'ice' ? f.vy * k - dt * 1 : f.vy * k + dt * 2;
     f.x += f.vx * dt; f.y += f.vy * dt; f.z += f.vz * dt;
     const g = Math.max(groundAt(f.x, f.z), 0) + 0.2;
     if (f.y < g) { f.y = g; f.vy = Math.abs(f.vy) * 0.2; }
-    if (f.breath && rainOver(f.x, f.z) && Math.random() < 0.3) f.t = f.life;   // rain dampens the breath too
+    if (f.breath && (f.kind === 'fire' || f.kind === 'gold') && rainOver(f.x, f.z) && Math.random() < 0.3) f.t = f.life;   // rain dampens the breath too
   }
+  for (const b of bolts) b.t += dt;
+  bolts = bolts.filter(b => b.t < b.life);
   flames = flames.filter(f => f.t < f.life);
   if (flames.length > 2500) flames.splice(0, flames.length - 2500);
 }
+let boltTubeMesh = null;
+const boltTube = () => boltTubeMesh || (boltTubeMesh = (() => { const g = new Geo(256); cyl(g, [0, 0, 0], [0, 1, 0], 1, 1, [1, 0.95, 0.45], 6, false); return makeMesh(g); })());
 function rainAt(hit) {
   const R = rainR();
   const old = rains.find(r => Math.hypot(r.x - hit.x, r.z - hit.z) < r.R * 0.5);
@@ -4865,9 +5010,13 @@ function rainAt(hit) {
   return true;
 }
 let flameMeshes = null, cloudMesh = null, dropMesh = null, smokeMesh = null;
+const breathMeshes = {};
 function drawFireAndRain(time) {
-  if (!flames.length && !rains.length) return;
+  if (!flames.length && !rains.length && !bolts.length) return;
   if (!flameMeshes) {
+    breathMeshes.ice = [[0.75, 0.9, 1], [0.92, 0.98, 1], [0.6, 0.82, 1]].map((c, i) => { const g = new Geo(64); blob(g, 0, 0, 0, 1, 1, 1, c, mulberry32(40 + i), 0.5, -1, 0); return makeMesh(g); });
+    breathMeshes.water = [[0.3, 0.6, 0.95], [0.55, 0.8, 1], [0.2, 0.5, 0.85]].map((c, i) => { const g = new Geo(64); blob(g, 0, 0, 0, 1, 1, 1, c, mulberry32(50 + i), 0.3, -1, 0); return makeMesh(g); });
+    breathMeshes.gold = [[1, 0.85, 0.3], [1, 0.95, 0.6], [1, 0.7, 0.15]].map((c, i) => { const g = new Geo(64); blob(g, 0, 0, 0, 1, 1, 1, c, mulberry32(60 + i), 0.4, -1, 0); return makeMesh(g); });
     flameMeshes = [[1.0, 0.45, 0.05], [1.0, 0.75, 0.1], [1.0, 0.25, 0.02]].map((c, i) => { const g = new Geo(64); blob(g, 0, 0, 0, 1, 1, 1, c, mulberry32(30 + i), 0.4, -1, 0); return makeMesh(g); });
     { const g = new Geo(4096), r = mulberry32(5); for (let i = 0; i < 9; i++) { const a = i / 9 * 6.283; blob(g, Math.cos(a) * 0.6 * (0.5 + r()), (r() - 0.5) * 0.2, Math.sin(a) * 0.6 * (0.5 + r()), 0.5, 0.32, 0.5, [0.42, 0.45, 0.52], r, 0.25, -1, 0); } blob(g, 0, 0.1, 0, 0.7, 0.4, 0.7, [0.5, 0.53, 0.6], r, 0.2, -1, 0); cloudMesh = makeMesh(g); }
     { const g = new Geo(256); cyl(g, [0, 0, 0], [0, 1, 0], 0.04, 0.04, [0.7, 0.82, 1], 5); dropMesh = makeMesh(g); }
@@ -4875,7 +5024,15 @@ function drawFireAndRain(time) {
   }
   beginBatch();
   setEmit(1);
-  for (const f of flames) { if (f.smoke) continue; const sz = f.k * (0.25 + Math.sin(Math.min(1, f.t / f.life) * Math.PI) * 0.9 + f.t * 0.3); drawMesh(flameMeshes[f.m], mChain(mT(f.x, f.y, f.z), mS(sz)), f.t < 0.12 ? 0.5 : 0); }   // (sizes from Wildwood's dragon fire)
+  for (const f of flames) { if (f.smoke) continue; const sz = f.k * (0.25 + Math.sin(Math.min(1, f.t / f.life) * Math.PI) * 0.9 + f.t * 0.3), ms = breathMeshes[f.kind] || flameMeshes; setEmit(f.kind === 'water' ? 0.25 : f.kind === 'ice' ? 0.6 : 1); drawMesh(ms[f.m], mChain(mT(f.x, f.y, f.z), mS(sz)), f.t < 0.12 ? 0.5 : 0); }
+  setEmit(1);
+  for (const b of bolts) {                             // lightning: a jagged line that flickers to a new shape every frame
+    const N = 9, pts = [b.a];
+    for (let i = 1; i < N; i++) { const t = i / N, j = Math.hypot(b.b[0] - b.a[0], b.b[2] - b.a[2]) * 0.13; pts.push([b.a[0] + (b.b[0] - b.a[0]) * t + (Math.random() - 0.5) * j, b.a[1] + (b.b[1] - b.a[1]) * t + (Math.random() - 0.5) * j, b.a[2] + (b.b[2] - b.a[2]) * t + (Math.random() - 0.5) * j]); }
+    pts.push(b.b);
+    for (let i = 1; i < pts.length; i++) drawMesh(boltTube(), segM(pts[i - 1], pts[i], b.w * (1 - i / pts.length * 0.5)), 0);
+    for (const i of [3, 6]) { const p = pts[i], L = Math.hypot(b.b[0] - b.a[0], b.b[2] - b.a[2]) * 0.2; let q = p; for (let k = 0; k < 3; k++) { const n = [q[0] + (Math.random() - 0.5) * L, q[1] - Math.random() * L * 0.5, q[2] + (Math.random() - 0.5) * L]; drawMesh(boltTube(), segM(q, n, b.w * 0.4), 0); q = n; } }   // little side branches
+  }   // (sizes from Wildwood's dragon fire)
   setEmit(0);
   for (const f of flames) if (f.smoke) { const k = f.t / f.life; drawMesh(smokeMesh, mChain(mT(f.x, f.y, f.z), mS(f.k * (0.5 + k * 1.8))), 0); }
   for (const r of rains) {
@@ -4952,7 +5109,7 @@ function landHit(o, f, arrow) {
   if (o.fac === 'predator' && f.fac === 'animal' && CAT[f.t].r * f.s < CAT[o.t].r * o.s * 1.2) f.hp = 0;   // a hungry animal catches smaller animals in one bite
   f.hitT = 0.25; if (!arrow) o.lunge = 1;
   if (o.t === 'zombie' && CAT[f.t].move !== 'swim') { defeat(f, o); return; }   // one zombie bite makes another zombie
-  if (near3(o)) { noiseHit('lowpass', 900, 0.8, 0.12, 0.09); if (o.t === 'dragon' || o.t === 'troll' || o.t === 'hydra') tone('sawtooth', 110, 60, 0.3, 0.08, 0, 500); }
+  if (near3(o)) { noiseHit('lowpass', 900, 0.8, 0.12, 0.09); if (DRAGONS.has(o.t) || o.t === 'troll' || o.t === 'hydra' || o.t === 'cerberus') tone('sawtooth', 110, 60, 0.3, 0.08, 0, 500); }
   if (attacks(f.fac) && !isCiv(f) && hostile(f, o)) { if (!f.foe || f.foe.gone) f.foe = o; }
   else { f.fleeT = 2.5; f.fleeFrom = { x: o.x, z: o.z }; }
   if (f.hp <= 0) defeat(f, o);
@@ -4991,14 +5148,14 @@ function fightStep(o, d, dt, time) {
   if (!o.foe && o.lookT <= 0) {
     o.lookT = 0.45 + Math.random() * 0.3;
     o.foe = findFoe(o);
-    if (o.foe && near3(o)) { if (o.t === 'dragon') { o.roarT = 1.2; tone('sawtooth', 75, 45, 1.4, 0.18, 0, 600); } else if (o.fac === 'orc') say(o, pick(['Waaagh!', 'Grr!', 'Charge!']), '#ff8a7a'); }
+    if (o.foe && near3(o)) { if (DRAGONS.has(o.t)) { o.roarT = 1.2; tone('sawtooth', 75, 45, 1.4, 0.18, 0, 600); } else if (o.fac === 'orc') say(o, pick(['Waaagh!', 'Grr!', 'Charge!']), '#ff8a7a'); }
   }
   if (o.roarT > 0) o.roarT -= dt;
   const f = o.foe;
   if (!f) { o.windup = 0; return o.march ? marchStep(o, d, dt) : false; }
   const st = statOf(o), dist = Math.hypot(f.x - o.x, f.z - o.z);
   if (dist > st[3] * Math.sqrt(o.s) * 1.8) { o.foe = null; return false; }
-  if (o.t === 'dragon' && dragonBreath(o, f, dist, dt)) { o.y = groundY(o, d); o.tx = undefined; o.wait = 0; return true; }
+  if (DRAGONS.has(o.t) && dragonBreath(o, f, dist, dt)) { o.y = groundY(o, d); o.tx = undefined; o.wait = 0; return true; }
   const reach = (o.race === 'elf' || o.t === 'alien' ? 15 * Math.sqrt(o.s) : st[2] * o.s) + CAT[f.t].r * f.s * 0.6;   // elves are archers: they shoot from far away
   if (o.windup > 0) {                                  // winding up to hit
     o.windup -= dt; o.moving = false;
@@ -5009,7 +5166,7 @@ function fightStep(o, d, dt, time) {
   } else {
     o.moving = false;
     o.cd = (o.cd || 0) - dt;
-    if (o.cd <= 0) { o.windup = o.t === 'dragon' ? 0.8 : 0.35; o.cd = 1.1 + Math.random() * 0.4; }
+    if (o.cd <= 0) { o.windup = DRAGONS.has(o.t) ? 0.8 : o.t === 'cerberus' ? 0.5 : 0.35; o.cd = 1.1 + Math.random() * 0.4; }
   }
   o.y = groundY(o, d);
   if (d.hop && o.moving) o.y += Math.abs(Math.sin(o.phase * 0.5)) * 0.25 * o.s;
@@ -5127,6 +5284,7 @@ function drawOne(o, time, shadow, flash) {
   if (o.bank) base = mChain(base, mRz(o.bank * 0.4));
   const far = !shadow && Math.hypot(o.x - camEye[0], o.y - camEye[1], o.z - camEye[2]) > 260 + 40 * o.s;
   if (o.hitT > 0) flash = Math.max(flash || 0, 0.6);                   // flashes when it gets hit
+  if (o.frozenT > 0) flash = Math.max(flash || 0, 0.45);               // frosted white while it's frozen
   if (!d.draw && (o.windup > 0 || o.lunge > 0)) base = mChain(base, mT(0, 0, (o.lunge || 0) * 0.3), mRx(o.windup > 0 ? -0.15 : (o.lunge || 0) * 0.12));
   if (o.swim) {
     if (d.arm) base = mChain(base, mT(0, 0, -0.42 * d.h), mRx(1.25), mRy(Math.sin(o.phase) * 0.38));   // front crawl: lying forward, rolling with each stroke
