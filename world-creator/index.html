@@ -74,7 +74,7 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,38px);lin
 #cross.show{display:block}
 #palette{position:absolute;left:50%;bottom:max(10px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(980px,calc(100vw - 20px));background:rgba(21,18,63,.86);border:3px solid var(--edge);border-radius:18px;padding:8px;box-sizing:border-box;display:flex;flex-direction:column;gap:6px}
 #cats{display:flex;gap:6px;flex-wrap:wrap}
-#cats button{padding:6px 10px;font-size:15px;flex:1;min-width:max-content}
+#cats button{padding:6px 7px;font-size:14px;flex:1;min-width:max-content}
 #cats button.on{border-color:var(--sun);color:var(--sun);background:#2a2470}
 #items{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:thin}
 #items button{flex:none;padding:5px 8px;font-size:13px;min-width:76px;display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1.1}
@@ -194,6 +194,7 @@ canvas.inspecting{cursor:zoom-in}
       <div><b class="h">It's alive</b>People and creatures walk around by themselves. Birds and dragons fly, and dolphins swim in the sea. Monsters, zombies and the dragon attack; zombies turn what they bite into zombies; anything near a ghost runs away screaming. Turn <b>Fighting</b> off in the menu for calm building.</div>
       <div><b class="h">Towns</b>Put down <b>humans, elves, dwarves</b> or <b>orcs</b> (in People). With <b>Towns: People build</b> (in the menu), once <b>10</b> of a kind are together they start building a town: the town hall takes about 2 minutes, then they build their own houses one at a time. With <b>Towns: Quick</b>, one person founds a whole town at once. Orcs fight everyone else; humans sometimes start wars; elves are archers. Open <b>🏰 Towns</b> (T, or View on the controller) to make a town keep the peace or go to war with everyone.</div>
       <div><b class="h">Maps</b>Ten islands, plus four big maps: <b>Island Set</b> (seven islands, each a different land), <b>Pangea</b> (one giant supercontinent), <b>Sky Islands</b> (floating in the sky) and <b>Endless Ocean</b>. Or pick <b>🎲 Random</b>. New islands are much bigger than the first ones, and people and animals are smaller, so everything is more to scale.</div>
+      <div><b class="h">Fire and rain</b>In a fight, a <b>dragon</b> sometimes breathes fire instead of biting. Its fire burns what it hits and sets fires where it lands: fires burn trees, plants and buildings down slowly, hurt anyone standing in them, can spread to plants nearby, and burn out after about a minute. With Fighting off, a dragon just breathes fire at the sky now and then. The <b>✨ Special effects</b> group has <b>🌧️ Rain</b>: a dark cloud rains for 20 seconds (bigger with size) and puts out every fire under it.</div>
       <div><b class="h">Disasters</b>The <b>Disasters</b> group has a <b>tornado</b> (picks things up and throws them), a <b>tsunami</b> (a wave rolls in from the nearest sea), a <b>bomb</b>, a <b>sprinkle bomb</b> (lots of little bombs) and an <b>earthquake</b> (cracks the ground and knocks buildings down). The size buttons make them bigger. <b>Undo</b> puts things back.</div>
       <div><b class="h">Kings, queens and battles</b>Once a town starts to grow it crowns a <b>king</b>, a <b>queen</b> or both. Their town hall becomes a <b>castle</b>, and they live inside it in fancy robes, coming out for a walk now and then and whenever their town is at war. A <b>golden crown</b> treasure near the town makes their crowns grander. They train soldiers in armour who stand guard around the town and go to battle. Ordinary townsfolk never fight: they run from danger. Tap the <b>🪄 Battle wand</b> (in People) on one town, then on another, and they go to war. The <b>🕊️ Peace wand</b> does the opposite: the two towns become friends and never fight (even orcs). Bears, polar bears, foxes, crocodiles, sharks and dinosaurs are hungry: they hunt people and other animals. When a town has nobody left, its town hall explodes and it has fallen.</div>
       <div><b class="h">Farms and caves</b>Towns plant <b>crop fields</b>: farmers walk out, hoe the ground and bring in the harvest (40 gold each time), and barns come with cows, sheep, pigs or chickens. New islands start with trees and plants that fit them, and some have <b>caves</b> that animals (or goblins) come out of.</div>
@@ -1362,6 +1363,7 @@ const CATS = [
   { id: 'creatures', name: 'Creatures', icon: '🐾', items: [] },
   { id: 'mythical', name: 'Mythical', icon: '🐉', items: [] },
   { id: 'disasters', name: 'Disasters', icon: '🌪️', items: [] },
+  { id: 'effects', name: 'Special effects', icon: '✨', items: [] },
 ];
 const CAT = {};
 function def(id, cat, name, icon, o) {
@@ -2468,6 +2470,7 @@ function dragonUpdate(o, dt, time) {
     o.flySpotT = 1; o.fac = 'monster'; const f = findFoe(o); if (f) { o.flying = false; o.flyT = 20; o.foe = f; }
   }
   if (o.foe && !o.foe.gone && settings.fight) o.flying = false;     // it stays down while it's fighting
+  if (!o.flying && !o.foe && !(o.fireT > 0)) { o.skyT = (o.skyT === undefined ? 15 + Math.random() * 30 : o.skyT) - dt; if (o.skyT <= 0) { o.skyT = 30 + Math.random() * 40; o.fireT = 1.4; o.fireSky = true; if (near3(o)) fireSound(); } }
   const g = Math.max(groundAt(o.x, o.z), 0), sc = o.s * DRAGON_SCALE;
   o.flyAlt = o.flyAlt || 0;
   if (o.flying) {
@@ -2507,9 +2510,10 @@ function dragonDraw(o, base0, time, flash) {
   const body = mChain(base, mT(0, sp.hipY, sp.hips[0][1]), mRx(tilt), mT(0, -sp.hipY, -sp.hips[0][1]));
   drawMesh(m.body, body, flash);
   const headM = dragonHeadM(a, body);
+  { const M = headM; o.mouth = [M[4] * -0.25 + M[8] * 1.85 + M[12], M[5] * -0.25 + M[9] * 1.85 + M[13], M[6] * -0.25 + M[10] * 1.85 + M[14]]; o.mouthT = time; }
   drawDragonNeck(a, body, headM, flash);
   drawMesh(m.head, headM, flash);
-  const open = a.windup > 0 ? 0.15 + 0.65 * (1 - a.windup / sp.windup) : a.lunge > 0.25 ? 0.45 * (a.lunge - 0.25) : a.lunge > 0 ? 0 : a.roarT > 0 ? 0.6 * Math.min(1, a.roarT * 2) : 0.06 + Math.max(0, Math.sin(time * 0.7 + o.phase)) * 0.12;
+  const open = o.fireT > 0 ? 0.75 : a.windup > 0 ? 0.15 + 0.65 * (1 - a.windup / sp.windup) : a.lunge > 0.25 ? 0.45 * (a.lunge - 0.25) : a.lunge > 0 ? 0 : a.roarT > 0 ? 0.6 * Math.min(1, a.roarT * 2) : 0.06 + Math.max(0, Math.sin(time * 0.7 + o.phase)) * 0.12;
   drawMesh(m.jaw, mChain(headM, mT(0, -0.3, 0.3), mRx(open)), flash);
   const amp = o.moving ? 0.7 : 0;
   sp.hips.forEach((hp, i) => { const swing = a.flyAlt > 1 ? 0.9 : Math.sin(a.legPhase + (i === 0 ? 0 : Math.PI)) * amp; drawMesh(m.leg, mChain(base, mT(hp[0], sp.hipY, hp[1]), mRx(swing)), flash); });
@@ -2897,6 +2901,7 @@ function landRadius() { return LAND_RADIUS[tool.brush]; }
 function placeAt(hit) {
   const d = selectedDef(), s = sizeOf(d);
   if (d.tool === 'disaster') return disasterAt(hit, d);
+  if (d.tool === 'effect') return rainAt(hit);
   if (d.tool === 'wand') return wandAt(hit, d.peace);
   if (d.tool === 'land') return landAt(hit, d);
   if (d.tool === 'biome') return biomeAt(hit, d);
@@ -3022,7 +3027,7 @@ function settle(o) { const d = CAT[o.t]; o.y = d.move === 'swim' || d.move === '
    Loading and the starting nature on a new island
    ===================================================================== */
 function loadThings(data, fresh) {
-  objs = []; undoStack = []; arrows = []; fx = []; texts = [];
+  objs = []; undoStack = []; arrows = []; fx = []; texts = []; flames = []; fires = []; rains = [];
   loadTowns(data && data.towns);
   if (fresh) { scatterStart(); return; }
   if (!data || !Array.isArray(data.objs)) return;
@@ -3219,7 +3224,7 @@ function splash(x, z, size, count = 8) {
   if (ripples.length < 160) ripples.push({ x, z, t: 0, life: 1.6, r0: size * 0.6 });
 }
 function updateLife(dt, time) {
-  updateSettlers(dt); updateTowns(dt); levelTowns(dt); buildGrid(); buildBGrid(); ghostScares(dt); corruptSpawns(dt); updateFx(dt); updateArrows(dt); updateDisasters(dt, time); caveSpawns(dt);
+  updateFire(dt); updateSettlers(dt); updateTowns(dt); levelTowns(dt); buildGrid(); buildBGrid(); ghostScares(dt); corruptSpawns(dt); updateFx(dt); updateArrows(dt); updateDisasters(dt, time); caveSpawns(dt);
   for (const o of objs.slice()) {                        // (a copy: things can be beaten while we go)
     if (o.ag !== undefined) o.ag += dt / YEAR;          // one year every 2 minutes
     if (o.gone || o.held) continue;                      // (caught in a tornado or a wave)
@@ -3791,6 +3796,7 @@ function loadTowns(list) {
 // Disasters, and the battle wand (in People)
 for (const [k, name, icon] of [['tornado', 'Tornado', '🌪️'], ['tsunami', 'Tsunami', '🌊'], ['bomb', 'Bomb', '💣'], ['sprinkle', 'Sprinkle bomb', '🎆'], ['quake', 'Earthquake', '🏚️']])
   def('d_' + k, 'disasters', name, icon, { tool: 'disaster', kind: k, r: 1, h: 1 });
+def('rain', 'effects', 'Rain', '🌧️', { tool: 'effect', kind: 'rain', r: 1, h: 1 });
 def('wand', 'people', 'Battle wand', '🪄', { tool: 'wand', r: 1, h: 1 });
 def('peacewand', 'people', 'Peace wand', '🕊️', { tool: 'wand', peace: true, r: 1, h: 1 });
 /* =====================================================================
@@ -4033,7 +4039,7 @@ function wreck(o, dmg, dz, col) {
   o.hp -= dmg; o.hitT = 0.25;
   if (o.hp > 0) return;
   if (dz && dz.grp) dz.grp.dels.push(o);
-  if (dz && o.town && TOWN[o.town] && !d.move && !(dz.logged || (dz.logged = new Set())).has(o.town)) { dz.logged.add(o.town); townLog(TOWN[o.town], { tornado: 'A tornado tore through the town.', wave: 'A tsunami crashed into the town.', bomb: 'A bomb fell on the town!', quake: 'An earthquake shook the town.' }[dz.kind] || 'Disaster struck!'); }
+  if (dz && o.town && TOWN[o.town] && !d.move && !(dz.logged || (dz.logged = new Set())).has(o.town)) { dz.logged.add(o.town); townLog(TOWN[o.town], { fire: 'A fire burned in the town.', tornado: 'A tornado tore through the town.', wave: 'A tsunami crashed into the town.', bomb: 'A bomb fell on the town!', quake: 'An earthquake shook the town.' }[dz.kind] || 'Disaster struck!'); }
   if (col) poof(o.x, o.y + 0.5, o.z, Math.max(0.8, d.h * o.s * 0.4), col);
   defeat(o, null);
 }
@@ -4482,6 +4488,188 @@ function pickOnScreen(px, py) {
 function inspectPoint() { return mouse.active && !usingPad ? [mouse.x, mouse.y] : [innerWidth / 2, innerHeight / 2]; }
 let inspHover = null;
 let fx = [], texts = [], screamT = 0;
+/* ---- fire and rain ----
+   Dragons breathe fire now and then in a fight: a cone of flame that burns what it hits and sets fires where it lands.
+   Fires burn trees, plants and buildings down slowly, hurt anyone standing in them (with Fighting on), can spread a little
+   to plants nearby, and burn out by themselves after about a minute. Rain (in Special effects) puts out every fire under it. */
+let flames = [], fires = [], rains = [];
+const FIRE_DZ = { kind: 'fire' };
+function fireSound() { noiseHit('lowpass', 900, 0.5, 1.8, 0.3, 350); noiseHit('bandpass', 2500, 0.6, 1.6, 0.1); }
+const rainR = () => 18 * Math.sqrt(SIZES[tool.size]);
+const rainOver = (x, z) => rains.some(r => Math.hypot(r.x - x, r.z - z) < r.R);
+const fireProof = o => o.t === 'dragon' || o.t === 'phoenix' || o.t === 'demon';
+// set a fire at (x, z); on a thing (a tree, a building), it burns that thing
+function startFire(x, z, on) {
+  if (fires.length >= 140 || rainOver(x, z) || groundAt(x, z) < 0.1 || lavaAt(x, z)) return null;
+  const old = fires.find(f => on ? f.on === on : !f.on && Math.hypot(f.x - x, f.z - z) < 2.2);
+  if (old) { old.life = Math.max(old.life, old.t + 25); return old; }
+  const d = on && CAT[on.t];
+  const f = { x: on ? on.x : x, z: on ? on.z : z, on: on || null, r: on ? Math.max(1, (isCastle(on) ? footR(on) : d.r * on.s) * 0.7) : 1.3, h: on ? d.h * on.s * 0.75 : 0.4,
+    t: 0, life: 35 + Math.random() * 25, tick: Math.random() * 0.5, emit: 0, spreadT: 6 + Math.random() * 10 };
+  fires.push(f);
+  return f;
+}
+// fire (or a dragon's breath) hurting something
+function fireHurt(v, dmg, by) {
+  if (v.gone || v.inside || v.held || fireProof(v)) return;
+  const d = CAT[v.t];
+  if (!d.move) {                                     // trees, plants and buildings burn down slowly (without flashing like something being hit)
+    if (!(d.cat === 'build' || d.cat === 'plants' || d.cat === 'nature' || d.cat === 'treasure')) return;
+    if (v.hp === undefined) { v.maxHp = v.hp = 25 * v.s; }
+    v.hp -= dmg; if (v.hp <= 0) { v.hp = 0.001; wreck(v, 1, FIRE_DZ, [0.25, 0.22, 0.2]); }
+    return;
+  }
+  if (d.move === 'swim' || d.move === 'fly') return;
+  if (!settings.fight) { if (!(v.fleeT > 0)) { v.fleeT = 1.5; v.fleeFrom = by ? { x: by.x, z: by.z } : { x: v.x + Math.random() - 0.5, z: v.z + Math.random() - 0.5 }; } return; }
+  if (v.hp === undefined) { v.maxHp = v.hp = statOf(v)[0] * v.s; }
+  v.hp -= dmg; v.hitT = 0.25;
+  if (!v.foe && !(v.fleeT > 0)) { v.fleeT = 1.5; v.fleeFrom = by ? { x: by.x, z: by.z } : { x: v.x + Math.random() - 0.5, z: v.z + Math.random() - 0.5 }; if (Math.random() < 0.3) say(v, pick(['Hot!', 'Ow!', 'Fire!']), '#ffb347'); }
+  if (v.hp <= 0) defeat(v, by);
+}
+function mouthOf(o) {
+  if (o.mouth && performance.now() / 1000 - o.mouthT < 0.3) return o.mouth;
+  return [o.x + Math.sin(o.r) * 2 * o.s, o.y + 1.6 * o.s, o.z + Math.cos(o.r) * 2 * o.s];
+}
+// the dragon in a fight: every 7-14 seconds, if what it's after is in range, it breathes fire instead of biting (true while breathing)
+function dragonBreath(o, f, dist, dt) {
+  o.fireCd = (o.fireCd === undefined ? 3 + Math.random() * 4 : o.fireCd) - dt;
+  if (o.fireT > 0 && !o.fireSky) {
+    o.moving = false; o.windup = 0;
+    let dy = Math.atan2(f.x - o.x, f.z - o.z) - o.r; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); o.r += clamp(dy, -2 * dt, 2 * dt);
+    o.fireAt = [f.x, f.y + CAT[f.t].h * f.s * 0.4, f.z];
+    return true;
+  }
+  const L = 14 * Math.sqrt(o.s);
+  if (o.fireCd <= 0 && dist > 3 * Math.sqrt(o.s) && dist < L) {
+    o.fireCd = 7 + Math.random() * 7; o.fireT = 1.8; o.fireSky = false; o.fireAt = [f.x, f.y + CAT[f.t].h * f.s * 0.4, f.z]; o.fireTick = 0;
+    if (near3(o)) { fireSound(); tone('sawtooth', 90, 50, 1.2, 0.12, 0, 500); }
+    return true;
+  }
+  return false;
+}
+function updateFire(dt) {
+  // dragons breathing fire
+  for (const o of objs) {
+    if (!(o.fireT > 0) || o.gone) continue;
+    o.fireT -= dt;
+    const m = mouthOf(o);
+    let d;
+    if (o.fireSky || !o.fireAt) d = norm3(Math.sin(o.r), 1.1, Math.cos(o.r));
+    else d = norm3(o.fireAt[0] - m[0], o.fireAt[1] - m[1], o.fireAt[2] - m[2]);
+    const L = 14 * Math.sqrt(o.s), spd = L * 1.15;
+    o.fireAcc = (o.fireAcc || 0) + dt * 50;
+    while (o.fireAcc >= 1) {
+      o.fireAcc -= 1; const j = () => (Math.random() - 0.5) * 0.22;
+      flames.push({ x: m[0], y: m[1], z: m[2], vx: (d[0] + j()) * spd, vy: (d[1] + j()) * spd, vz: (d[2] + j()) * spd, t: 0, life: 0.95 + Math.random() * 0.3, m: Math.random() * 3 | 0, k: 0.65 * Math.sqrt(o.s), breath: !o.fireSky });
+    }
+    if (o.fireSky || !settings.fight) continue;
+    o.fireTick = (o.fireTick || 0) - dt;
+    if (o.fireTick > 0) continue;
+    o.fireTick = 0.25;
+    const dmg = statOf(o)[1] * 0.3 * Math.sqrt(o.s);
+    for (const v of objs.slice()) {                    // everything in the cone of fire
+      if (v === o || v.gone) continue;
+      const px = v.x - m[0], py = v.y + CAT[v.t].h * v.s * 0.4 - m[1], pz = v.z - m[2];
+      const t = px * d[0] + py * d[1] + pz * d[2];
+      if (t < 0 || t > L) continue;
+      const off = Math.hypot(px - d[0] * t, py - d[1] * t, pz - d[2] * t), R = 1.2 + t * 0.12 + CAT[v.t].r * v.s * 0.5;
+      if (off > R) continue;
+      fireHurt(v, CAT[v.t].move ? dmg : dmg * 0.5, o);
+      if (!CAT[v.t].move && !v.gone && Math.random() < 0.5) startFire(v.x, v.z, v);
+    }
+    const t = Math.min(L, Math.hypot(o.fireAt[0] - m[0], o.fireAt[2] - m[2]));   // and the ground where it lands catches fire
+    const gx = m[0] + d[0] / Math.hypot(d[0], d[2]) * t, gz = m[2] + d[2] / Math.hypot(d[0], d[2]) * t;
+    if (Math.random() < 0.6) startFire(gx + (Math.random() - 0.5) * 3, gz + (Math.random() - 0.5) * 3, null);
+  }
+  // fires burning
+  const near = (x, z) => Math.hypot(x - camEye[0], z - camEye[2]) < 320;
+  for (const f of fires) {
+    f.t += dt;
+    if (f.on && f.on.gone && f.t < f.life - 5) f.life = f.t + 5;          // the thing it was burning is gone: the fire dies down
+    if (near(f.x, f.z)) {
+      f.emit += dt * (6 + f.r * 4);
+      const y0 = Math.max(groundAt(f.x, f.z), 0);
+      while (f.emit >= 1) {
+        f.emit -= 1; const a = Math.random() * 6.283, q = Math.sqrt(Math.random()) * f.r;
+        flames.push({ x: f.x + Math.cos(a) * q, y: y0 + Math.random() * f.h + 0.1, z: f.z + Math.sin(a) * q, vx: 0, vy: 1.5 + Math.random() * 1.5, vz: 0, t: 0, life: 0.6 + Math.random() * 0.4, m: Math.random() * 3 | 0, k: 0.55 + f.r * 0.12 });
+      }
+      if (Math.random() < dt * 2.5) flames.push({ smoke: true, x: f.x + (Math.random() - 0.5) * f.r, y: y0 + f.h + 0.8, z: f.z + (Math.random() - 0.5) * f.r, vx: (Math.random() - 0.5) * 0.6, vy: 2, vz: (Math.random() - 0.5) * 0.6, t: 0, life: 2.5, k: 0.6 + f.r * 0.25 });   // smoke
+    }
+    f.tick -= dt;
+    if (f.tick <= 0) {
+      f.tick = 0.5;
+      if (f.on && !f.on.gone) fireHurt(f.on, 1.3, null);
+      for (const v of objs) if (v !== f.on && !v.gone && CAT[v.t].move && Math.abs(v.x - f.x) < f.r + 1 && Math.abs(v.z - f.z) < f.r + 1 && Math.hypot(v.x - f.x, v.z - f.z) < f.r + 0.6) fireHurt(v, 2, null);
+      if (near(f.x, f.z) && Math.random() < 0.15) noiseHit('bandpass', 1800 + Math.random() * 1500, 2, 0.08, 0.025);   // crackle
+    }
+    f.spreadT -= dt;
+    if (f.spreadT <= 0 && f.t < f.life - 10) {                // fires on plants can catch the plants next to them
+      f.spreadT = 8 + Math.random() * 10;
+      if (f.on && Math.random() < 0.55) {
+        const c = objs.find(v => v !== f.on && !v.gone && !CAT[v.t].move && (CAT[v.t].cat === 'plants' || CAT[v.t].cat === 'nature') && Math.abs(v.x - f.x) < 7 && Math.abs(v.z - f.z) < 7 && !fires.some(q => q.on === v));
+        if (c) startFire(c.x, c.z, c);
+      }
+    }
+  }
+  fires = fires.filter(f => f.t < f.life);
+  // rain: puts out the fires under it
+  for (const r of rains) {
+    r.t += dt;
+    for (const f of fires) if (Math.hypot(f.x - r.x, f.z - r.z) < r.R) { f.t = f.life; poof(f.x, Math.max(groundAt(f.x, f.z), 0) + 0.5, f.z, 0.8 + f.r * 0.3, [0.9, 0.9, 0.95]); r.hiss = true; }
+    if (r.hiss) { r.hiss = false; if (near3(r)) noiseHit('highpass', 3500, 0.7, 0.9, 0.08); }
+    if (Math.random() < dt * 6) { const a = Math.random() * 6.283, q = Math.sqrt(Math.random()) * r.R, x = r.x + Math.cos(a) * q, z = r.z + Math.sin(a) * q; if (groundAt(x, z) < 0.05) ripples.push({ x, z, t: 0, life: 0.8, r0: 0.2 }); }
+  }
+  rains = rains.filter(r => r.t < r.life);
+  // the flames themselves
+  for (const f of flames) {
+    f.t += dt; const k = Math.exp(-dt * 0.9);
+    if (f.smoke) { f.x += f.vx * dt; f.y += f.vy * dt; f.z += f.vz * dt; continue; }
+    f.vx *= k; f.vz *= k; f.vy = f.vy * k + dt * 2;
+    f.x += f.vx * dt; f.y += f.vy * dt; f.z += f.vz * dt;
+    const g = Math.max(groundAt(f.x, f.z), 0) + 0.2;
+    if (f.y < g) { f.y = g; f.vy = Math.abs(f.vy) * 0.2; }
+    if (f.breath && rainOver(f.x, f.z) && Math.random() < 0.3) f.t = f.life;   // rain dampens the breath too
+  }
+  flames = flames.filter(f => f.t < f.life);
+  if (flames.length > 2500) flames.splice(0, flames.length - 2500);
+}
+function rainAt(hit) {
+  const R = rainR();
+  const old = rains.find(r => Math.hypot(r.x - hit.x, r.z - hit.z) < r.R * 0.5);
+  if (old) { old.life = old.t + 20; return true; }
+  if (rains.length >= 12) rains.shift();
+  rains.push({ x: hit.x, z: hit.z, R, t: 0, life: 20, seed: Math.random() * 1000, y: Math.max(groundAt(hit.x, hit.z), 0) + 22 + R * 0.3 });
+  noiseHit('lowpass', 1200, 0.4, 2.5, 0.12); toast('🌧️ Rain! It puts out fires.', 1400);
+  return true;
+}
+let flameMeshes = null, cloudMesh = null, dropMesh = null, smokeMesh = null;
+function drawFireAndRain(time) {
+  if (!flames.length && !rains.length) return;
+  if (!flameMeshes) {
+    flameMeshes = [[1.0, 0.45, 0.05], [1.0, 0.75, 0.1], [1.0, 0.25, 0.02]].map((c, i) => { const g = new Geo(64); blob(g, 0, 0, 0, 1, 1, 1, c, mulberry32(30 + i), 0.4, -1, 0); return makeMesh(g); });
+    { const g = new Geo(4096), r = mulberry32(5); for (let i = 0; i < 9; i++) { const a = i / 9 * 6.283; blob(g, Math.cos(a) * 0.6 * (0.5 + r()), (r() - 0.5) * 0.2, Math.sin(a) * 0.6 * (0.5 + r()), 0.5, 0.32, 0.5, [0.42, 0.45, 0.52], r, 0.25, -1, 0); } blob(g, 0, 0.1, 0, 0.7, 0.4, 0.7, [0.5, 0.53, 0.6], r, 0.2, -1, 0); cloudMesh = makeMesh(g); }
+    { const g = new Geo(256); cyl(g, [0, 0, 0], [0, 1, 0], 0.04, 0.04, [0.7, 0.82, 1], 5); dropMesh = makeMesh(g); }
+    { const g = new Geo(256); blob(g, 0, 0, 0, 1, 1, 1, [0.38, 0.37, 0.38], mulberry32(9), 0.3, -1, 0); smokeMesh = makeMesh(g); }
+  }
+  beginBatch();
+  setEmit(1);
+  for (const f of flames) { if (f.smoke) continue; const sz = f.k * (0.25 + Math.sin(Math.min(1, f.t / f.life) * Math.PI) * 0.9 + f.t * 0.3); drawMesh(flameMeshes[f.m], mChain(mT(f.x, f.y, f.z), mS(sz)), f.t < 0.12 ? 0.5 : 0); }   // (sizes from Wildwood's dragon fire)
+  setEmit(0);
+  for (const f of flames) if (f.smoke) { const k = f.t / f.life; drawMesh(smokeMesh, mChain(mT(f.x, f.y, f.z), mS(f.k * (0.5 + k * 1.8))), 0); }
+  for (const r of rains) {
+    const fade = Math.min(1, r.t / 1.5, (r.life - r.t) / 2);
+    drawMesh(cloudMesh, mChain(mT(r.x, r.y, r.z), mS3(r.R * 1.15 * (0.6 + 0.4 * fade), r.R * 0.5, r.R * 1.15 * (0.6 + 0.4 * fade))), 0);
+    const N = Math.floor(160 * fade * Math.min(2.5, r.R / 18)), rnd = mulberry32(Math.floor(r.seed));
+    for (let i = 0; i < N; i++) {
+      const a = rnd() * 6.283, q = Math.sqrt(rnd()) * r.R * 0.95, x = r.x + Math.cos(a) * q, z = r.z + Math.sin(a) * q, g = Math.max(groundAt(x, z), 0);
+      const top = r.y - 1, fall = (time * 22 + rnd() * 100) % (top - g);
+      drawMesh(dropMesh, mChain(mT(x, top - fall, z), mS3(1, 1.4, 1)), 0);
+    }
+  }
+  gl.uniform1f(progWorld.u.uAlpha, 0.8);
+  flushBatch();
+  gl.uniform1f(progWorld.u.uAlpha, 1);
+}
 function poof(x, y, z, size, col) {
   for (let i = 0; i < 10; i++) { const a = Math.random() * 6.283, sp = 1 + Math.random() * 2; fx.push({ x, y: y + size * 0.6, z, vx: Math.cos(a) * sp, vy: 1 + Math.random() * 2, vz: Math.sin(a) * sp, t: 0, life: 0.9 + Math.random() * 0.4, r: size * (0.25 + Math.random() * 0.25), col }); }
 }
@@ -4581,6 +4769,7 @@ function fightStep(o, d, dt, time) {
   if (!f) { o.windup = 0; return o.march ? marchStep(o, d, dt) : false; }
   const st = statOf(o), dist = Math.hypot(f.x - o.x, f.z - o.z);
   if (dist > st[3] * Math.sqrt(o.s) * 1.8) { o.foe = null; return false; }
+  if (o.t === 'dragon' && dragonBreath(o, f, dist, dt)) { o.y = groundY(o, d); o.tx = undefined; o.wait = 0; return true; }
   const reach = (o.race === 'elf' ? 14 * Math.sqrt(o.s) : st[2] * o.s) + CAT[f.t].r * f.s * 0.6;   // elves are archers: they shoot from far away
   if (o.windup > 0) {                                  // winding up to hit
     o.windup -= dt; o.moving = false;
@@ -4787,8 +4976,8 @@ function drawCursor(time) {
   if (tool.inspect) { ok = true; ringR = 1.6 + cam.dist * 0.012; col = [0.4, 0.8, 1]; }
   else if (tool.erase) { ok = tool.brush > 0 || !!eraseTarget(cursor); ringR = tool.brush ? eraseRadius() : 1.6 + cam.dist * 0.012; col = ok ? [1, 0.35, 0.3] : [0.7, 0.5, 0.5]; }
   else if (d.tool) {
-    ok = true; ringR = d.tool === 'disaster' ? { tornado: 6, tsunami: 12, bomb: 10, sprinkle: 24, quake: 32 }[d.kind] * Math.sqrt(SIZES[tool.size]) : d.tool === 'wand' ? 10 : landRadius();
-    col = d.tool === 'wand' ? (d.peace ? [1, 1, 1] : [0.8, 0.5, 1]) : d.tool === 'disaster' ? [1, 0.4, 0.2] : d.tool === 'biome' ? mixc(BIOME_GROUND[d.biome][0], [1, 1, 1], 0.3) : d.mode === 'shallow' || d.mode === 'deep' ? [0.35, 0.7, 1] : [1, 0.82, 0.45];
+    ok = true; ringR = d.tool === 'disaster' ? { tornado: 6, tsunami: 12, bomb: 10, sprinkle: 24, quake: 32 }[d.kind] * Math.sqrt(SIZES[tool.size]) : d.tool === 'effect' ? rainR() : d.tool === 'wand' ? 10 : landRadius();
+    col = d.tool === 'effect' ? [0.45, 0.75, 1] : d.tool === 'wand' ? (d.peace ? [1, 1, 1] : [0.8, 0.5, 1]) : d.tool === 'disaster' ? [1, 0.4, 0.2] : d.tool === 'biome' ? mixc(BIOME_GROUND[d.biome][0], [1, 1, 1], 0.3) : d.mode === 'shallow' || d.mode === 'deep' ? [0.35, 0.7, 1] : [1, 0.82, 0.45];
   }
   else { ok = canPlace(d, cursor, s); ringR = Math.max(0.8, d.r * s) + 0.3 + brushRadius(d, s); col = ok ? [0.45, 1, 0.5] : [1, 0.3, 0.25]; }
   const y = Math.max(cursor.y, 0) + 0.15;
@@ -5084,6 +5273,7 @@ function render(time) {
   gl.useProgram(progWorld.p);
   drawFx();
   drawDisasters(time);
+  drawFireAndRain(time);
   drawGhosts(time);
   drawCursor(time);
   gl.disable(gl.BLEND);
