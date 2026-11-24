@@ -2906,10 +2906,27 @@ function krakenDraw(o, base, time, flash) {
   const eyesM = cmk('krkEyes', [1, 0.8, 0.05], (g, c) => { for (const s of [-1, 1]) orb(g, s * 0.72, 0.48, 1.12, 0.38, 0.36, 0.36, c); });
   drawMesh(head, base, flash);
   setEmit(0.9); drawMesh(eyesM, base, flash); setEmit(0);
-  const T = cTube(KRK), J = cBall(KRK), grab = o.grab && !o.grab.gone ? o.grab : null;
+  const T = cTube(KRK), J = cBall(KRK), held = krakenHeld(o);
   for (let k = 0; k < 8; k++) {
     const a = k / 8 * 6.283 + 0.39;
-    if (k === 0 && grab) continue;
+    const v = held[k];
+    if (v) {                                           // this tentacle reaches out and wraps around what it caught
+      const root = xf(base, [Math.sin(a) * 1.25, 0.2, Math.cos(a) * 1.25]), vh = CAT[v.t].h * v.s;
+      const vc = [v.x, v.y + vh * 0.75, v.z], c = [(root[0] + vc[0]) / 2, Math.max(root[1], vc[1]) + 2.2 * o.s, (root[2] + vc[2]) / 2];
+      let prev = root;
+      for (let i = 1; i <= 14; i++) {
+        const t = i / 14, u = 1 - t, q = [u * u * root[0] + 2 * u * t * c[0] + t * t * vc[0], u * u * root[1] + 2 * u * t * c[1] + t * t * vc[1], u * u * root[2] + 2 * u * t * c[2] + t * t * vc[2]];
+        const r = (0.3 * (1 - t * 0.6) + 0.04) * o.s;
+        drawMesh(J, mChain(mT(q[0], q[1], q[2]), mS(r)), flash); drawMesh(T, segM(prev, q, r), flash); prev = q;
+      }
+      const rv = CAT[v.t].r * v.s * 0.85 + 0.1 * o.s;
+      for (let i = 1; i <= 16; i++) {                  // the coil, around and down
+        const an = i * 0.85 + time * 0.5 + k, q = [v.x + Math.cos(an) * rv, v.y + vh * (0.75 - i / 16 * 0.55), v.z + Math.sin(an) * rv];
+        const r = 0.13 * o.s * (1 - i / 20);
+        drawMesh(J, mChain(mT(q[0], q[1], q[2]), mS(r)), flash); drawMesh(T, segM(prev, q, r), flash); prev = q;
+      }
+      continue;
+    }
     let m = mChain(base, mT(Math.sin(a) * 1.25, -0.4, Math.cos(a) * 1.25), mRy(a), mRx(0.75));
     for (let i = 0; i < 15; i++) {
       const r = 0.3 * (1 - i / 16) + 0.04, len = 0.45;
@@ -2917,53 +2934,54 @@ function krakenDraw(o, base, time, flash) {
       m = mChain(m, mT(0, len, 0), mRx(0.1 + 0.14 * Math.sin(time * 1.3 + i * 0.45 + k * 1.7)), mRz(0.11 * Math.sin(time * 0.9 + i * 0.35 + k * 2.3)));
     }
   }
-  if (grab) {                                          // one tentacle reaches out and wraps around what it caught
-    const a = 0.39, root = xf(base, [Math.sin(a) * 1.25, 0.2, Math.cos(a) * 1.25]), vh = CAT[grab.t].h * grab.s;
-    const vc = [grab.x, grab.y + vh * 0.75, grab.z], c = [(root[0] + vc[0]) / 2, Math.max(root[1], vc[1]) + 3 * o.s, (root[2] + vc[2]) / 2];
-    let prev = root;
-    for (let i = 1; i <= 16; i++) {
-      const t = i / 16, u = 1 - t, p = [u * u * root[0] + 2 * u * t * c[0] + t * t * vc[0], u * u * root[1] + 2 * u * t * c[1] + t * t * vc[1], u * u * root[2] + 2 * u * t * c[2] + t * t * vc[2]];
-      const r = (0.3 * (1 - t * 0.6) + 0.04) * o.s;
-      drawMesh(J, mChain(mT(p[0], p[1], p[2]), mS(r)), flash); drawMesh(T, segM(prev, p, r), flash); prev = p;
-    }
-    const rv = CAT[grab.t].r * grab.s * 0.85 + 0.1 * o.s;
-    for (let i = 1; i <= 18; i++) {                    // the coil, around and down
-      const an = i * 0.85 + time * 0.5, p = [grab.x + Math.cos(an) * rv, grab.y + vh * (0.75 - i / 18 * 0.55), grab.z + Math.sin(an) * rv];
-      const r = 0.13 * o.s * (1 - i / 22);
-      drawMesh(J, mChain(mT(p[0], p[1], p[2]), mS(r)), flash); drawMesh(T, segM(prev, p, r), flash); prev = p;
-    }
-  }
 }
-// holding something: lift it up out of the water in front of the head and squeeze
+// what each of the eight tentacles is holding (an array of 8, empty slots undefined)
+function krakenHeld(o) {
+  const h = [];
+  if (o.grabs) for (const v of o.grabs) if (v && !v.gone && v.held && v.held.kraken === o) h[v.held.slot] = v;
+  return h;
+}
+// holding things: up to 8 at once, one per tentacle, lifted out of the water around the head and squeezed.
+// It keeps hunting with its free tentacles while it holds the others.
 function krakenUpdate(o, dt, time) {
-  const v = o.grab;
-  if (!v) return false;
-  if (v.gone || !settings.fight) { krakenLetGo(o); return false; }
-  o.moving = false;
-  let dy = Math.atan2(v.x - o.x, v.z - o.z) - o.r; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); o.r += clamp(dy, -dt, dt);
-  const tx = o.x + Math.sin(o.r) * 4.6 * o.s, tz = o.z + Math.cos(o.r) * 4.6 * o.s, ty = 1.6 * o.s + Math.sin(time * 2) * 0.3;
-  const k = Math.min(1, dt * 1.5);
-  v.x += (tx - v.x) * k; v.z += (tz - v.z) * k; v.y += (ty - v.y) * k; v.r += dt * 1.5; v.moving = true; v.phase = (v.phase || 0) + dt * 12;
-  o.sqT = (o.sqT || 0) - dt;
-  if (o.sqT <= 0) {
-    o.sqT = 1;
-    if (v.hp === undefined) { v.maxHp = v.hp = statOf(v)[0] * v.s; }
-    v.hp -= statOf(o)[1] * 0.5 * Math.sqrt(o.s); v.hitT = 0.25;
-    if (near3(o)) noiseHit('lowpass', 300, 0.8, 0.25, 0.08);
-    if (Math.random() < 0.25) say(v, pick(['Help!', 'Let go!', 'Aaah!']), '#ffd23f');
-    if (v.hp <= 0) { krakenLetGo(o); defeat(v, o); }
+  if (!o.grabs || !o.grabs.length) return false;
+  if (!settings.fight) { for (const v of o.grabs.slice()) krakenLetGo(o, v); return false; }
+  for (const v of o.grabs.slice()) {
+    if (v.gone || !v.held || v.held.kraken !== o) { o.grabs.splice(o.grabs.indexOf(v), 1); continue; }
+    const a = v.held.slot / 8 * 6.283 + 0.39 + o.r, d = 4.2 * o.s;
+    const tx = o.x + Math.sin(a) * d, tz = o.z + Math.cos(a) * d, ty = 1.6 * o.s + Math.sin(time * 2 + v.held.slot) * 0.3;
+    const k = Math.min(1, dt * 1.5);
+    v.x += (tx - v.x) * k; v.z += (tz - v.z) * k; v.y += (ty - v.y) * k; v.r += dt * 1.5; v.moving = true; v.phase = (v.phase || 0) + dt * 12;
+    v.held.sqT -= dt;
+    if (v.held.sqT <= 0) {
+      v.held.sqT = 1;
+      if (v.hp === undefined) { v.maxHp = v.hp = statOf(v)[0] * v.s; }
+      v.hp -= statOf(o)[1] * 0.5 * Math.sqrt(o.s); v.hitT = 0.25;
+      if (near3(o)) noiseHit('lowpass', 300, 0.8, 0.25, 0.08);
+      if (Math.random() < 0.25) say(v, pick(['Help!', 'Let go!', 'Aaah!']), '#ffd23f');
+      if (v.hp <= 0) { krakenLetGo(o, v); defeat(v, o); }
+    }
   }
-  return true;
+  if (o.grabs.length >= 8) { o.moving = false; o.foe = null; return true; }   // all eight tentacles are full: it just holds on
+  return false;
 }
 function krakenGrab(o, f) {
-  if (o.grab || f.held || CAT[f.t].move === 'fly' || CAT[f.t].r * f.s > 3) { landHit(o, f); return; }
-  o.grab = f; f.held = { kraken: o }; f.foe = null; f.fleeT = 0; o.sqT = 3;          // (it lifts its catch up and holds it a moment before the first squeeze)
+  o.grabs = o.grabs || [];
+  const used = krakenHeld(o);
+  if (o.grabs.length >= 8 || f.held || CAT[f.t].move === 'fly' || CAT[f.t].r * f.s > 3) { landHit(o, f); return; }
+  // the free tentacle that points nearest to what it's catching
+  const want = Math.atan2(f.x - o.x, f.z - o.z) - o.r;
+  let slot = -1, best = 99;
+  for (let k = 0; k < 8; k++) { if (used[k]) continue; let d = want - (k / 8 * 6.283 + 0.39); d = Math.abs(Math.atan2(Math.sin(d), Math.cos(d))); if (d < best) { best = d; slot = k; } }
+  if (slot < 0) { landHit(o, f); return; }
+  o.grabs.push(f); f.held = { kraken: o, slot, sqT: 3 }; f.foe = null; f.fleeT = 0;   // (it lifts its catch up and holds it a moment before the first squeeze)
+  o.foe = null; o.lookT = 0.3;                                                        // (and looks for the next one)
   say(f, 'Help!', '#ffd23f');
   if (near3(o)) { noiseHit('lowpass', 500, 0.7, 0.6, 0.2, 150); tone('sawtooth', 70, 45, 1.2, 0.15, 0, 400); }
 }
-function krakenLetGo(o) {
-  const v = o.grab; o.grab = null;
-  if (!v || v.gone) return;
+function krakenLetGo(o, v) {
+  if (o.grabs) { const i = o.grabs.indexOf(v); if (i >= 0) o.grabs.splice(i, 1); }
+  if (!v || v.gone || !v.held || v.held.kraken !== o) return;
   v.held = null; v.hx = v.x; v.hz = v.z; v.tx = undefined; v.y = CAT[v.t].move === 'swim' ? groundY(v, CAT[v.t]) : Math.max(groundAt(v.x, v.z), CAT[v.t].amph ? -0.2 * v.s : -10); v.pitch = 0;
   splash(v.x, v.z, 1, 8);
 }
@@ -3425,7 +3443,7 @@ function updateLife(dt, time) {
   updateFire(dt); updateSettlers(dt); updateTowns(dt); levelTowns(dt); buildGrid(); buildBGrid(); ghostScares(dt); corruptSpawns(dt); updateFx(dt); updateArrows(dt); updateDisasters(dt, time); caveSpawns(dt);
   for (const o of objs.slice()) {                        // (a copy: things can be beaten while we go)
     if (o.ag !== undefined) o.ag += dt / YEAR;          // one year every 2 minutes
-    if (o.held && o.held.kraken && (o.held.kraken.gone || o.held.kraken.grab !== o)) { o.held = null; o.tx = undefined; settle(o); }
+    if (o.held && o.held.kraken && (o.held.kraken.gone || !o.held.kraken.grabs || !o.held.kraken.grabs.includes(o))) { o.held = null; o.tx = undefined; settle(o); }
     if (o.gone || o.held) continue;                      // (caught in a tornado or a wave)
     if (o.inside) continue;                              // (a king or queen inside the castle)
     const d = CAT[o.t];
@@ -3515,7 +3533,7 @@ const attacks = f => f && f !== 'animal' && f !== 'ghost';
 const isCiv = o => !!o.race && !o.soldier && !o.ruler;     // ordinary townsfolk
 function hostile(a, b) {
   const fa = a.fac, fb = b.fac;
-  if (a.inside || b.inside || b.dive > 0.5) return false;
+  if (a.inside || b.inside || b.dive > 0.5 || (b.held && b.held.kraken)) return false;
   if (isCiv(a) || (isCiv(b) && a.race)) return false;          // townsfolk never start fights, and soldiers don't go after other towns' townsfolk
   if (!fa || !fb || fa === 'ghost' || fb === 'ghost' || a === b) return false;
   if (fa === 'predator') return fb !== 'predator' && !(fb === 'animal' && CAT[b.t].r * b.s > CAT[a.t].r * a.s * 1.3);   // hungry animals go after people and other animals (but not ones much bigger than them, like elephants)
