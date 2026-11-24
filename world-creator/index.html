@@ -2835,10 +2835,18 @@ function nessieDraw(o, base, time, flash) {
     for (let i = 0; i < 9; i++) { const a = (i / 8 - 0.5) * 2.6, x = Math.sin(a) * 0.21, z = 0.5 + Math.cos(a) * 0.32 - 0.12; coneS(g, x, -0.15, z, 0.03, -0.09, TOOTH, 5); }   // upper teeth
     for (const s of [-1, 1]) { orb(g, s * 0.22, 0.15, 0.36, 0.08, 0.08, 0.07, [0.95, 0.85, 0.3], { lo: true }); orb(g, s * 0.25, 0.15, 0.4, 0.035, 0.06, 0.03, COL.black, { lo: true }); orb(g, s * 0.08, 0.02, 0.85, 0.03, 0.02, 0.02, COL.black, { lo: true }); }
     for (const s of [-1, 1]) cyl(g, [s * 0.12, 0.27, 0.25], [s * 0.18, 0.2, 0.48], 0.05, 0.03, shade(NES, 0.7), 6);   // brow ridges
+    orb(g, 0, -0.1, 0.05, 0.3, 0.16, 0.42, NESB);                                                                       // lighter chin and throat
+    for (const s of [-1, 1]) { orb(g, s * 0.21, 0.2, 0.36, 0.09, 0.04, 0.08, shade(NES, 0.8), { lo: true }); orb(g, s * 0.085, 0.04, 0.84, 0.05, 0.04, 0.05, NES, { lo: true }); }   // eyelids, raised nostrils
+    for (let i = 0; i < 5; i++) orb(g, 0, 0.3 - i * 0.015, 0.32 - i * 0.14, 0.05, 0.045, 0.05, shade(NES, 0.75), { lo: true });   // a row of little bumps over the head
+    for (const [x, y, z, r] of [[0.18, 0.22, 0.05, 0.05], [-0.2, 0.18, -0.05, 0.06], [0.1, 0.26, -0.15, 0.04], [-0.12, 0.25, 0.15, 0.035], [0.26, 0.05, -0.1, 0.045], [-0.27, 0.08, 0.02, 0.04]]) orb(g, x, y, z, r, r * 0.4, r, shade(NES, 0.72), { lo: true });   // spots
+    orb(g, 0, -0.14, 0.47, 0.22, 0.025, 0.33, [0.6, 0.25, 0.28], { lo: true });                                    // gums
+    for (let i = 0; i < 7; i++) { const a = (i / 6 - 0.5) * 2.2, x = Math.sin(a) * 0.15, z = 0.46 + Math.cos(a) * 0.24 - 0.12; coneS(g, x, -0.15, z, 0.018, -0.05, TOOTH, 4); }   // a second row of little teeth
   });
   const jaw = cmk('nesJaw', NES, g => {                 // hinged at its back end
     orb(g, 0, -0.06, 0.32, 0.24, 0.08, 0.4, NESB); orb(g, 0, 0.0, 0.3, 0.17, 0.03, 0.32, MOUTH, { lo: true });
     for (let i = 0; i < 8; i++) { const a = (i / 7 - 0.5) * 2.4, x = Math.sin(a) * 0.18, z = 0.36 + Math.cos(a) * 0.3 - 0.1; coneS(g, x, 0.0, z, 0.028, 0.08, TOOTH, 5); }
+    orb(g, 0, 0.01, 0.3, 0.1, 0.03, 0.24, [0.82, 0.35, 0.4]);                                                        // tongue
+    orb(g, 0, -0.1, 0.25, 0.2, 0.05, 0.32, shade(NESB, 1.08), { lo: true });                                          // pale underside of the jaw
   });
   const body = cmk('nesBody', NES, g => {
     orb(g, 0, 0, 0, 1.3, 0.85, 2.6, NES, { grad: true }); orb(g, 0, -0.35, 0.1, 1.1, 0.5, 2.2, NESB);
@@ -2863,13 +2871,28 @@ function nessieDraw(o, base, time, flash) {
   drawMesh(jaw, mChain(hm, mT(0, -0.16, 0.12), mRx(open)), flash);
   // the tail: a long tube that swishes side to side
   let tm = mChain(base, mT(0, 0.05, -2.4), mRx(-Math.PI / 2 - 0.05));
-  for (let i = 0; i < 12; i++) {
-    const r = 0.62 * (1 - i / 12.5) + 0.04, len = 0.48;
+  for (let i = 0; i < 20; i++) {
+    const r = 0.62 * (1 - i / 20.5) + 0.04, len = 0.48;
     drawMesh(J, mChain(tm, mS(r)), flash); drawMesh(T, mChain(tm, mS3(r, len, r)), flash);
-    tm = mChain(tm, mT(0, len, 0), mRz(Math.sin(time * 1.6 - i * 0.5 + o.phase) * (o.moving ? 0.13 : 0.06)));
+    tm = mChain(tm, mT(0, len, 0), mRz(Math.sin(time * 1.6 - i * 0.45 + o.phase) * (o.moving ? 0.1 : 0.05)));
   }
 }
-swimDef('nessie', 'Loch Ness Monster', '🦕', g => {}, { cat: 'conspiracy', r: 3, h: 2, lift: 0.65, speed: 2.2, draw: nessieDraw });
+// Nessie stays deep under the water (just ripples now and then show where she is) until prey comes near: then she rises up with a splash
+// and attacks, and a few seconds after there's nothing left to hunt she sinks out of sight again. With Fighting off she comes up for a look now and then.
+const NESSIE_DEEP = 7.5;                              // how far down she goes (enough to hide the top of her head)
+function nessieUpdate(o, dt) {
+  if (o.dive === undefined) { o.dive = 0; o.calmT = 0; }
+  const hunting = settings.fight && o.foe && !o.foe.gone;
+  if (!settings.fight) { o.peekT = (o.peekT === undefined ? 25 + Math.random() * 20 : o.peekT) - dt; if (o.peekT < -15) o.peekT = 35 + Math.random() * 30; }
+  const before = o.dive;
+  if (hunting || (!settings.fight && o.peekT < 0)) { o.calmT = 0; o.dive = Math.max(0, o.dive - dt * 0.5); }
+  else { o.calmT += dt; if (o.calmT > 6) o.dive = Math.min(1, o.dive + dt * 0.3); }
+  if (before > 0.5 && o.dive <= 0.5) { splash(o.x + Math.sin(o.r) * 3 * o.s, o.z + Math.cos(o.r) * 3 * o.s, 3, 16); if (near3(o)) { noiseHit('lowpass', 700, 0.6, 1.2, 0.25, 200); tone('sawtooth', 80, 50, 1.0, 0.1, 0, 400); } }
+  if (o.dive > 0.8 && Math.random() < dt * 0.35) ripples.push({ x: o.x + (Math.random() - 0.5) * 4 * o.s, z: o.z + (Math.random() - 0.5) * 4 * o.s, t: 0, life: 1.4, r0: 0.6 });
+  if (hunting && o.dive > 0.12) { o.moving = false; o.windup = 0; o.lunge = 0; o.y = groundY(o, CAT[o.t]); return true; }   // (still coming up: she attacks once she's up)
+  return false;
+}
+swimDef('nessie', 'Loch Ness Monster', '🦕', g => {}, { cat: 'conspiracy', r: 3, h: 2, lift: 0.65, speed: 2.2, draw: nessieDraw, update: nessieUpdate });
 
 // the Kraken: a huge head with menacing yellow eyes, and eight long bendy tentacles; it wraps a tentacle around what it catches
 const KRK = [0.55, 0.16, 0.24], KRKD = [0.36, 0.09, 0.15], KRKL = [0.78, 0.45, 0.48];
@@ -2934,7 +2957,7 @@ function krakenUpdate(o, dt, time) {
 }
 function krakenGrab(o, f) {
   if (o.grab || f.held || CAT[f.t].move === 'fly' || CAT[f.t].r * f.s > 3) { landHit(o, f); return; }
-  o.grab = f; f.held = { kraken: o }; f.foe = null; f.fleeT = 0; o.sqT = 2;          // (it lifts its catch up and holds it a moment before the first squeeze)
+  o.grab = f; f.held = { kraken: o }; f.foe = null; f.fleeT = 0; o.sqT = 3;          // (it lifts its catch up and holds it a moment before the first squeeze)
   say(f, 'Help!', '#ffd23f');
   if (near3(o)) { noiseHit('lowpass', 500, 0.7, 0.6, 0.2, 150); tone('sawtooth', 70, 45, 1.2, 0.15, 0, 400); }
 }
@@ -2944,7 +2967,7 @@ function krakenLetGo(o) {
   v.held = null; v.hx = v.x; v.hz = v.z; v.tx = undefined; v.y = CAT[v.t].move === 'swim' ? groundY(v, CAT[v.t]) : Math.max(groundAt(v.x, v.z), CAT[v.t].amph ? -0.2 * v.s : -10); v.pitch = 0;
   splash(v.x, v.z, 1, 8);
 }
-swimDef('kraken', 'Kraken', '🦑', g => {}, { cat: 'conspiracy', r: 2.5, h: 2, lift: 0.7, speed: 1.6, draw: krakenDraw, update: krakenUpdate });
+swimDef('kraken', 'Kraken', '🦑', g => {}, { cat: 'conspiracy', r: 2.5, h: 2, lift: 0.7, minDepth: 1, speed: 1.6, draw: krakenDraw, update: krakenUpdate });
 
 // Bigfoot: the yeti, in brown (without the icy horns)
 const BF = [0.44, 0.29, 0.17], BFS = [0.32, 0.21, 0.14];
@@ -2990,7 +3013,7 @@ bipedDef('chupacabra', 'Chupacabra', '🐺', { cat: 'conspiracy', r: 0.7, h: 2.4
 const SIZES = [0.5, 1, 1.75, 3], SIZE_NAMES = ['Small', 'Medium', 'Big', 'Giant'], SIZE_SHORT = ['S', 'M', 'L', 'XL'];
 // the brush on the left: how many things go down at once, and how wide the land tools reach
 // some things are bigger (or smaller) than their size button says, and the biggest monsters are limited to 3 of each per island
-const GROW = { dragon: 2.6, hydra: 1.6, seaserpent: 2.2, troll: 0.62, fairy: 1, griffin: 1.2, nessie: 1.6, kraken: 2.2, chupacabra: 1 }, ONLY3 = new Set(['dragon', 'hydra', 'seaserpent']);
+const GROW = { dragon: 2.6, hydra: 1.6, seaserpent: 2.2, troll: 0.62, fairy: 1, griffin: 1.2, nessie: 1.6, kraken: 1.4, chupacabra: 1 }, ONLY3 = new Set(['dragon', 'hydra', 'seaserpent', 'nessie', 'kraken']);
 const AUTO_MAX = 6000;                  // towns, caves and spawning stop adding things by themselves past this many (you can place as many as you like)
 // people, animals and monsters are 0.7 times the size they used to be (so the islands are more to scale), except the big monsters
 const SHRINK = 0.7, growOf = id => GROW[id] || (['people', 'creatures', 'mythical', 'conspiracy'].includes(CAT[id].cat) ? SHRINK : 1);
@@ -3306,7 +3329,7 @@ function bumps(o, d, nx, nz) {
 function walkStep(o, d, sp, dt, turn) {
   for (const da of [0, 0.6, -0.6, 1.2, -1.2, 1.9, -1.9]) {
     const r = o.r + da * (o.side || 1), nx = o.x + Math.sin(r) * sp * dt, nz = o.z + Math.cos(r) * sp * dt;
-    const ok = d.move === 'swim' ? groundAt(nx, nz) < -Math.max(1.2, d.h * o.s * 0.6) : landOK(d, nx, nz);
+    const ok = d.move === 'swim' ? groundAt(nx, nz) < -(d.minDepth || Math.max(1.2, d.h * o.s * 0.6)) : landOK(d, nx, nz);   // (the Kraken can come into shallower water)
     if (!ok) { if (da === 0) return false; continue; }
     if (bumps(o, d, nx, nz)) continue;
     if (da !== 0) o.r += clamp(da * (o.side || 1), -turn * dt * 2, turn * dt * 2); else if (Math.random() < 0.01) o.side = Math.random() < 0.5 ? 1 : -1;
@@ -3445,6 +3468,7 @@ function updateLife(dt, time) {
       }
       if (d.fin) o.y = -0.55 * o.s;
       if (d.lift) o.y += d.lift * o.s;   // the mermaid swims with her head and back out of the water
+      if (o.dive) o.y -= o.dive * NESSIE_DEEP * o.s;   // (Nessie, lurking down deep)
     } else {
       o.y = Math.max(groundAt(o.x, o.z), d.amph ? -0.2 * o.s : -10);
       if (d.hop && o.moving) o.y += Math.abs(Math.sin(o.phase * 0.5)) * 0.25 * o.s;
@@ -3466,7 +3490,7 @@ function updateLife(dt, time) {
 // [health, damage, reach, how far it sees] at Medium size
 const STATS = {
   skeleton: [10, 2, 1.4, 22], zombie: [9, 1.6, 1.3, 18], demon: [22, 4, 1.8, 26], troll: [45, 6, 2.6, 22], minotaur: [35, 5, 2.2, 24],
-  nessie: [1250, 25, 5, 30], kraken: [19500 / 22, 15, 7.5, 26], bigfoot: [40, 5.5, 2.4, 20], alien: [100 / 7, 3, 1.4, 22], chupacabra: [60, 6, 1.6, 20],
+  nessie: [1250, 25, 8, 30], kraken: [19500 / 14, 15, 18, 26], bigfoot: [40, 5.5, 2.4, 20], alien: [100 / 7, 3, 1.4, 22], chupacabra: [60, 6, 1.6, 20],
   griffin: [70 / 3, 5, 2.4, 20], fairy: [2, 0, 0, 0], yeti: [40, 5.5, 2.4, 20], dragon: [900, 24, 4.5, 40], hydra: [1437.5, 18, 4, 24], seaserpent: [1000, 18, 5, 22], goblin: [7, 1.5, 1.2, 20],
   knight: [100 / 7, 3.5, 1.6, 20], king: [14, 2.5, 1.4, 18], pirate: [12, 2.6, 1.5, 18],
   lion: [26, 4.5, 1.8, 18], tiger: [26, 4.5, 1.8, 18], wolf: [12, 2.5, 1.4, 16], bear: [24, 4, 1.8, 16], polarbear: [28, 4.5, 1.9, 16], fox: [6, 1.4, 1.0, 12], croc: [20, 4, 1.8, 10], shark: [18, 4, 2.0, 14], dino: [40, 6, 2.6, 20],
@@ -3491,7 +3515,7 @@ const attacks = f => f && f !== 'animal' && f !== 'ghost';
 const isCiv = o => !!o.race && !o.soldier && !o.ruler;     // ordinary townsfolk
 function hostile(a, b) {
   const fa = a.fac, fb = b.fac;
-  if (a.inside || b.inside) return false;
+  if (a.inside || b.inside || b.dive > 0.5) return false;
   if (isCiv(a) || (isCiv(b) && a.race)) return false;          // townsfolk never start fights, and soldiers don't go after other towns' townsfolk
   if (!fa || !fb || fa === 'ghost' || fb === 'ghost' || a === b) return false;
   if (fa === 'predator') return fb !== 'predator' && !(fb === 'animal' && CAT[b.t].r * b.s > CAT[a.t].r * a.s * 1.3);   // hungry animals go after people and other animals (but not ones much bigger than them, like elephants)
@@ -4920,7 +4944,7 @@ function stepToward(o, d, tx, tz, sp, dt) {
   o.r += clamp(dy, -4 * dt, 4 * dt);
   return walkStep(o, d, sp, dt, 4);
 }
-function groundY(o, d) { return d.move === 'swim' ? (-0.35 * d.h + (d.lift || 0)) * o.s : Math.max(groundAt(o.x, o.z), d.amph ? -0.2 * o.s : -10); }
+function groundY(o, d) { return d.move === 'swim' ? (-0.35 * d.h + (d.lift || 0) - (o.dive || 0) * NESSIE_DEEP) * o.s : Math.max(groundAt(o.x, o.z), d.amph ? -0.2 * o.s : -10); }
 // one creature's fighting (or running away) this frame; true means it's busy and won't wander
 function fightStep(o, d, dt, time) {
   if (o.hitT > 0) o.hitT -= dt;
