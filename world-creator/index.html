@@ -2833,7 +2833,7 @@ for (const [id, name, breath] of [['icedragon', 'Ice dragon', 'ice'], ['stormdra
   def(id, 'legendary', name, { ice: '❄️', lightning: '⚡', water: '💧', gold: '👑' }[breath], { r: 2.2, h: 3.2, move: 'walk', speed: 2.2, update: dragonUpdate, draw: dragonDraw, legs: { len: 0.8 }, breath });
 
 // Cerberus: a huge black three-headed dog. Each head looks about on its own; to bite, one head rears back and lunges
-// while the other two snarl (just like the hydra), with red eyes, spiked collars, and a snake for a tail.
+// while the other two snarl (just like the hydra), with red eyes, spiked collars and a wagging tail.
 const CB = [0.17, 0.15, 0.16], CB2 = [0.1, 0.09, 0.1], CB_TOOTH = [0.95, 0.93, 0.85], CB_MOUTH = [0.55, 0.1, 0.12], CB_SNAKE = [0.2, 0.33, 0.18];
 const CB_NECK0 = [[-0.62, 2.75, 1.75], [0, 3.0, 1.95], [0.62, 2.75, 1.75]], CB_HEAD0 = [[-1.2, 3.55, 2.65], [0, 3.95, 2.9], [1.2, 3.55, 2.65]];
 const CB_LEGS = [[-0.75, 1.75, 1.15], [0.75, 1.75, 1.15], [-0.75, 1.75, -1.25], [0.75, 1.75, -1.25]];
@@ -2863,7 +2863,6 @@ function cerberusModels() {
     jaw: mk(g => { orb(g, 0, -0.08, 0.4, 0.24, 0.09, 0.42, CB2); orb(g, 0, 0, 0.38, 0.18, 0.04, 0.34, [0.8, 0.3, 0.35]);
       for (const s of [-1, 1]) for (let i = 0; i < 4; i++) coneS(g, s * (0.17 - i * 0.025), 0.0, 0.38 + i * 0.12, 0.028, 0.08, CB_TOOTH, 5); }),
     collar: mk(g => { cyl(g, [0, -0.12, 0], [0, 0.12, 0], 0.56, 0.56, [0.35, 0.2, 0.12], 18); for (let i = 0; i < 10; i++) { const a = i / 10 * 6.283; cyl(g, [Math.cos(a) * 0.55, 0, Math.sin(a) * 0.55], [Math.cos(a) * 0.85, 0, Math.sin(a) * 0.85], 0.07, 0.005, [0.78, 0.78, 0.82], 6); } }),
-    snakeHead: mk(g => { orb(g, 0, 0, 0.12, 0.16, 0.12, 0.24, CB_SNAKE); for (const s of [-1, 1]) orb(g, s * 0.09, 0.07, 0.22, 0.035, 0.035, 0.03, [1, 0.85, 0.1], { lo: true }); cyl(g, [0, -0.03, 0.34], [0, -0.03, 0.46], 0.015, 0.01, [0.85, 0.2, 0.3], 4); }),
   };
   return CBM;
 }
@@ -2898,18 +2897,18 @@ function cerberusDraw(o, base, time, flash) {
     setEmit(0.9); drawMesh(M.eyes, headM, flash); setEmit(0);
     drawMesh(M.jaw, mChain(headM, mT(0, -0.14, 0.15), mRx(h.open * 0.75)), flash);
   });
-  // a snake for a tail, swaying and looking about
-  const S = cTube(CB_SNAKE), SB = cBall(CB_SNAKE);
-  let x = 0, y = 2.3, z = -2.0, ang = 0, prev = [x, y, z];
-  for (let i = 0; i < 9; i++) {
-    ang += Math.sin(time * 1.8 - i * 0.6 + o.phase) * 0.16;
-    x += Math.sin(ang) * 0.42; z -= Math.cos(ang) * 0.35; y += 0.16 - i * 0.012;
-    const p = [x, y, z], r = 0.28 - i * 0.022;
-    drawMesh(SB, mChain(base, mT(prev[0], prev[1], prev[2]), mS(r)), flash); drawMesh(S, mChain(base, segM(prev, p, r)), flash); prev = p;
+  // a dog's tail: thick and furry at the base, curving up, swishing from side to side (faster when it's fighting)
+  let x = 0, y = 2.35, z = -2.05, prev = [x, y, z];
+  const wag = o.foe ? 3.2 : 1.6;
+  for (let i = 0; i < 8; i++) {
+    const sw = Math.sin(time * wag - i * 0.5 + o.phase) * (0.1 + i * 0.03);
+    x += sw; z -= 0.32 - i * 0.02; y += 0.1 + i * 0.03;
+    const p = [x, y, z], r = 0.26 - i * 0.022;
+    drawMesh(J, mChain(base, mT(prev[0], prev[1], prev[2]), mS(r * 1.05)), flash); drawMesh(T, mChain(base, segM(prev, p, r)), flash); prev = p;
   }
-  drawMesh(M.snakeHead, mChain(base, mT(x, y, z), mRy(Math.PI + Math.sin(time * 0.9 + o.phase) * 0.6), mRx(-0.3)), flash);
+  drawMesh(J, mChain(base, mT(x, y, z), mS(0.09)), flash);
 }
-def('cerberus', 'legendary', 'Cerberus', '🐶', { r: 2, h: 4.2, move: 'walk', speed: 1.8, big: true, draw: cerberusDraw, legs: { len: 1.7 } });
+def('cerberus', 'legendary', 'Cerberus', '🦴', { r: 2, h: 4.2, move: 'walk', speed: 1.8, big: true, draw: cerberusDraw, legs: { len: 1.7 } });
 
 // the Roc: a giant golden eagle with a white head and crest, huge wings and great talons
 const ROC = [0.55, 0.36, 0.16], ROCD = [0.36, 0.22, 0.1], ROCW = [0.97, 0.95, 0.9], ROCG = [0.98, 0.78, 0.2];
@@ -3146,7 +3145,7 @@ bipedDef('chupacabra', 'Chupacabra', '🐺', { cat: 'conspiracy', r: 0.7, h: 2.4
 const SIZES = [0.5, 1, 1.75, 3], SIZE_NAMES = ['Small', 'Medium', 'Big', 'Giant'], SIZE_SHORT = ['S', 'M', 'L', 'XL'];
 // the brush on the left: how many things go down at once, and how wide the land tools reach
 // some things are bigger (or smaller) than their size button says, and the biggest monsters are limited to 3 of each per island
-const GROW = { dragon: 2.6, icedragon: 2.6, stormdragon: 2.6, waterdragon: 2.6, golddragon: 2.6, cerberus: 1.6, roc: 1, hydra: 1.6, seaserpent: 2.2, troll: 0.62, fairy: 1, griffin: 1.2, nessie: 1.6, kraken: 1.4, chupacabra: 1 }, ONLY3 = new Set(['dragon', 'icedragon', 'stormdragon', 'waterdragon', 'golddragon', 'hydra', 'seaserpent', 'nessie', 'kraken']);
+const GROW = { dragon: 2.6, icedragon: 2.6, stormdragon: 2.6, waterdragon: 2.6, golddragon: 2.6, cerberus: 1.1, roc: 1, hydra: 1.6, seaserpent: 2.2, troll: 0.62, fairy: 1, griffin: 1.2, nessie: 1.6, kraken: 1.4, chupacabra: 1 }, ONLY3 = new Set(['dragon', 'icedragon', 'stormdragon', 'waterdragon', 'golddragon', 'hydra', 'seaserpent', 'nessie', 'kraken']);
 const AUTO_MAX = 6000;                  // towns, caves and spawning stop adding things by themselves past this many (you can place as many as you like)
 // people, animals and monsters are 0.7 times the size they used to be (so the islands are more to scale), except the big monsters
 const SHRINK = 0.7, growOf = id => GROW[id] || (['people', 'creatures', 'mythical', 'conspiracy', 'legendary'].includes(CAT[id].cat) ? SHRINK : 1);
@@ -3625,7 +3624,7 @@ function updateLife(dt, time) {
 const STATS = {
   skeleton: [10, 2, 1.4, 22], zombie: [9, 1.6, 1.3, 18], demon: [22, 4, 1.8, 26], troll: [45, 6, 2.6, 22], minotaur: [35, 5, 2.2, 24],
   nessie: [1250, 25, 8, 30], kraken: [19500 / 14, 15, 18, 26], bigfoot: [40, 5.5, 2.4, 20], alien: [100 / 7, 3, 1.4, 22], chupacabra: [60, 6, 1.6, 20],
-  griffin: [70 / 3, 5, 2.4, 20], fairy: [2, 0, 0, 0], yeti: [40, 5.5, 2.4, 20], dragon: [900, 24, 4.5, 40], icedragon: [900, 24, 4.5, 40], stormdragon: [900, 24, 4.5, 40], waterdragon: [900, 24, 4.5, 40], golddragon: [25000 / 26, 26, 4.5, 40], cerberus: [625, 16, 3.5, 24], roc: [900, 0, 0, 0], hydra: [1437.5, 18, 4, 24], seaserpent: [1000, 18, 5, 22], goblin: [7, 1.5, 1.2, 20],
+  griffin: [70 / 3, 5, 2.4, 20], fairy: [2, 0, 0, 0], yeti: [40, 5.5, 2.4, 20], dragon: [900, 24, 4.5, 40], icedragon: [900, 24, 4.5, 40], stormdragon: [900, 24, 4.5, 40], waterdragon: [900, 24, 4.5, 40], golddragon: [25000 / 26, 26, 4.5, 40], cerberus: [10000 / 11, 16, 3.5, 24], roc: [900, 0, 0, 0], hydra: [1437.5, 18, 4, 24], seaserpent: [1000, 18, 5, 22], goblin: [7, 1.5, 1.2, 20],
   knight: [100 / 7, 3.5, 1.6, 20], king: [14, 2.5, 1.4, 18], pirate: [12, 2.6, 1.5, 18],
   lion: [26, 4.5, 1.8, 18], tiger: [26, 4.5, 1.8, 18], wolf: [12, 2.5, 1.4, 16], bear: [24, 4, 1.8, 16], polarbear: [28, 4.5, 1.9, 16], fox: [6, 1.4, 1.0, 12], croc: [20, 4, 1.8, 10], shark: [18, 4, 2.0, 14], dino: [40, 6, 2.6, 20],
   human: [10, 2, 1.4, 18], elf: [9, 2.2, 1.6, 24], dwarf: [13, 2.5, 1.4, 16], orc: [13, 2.8, 1.5, 22], animal: [5, 0, 0, 0],
