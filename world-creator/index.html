@@ -3915,10 +3915,12 @@ function drawGear(o, shadow) {
 function drawRulerLabels() {
   let n = 0;
   for (const o of objs) {
-    if (!o.ruler || o.gone || o.inside || n > 12) continue;
-    const p = toScreen(o.x, o.y + CAT[o.t].h * o.s + 0.9, o.z); if (!p || p[2] > 140) continue;
+    if (!o.ruler || o.gone || n > 12) continue;
+    // a king or queen inside the castle still has their name up, over the castle (so you can always see who rules)
+    const stack = o.inside ? objs.filter(q => q.ruler && q.inside && q.town === o.town && !q.gone).indexOf(o) : 0;
+    const p = o.inside ? toScreen(o.x, o.y + 10.5 + stack * 1.8, o.z) : toScreen(o.x, o.y + CAT[o.t].h * o.s + 0.9, o.z); if (!p || p[2] > (o.inside ? 260 : 140)) continue;
     const el = labEl('wlab'); n++;
-    placeLab(el, p, 'wlab', '👑 ' + rulerTitle(o)); el.style.color = '#ffd23f'; el.style.opacity = '1';
+    placeLab(el, p, 'wlab', '👑 ' + rulerTitle(o) + (o.inside ? ' 🏰' : '')); el.style.color = '#ffd23f'; el.style.opacity = '1';
   }
 }
 
