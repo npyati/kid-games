@@ -73,8 +73,8 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,38px);lin
 @media (max-height:560px){#brushes button{width:44px;height:40px;font-size:11px}#brushPanel .lab{display:none}}
 #cross.show{display:block}
 #palette{position:absolute;left:50%;bottom:max(10px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(980px,calc(100vw - 20px));background:rgba(21,18,63,.86);border:3px solid var(--edge);border-radius:18px;padding:8px;box-sizing:border-box;display:flex;flex-direction:column;gap:6px}
-#cats{display:flex;gap:6px;flex-wrap:wrap}
-#cats button{padding:6px 7px;font-size:14px;flex:1;min-width:max-content}
+#cats{display:flex;gap:4px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin}
+#cats button{padding:6px 4px;font-size:13px;flex:1;min-width:max-content}
 #cats button.on{border-color:var(--sun);color:var(--sun);background:#2a2470}
 #items{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:thin}
 #items button{flex:none;padding:5px 8px;font-size:13px;min-width:76px;display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1.1}
@@ -194,6 +194,7 @@ canvas.inspecting{cursor:zoom-in}
       <div><b class="h">It's alive</b>People and creatures walk around by themselves. Birds and dragons fly, and dolphins swim in the sea. Monsters, zombies and the dragon attack; zombies turn what they bite into zombies; anything near a ghost runs away screaming. Turn <b>Fighting</b> off in the menu for calm building.</div>
       <div><b class="h">Towns</b>Put down <b>humans, elves, dwarves</b> or <b>orcs</b> (in People). With <b>Towns: People build</b> (in the menu), once <b>10</b> of a kind are together they start building a town: the town hall takes about 2 minutes, then they build their own houses one at a time. With <b>Towns: Quick</b>, one person founds a whole town at once. Orcs fight everyone else; humans sometimes start wars; elves are archers. Open <b>🏰 Towns</b> (T, or View on the controller) to make a town keep the peace or go to war with everyone.</div>
       <div><b class="h">Maps</b>Ten islands, plus four big maps: <b>Island Set</b> (seven islands, each a different land), <b>Pangea</b> (one giant supercontinent), <b>Sky Islands</b> (floating in the sky) and <b>Endless Ocean</b>. Or pick <b>🎲 Random</b>. New islands are much bigger than the first ones, and people and animals are smaller, so everything is more to scale.</div>
+      <div><b class="h">Conspiracy Theories</b>The <b>🛸 Conspiracy Theories</b> group has the <b>Loch Ness Monster</b> (in deep water, with a very long neck and a jaw full of teeth), the <b>Kraken</b> (in deep water: its tentacles wrap around whatever it catches and lift it out of the water), <b>Bigfoot</b>, the <b>Alien</b> (with a blaster that shoots glowing bolts) and the <b>Chupacabra</b>.</div>
       <div><b class="h">Fire and rain</b>In a fight, a <b>dragon</b> sometimes breathes fire instead of biting. Its fire burns what it hits and sets fires where it lands: fires burn trees, plants and buildings down slowly, hurt anyone standing in them, can spread to plants nearby, and burn out after about a minute. With Fighting off, a dragon just breathes fire at the sky now and then. The <b>✨ Special effects</b> group has <b>🌧️ Rain</b>: a dark cloud rains for 20 seconds (bigger with size) and puts out every fire under it.</div>
       <div><b class="h">Disasters</b>The <b>Disasters</b> group has a <b>tornado</b> (picks things up and throws them), a <b>tsunami</b> (a wave rolls in from the nearest sea), a <b>bomb</b>, a <b>sprinkle bomb</b> (lots of little bombs) and an <b>earthquake</b> (cracks the ground and knocks buildings down). The size buttons make them bigger. <b>Undo</b> puts things back.</div>
       <div><b class="h">Kings, queens and battles</b>Once a town starts to grow it crowns a <b>king</b>, a <b>queen</b> or both. Their town hall becomes a <b>castle</b>, and they live inside it in fancy robes, coming out for a walk now and then and whenever their town is at war. A <b>golden crown</b> treasure near the town makes their crowns grander. They train soldiers in armour who stand guard around the town and go to battle. Ordinary townsfolk never fight: they run from danger. Tap the <b>🪄 Battle wand</b> (in People) on one town, then on another, and they go to war. The <b>🕊️ Peace wand</b> does the opposite: the two towns become friends and never fight (even orcs). Bears, polar bears, foxes, crocodiles, sharks and dinosaurs are hungry: they hunt people and other animals. When a town has nobody left, its town hall explodes and it has fallen.</div>
@@ -1363,6 +1364,7 @@ const CATS = [
   { id: 'creatures', name: 'Creatures', icon: '🐾', items: [] },
   { id: 'mythical', name: 'Mythical', icon: '🐉', items: [] },
   { id: 'disasters', name: 'Disasters', icon: '🌪️', items: [] },
+  { id: 'conspiracy', name: 'Conspiracy Theories', icon: '🛸', items: [] },
   { id: 'effects', name: 'Special effects', icon: '✨', items: [] },
 ];
 const CAT = {};
@@ -1799,7 +1801,7 @@ quadDef('crab', 'Crab', '🦀', { L: 0.4, H: 0.15, W: 0.26, bodyH: 0.1, col: [0.
 } });
 // two legs
 function bipedDef(id, name, icon, o) {
-  return def(id, 'creatures', name, icon, { r: o.r, h: o.h, move: 'walk', speed: o.speed, place: o.place || 'land', body: o.body, hop: o.hop, amph: o.amph,
+  return def(id, o.cat || 'creatures', name, icon, { r: o.r, h: o.h, move: 'walk', speed: o.speed, place: o.place || 'land', body: o.body, hop: o.hop, amph: o.amph, glow: o.glow,
     legs: { at: o.legAt, amp: o.amp || 0.6, gait: o.hop ? 'hop' : 'biped', len: o.legLen, make: o.leg } });
 }
 bipedDef('chicken', 'Chicken', '🐔', { r: 0.3, h: 0.7, speed: 1.2, legAt: [[-0.08, 0.28, 0], [0.08, 0.28, 0]], legLen: 0.28,
@@ -2809,16 +2811,189 @@ birdDef('fairy', 'Fairy', '🧚', g => {
   cyl(g, [0.12, -0.02, 0.05], [0.18, 0.12, 0.14], 0.008, 0.008, [0.9, 0.9, 0.95], 4); orb(g, 0.18, 0.13, 0.14, 0.035, 0.035, 0.035, [1, 0.95, 0.4], { lo: true });   // her wand
 }, g => { const A = FAIRW[0], B = FAIRW[1]; tri(g, [0, 0, 0.02], [0.3, 0.12, 0.2], [0.32, 0.06, -0.04], [0, 1, 0], 0, A, B, A, 0, 0, 0); tri(g, [0, 0, -0.02], [0.24, -0.04, -0.06], [0.14, -0.08, -0.22], [0, 1, 0], 0, A, A, B, 0, 0, 0); },
   { r: 0.3, h: 0.5, speed: 2.4, alt: 4, amp: 0.8, rate: 16, wingAt: [0.03, 0.08, -0.05], cat: 'mythical', glowAll: true });
+/* ---------------- Conspiracy Theories: Loch Ness Monster, Kraken, Bigfoot, Alien, Chupacabra ---------------- */
+// a matrix that stretches the unit tube (radius 1, from y=0 to y=1) from point a to point b with radius r, all in the world
+function segM(a, b, r) {
+  const dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2], L = Math.hypot(dx, dy, dz) || 1e-6, yn = [dx / L, dy / L, dz / L];
+  const t = Math.abs(yn[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
+  const x = norm3(t[1] * yn[2] - t[2] * yn[1], t[2] * yn[0] - t[0] * yn[2], t[0] * yn[1] - t[1] * yn[0]);
+  const z = [x[1] * yn[2] - x[2] * yn[1], x[2] * yn[0] - x[0] * yn[2], x[0] * yn[1] - x[1] * yn[0]];
+  return new Float32Array([x[0] * r, x[1] * r, x[2] * r, 0, dx, dy, dz, 0, z[0] * r, z[1] * r, z[2] * r, 0, a[0], a[1], a[2], 1]);
+}
+const xf = (M, p) => [M[0] * p[0] + M[4] * p[1] + M[8] * p[2] + M[12], M[1] * p[0] + M[5] * p[1] + M[9] * p[2] + M[13], M[2] * p[0] + M[6] * p[1] + M[10] * p[2] + M[14]];
+const cMesh = {};
+function cmk(key, col, fn) { if (!cMesh[key]) { const g = new Geo(4096); fn(g, col); cMesh[key] = makeMesh(g); } return cMesh[key]; }
+const cTube = col => cmk('tube' + col.join(), col, g => cyl(g, [0, 0, 0], [0, 1, 0], 1, 1, col, 12, false));
+const cBall = col => cmk('ball' + col.join(), col, g => orb(g, 0, 0, 0, 1, 1, 1, col));
+
+// the Loch Ness Monster: a humped body, a very long bendy neck, a head with a real jaw and teeth, and a long swishing tail
+const NES = [0.24, 0.37, 0.3], NESB = [0.52, 0.6, 0.46], TOOTH = [0.96, 0.95, 0.86], MOUTH = [0.45, 0.1, 0.13];
+function nessieDraw(o, base, time, flash) {
+  const head = cmk('nesHead', NES, g => {
+    orb(g, 0, 0.02, 0.1, 0.36, 0.3, 0.5, NES, { grad: true }); orb(g, 0, -0.04, 0.5, 0.27, 0.15, 0.36, NES);   // skull and upper snout
+    orb(g, 0, -0.17, 0.45, 0.23, 0.035, 0.34, MOUTH, { lo: true });                                           // the inside of the mouth
+    for (let i = 0; i < 9; i++) { const a = (i / 8 - 0.5) * 2.6, x = Math.sin(a) * 0.21, z = 0.5 + Math.cos(a) * 0.32 - 0.12; coneS(g, x, -0.15, z, 0.03, -0.09, TOOTH, 5); }   // upper teeth
+    for (const s of [-1, 1]) { orb(g, s * 0.22, 0.15, 0.36, 0.08, 0.08, 0.07, [0.95, 0.85, 0.3], { lo: true }); orb(g, s * 0.25, 0.15, 0.4, 0.035, 0.06, 0.03, COL.black, { lo: true }); orb(g, s * 0.08, 0.02, 0.85, 0.03, 0.02, 0.02, COL.black, { lo: true }); }
+    for (const s of [-1, 1]) cyl(g, [s * 0.12, 0.27, 0.25], [s * 0.18, 0.2, 0.48], 0.05, 0.03, shade(NES, 0.7), 6);   // brow ridges
+  });
+  const jaw = cmk('nesJaw', NES, g => {                 // hinged at its back end
+    orb(g, 0, -0.06, 0.32, 0.24, 0.08, 0.4, NESB); orb(g, 0, 0.0, 0.3, 0.17, 0.03, 0.32, MOUTH, { lo: true });
+    for (let i = 0; i < 8; i++) { const a = (i / 7 - 0.5) * 2.4, x = Math.sin(a) * 0.18, z = 0.36 + Math.cos(a) * 0.3 - 0.1; coneS(g, x, 0.0, z, 0.028, 0.08, TOOTH, 5); }
+  });
+  const body = cmk('nesBody', NES, g => {
+    orb(g, 0, 0, 0, 1.3, 0.85, 2.6, NES, { grad: true }); orb(g, 0, -0.35, 0.1, 1.1, 0.5, 2.2, NESB);
+    orb(g, 0, 0.55, -0.6, 0.85, 0.6, 1.0, NES); orb(g, 0, 0.4, -1.7, 0.6, 0.45, 0.7, NES);           // humps
+    for (const s of [-1, 1]) { fin(g, [s * 1.0, -0.3, 1.5], [s * 1.0, -0.3, 0.8], [s * 2.3, -0.6, 0.6], 0.08, NES); fin(g, [s * 0.9, -0.3, -1.3], [s * 0.9, -0.3, -1.9], [s * 2.0, -0.6, -2.2], 0.08, NES); }
+  });
+  drawMesh(body, base, flash);
+  const T = cTube(NES), J = cBall(NES);
+  // the neck: rears back to wind up, strikes forward to bite, and sways the rest of the time
+  const tilt = 0.5 + (o.windup > 0 ? -0.35 : 0) + (o.lunge > 0 ? 0.9 * Math.min(1, o.lunge * 1.5) : 0) + Math.sin(time * 0.5 + o.phase) * 0.06;
+  let m = mChain(base, mT(0, 0.3, 2.1), mRx(tilt)), total = tilt;
+  const N = 13;
+  for (let i = 0; i < N; i++) {
+    const r = 0.52 - i * 0.02, len = 0.5, bend = 0.05 + Math.sin(time * 0.8 - i * 0.4 + o.phase) * 0.03;
+    drawMesh(J, mChain(m, mS(r)), flash); drawMesh(T, mChain(m, mS3(r, len, r)), flash);
+    m = mChain(m, mT(0, len, 0), mRx(bend), mRz(Math.sin(time * 0.7 - i * 0.35 + o.phase) * 0.04)); total += bend;
+  }
+  drawMesh(J, mChain(m, mS(0.27)), flash);
+  const hm = mChain(m, mRx(-total + (o.lunge > 0 ? 0.5 : 0.2)));         // the head looks forward (and down when it bites)
+  drawMesh(head, hm, flash);
+  const open = o.windup > 0 ? 0.65 : o.lunge > 0.3 ? 0.35 : 0.06 + Math.max(0, Math.sin(time * 0.6 + o.phase)) * 0.18;
+  drawMesh(jaw, mChain(hm, mT(0, -0.16, 0.12), mRx(open)), flash);
+  // the tail: a long tube that swishes side to side
+  let tm = mChain(base, mT(0, 0.05, -2.4), mRx(-Math.PI / 2 - 0.05));
+  for (let i = 0; i < 12; i++) {
+    const r = 0.62 * (1 - i / 12.5) + 0.04, len = 0.48;
+    drawMesh(J, mChain(tm, mS(r)), flash); drawMesh(T, mChain(tm, mS3(r, len, r)), flash);
+    tm = mChain(tm, mT(0, len, 0), mRz(Math.sin(time * 1.6 - i * 0.5 + o.phase) * (o.moving ? 0.13 : 0.06)));
+  }
+}
+swimDef('nessie', 'Loch Ness Monster', '🦕', g => {}, { cat: 'conspiracy', r: 3, h: 2, lift: 0.65, speed: 2.2, draw: nessieDraw });
+
+// the Kraken: a huge head with menacing yellow eyes, and eight long bendy tentacles; it wraps a tentacle around what it catches
+const KRK = [0.55, 0.16, 0.24], KRKD = [0.36, 0.09, 0.15], KRKL = [0.78, 0.45, 0.48];
+function krakenDraw(o, base, time, flash) {
+  const head = cmk('krkHead', KRK, g => {
+    orb(g, 0, 1.5, -0.5, 1.45, 2.1, 1.5, KRK, { grad: true }); orb(g, 0, 0.25, 0.3, 1.35, 0.95, 1.2, KRK);   // the tall head and the face below it
+    for (let i = 0; i < 14; i++) { const a = i * 2.4, y = 0.8 + (i % 5) * 0.5; orb(g, Math.sin(a) * 1.25, y, -0.5 + Math.cos(a) * 1.25, 0.14, 0.14, 0.06, KRKD, { lo: true }); }   // spots
+    for (const s of [-1, 1]) { orb(g, s * 0.72, 0.48, 1.48, 0.07, 0.3, 0.05, COL.black, { lo: true }); cyl(g, [s * 0.32, 0.72, 1.3], [s * 1.08, 0.98, 0.98], 0.11, 0.08, KRKD, 8); }   // slit pupils, angry brows
+    coneS(g, 0, 0.05, 1.32, 0.16, -0.32, [0.15, 0.12, 0.1], 8);                                                // beak
+  });
+  const eyesM = cmk('krkEyes', [1, 0.8, 0.05], (g, c) => { for (const s of [-1, 1]) orb(g, s * 0.72, 0.48, 1.12, 0.38, 0.36, 0.36, c); });
+  drawMesh(head, base, flash);
+  setEmit(0.9); drawMesh(eyesM, base, flash); setEmit(0);
+  const T = cTube(KRK), J = cBall(KRK), grab = o.grab && !o.grab.gone ? o.grab : null;
+  for (let k = 0; k < 8; k++) {
+    const a = k / 8 * 6.283 + 0.39;
+    if (k === 0 && grab) continue;
+    let m = mChain(base, mT(Math.sin(a) * 1.25, -0.4, Math.cos(a) * 1.25), mRy(a), mRx(0.75));
+    for (let i = 0; i < 15; i++) {
+      const r = 0.3 * (1 - i / 16) + 0.04, len = 0.45;
+      drawMesh(J, mChain(m, mS(r)), flash); drawMesh(T, mChain(m, mS3(r, len, r)), flash);
+      m = mChain(m, mT(0, len, 0), mRx(0.1 + 0.14 * Math.sin(time * 1.3 + i * 0.45 + k * 1.7)), mRz(0.11 * Math.sin(time * 0.9 + i * 0.35 + k * 2.3)));
+    }
+  }
+  if (grab) {                                          // one tentacle reaches out and wraps around what it caught
+    const a = 0.39, root = xf(base, [Math.sin(a) * 1.25, 0.2, Math.cos(a) * 1.25]), vh = CAT[grab.t].h * grab.s;
+    const vc = [grab.x, grab.y + vh * 0.75, grab.z], c = [(root[0] + vc[0]) / 2, Math.max(root[1], vc[1]) + 3 * o.s, (root[2] + vc[2]) / 2];
+    let prev = root;
+    for (let i = 1; i <= 16; i++) {
+      const t = i / 16, u = 1 - t, p = [u * u * root[0] + 2 * u * t * c[0] + t * t * vc[0], u * u * root[1] + 2 * u * t * c[1] + t * t * vc[1], u * u * root[2] + 2 * u * t * c[2] + t * t * vc[2]];
+      const r = (0.3 * (1 - t * 0.6) + 0.04) * o.s;
+      drawMesh(J, mChain(mT(p[0], p[1], p[2]), mS(r)), flash); drawMesh(T, segM(prev, p, r), flash); prev = p;
+    }
+    const rv = CAT[grab.t].r * grab.s * 0.85 + 0.1 * o.s;
+    for (let i = 1; i <= 18; i++) {                    // the coil, around and down
+      const an = i * 0.85 + time * 0.5, p = [grab.x + Math.cos(an) * rv, grab.y + vh * (0.75 - i / 18 * 0.55), grab.z + Math.sin(an) * rv];
+      const r = 0.13 * o.s * (1 - i / 22);
+      drawMesh(J, mChain(mT(p[0], p[1], p[2]), mS(r)), flash); drawMesh(T, segM(prev, p, r), flash); prev = p;
+    }
+  }
+}
+// holding something: lift it up out of the water in front of the head and squeeze
+function krakenUpdate(o, dt, time) {
+  const v = o.grab;
+  if (!v) return false;
+  if (v.gone || !settings.fight) { krakenLetGo(o); return false; }
+  o.moving = false;
+  let dy = Math.atan2(v.x - o.x, v.z - o.z) - o.r; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); o.r += clamp(dy, -dt, dt);
+  const tx = o.x + Math.sin(o.r) * 4.6 * o.s, tz = o.z + Math.cos(o.r) * 4.6 * o.s, ty = 1.6 * o.s + Math.sin(time * 2) * 0.3;
+  const k = Math.min(1, dt * 1.5);
+  v.x += (tx - v.x) * k; v.z += (tz - v.z) * k; v.y += (ty - v.y) * k; v.r += dt * 1.5; v.moving = true; v.phase = (v.phase || 0) + dt * 12;
+  o.sqT = (o.sqT || 0) - dt;
+  if (o.sqT <= 0) {
+    o.sqT = 1;
+    if (v.hp === undefined) { v.maxHp = v.hp = statOf(v)[0] * v.s; }
+    v.hp -= statOf(o)[1] * 0.5 * Math.sqrt(o.s); v.hitT = 0.25;
+    if (near3(o)) noiseHit('lowpass', 300, 0.8, 0.25, 0.08);
+    if (Math.random() < 0.25) say(v, pick(['Help!', 'Let go!', 'Aaah!']), '#ffd23f');
+    if (v.hp <= 0) { krakenLetGo(o); defeat(v, o); }
+  }
+  return true;
+}
+function krakenGrab(o, f) {
+  if (o.grab || f.held || CAT[f.t].move === 'fly' || CAT[f.t].r * f.s > 3) { landHit(o, f); return; }
+  o.grab = f; f.held = { kraken: o }; f.foe = null; f.fleeT = 0; o.sqT = 2;          // (it lifts its catch up and holds it a moment before the first squeeze)
+  say(f, 'Help!', '#ffd23f');
+  if (near3(o)) { noiseHit('lowpass', 500, 0.7, 0.6, 0.2, 150); tone('sawtooth', 70, 45, 1.2, 0.15, 0, 400); }
+}
+function krakenLetGo(o) {
+  const v = o.grab; o.grab = null;
+  if (!v || v.gone) return;
+  v.held = null; v.hx = v.x; v.hz = v.z; v.tx = undefined; v.y = CAT[v.t].move === 'swim' ? groundY(v, CAT[v.t]) : Math.max(groundAt(v.x, v.z), CAT[v.t].amph ? -0.2 * v.s : -10); v.pitch = 0;
+  splash(v.x, v.z, 1, 8);
+}
+swimDef('kraken', 'Kraken', '🦑', g => {}, { cat: 'conspiracy', r: 2.5, h: 2, lift: 0.7, speed: 1.6, draw: krakenDraw, update: krakenUpdate });
+
+// Bigfoot: the yeti, in brown (without the icy horns)
+const BF = [0.44, 0.29, 0.17], BFS = [0.32, 0.21, 0.14];
+personDef('bigfoot', 'Bigfoot', '🦶', { cat: 'conspiracy', k: 1.55, skin: BFS, shirt: BF, sleeve: BF, pants: BF, legCol: BF, shoes: [0.26, 0.17, 0.1], hair: BF, speed: 1.2, extra: (g, k, y) => {
+  orb(g, 0, y + 1.15 * k, 0, 0.36 * k, 0.48 * k, 0.28 * k, BF, { bump: 0.05 }); for (const s of [-1, 1]) { orb(g, s * 0.3 * k, y + 1.45 * k, 0, 0.17 * k, 0.15 * k, 0.17 * k, BF); orb(g, s * 0.12 * k, y + 0.7 * k, 0, 0.15 * k, 0.24 * k, 0.15 * k, BF); }
+  for (const s of [-1, 1]) for (let i = 0; i < 3; i++) orb(g, s * (0.28 + i * 0.025) * k, y + (1.3 - i * 0.16) * k, 0.02 * k, 0.1 * k, 0.12 * k, 0.1 * k, BF, { lo: true });
+  for (let i = 0; i < 12; i++) { const a = i / 12 * 6.283; orb(g, Math.cos(a) * 0.24 * k, y + (1.0 + (i % 3) * 0.18) * k, Math.sin(a) * 0.16 * k, 0.1 * k, 0.12 * k, 0.1 * k, shade(BF, 0.9 + (i % 3) * 0.08), { lo: true }); }
+  for (const s of [-1, 1]) orb(g, s * 0.17 * k, y + 1.78 * k, -0.02 * k, 0.07 * k, 0.15 * k, 0.12 * k, BF, { lo: true });
+  orb(g, 0, y + 1.7 * k, 0.17 * k, 0.07 * k, 0.025 * k, 0.02 * k, [0.12, 0.08, 0.06], { lo: true });
+  for (const s of [-1, 1]) coneS(g, s * 0.035 * k, y + 1.71 * k, 0.185 * k, 0.012 * k, -0.035 * k, COL.white, 4);
+} });
+
+// the Alien: green, with big dark eyes, a silver suit and a sci-fi blaster that shoots glowing bolts
+const ALG = [0.42, 0.78, 0.38], SILV = [0.74, 0.77, 0.84], BLAST = [0.22, 0.23, 0.27];
+personDef('alien', 'Alien', '👽', { cat: 'conspiracy', skin: ALG, shirt: SILV, sleeve: SILV, pants: SILV, shoes: [0.3, 0.32, 0.38], hair: null, speed: 1.4, extra: (g, k, y) => {
+  orb(g, 0, y + 1.86, -0.02, 0.22, 0.2, 0.21, ALG);                                                                  // a big round head
+  for (const s of [-1, 1]) orb(g, s * 0.085, y + 1.84, 0.16, 0.07, 0.045, 0.04, COL.black, { lo: true });            // big dark eyes
+  for (const s of [-1, 1]) { cyl(g, [s * 0.06, y + 2.02, 0], [s * 0.13, y + 2.22, -0.02], 0.012, 0.01, ALG, 5); orb(g, s * 0.13, y + 2.24, -0.02, 0.035, 0.035, 0.035, [0.5, 1, 0.5], { lo: true }); }   // antennae
+  cyl(g, [0, y + 0.95, 0], [0, y + 1.0, 0], 0.235, 0.235, BLAST, 14); orb(g, 0, y + 1.3, 0.16, 0.06, 0.06, 0.02, [0.3, 0.9, 0.4], { lo: true });   // belt and badge
+  box(g, 0.34, y + 0.92, 0.16, 0.06, 0.08, 0.22, BLAST); box(g, 0.34, y + 0.85, 0.08, 0.04, 0.12, 0.06, BLAST);    // the blaster: body and grip
+  cyl(g, [0.34, y + 0.96, 0.26], [0.34, y + 0.96, 0.42], 0.022, 0.018, [0.55, 0.57, 0.62], 8); box(g, 0.34, y + 1.0, 0.12, 0.012, 0.035, 0.1, [0.55, 0.57, 0.62]);
+  cyl(g, [0.34, y + 0.96, 0.2], [0.34, y + 0.96, 0.24], 0.03, 0.03, [0.3, 0.9, 0.4], 8);
+}, glow: { flicker: 'pulse', make: g => orb(g, 0.34, 0.96, 0.43, 0.025, 0.025, 0.025, [0.5, 1, 0.5], { lo: true }) } });
+
+// the Chupacabra: a hunched wolf-beast a bit bigger than a werewolf, with red eyes, spines down its back and claws
+const CHU = [0.36, 0.37, 0.32], CHUD = [0.24, 0.25, 0.22], CLAW = [0.92, 0.9, 0.82];
+bipedDef('chupacabra', 'Chupacabra', '🐺', { cat: 'conspiracy', r: 0.7, h: 2.4, speed: 2.4, legAt: [[-0.2, 0.95, -0.05], [0.2, 0.95, -0.05]], legLen: 0.95, amp: 0.7,
+  body: g => {
+    orb(g, 0, 1.45, 0.08, 0.4, 0.52, 0.34, CHU, { bump: 0.05 }); orb(g, 0, 1.6, 0.25, 0.36, 0.36, 0.3, CHU); orb(g, 0, 1.15, 0, 0.3, 0.25, 0.26, CHUD);   // hunched body
+    orb(g, 0, 1.98, 0.48, 0.23, 0.22, 0.26, CHU); cyl(g, [0, 1.94, 0.62], [0, 1.86, 1.0], 0.13, 0.07, CHU, 10); orb(g, 0, 1.87, 1.0, 0.05, 0.04, 0.04, COL.black, { lo: true });   // wolf head and snout
+    for (let i = 0; i < 5; i++) coneS(g, (i - 2) * 0.035, 1.8, 0.62 + i * 0.06 * 0, 0.015, -0.07, CLAW, 4);              // fangs
+    for (const s of [-1, 1]) { coneS(g, s * 0.13, 2.12, 0.42, 0.07, 0.2, CHUD, 6); cyl(g, [s * 0.38, 1.75, 0.22], [s * 0.48, 1.25, 0.42], 0.1, 0.08, CHU, 8); cyl(g, [s * 0.48, 1.25, 0.42], [s * 0.5, 0.95, 0.6], 0.08, 0.06, CHU, 8);
+      for (let c = -1; c <= 1; c++) cyl(g, [s * 0.5 + c * 0.03, 0.93, 0.62], [s * 0.5 + c * 0.04, 0.85, 0.74], 0.018, 0.004, CLAW, 4); }   // ears, long arms, claws
+    for (let i = 0; i < 8; i++) { const t = i / 7; coneS(g, 0, 2.05 - t * 0.95 + 0.02, 0.3 - t * 0.7, 0.05, 0.22 - t * 0.08, [0.3, 0.35, 0.28], 5); }   // spines down its back
+    cyl(g, [0, 1.1, -0.28], [0, 0.65, -0.85], 0.07, 0.03, CHU, 8);
+  },
+  leg: g => { cyl(g, [0, 0, 0], [0, -0.5, 0.16], 0.15, 0.11, CHU, 8); cyl(g, [0, -0.5, 0.16], [0, -0.9, -0.04], 0.09, 0.07, CHUD, 8); orb(g, 0, -0.92, 0.06, 0.09, 0.05, 0.16, CHUD, { lo: true });
+    for (let c = -1; c <= 1; c++) coneS(g, c * 0.04, -0.94, 0.2, 0.015, 0.05, CLAW, 4); },
+  glow: { flicker: 'pulse', make: g => { for (const s of [-1, 1]) orb(g, s * 0.1, 2.04, 0.68, 0.04, 0.03, 0.025, [1, 0.15, 0.1], { lo: true }); } } });
 /* =====================================================================
    Placing, erasing and undo
    ===================================================================== */
 const SIZES = [0.5, 1, 1.75, 3], SIZE_NAMES = ['Small', 'Medium', 'Big', 'Giant'], SIZE_SHORT = ['S', 'M', 'L', 'XL'];
 // the brush on the left: how many things go down at once, and how wide the land tools reach
 // some things are bigger (or smaller) than their size button says, and the biggest monsters are limited to 3 of each per island
-const GROW = { dragon: 2.6, hydra: 1.6, seaserpent: 2.2, troll: 0.62, fairy: 1, griffin: 1.2 }, ONLY3 = new Set(['dragon', 'hydra', 'seaserpent']);
+const GROW = { dragon: 2.6, hydra: 1.6, seaserpent: 2.2, troll: 0.62, fairy: 1, griffin: 1.2, nessie: 1.6, kraken: 2.2, chupacabra: 1 }, ONLY3 = new Set(['dragon', 'hydra', 'seaserpent']);
 const AUTO_MAX = 6000;                  // towns, caves and spawning stop adding things by themselves past this many (you can place as many as you like)
 // people, animals and monsters are 0.7 times the size they used to be (so the islands are more to scale), except the big monsters
-const SHRINK = 0.7, growOf = id => GROW[id] || (['people', 'creatures', 'mythical'].includes(CAT[id].cat) ? SHRINK : 1);
+const SHRINK = 0.7, growOf = id => GROW[id] || (['people', 'creatures', 'mythical', 'conspiracy'].includes(CAT[id].cat) ? SHRINK : 1);
 const sizeOf = d => SIZES[tool.size] * growOf(d.id);
 const countOf = id => { let n = 0; for (const o of objs) if (o.t === id) n++; return n; };
 const BRUSH_N = [1, 2, 3, 6, 10], BRUSH_R = [0, 3, 5, 9, 14];
@@ -3227,6 +3402,7 @@ function updateLife(dt, time) {
   updateFire(dt); updateSettlers(dt); updateTowns(dt); levelTowns(dt); buildGrid(); buildBGrid(); ghostScares(dt); corruptSpawns(dt); updateFx(dt); updateArrows(dt); updateDisasters(dt, time); caveSpawns(dt);
   for (const o of objs.slice()) {                        // (a copy: things can be beaten while we go)
     if (o.ag !== undefined) o.ag += dt / YEAR;          // one year every 2 minutes
+    if (o.held && o.held.kraken && (o.held.kraken.gone || o.held.kraken.grab !== o)) { o.held = null; o.tx = undefined; settle(o); }
     if (o.gone || o.held) continue;                      // (caught in a tornado or a wave)
     if (o.inside) continue;                              // (a king or queen inside the castle)
     const d = CAT[o.t];
@@ -3290,12 +3466,13 @@ function updateLife(dt, time) {
 // [health, damage, reach, how far it sees] at Medium size
 const STATS = {
   skeleton: [10, 2, 1.4, 22], zombie: [9, 1.6, 1.3, 18], demon: [22, 4, 1.8, 26], troll: [45, 6, 2.6, 22], minotaur: [35, 5, 2.2, 24],
+  nessie: [1250, 25, 5, 30], kraken: [19500 / 22, 15, 7.5, 26], bigfoot: [40, 5.5, 2.4, 20], alien: [100 / 7, 3, 1.4, 22], chupacabra: [60, 6, 1.6, 20],
   griffin: [70 / 3, 5, 2.4, 20], fairy: [2, 0, 0, 0], yeti: [40, 5.5, 2.4, 20], dragon: [900, 24, 4.5, 40], hydra: [1437.5, 18, 4, 24], seaserpent: [1000, 18, 5, 22], goblin: [7, 1.5, 1.2, 20],
   knight: [100 / 7, 3.5, 1.6, 20], king: [14, 2.5, 1.4, 18], pirate: [12, 2.6, 1.5, 18],
   lion: [26, 4.5, 1.8, 18], tiger: [26, 4.5, 1.8, 18], wolf: [12, 2.5, 1.4, 16], bear: [24, 4, 1.8, 16], polarbear: [28, 4.5, 1.9, 16], fox: [6, 1.4, 1.0, 12], croc: [20, 4, 1.8, 10], shark: [18, 4, 2.0, 14], dino: [40, 6, 2.6, 20],
   human: [10, 2, 1.4, 18], elf: [9, 2.2, 1.6, 24], dwarf: [13, 2.5, 1.4, 16], orc: [13, 2.8, 1.5, 22], animal: [5, 0, 0, 0],
 };
-const FACTION = { skeleton: 'undead', zombie: 'undead', demon: 'monster', yeti: 'monster', griffin: 'predator', minotaur: 'monster', dragon: 'monster', hydra: 'monster', seaserpent: 'monster',
+const FACTION = { skeleton: 'undead', zombie: 'undead', demon: 'monster', yeti: 'monster', griffin: 'predator', nessie: 'monster', kraken: 'monster', bigfoot: 'monster', alien: 'monster', chupacabra: 'predator', minotaur: 'monster', dragon: 'monster', hydra: 'monster', seaserpent: 'monster',
   troll: 'orcfriend', goblin: 'orcfriend', ghost: 'ghost',
   lion: 'predator', tiger: 'predator', wolf: 'predator', bear: 'predator', polarbear: 'predator', fox: 'predator', croc: 'predator', shark: 'predator', dino: 'predator' };
 const PEOPLE_FACS = new Set(['human', 'elf', 'dwarf']);
@@ -4257,7 +4434,7 @@ const LIKES = ['apples', 'sunny days', 'naps', 'singing', 'the sea', 'stories', 
 const JOBS = { human: ['farmer', 'baker', 'blacksmith', 'fisher', 'builder', 'shopkeeper', 'shepherd', 'carpenter'], elf: ['archer', 'gardener', 'singer', 'healer', 'scout', 'weaver'],
   dwarf: ['miner', 'blacksmith', 'brewer', 'stonemason', 'jeweller', 'tunnel digger'], orc: ['hunter', 'drummer', 'cook', 'scout', 'boar tamer', 'axe sharpener'] };
 const GENTLE_MYTH = ['unicorn', 'phoenix', 'pegasus', 'mermaid', 'fairy'];   // these get proper names and are 'he' or 'she'
-const AGE_RANGE = { dragon: [120, 900], hydra: [300, 1000], seaserpent: [200, 800], phoenix: [500, 1500], unicorn: [40, 200], pegasus: [10, 120], griffin: [20, 150], mermaid: [16, 300], yeti: [30, 300], fairy: [10, 500], ghost: [150, 600], skeleton: [80, 400],
+const AGE_RANGE = { dragon: [120, 900], hydra: [300, 1000], seaserpent: [200, 800], phoenix: [500, 1500], unicorn: [40, 200], nessie: [500, 1500], kraken: [300, 1000], bigfoot: [20, 200], alien: [50, 400], chupacabra: [5, 40], pegasus: [10, 120], griffin: [20, 150], mermaid: [16, 300], yeti: [30, 300], fairy: [10, 500], ghost: [150, 600], skeleton: [80, 400],
   zombie: [20, 90], demon: [100, 999], troll: [60, 250], minotaur: [40, 160], goblin: [8, 40], dino: [5, 30], dog: [1, 12], cat: [1, 14] };
 const hashStr = s => { let h = 7; for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); };
 function lifeInfo(o) {                    // fill in the name, age and personality the first time someone looks
@@ -4268,6 +4445,9 @@ function lifeInfo(o) {                    // fill in the name, age and personali
   if (!o.nm) {
     if (o.race) o.nm = byGn(FIRST_NAMES[o.race]);
     else if (o.t === 'mermaid' || o.t === 'fairy') o.nm = byGn(FIRST_NAMES.elf);
+    else if (o.t === 'nessie') o.nm = 'Nessie';
+    else if (o.t === 'alien') o.nm = pick(['Zorb', 'Blip', 'Xylo', 'Quark', 'Nebulo', 'Glorp', 'Zib', 'Orbo', 'Vrrp', 'Kweeble']) + '-' + (1 + Math.floor(Math.random() * 99));
+    else if (d.cat === 'conspiracy') o.nm = pick(BEAST_NAMES[0]) + pick(BEAST_NAMES[1]);
     else if (d.cat === 'mythical' && !GENTLE_MYTH.includes(o.t)) o.nm = pick(BEAST_NAMES[0]) + pick(BEAST_NAMES[1]);
     else if (d.cat === 'people') o.nm = byGn(FIRST_NAMES.human);
     else o.nm = pick(PET_NAMES);
@@ -4353,13 +4533,13 @@ function fillInspect() {
       head = `${o.ruler ? '👑' : d.icon} ${esc(title)}`;
       const doing = o.inside ? 'Inside the castle' : o.goingIn ? 'Going back into the castle' : o.race && !adult(o) && !o.held && !(o.fleeT > 0) ? (o.ag < 3 ? 'Toddling around' : 'Playing') : o.farmer && !o.farmer.gone && !o.foe && !o.march ? 'Working in the fields' : o.held ? (o.held.tor ? 'Flying around in a tornado!' : 'Being swept away by a wave!') : o.fleeT > 0 ? 'Running away!' : o.march && TOWN[o.march] ? 'Marching to battle against ' + esc(TOWN[o.march].name) : o.foe && !o.foe.gone ? 'Fighting ' + esc(o.foe.nm || CAT[o.foe.t].name.toLowerCase()) : o.flying ? 'Flying' : o.moving ? 'Walking around' : 'Resting';
       body = row('Kind', esc(kind)) + row('Age', yearsTxt(o.ag) + ' old') + (job ? row('Job', esc(job)) : '') + (t ? row('Home', esc(t.name)) : '')
-        + row('Personality', esc(o.tr)) + row('Likes', esc(o.lk))
+        + (o.race || d.cat === 'people' ? row('Personality', esc(o.tr)) + row('Likes', esc(o.lk)) : '')   // (only people have a personality and likes)
         + row('Health', healthTxt(o))
         + row('Doing', doing);
       // the story so far
-      const he = d.cat === 'mythical' && !GENTLE_MYTH.includes(o.t) ? 'it' : o.gn === 'f' ? 'she' : 'he';
+      const he = (d.cat === 'mythical' && !GENTLE_MYTH.includes(o.t)) || (d.cat === 'conspiracy' && o.t !== 'alien') ? 'it' : o.gn === 'f' ? 'she' : 'he';
       const He = he[0].toUpperCase() + he.slice(1), bits = [];
-      bits.push(o.bi ? `${esc(o.nm)} was born in ${esc(o.bi)}.` : o.mv ? `${esc(o.nm)} lives in ${esc(o.mv)}.` : o.race ? `${esc(o.nm)} came to the island with the first ${CAT[o.race].name.toLowerCase()}s.` : `${esc(o.nm)} is a ${esc(o.tr)} ${esc(d.name.toLowerCase())} who loves ${esc(o.lk)}.`);
+      bits.push(o.bi ? `${esc(o.nm)} was born in ${esc(o.bi)}.` : o.mv ? `${esc(o.nm)} lives in ${esc(o.mv)}.` : o.race ? `${esc(o.nm)} came to the island with the first ${CAT[o.race].name.toLowerCase()}s.` : d.cat === 'people' ? `${esc(o.nm)} is a ${esc(o.tr)} ${esc(d.name.toLowerCase())} who loves ${esc(o.lk)}.` : `${esc(o.nm)} is ${/^[aeiou]/i.test(d.name) ? 'an' : 'a'} ${esc(d.name.toLowerCase())} living on the island.`);
       if (o.ruler) bits.push(`${He} was crowned ruler of ${t ? esc(t.name) : 'a town'}.`);
       if (o.soldier) bits.push(`${He} joined the army to guard ${t ? esc(t.name) : 'the town'}.`);
       if (o.hv) bits.push(`${He} has brought in ${o.hv === 1 ? 'a harvest' : o.hv + ' harvests'}.`);
@@ -4697,6 +4877,13 @@ const near3 = o => Math.hypot(o.x - cam.tx, o.z - cam.tz) < cam.dist * 1.4 + 40;
 // elves shoot an arrow that flies to the target; everyone else hits up close
 let arrows = [];
 function strike(o, f) {
+  if (o.t === 'kraken') { krakenGrab(o, f); return; }
+  if (o.t === 'alien' && !o.gone && !f.gone) {              // a blaster bolt
+    arrows.push({ x: o.x + Math.sin(o.r) * 0.45 * o.s + Math.cos(o.r) * 0.34 * o.s, y: o.y + 0.96 * o.s, z: o.z + Math.cos(o.r) * 0.45 * o.s - Math.sin(o.r) * 0.34 * o.s, f, from: o, t: 0, bolt: true });
+    o.lunge = 0.3;
+    if (near3(o)) tone('square', 1900, 260, 0.16, 0.045, 0, 3000);
+    return;
+  }
   if (o.race === 'elf' && !o.gone && !f.gone) {
     arrows.push({ x: o.x + Math.sin(o.r) * 0.4 * o.s, y: o.y + 1.45 * o.s, z: o.z + Math.cos(o.r) * 0.4 * o.s, f, from: o, t: 0 });
     o.lunge = 0.5;
@@ -4708,11 +4895,11 @@ function strike(o, f) {
 function updateArrows(dt) {
   for (const a of arrows) {
     const f = a.f, tx = f.x, ty = f.y + CAT[f.t].h * f.s * 0.55, tz = f.z;
-    const dx = tx - a.x, dy = ty - a.y, dz = tz - a.z, d = Math.hypot(dx, dy, dz), sp = 32 * dt;
+    const dx = tx - a.x, dy = ty - a.y, dz = tz - a.z, d = Math.hypot(dx, dy, dz), sp = (a.bolt ? 55 : 32) * dt;
     a.t += dt; a.vx = dx / (d || 1); a.vy = dy / (d || 1); a.vz = dz / (d || 1);
     if (f.gone || a.t > 2) { a.done = true; continue; }
     if (d <= sp + 0.4) { a.done = true; if (!a.from.gone) landHit(a.from, f, true); else { f.hp = (f.hp === undefined ? statOf(f)[0] * f.s : f.hp) - 2; f.hitT = 0.25; if (f.hp <= 0) defeat(f, null); } continue; }
-    a.x += a.vx * sp; a.y += a.vy * sp + Math.sin(Math.PI * Math.min(1, a.t * 2)) * dt * 2; a.z += a.vz * sp;
+    a.x += a.vx * sp; a.y += a.vy * sp + (a.bolt ? 0 : Math.sin(Math.PI * Math.min(1, a.t * 2)) * dt * 2); a.z += a.vz * sp;
   }
   arrows = arrows.filter(a => !a.done);
 }
@@ -4770,7 +4957,7 @@ function fightStep(o, d, dt, time) {
   const st = statOf(o), dist = Math.hypot(f.x - o.x, f.z - o.z);
   if (dist > st[3] * Math.sqrt(o.s) * 1.8) { o.foe = null; return false; }
   if (o.t === 'dragon' && dragonBreath(o, f, dist, dt)) { o.y = groundY(o, d); o.tx = undefined; o.wait = 0; return true; }
-  const reach = (o.race === 'elf' ? 14 * Math.sqrt(o.s) : st[2] * o.s) + CAT[f.t].r * f.s * 0.6;   // elves are archers: they shoot from far away
+  const reach = (o.race === 'elf' || o.t === 'alien' ? 15 * Math.sqrt(o.s) : st[2] * o.s) + CAT[f.t].r * f.s * 0.6;   // elves are archers: they shoot from far away
   if (o.windup > 0) {                                  // winding up to hit
     o.windup -= dt; o.moving = false;
     let dy = Math.atan2(f.x - o.x, f.z - o.z) - o.r; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); o.r += clamp(dy, -4 * dt, 4 * dt);
@@ -4844,11 +5031,17 @@ function updateFx(dt) {
   for (const t of texts) { t.t += dt; t.y += dt * 0.8; }
   texts = texts.filter(t => t.t < 1.6);
 }
-let puffMesh = null, arrowMesh = null, rippleMesh = null;
+let puffMesh = null, arrowMesh = null, rippleMesh = null, boltMesh = null;
 function drawFx() {
   if (arrows.length) {
     if (!arrowMesh) { const g = new Geo(512); cyl(g, [0, 0, -0.45], [0, 0, 0.35], 0.025, 0.025, COL.plank, 6); coneS(g, 0, 0, 0, 0.001, 0.001, COL.iron); cyl(g, [0, 0, 0.35], [0, 0, 0.5], 0.06, 0.001, COL.iron, 6); tri(g, [0, 0, -0.45], [0, 0.1, -0.3], [0, 0, -0.25], [1, 0, 0], 0, COL.red, COL.red, COL.red, 0, 0, 0); tri(g, [0, 0, -0.45], [0.1, 0, -0.3], [0, 0, -0.25], [0, 1, 0], 0, COL.red, COL.red, COL.red, 0, 0, 0); arrowMesh = makeMesh(g); }
-    for (const a of arrows) drawMesh(arrowMesh, mChain(mT(a.x, a.y, a.z), mRy(Math.atan2(a.vx || 0, a.vz || 1)), mRx(-Math.atan2(a.vy || 0, Math.hypot(a.vx || 0, a.vz || 1))), mS(1.4)), 0);
+    for (const a of arrows) if (!a.bolt) drawMesh(arrowMesh, mChain(mT(a.x, a.y, a.z), mRy(Math.atan2(a.vx || 0, a.vz || 1)), mRx(-Math.atan2(a.vy || 0, Math.hypot(a.vx || 0, a.vz || 1))), mS(1.4)), 0);
+    if (arrows.some(a => a.bolt)) {                    // blaster bolts: short glowing streaks
+      if (!boltMesh) { const g = new Geo(512); orb(g, 0, 0, 0, 0.06, 0.06, 0.45, [0.55, 1, 0.5]); boltMesh = makeMesh(g); }
+      gl.uniform1f(progWorld.u.uEmit, 1);
+      for (const a of arrows) if (a.bolt) drawMesh(boltMesh, mChain(mT(a.x, a.y, a.z), mRy(Math.atan2(a.vx || 0, a.vz || 1)), mRx(-Math.atan2(a.vy || 0, Math.hypot(a.vx || 0, a.vz || 1)))), 0);
+      gl.uniform1f(progWorld.u.uEmit, 0);
+    }
   }
   if (ripples.length) {
     if (!rippleMesh) { const g = new Geo(1024), N = 40, c = [0.88, 0.96, 1]; for (let i = 0; i < N; i++) { const a0 = i / N * 6.283, a1 = (i + 1) / N * 6.283, c0 = Math.cos(a0), s0 = Math.sin(a0), c1 = Math.cos(a1), s1 = Math.sin(a1);
