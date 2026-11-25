@@ -3657,6 +3657,7 @@ function loadThings(data, fresh) {
       for (const k of ['ki', 'ba', 'to', 'wa', 'sc', 'an', 'hv', 'fromCave']) if (Number.isFinite(ex[k])) o[k] = clamp(ex[k] | 0, 0, 99999);
     }
     if (CAT[t].race) o.race = CAT[t].race;
+    dwarfLook(o);
   }
   updateCount();
 }
@@ -3992,7 +3993,7 @@ const RACES = {
     names: [['Brook', 'Oak', 'Mill', 'River', 'Stone', 'Green', 'Fair', 'Ash', 'Elm', 'Maple', 'Clover', 'Honey', 'Willow', 'Apple'], ['Creek', 'Hollow', 'Ford', 'Hill', 'Vale', 'Haven', 'Meadow', 'Bend', 'Field', 'Crossing']] },
   elf: { name: 'Elves', icon: '🧝', center: 'elftree', homes: [['elfhouse', 4], ['field', 1.5], ['elftower', 1]], folk: ['elf', 'elf2'],
     names: [['Silver', 'Moon', 'Star', 'Dawn', 'Mist', 'Glimmer', 'Sun', 'Dew', 'Fern', 'Lark'], ['leaf', 'glade', 'shade', 'song', 'light', 'wood', 'vale', 'brook']] },
-  dwarf: { name: 'Dwarves', icon: '🧔', center: 'dwarfhall', homes: [['dwarfhouse', 4], ['field', 1.5], ['forge', 1]], folk: ['dwarf', 'dwarf2'],
+  dwarf: { name: 'Dwarves', icon: '🧔', center: 'dwarfhall', homes: [['dwarfhouse', 4], ['field', 1.5], ['forge', 1]], folk: ['dwarf', 'dwarf2', 'dwarf3'],
     names: [['Iron', 'Stone', 'Copper', 'Granite', 'Deep', 'Gold', 'Anvil', 'Boulder', 'Coal', 'Hammer'], ['hold', 'forge', 'delve', 'peak', 'hall', 'gate', 'mine', 'rock']] },
   orc: { name: 'Orcs', icon: '👹', center: 'warcamp', homes: [['orchut', 4], ['field', 1.5], ['barn', 0.5], ['orctower', 1]], folk: ['orc', 'orc2'],
     names: [['Mud', 'Grub', 'Snarl', 'Bog', 'Thunder', 'Rust', 'Grumble', 'Fang', 'Stomp', 'Grit'], ['tusk', 'maw', 'pit', 'crag', 'camp', 'fang', 'gut', 'skull']] },
@@ -4015,6 +4016,25 @@ function dwarfExtra(g, k, y) {
 }
 racePerson('dwarf', 'dwarf', 'Dwarf', '🧔', { k: 0.74, shirt: [0.6, 0.3, 0.2], pants: [0.35, 0.28, 0.2], hair: null, speed: 1.1, extra: dwarfExtra });
 racePerson('dwarf2', 'dwarf', 'Dwarf', '🧔', { k: 0.74, shirt: [0.25, 0.4, 0.6], pants: [0.35, 0.28, 0.2], hair: null, speed: 1.1, extra: (g, k, y) => { dwarfExtra(g, k, y); orb(g, 0, y + 1.62 * k, 0.14 * k, 0.17 * k, 0.24 * k, 0.1 * k, [0.5, 0.42, 0.38]); } }, true);
+// a woman dwarf: no beard, two long braids instead (with the same helmet and axe)
+function dwarfLadyExtra(g, k, y) {
+  const HAIR = [0.7, 0.34, 0.14];
+  orb(g, 0, y + 1.9 * k, 0, 0.21 * k, 0.15 * k, 0.21 * k, [0.62, 0.64, 0.68], { cutBelow: y + 1.84 * k });
+  cyl(g, [0.36 * k, y + 0.6 * k, 0.1 * k], [0.36 * k, y + 1.4 * k, 0.1 * k], 0.03 * k, 0.03 * k, COL.wood, 8); box(g, 0.36 * k, y + 1.25 * k, 0.1 * k, 0.04 * k, 0.22 * k, 0.28 * k, COL.iron);
+  orb(g, 0, y + 1.82 * k, -0.07 * k, 0.2 * k, 0.12 * k, 0.15 * k, HAIR);                                              // hair under the helmet
+  for (const s of [-1, 1]) {
+    for (let i = 0; i < 5; i++) orb(g, s * (0.17 + i * 0.006) * k, y + (1.76 - i * 0.085) * k, (0.02 + i * 0.012) * k, 0.055 * k, 0.06 * k, 0.055 * k, HAIR, { lo: true });   // a braid
+    orb(g, s * 0.2 * k, y + 1.33 * k, 0.08 * k, 0.03 * k, 0.03 * k, 0.03 * k, [0.85, 0.7, 0.2], { lo: true });         // a gold band at the end
+    orb(g, s * 0.1 * k, y + 1.76 * k, 0.15 * k, 0.035 * k, 0.025 * k, 0.015 * k, [0.95, 0.6, 0.55], { lo: true });    // rosy cheeks
+  }
+}
+racePerson('dwarf3', 'dwarf', 'Dwarf', '🧔', { k: 0.74, shirt: [0.55, 0.25, 0.35], pants: [0.35, 0.28, 0.2], hair: null, speed: 1.1, extra: dwarfLadyExtra }, true);
+// dwarf women have braids, dwarf men have beards: make the look match who they are
+function dwarfLook(o) {
+  if (!['dwarf', 'dwarf2', 'dwarf3'].includes(o.t) || !o.gn) return;
+  if (o.gn === 'f' && o.t !== 'dwarf3') o.t = 'dwarf3';
+  else if (o.gn === 'm' && o.t === 'dwarf3') o.t = 'dwarf';
+}
 function orcExtra(g, k, y) {
   for (const s of [-1, 1]) coneS(g, s * 0.07 * k, y + 1.7 * k, 0.15 * k, 0.025 * k, 0.09 * k, COL.cream, 6);
   orb(g, 0, y + 1.96 * k, -0.05 * k, 0.06 * k, 0.1 * k, 0.06 * k, COL.black, { lo: true });
@@ -4437,7 +4457,7 @@ function crownRulers(t, folk) {
   const names = [];
   kinds.forEach((k, i) => {
     const o = civ[i]; if (!o) return;
-    o.ruler = k; o.rname = pick(RULER_NAMES[t.race][k === 'king' ? 0 : 1]); o.nm = o.rname; o.gn = k === 'queen' ? 'f' : 'm'; o.hx = t.x; o.hz = t.z;
+    o.ruler = k; o.rname = pick(RULER_NAMES[t.race][k === 'king' ? 0 : 1]); o.nm = o.rname; o.gn = k === 'queen' ? 'f' : 'm'; dwarfLook(o); o.hx = t.x; o.hz = t.z;
     o.maxHp = o.hp = (statOf(o)[0] * 2.5) * o.s;
     names.push(rulerTitle(o));
   });
@@ -4885,7 +4905,8 @@ const AGE_RANGE = { killerrobot: [1, 30], alienrobot: [1, 60], owlbear: [3, 40],
 const hashStr = s => { let h = 7; for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); };
 function lifeInfo(o) {                    // fill in the name, age and personality the first time someone looks
   const d = CAT[o.t];
-  if (!o.gn) o.gn = o.ruler ? (o.ruler === 'queen' ? 'f' : 'm') : o.t === 'human3' ? 'f' : Math.random() < 0.5 ? 'f' : 'm';
+  if (!o.gn) o.gn = o.ruler ? (o.ruler === 'queen' ? 'f' : 'm') : o.t === 'human3' || o.t === 'dwarf3' ? 'f' : o.t === 'dwarf' || o.t === 'dwarf2' ? 'm' : Math.random() < 0.5 ? 'f' : 'm';
+  dwarfLook(o);
   if (o.ruler && o.rname) o.nm = o.rname;
   const byGn = list => pick(list.filter((n, i) => (i % 2 === 1) === (o.gn === 'f')));
   if (!o.nm) {
