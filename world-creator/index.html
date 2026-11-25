@@ -321,8 +321,8 @@ const owns = id => !id || shop.free || shop.own.includes(id);
 })();
 // what's for sale
 const SHOP_ITEMS = [
-  { id: 'killerrobot', icon: '🤖', name: 'Killer robot', desc: 'A tall metal robot with a glowing red eye and an arm cannon that shoots red lasers. ❤️ 2,000.', price: 30000, creature: 'killerrobot' },
-  { id: 'alienrobot', icon: '👾', name: 'Alien robot', desc: 'A silver robot with a little green alien inside its glass dome, and a blaster. ❤️ 1,500.', price: 45000, creature: 'alienrobot' },
+  { id: 'killerrobot', icon: '🤖', name: 'Killer robot', desc: 'A tall metal robot with a glowing red eye and an arm cannon that shoots red lasers. ❤️ 300.', price: 30000, creature: 'killerrobot' },
+  { id: 'alienrobot', icon: '👾', name: 'Alien robot', desc: 'A silver robot with a little green alien inside its glass dome, and a blaster. ❤️ 300.', price: 45000, creature: 'alienrobot' },
   { id: 'owlbear', icon: '🦉', name: 'Owlbear', desc: 'A big bulky bear with an owl’s head, huge eyes and a hooked beak. The strongest of these three: it hunts, and bites hardest. ❤️ 2,500.', price: 50000, creature: 'owlbear' },
   { id: 'fx_snow', icon: '❄️', name: 'Snow', desc: 'A cloud that snows for 20 seconds, and puts out fires.', price: 5000 },
   { id: 'fx_rainbow', icon: '🌈', name: 'Rainbow', desc: 'A big rainbow over the island for 30 seconds.', price: 5000 },
@@ -3824,7 +3824,7 @@ function updateLife(dt, time) {
 // [health, damage, reach, how far it sees] at Medium size
 const STATS = {
   skeleton: [10, 2, 1.4, 22], zombie: [9, 1.6, 1.3, 18], demon: [22, 4, 1.8, 26], troll: [45, 6, 2.6, 22], minotaur: [35, 5, 2.2, 24],
-  killerrobot: [200, 8, 1.6, 26], alienrobot: [150, 6, 1.4, 24], owlbear: [200, 12, 2, 20],
+  killerrobot: [30, 8, 1.6, 26], alienrobot: [30, 6, 1.4, 24], owlbear: [200, 12, 2, 20],
   nessie: [1250, 25, 8, 30], kraken: [19500 / 14, 15, 18, 26], bigfoot: [40, 5.5, 2.4, 20], alien: [100 / 7, 3, 1.4, 22], chupacabra: [60, 6, 1.6, 20],
   griffin: [70 / 3, 5, 2.4, 20], fairy: [2, 0, 0, 0], yeti: [40, 5.5, 2.4, 20], dragon: [900, 24, 4.5, 40], icedragon: [900, 24, 4.5, 40], stormdragon: [900, 24, 4.5, 40], waterdragon: [900, 24, 4.5, 40], golddragon: [25000 / 34, 26, 4.5, 40], cosmicdragon: [35000 / 46, 40, 4.5, 45], cerberus: [10000 / 6, 16, 3.5, 24], roc: [900, 0, 0, 0], hydra: [1437.5, 18, 4, 24], seaserpent: [1000, 18, 5, 22], goblin: [7, 1.5, 1.2, 20],
   knight: [100 / 7, 3.5, 1.6, 20], king: [14, 2.5, 1.4, 18], pirate: [12, 2.6, 1.5, 18],
