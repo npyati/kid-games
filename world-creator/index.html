@@ -321,9 +321,9 @@ const owns = id => !id || shop.free || shop.own.includes(id);
 })();
 // what's for sale
 const SHOP_ITEMS = [
-  { id: 'killerrobot', icon: '🤖', name: 'Killer robot', desc: 'A tall metal robot with a glowing red eye and an arm cannon that shoots red lasers. ❤️ 300.', price: 30000, creature: 'killerrobot' },
+  { id: 'killerrobot', icon: '🤖', name: 'Killer robot', desc: 'A metal robot with a glowing red eye and an arm cannon that shoots red lasers. ❤️ 300.', price: 30000, creature: 'killerrobot' },
   { id: 'alienrobot', icon: '👾', name: 'Alien robot', desc: 'A silver robot with a little green alien inside its glass dome, and a blaster. ❤️ 300.', price: 45000, creature: 'alienrobot' },
-  { id: 'owlbear', icon: '🦉', name: 'Owlbear', desc: 'A big bulky bear with an owl’s head, huge eyes and a hooked beak. The strongest of these three: it hunts, and bites hardest. ❤️ 2,500.', price: 50000, creature: 'owlbear' },
+  { id: 'owlbear', icon: '🦉', name: 'Owlbear', desc: 'A big bulky bear with an owl’s head, huge eyes and a hooked beak. The strongest of these three: it hunts, and bites hardest. ❤️ 500.', price: 50000, creature: 'owlbear' },
   { id: 'fx_snow', icon: '❄️', name: 'Snow', desc: 'A cloud that snows for 20 seconds, and puts out fires.', price: 5000 },
   { id: 'fx_rainbow', icon: '🌈', name: 'Rainbow', desc: 'A big rainbow over the island for 30 seconds.', price: 5000 },
   { id: 'sky_sunset', icon: '🌅', name: 'Sunset sky', desc: 'An orange and purple sky over every island.', price: 15, sky: [[1, 0.62, 0.42], [0.32, 0.28, 0.55]] },
@@ -3412,7 +3412,7 @@ for (const id of CATS.find(c => c.id === 'legendary').items) CAT[id].shop = id =
 const SIZES = [0.5, 1, 1.75, 3], SIZE_NAMES = ['Small', 'Medium', 'Big', 'Giant'], SIZE_SHORT = ['S', 'M', 'L', 'XL'];
 // the brush on the left: how many things go down at once, and how wide the land tools reach
 // some things are bigger (or smaller) than their size button says, and the biggest monsters are limited to 3 of each per island
-const GROW = { dragon: 2.6, icedragon: 2.6, stormdragon: 2.6, waterdragon: 2.6, golddragon: 3.4, cosmicdragon: 4.6, cerberus: 0.6, roc: 1, killerrobot: 1, alienrobot: 1, owlbear: 1.25, hydra: 1.6, seaserpent: 2.2, troll: 0.62, fairy: 1, griffin: 1.2, nessie: 1.6, kraken: 1.4, chupacabra: 1 }, ONLY3 = new Set(['dragon', 'icedragon', 'stormdragon', 'waterdragon', 'golddragon', 'cosmicdragon', 'hydra', 'seaserpent', 'nessie', 'kraken']);
+const GROW = { dragon: 2.6, icedragon: 2.6, stormdragon: 2.6, waterdragon: 2.6, golddragon: 3.4, cosmicdragon: 4.6, cerberus: 0.6, roc: 1, killerrobot: 0.52, alienrobot: 0.61, owlbear: 1.25, hydra: 1.6, seaserpent: 2.2, troll: 0.62, fairy: 1, griffin: 1.2, nessie: 1.6, kraken: 1.4, chupacabra: 1 }, ONLY3 = new Set(['dragon', 'icedragon', 'stormdragon', 'waterdragon', 'golddragon', 'cosmicdragon', 'hydra', 'seaserpent', 'nessie', 'kraken']);
 const AUTO_MAX = 6000;                  // towns, caves and spawning stop adding things by themselves past this many (you can place as many as you like)
 // people, animals and monsters are 0.7 times the size they used to be (so the islands are more to scale), except the big monsters
 const SHRINK = 0.7, growOf = id => GROW[id] || (['people', 'creatures', 'mythical', 'conspiracy', 'legendary', 'shopcreatures'].includes(CAT[id].cat) ? SHRINK : 1);
@@ -3900,7 +3900,7 @@ function updateLife(dt, time) {
 // [health, damage, reach, how far it sees] at Medium size
 const STATS = {
   skeleton: [10, 2, 1.4, 22], zombie: [9, 1.6, 1.3, 18], demon: [22, 4, 1.8, 26], troll: [45, 6, 2.6, 22], minotaur: [35, 5, 2.2, 24],
-  killerrobot: [30, 8, 1.6, 26], alienrobot: [30, 6, 1.4, 24], owlbear: [200, 12, 2, 20],
+  killerrobot: [300 / 5.2, 8, 1.6, 26], alienrobot: [300 / 6.1, 6, 1.4, 24], owlbear: [40, 12, 2, 20],
   nessie: [1250, 25, 8, 30], kraken: [19500 / 14, 15, 18, 26], bigfoot: [40, 5.5, 2.4, 20], alien: [100 / 7, 3, 1.4, 22], chupacabra: [60, 6, 1.6, 20],
   griffin: [70 / 3, 5, 2.4, 20], fairy: [2, 0, 0, 0], yeti: [40, 5.5, 2.4, 20], dragon: [900, 24, 4.5, 40], icedragon: [900, 24, 4.5, 40], stormdragon: [900, 24, 4.5, 40], waterdragon: [900, 24, 4.5, 40], golddragon: [25000 / 34, 26, 4.5, 40], cosmicdragon: [35000 / 46, 40, 4.5, 45], cerberus: [10000 / 6, 16, 3.5, 24], roc: [900, 0, 0, 0], hydra: [1437.5, 18, 4, 24], seaserpent: [1000, 18, 5, 22], goblin: [7, 1.5, 1.2, 20],
   knight: [100 / 7, 3.5, 1.6, 20], king: [14, 2.5, 1.4, 18], pirate: [12, 2.6, 1.5, 18],
