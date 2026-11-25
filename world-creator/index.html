@@ -105,7 +105,7 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,38px);lin
 .freeNote{color:var(--sun);text-align:center;font-weight:800;margin:4px 0}
 #items button.locked{opacity:.6}
 #items .price{display:block;font-size:10px;color:var(--sun)}
-#cats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+#cats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px}
 @media (max-width:700px){#cats{grid-template-columns:repeat(3,minmax(0,1fr))}}
 #cats button{padding:6px 4px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #cats button.on{border-color:var(--sun);color:var(--sun);background:#2a2470}
@@ -1495,6 +1495,7 @@ const CATS = [
   { id: 'disasters', name: 'Disasters', icon: '🌪️', items: [] },
   { id: 'legendary', name: 'Legendary', icon: '⭐', items: [] },
   { id: 'conspiracy', name: 'Conspiracy Theories', icon: '🛸', items: [] },
+  { id: 'shopcreatures', name: 'Shop creatures', icon: '🛒', items: [] },
   { id: 'effects', name: 'Special effects', icon: '✨', items: [] },
 ];
 const CAT = {};
@@ -3350,7 +3351,7 @@ bipedDef('chupacabra', 'Chupacabra', '🐺', { cat: 'conspiracy', r: 0.7, h: 2.4
 /* ---------------- Shop creatures: the Killer robot, the Alien robot and the Owlbear ---------------- */
 // the Killer robot: tall and metal, a boxy head with a glowing red eye-slit, armour plates, and an arm cannon that shoots red laser bolts
 const KR = [0.44, 0.46, 0.52], KR2 = [0.3, 0.32, 0.37], KRD = [0.16, 0.17, 0.2], KRR = [1, 0.15, 0.1];
-personDef('killerrobot', 'Killer robot', '🤖', { cat: 'conspiracy', k: 1.35, skin: KR, shirt: KR2, sleeve: KR, pants: KRD, legCol: KR2, shoes: KRD, hair: null, speed: 1.1, extra: (g, k, y) => {
+personDef('killerrobot', 'Killer robot', '🤖', { cat: 'shopcreatures', k: 1.35, skin: KR, shirt: KR2, sleeve: KR, pants: KRD, legCol: KR2, shoes: KRD, hair: null, speed: 1.1, extra: (g, k, y) => {
   box(g, 0, y + 1.6 * k, 0, 0.46 * k, 0.42 * k, 0.46 * k, KR);                                         // a boxy head
   box(g, 0, y + 1.76 * k, 0.21 * k, 0.36 * k, 0.07 * k, 0.06 * k, KRD);                               // the visor slot
   cyl(g, [0.14 * k, y + 2.02 * k, 0], [0.18 * k, y + 2.3 * k, 0], 0.015 * k, 0.012 * k, KRD, 5); orb(g, 0.18 * k, y + 2.31 * k, 0, 0.03 * k, 0.03 * k, 0.03 * k, KRR, { lo: true });   // antenna
@@ -3362,7 +3363,7 @@ personDef('killerrobot', 'Killer robot', '🤖', { cat: 'conspiracy', k: 1.35, s
 
 // the Alien robot: a silver robot body with a green alien's head inside a glass dome frame, and a blaster that shoots green bolts
 const AR = [0.78, 0.8, 0.86], AR2 = [0.55, 0.57, 0.64], ARG = [0.42, 0.85, 0.4], ARC = [0.4, 0.95, 1];
-personDef('alienrobot', 'Alien robot', '👾', { cat: 'conspiracy', k: 1.15, skin: AR, shirt: AR, sleeve: AR2, pants: AR2, legCol: AR, shoes: [0.3, 0.32, 0.38], hair: null, speed: 1.3, extra: (g, k, y) => {
+personDef('alienrobot', 'Alien robot', '👾', { cat: 'shopcreatures', k: 1.15, skin: AR, shirt: AR, sleeve: AR2, pants: AR2, legCol: AR, shoes: [0.3, 0.32, 0.38], hair: null, speed: 1.3, extra: (g, k, y) => {
   orb(g, 0, y + 1.86 * k, 0, 0.23 * k, 0.22 * k, 0.22 * k, ARG);                                     // the alien inside
   for (const s of [-1, 1]) orb(g, s * 0.09 * k, y + 1.86 * k, 0.17 * k, 0.07 * k, 0.045 * k, 0.04 * k, COL.black, { lo: true });
   cyl(g, [0, y + 1.6 * k, 0], [0, y + 1.66 * k, 0], 0.3 * k, 0.3 * k, AR2, 20);                          // the collar ring the dome sits on
@@ -3376,7 +3377,7 @@ personDef('alienrobot', 'Alien robot', '👾', { cat: 'conspiracy', k: 1.15, ski
 // a two-part hooked beak, tall ear tufts and crown feathers; a ruff round its neck, overlapping feathers on its chest and front that
 // turn into shaggy bear fur and a shoulder hump further back; furry legs with big paws and long claws; and a fanned feather tail.
 const OB = [0.45, 0.3, 0.18], OBF = [0.72, 0.58, 0.4], OBD = [0.28, 0.18, 0.1], OBW = [0.9, 0.82, 0.66], OBC = [0.93, 0.9, 0.82], OBK = [0.95, 0.78, 0.22];
-quadDef('owlbear', 'Owlbear', '🦉', { cat: 'mythical', L: 1.9, H: 1.15, W: 0.64, bodyH: 0.64, col: OB, legR: 0.2, hoof: OBD, speed: 1.6, fluffy: true, headY: 0.7,
+quadDef('owlbear', 'Owlbear', '🦉', { cat: 'shopcreatures', L: 1.9, H: 1.15, W: 0.64, bodyH: 0.64, col: OB, legR: 0.2, hoof: OBD, speed: 1.6, fluffy: true, headY: 0.7,
   paw: (g, fy) => { orb(g, 0, fy + 0.04, 0.08, 0.23, 0.1, 0.27, OB, { bump: 0.05 }); for (let c = -1.5; c <= 1.5; c++) { orb(g, c * 0.09, fy + 0.03, 0.3, 0.05, 0.045, 0.06, OBD, { lo: true }); cyl(g, [c * 0.09, fy + 0.04, 0.34], [c * 0.11, fy - 0.02, 0.5], 0.03, 0.004, OBC, 5); } },
   head: g => {
     orb(g, 0, 1.85, 1.05, 0.42, 0.42, 0.38, OB, { bump: 0.04 });                                                       // the owl head
@@ -3387,7 +3388,7 @@ quadDef('owlbear', 'Owlbear', '🦉', { cat: 'mythical', L: 1.9, H: 1.15, W: 0.6
       for (let i = 0; i < 3; i++) cyl(g, [s * (0.22 + i * 0.03), 2.15, 1.0 - i * 0.03], [s * (0.3 + i * 0.05), 2.5 - i * 0.07, 0.9 - i * 0.05], 0.05, 0.008, i ? OB : OBD, 5);   // tall ear tufts
       for (let i = 0; i < 4; i++) orb(g, s * 0.34, 1.75 - i * 0.07, 1.12 - i * 0.04, 0.09, 0.06, 0.1, i % 2 ? OBF : OB, { lo: true });   // cheek feathers
     }
-    for (let i = 0; i < 7; i++) orb(g, (i % 3 - 1) * 0.12, 2.18 - Math.floor(i / 3) * 0.04, 1.08 - Math.floor(i / 3) * 0.16, 0.12, 0.05, 0.12, i % 2 ? OBD : OB, { lo: true });   // layered crown feathers
+    for (let i = 0; i < 7; i++) orb(g, (i % 3 - 1) * 0.11, 2.2 - Math.floor(i / 3) * 0.06, 1.1 - Math.floor(i / 3) * 0.1, 0.12, 0.05, 0.12, i % 2 ? OBD : OB, { lo: true });   // layered crown feathers
     cyl(g, [0, 1.84, 1.44], [0, 1.66, 1.6], 0.075, 0.02, OBK, 8); cyl(g, [0, 1.66, 1.6], [0, 1.55, 1.54], 0.022, 0.005, OBK, 6);   // the hooked upper beak
     cyl(g, [0, 1.7, 1.45], [0, 1.62, 1.53], 0.05, 0.015, shade(OBK, 0.8), 6);                                         // the lower beak
     for (const s of [-1, 1]) orb(g, s * 0.03, 1.78, 1.51, 0.012, 0.01, 0.008, OBD, { lo: true });                    // nostrils
@@ -3397,9 +3398,10 @@ quadDef('owlbear', 'Owlbear', '🦉', { cat: 'mythical', L: 1.9, H: 1.15, W: 0.6
   },
   tail: g => { for (let i = 0; i < 7; i++) { const a = (i - 3) * 0.22; tri(g, [0, 1.2, -0.85], [Math.sin(a) * 0.55 - 0.06, 1.0 + Math.cos(a) * 0.1, -0.85 - Math.cos(a) * 0.5], [Math.sin(a) * 0.55 + 0.06, 1.0 + Math.cos(a) * 0.1, -0.85 - Math.cos(a) * 0.5], [0, 1, 0], 0, OB, i % 2 ? OBD : OBF, OBD, 0, 0, 0); } },
   extra: g => {
-    for (let i = 0; i < 12; i++) { const a = i / 12 * 6.283; orb(g, Math.cos(a) * 0.55, 1.5 + Math.sin(i * 1.7) * 0.1, Math.sin(a) * 0.5 + 0.3, 0.16, 0.12, 0.16, i % 2 ? OBF : OB, { lo: true }); }   // feathers round the shoulders
+    const onBody = (z, a) => { const f = Math.sqrt(Math.max(0, 1 - (z / 0.95) ** 2)) * 0.98; return [Math.sin(a) * 0.64 * f, 1.15 + Math.cos(a) * 0.64 * f, z]; };   // a point on the body's surface (a = angle round from the top)
+    for (let i = 0; i < 12; i++) { const [x, y, z] = onBody(0.15 + (i % 3) * 0.2, (i / 12 - 0.5) * 3.4); orb(g, x, y, z, 0.16, 0.12, 0.16, i % 2 ? OBF : OB, { lo: true }); }   // feathers round the shoulders
     orb(g, 0, 1.68, -0.05, 0.45, 0.28, 0.5, OB, { bump: 0.06 });                                                      // a bear's shoulder hump
-    for (let i = 0; i < 30; i++) { const a = i * 2.4, z = -0.85 + (i % 6) * 0.2, yy = 1.35 + Math.cos(a) * 0.35; coneS(g, Math.sin(a) * 0.6, yy, z, 0.05, -0.1, i % 3 ? OB : shade(OB, 0.85), 5); }   // shaggy bear fur on the back half
+    for (let i = 0; i < 30; i++) { const [x, y, z] = onBody(-0.8 + (i % 6) * 0.17, Math.sin(i * 2.4) * 1.5); coneS(g, x, y + 0.04, z, 0.05, -0.12, i % 3 ? OB : shade(OB, 0.85), 5); }   // shaggy bear fur on the back half
   } });
 /* =====================================================================
    Placing, erasing and undo
@@ -3413,7 +3415,7 @@ const SIZES = [0.5, 1, 1.75, 3], SIZE_NAMES = ['Small', 'Medium', 'Big', 'Giant'
 const GROW = { dragon: 2.6, icedragon: 2.6, stormdragon: 2.6, waterdragon: 2.6, golddragon: 3.4, cosmicdragon: 4.6, cerberus: 0.6, roc: 1, killerrobot: 1, alienrobot: 1, owlbear: 1.25, hydra: 1.6, seaserpent: 2.2, troll: 0.62, fairy: 1, griffin: 1.2, nessie: 1.6, kraken: 1.4, chupacabra: 1 }, ONLY3 = new Set(['dragon', 'icedragon', 'stormdragon', 'waterdragon', 'golddragon', 'cosmicdragon', 'hydra', 'seaserpent', 'nessie', 'kraken']);
 const AUTO_MAX = 6000;                  // towns, caves and spawning stop adding things by themselves past this many (you can place as many as you like)
 // people, animals and monsters are 0.7 times the size they used to be (so the islands are more to scale), except the big monsters
-const SHRINK = 0.7, growOf = id => GROW[id] || (['people', 'creatures', 'mythical', 'conspiracy', 'legendary'].includes(CAT[id].cat) ? SHRINK : 1);
+const SHRINK = 0.7, growOf = id => GROW[id] || (['people', 'creatures', 'mythical', 'conspiracy', 'legendary', 'shopcreatures'].includes(CAT[id].cat) ? SHRINK : 1);
 const sizeOf = d => SIZES[tool.size] * growOf(d.id);
 const countOf = id => { let n = 0; for (const o of objs) if (o.t === id) n++; return n; };
 const BRUSH_N = [1, 2, 3, 6, 10], BRUSH_R = [0, 3, 5, 9, 14];
@@ -3516,7 +3518,7 @@ function placeAt(hit) {
   }
   if (!made) { if (!grp.adds.length && !grp.dels.length && !grp.land) undoStack.splice(undoStack.indexOf(grp), 1), curGroup = null; sfx('nope'); toast(d.place === 'water' ? `${d.icon} ${d.name} needs deep water with room to swim` : clashMsg ? `${d.icon} No room: that's on top of another building` : `${d.icon} ${d.name} goes on land`, 1500); return false; }
   achieve('placed');                                     // (one per click, however many the brush puts down)
-  { const cc = { creatures: 'creatures', people: 'people', build: 'buildings', treasure: 'treasure', mythical: 'mythical', legendary: 'mythical', conspiracy: 'mythical' }[d.cat]; if (cc) achieve(cc); }
+  { const cc = { creatures: 'creatures', people: 'people', build: 'buildings', treasure: 'treasure', mythical: 'mythical', legendary: 'mythical', conspiracy: 'mythical', shopcreatures: 'mythical' }[d.cat]; if (cc) achieve(cc); }
   if (tool.size === 3) achieve('giant');
   if (countOf(d.id) === made) achieve('kinds');
   dirty = true; sfx(d.big || s >= 1.75 ? 'big' : 'place'); rumble(0.2, 0.3, 60);
@@ -4893,7 +4895,7 @@ function lifeInfo(o) {                    // fill in the name, age and personali
     else if (o.t === 'killerrobot') o.nm = pick(['KR', 'XR', 'ZX', 'MK', 'RX', 'T']) + '-' + (100 + Math.floor(Math.random() * 900));
     else if (o.t === 'alienrobot') o.nm = pick(['Zorb', 'Blip', 'Xylo', 'Quark', 'Glorp', 'Orbo']) + '-bot ' + (1 + Math.floor(Math.random() * 9));
     else if (o.t === 'alien') o.nm = pick(['Zorb', 'Blip', 'Xylo', 'Quark', 'Nebulo', 'Glorp', 'Zib', 'Orbo', 'Vrrp', 'Kweeble']) + '-' + (1 + Math.floor(Math.random() * 99));
-    else if (d.cat === 'conspiracy' || d.cat === 'legendary') o.nm = pick(BEAST_NAMES[0]) + pick(BEAST_NAMES[1]);
+    else if (d.cat === 'conspiracy' || d.cat === 'legendary' || d.cat === 'shopcreatures') o.nm = pick(BEAST_NAMES[0]) + pick(BEAST_NAMES[1]);
     else if (d.cat === 'mythical' && !GENTLE_MYTH.includes(o.t)) o.nm = pick(BEAST_NAMES[0]) + pick(BEAST_NAMES[1]);
     else if (d.cat === 'people') o.nm = byGn(FIRST_NAMES.human);
     else o.nm = pick(PET_NAMES);
@@ -4983,7 +4985,7 @@ function fillInspect() {
         + row('Health', healthTxt(o))
         + row('Doing', doing);
       // the story so far
-      const he = (d.cat === 'mythical' && !GENTLE_MYTH.includes(o.t)) || (d.cat === 'conspiracy' && o.t !== 'alien') || o.t === 'owlbear' || d.cat === 'legendary' ? 'it' : o.gn === 'f' ? 'she' : 'he';
+      const he = (d.cat === 'mythical' && !GENTLE_MYTH.includes(o.t)) || (d.cat === 'conspiracy' && o.t !== 'alien') || d.cat === 'shopcreatures' || d.cat === 'legendary' ? 'it' : o.gn === 'f' ? 'she' : 'he';
       const He = he[0].toUpperCase() + he.slice(1), bits = [];
       bits.push(o.bi ? `${esc(o.nm)} was born in ${esc(o.bi)}.` : o.mv ? `${esc(o.nm)} lives in ${esc(o.mv)}.` : o.race ? `${esc(o.nm)} came to the island with the first ${CAT[o.race].name.toLowerCase()}s.` : d.cat === 'people' ? `${esc(o.nm)} is a ${esc(o.tr)} ${esc(d.name.toLowerCase())} who loves ${esc(o.lk)}.` : `${esc(o.nm)} is ${/^[aeiou]/i.test(d.name) ? 'an' : 'a'} ${esc(d.name.toLowerCase())} living on the island.`);
       if (o.ruler) bits.push(`${He} was crowned ruler of ${t ? esc(t.name) : 'a town'}.`);
