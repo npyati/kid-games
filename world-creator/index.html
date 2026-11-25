@@ -73,7 +73,21 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,38px);lin
 @media (max-height:560px){#brushes button{width:44px;height:40px;font-size:11px}#brushPanel .lab{display:none}}
 #cross.show{display:block}
 #palette{position:absolute;left:50%;bottom:max(10px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(980px,calc(100vw - 20px));background:rgba(21,18,63,.86);border:3px solid var(--edge);border-radius:18px;padding:8px;box-sizing:border-box;display:flex;flex-direction:column;gap:6px}
-#shop .panel{max-width:780px}
+#shop .panel{max-width:900px}
+#shopList .bigrow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:4px 0 6px}
+@media (max-width:700px){#shopList .bigrow{grid-template-columns:1fr}}
+#shopList .big{display:flex;flex-direction:column;gap:6px;background:var(--night);border:3px solid var(--edge);border-radius:16px;padding:10px;min-height:270px;min-width:0}
+#shopList .big.star{border-color:var(--sun);background:linear-gradient(160deg,#2b1d5e,#140f3a 60%,#3a1650)}
+#shopList .big.owned{opacity:.9}
+#shopList .big .bt{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center}
+#shopList .big .bt b{font-family:var(--display);font-weight:400;font-size:20px;color:var(--cream)}
+#shopList .big .bd{flex:1;font-size:13px;color:var(--muted);text-align:center;display:flex;align-items:center;justify-content:center}
+#shopList .minis{display:flex;flex-wrap:wrap;justify-content:center;gap:4px}
+#shopList .mini{display:flex;flex-direction:column;align-items:center;width:62px;font-size:10px;color:var(--muted);text-align:center;line-height:1.1}
+#shopList .mini img{width:56px;height:56px;border-radius:10px;background:rgba(255,255,255,.06)}
+#shopList .minis.one .mini{width:150px;font-size:12px}
+#shopList .minis.one .mini img{width:140px;height:140px}
+#shopList .cimg{width:44px;height:44px;border-radius:8px;background:rgba(255,255,255,.06)}
 .coins{font-family:var(--display);color:var(--sun);font-size:24px;margin-left:auto;margin-right:12px}
 .shoptabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
 .shoptabs button.on{border-color:var(--sun);color:var(--sun);background:#2a2470}
@@ -216,7 +230,7 @@ canvas.inspecting{cursor:zoom-in}
       <div><b class="h">Maps</b>Ten islands, plus four big maps: <b>Island Set</b> (seven islands, each a different land), <b>Pangea</b> (one giant supercontinent), <b>Sky Islands</b> (floating in the sky) and <b>Endless Ocean</b>. Or pick <b>🎲 Random</b>. New islands are much bigger than the first ones, and people and animals are smaller, so everything is more to scale.</div>
       <div><b class="h">Legendary</b>The <b>⭐ Legendary</b> group has <b>Cerberus</b> (a three-headed dog that bites with one head while the others snarl), the <b>ice dragon</b> (its frost freezes things and puts out fires), the <b>lightning dragon</b> (lightning bolts that jump from one thing to the next), the <b>water dragon</b> (a water jet that pushes things back and puts out fires), the <b>golden dragon</b> (golden fire, and the toughest of all) and the <b>Roc</b>, a giant eagle.</div>
       <div><b class="h">Conspiracy Theories</b>The <b>🛸 Conspiracy Theories</b> group has the <b>Loch Ness Monster</b> (in deep water, with a very long neck and a jaw full of teeth), the <b>Kraken</b> (in deep water: its tentacles wrap around whatever it catches and lift it out of the water), <b>Bigfoot</b>, the <b>Alien</b> (with a blaster that shoots glowing bolts) and the <b>Chupacabra</b>.</div>
-      <div><b class="h">Shop and achievements</b>The <b>🛒 Shop</b> (top right, or in the Menu) sells special effects, skies, the <b>Conspiracy Theories</b> and <b>Legendary</b> packs and the <b>Cosmic Dragon</b>. Earn 🪙 15 coins every time you complete an achievement: there are 150 of them (50 things to do, each at three levels), and you can complete each one again and again. See them under 🏆 Achievements in the Shop.</div>
+      <div><b class="h">Shop and achievements</b>The <b>🛒 Shop</b> (top right, or in the Menu) sells the <b>Conspiracy Theories</b> and <b>Legendary</b> packs, the <b>Cosmic Dragon</b>, the <b>Killer robot</b>, the <b>Alien robot</b>, the <b>Owlbear</b>, special effects and skies. Earn 🪙 15 coins every time you complete an achievement: there are 150 of them (50 things to do, each at three levels), and you can complete each one again and again. See them under 🏆 Achievements in the Shop.</div>
       <div><b class="h">Fire and rain</b>In a fight, a <b>dragon</b> sometimes breathes fire instead of biting. Its fire burns what it hits and sets fires where it lands: fires burn trees, plants and buildings down slowly, hurt anyone standing in them, can spread to plants nearby, and burn out after about a minute. With Fighting off, a dragon just breathes fire at the sky now and then. The <b>✨ Special effects</b> group has <b>🌧️ Rain</b>: a dark cloud rains for 20 seconds (bigger with size) and puts out every fire under it.</div>
       <div><b class="h">Disasters</b>The <b>Disasters</b> group has a <b>tornado</b> (picks things up and throws them), a <b>tsunami</b> (a wave rolls in from the nearest sea), a <b>bomb</b>, a <b>sprinkle bomb</b> (lots of little bombs) and an <b>earthquake</b> (cracks the ground and knocks buildings down). The size buttons make them bigger. <b>Undo</b> puts things back.</div>
       <div><b class="h">Kings, queens and battles</b>Once a town starts to grow it crowns a <b>king</b>, a <b>queen</b> or both. Their town hall becomes a <b>castle</b>, and they live inside it in fancy robes, coming out for a walk now and then and whenever their town is at war. A <b>golden crown</b> treasure near the town makes their crowns grander. They train soldiers in armour who stand guard around the town and go to battle. Ordinary townsfolk never fight: they run from danger. Tap the <b>🪄 Battle wand</b> (in People) on one town, then on another, and they go to war. The <b>🕊️ Peace wand</b> does the opposite: the two towns become friends and never fight (even orcs). Bears, polar bears, foxes, crocodiles, sharks and dinosaurs are hungry: they hunt people and other animals. When a town has nobody left, its town hall explodes and it has fallen.</div>
@@ -307,6 +321,9 @@ const owns = id => !id || shop.free || shop.own.includes(id);
 })();
 // what's for sale
 const SHOP_ITEMS = [
+  { id: 'killerrobot', icon: '🤖', name: 'Killer robot', desc: 'A tall metal robot with a glowing red eye and an arm cannon that shoots red lasers. ❤️ 2,000.', price: 30000, creature: 'killerrobot' },
+  { id: 'alienrobot', icon: '👾', name: 'Alien robot', desc: 'A silver robot with a little green alien inside its glass dome, and a blaster. ❤️ 1,500.', price: 45000, creature: 'alienrobot' },
+  { id: 'owlbear', icon: '🦉', name: 'Owlbear', desc: 'A big bulky bear with an owl’s head, huge eyes and a hooked beak. It hunts. ❤️ 800.', price: 50000, creature: 'owlbear' },
   { id: 'fx_snow', icon: '❄️', name: 'Snow', desc: 'A cloud that snows for 20 seconds, and puts out fires.', price: 5000 },
   { id: 'fx_rainbow', icon: '🌈', name: 'Rainbow', desc: 'A big rainbow over the island for 30 seconds.', price: 5000 },
   { id: 'sky_sunset', icon: '🌅', name: 'Sunset sky', desc: 'An orange and purple sky over every island.', price: 15, sky: [[1, 0.62, 0.42], [0.32, 0.28, 0.55]] },
@@ -3271,15 +3288,55 @@ bipedDef('chupacabra', 'Chupacabra', '🐺', { cat: 'conspiracy', r: 0.7, h: 2.4
   leg: g => { cyl(g, [0, 0, 0], [0, -0.5, 0.16], 0.15, 0.11, CHU, 8); cyl(g, [0, -0.5, 0.16], [0, -0.9, -0.04], 0.09, 0.07, CHUD, 8); orb(g, 0, -0.92, 0.06, 0.09, 0.05, 0.16, CHUD, { lo: true });
     for (let c = -1; c <= 1; c++) coneS(g, c * 0.04, -0.94, 0.2, 0.015, 0.05, CLAW, 4); },
   glow: { flicker: 'pulse', make: g => { for (const s of [-1, 1]) orb(g, s * 0.1, 2.04, 0.68, 0.04, 0.03, 0.025, [1, 0.15, 0.1], { lo: true }); } } });
+/* ---------------- Shop creatures: the Killer robot, the Alien robot and the Owlbear ---------------- */
+// the Killer robot: tall and metal, a boxy head with a glowing red eye-slit, armour plates, and an arm cannon that shoots red laser bolts
+const KR = [0.44, 0.46, 0.52], KR2 = [0.3, 0.32, 0.37], KRD = [0.16, 0.17, 0.2], KRR = [1, 0.15, 0.1];
+personDef('killerrobot', 'Killer robot', '🤖', { cat: 'conspiracy', k: 1.35, skin: KR, shirt: KR2, sleeve: KR, pants: KRD, legCol: KR2, shoes: KRD, hair: null, speed: 1.1, extra: (g, k, y) => {
+  box(g, 0, y + 1.6 * k, 0, 0.46 * k, 0.42 * k, 0.46 * k, KR);                                         // a boxy head
+  box(g, 0, y + 1.76 * k, 0.21 * k, 0.36 * k, 0.07 * k, 0.06 * k, KRD);                               // the visor slot
+  cyl(g, [0.14 * k, y + 2.02 * k, 0], [0.18 * k, y + 2.3 * k, 0], 0.015 * k, 0.012 * k, KRD, 5); orb(g, 0.18 * k, y + 2.31 * k, 0, 0.03 * k, 0.03 * k, 0.03 * k, KRR, { lo: true });   // antenna
+  box(g, 0, y + 1.05 * k, 0.12 * k, 0.5 * k, 0.42 * k, 0.12 * k, KR);                                  // chest plate
+  for (let i = 0; i < 3; i++) box(g, 0.12 * k, y + (1.12 + i * 0.09) * k, 0.185 * k, 0.16 * k, 0.025 * k, 0.01 * k, KRD);   // vents
+  for (const s of [-1, 1]) { box(g, s * 0.32 * k, y + 1.42 * k, 0, 0.24 * k, 0.16 * k, 0.3 * k, KR2); for (let i = 0; i < 3; i++) orb(g, s * 0.32 * k, y + 1.6 * k, (i - 1) * 0.09 * k, 0.025 * k, 0.025 * k, 0.025 * k, KRD, { lo: true }); }   // shoulder blocks with rivets
+  cyl(g, [0.34 * k, y + 0.98 * k, 0.0], [0.34 * k, y + 0.98 * k, 0.42 * k], 0.09 * k, 0.07 * k, KRD, 10); cyl(g, [0.34 * k, y + 0.98 * k, 0.42 * k], [0.34 * k, y + 0.98 * k, 0.5 * k], 0.045 * k, 0.045 * k, KR2, 8);   // arm cannon
+}, glow: { flicker: 'pulse', make: g => { const k = 1.35; box(g, 0, 1.765 * k, 0.24 * k, 0.32 * k, 0.045 * k, 0.02 * k, KRR); orb(g, -0.12 * k, 1.18 * k, 0.24 * k, 0.05 * k, 0.05 * k, 0.02 * k, KRR, { lo: true }); orb(g, 0.34 * k, 0.98 * k, 0.51 * k, 0.035 * k, 0.035 * k, 0.02 * k, KRR, { lo: true }); } } });
+
+// the Alien robot: a silver robot body with a green alien's head inside a glass dome frame, and a blaster that shoots green bolts
+const AR = [0.78, 0.8, 0.86], AR2 = [0.55, 0.57, 0.64], ARG = [0.42, 0.85, 0.4], ARC = [0.4, 0.95, 1];
+personDef('alienrobot', 'Alien robot', '👾', { cat: 'conspiracy', k: 1.15, skin: AR, shirt: AR, sleeve: AR2, pants: AR2, legCol: AR, shoes: [0.3, 0.32, 0.38], hair: null, speed: 1.3, extra: (g, k, y) => {
+  orb(g, 0, y + 1.86 * k, 0, 0.23 * k, 0.22 * k, 0.22 * k, ARG);                                     // the alien inside
+  for (const s of [-1, 1]) orb(g, s * 0.09 * k, y + 1.86 * k, 0.17 * k, 0.07 * k, 0.045 * k, 0.04 * k, COL.black, { lo: true });
+  cyl(g, [0, y + 1.6 * k, 0], [0, y + 1.66 * k, 0], 0.3 * k, 0.3 * k, AR2, 20);                          // the collar ring the dome sits on
+  for (let i = 0; i < 4; i++) { const a = i / 4 * 3.1416; const pts = []; for (let j = 0; j <= 8; j++) { const b = j / 8 * 3.1416; pts.push([Math.cos(b) * Math.cos(a) * 0.3 * k, y + (1.66 + Math.sin(b) * 0.42) * k, Math.cos(b) * Math.sin(a) * 0.3 * k]); } for (let j = 0; j < 8; j++) cyl(g, pts[j], pts[j + 1], 0.012 * k, 0.012 * k, ARC, 4, false); }   // glass dome frame
+  box(g, 0, y + 1.05 * k, 0.14 * k, 0.4 * k, 0.36 * k, 0.08 * k, AR2); orb(g, 0, y + 1.25 * k, 0.2 * k, 0.07 * k, 0.07 * k, 0.03 * k, ARC, { lo: true });   // chest panel and light
+  for (const s of [-1, 1]) orb(g, s * 0.3 * k, y + 1.48 * k, 0, 0.13 * k, 0.1 * k, 0.13 * k, AR2);
+  box(g, 0.34 * k, y + 0.92 * k, 0.16 * k, 0.07 * k, 0.09 * k, 0.24 * k, AR2); cyl(g, [0.34 * k, y + 0.97 * k, 0.27 * k], [0.34 * k, y + 0.97 * k, 0.42 * k], 0.022 * k, 0.018 * k, [0.4, 0.42, 0.48], 8);   // blaster
+}, glow: { flicker: 'pulse', make: g => { const k = 1.15; orb(g, 0.34 * k, 0.97 * k, 0.43 * k, 0.03 * k, 0.03 * k, 0.03 * k, [0.5, 1, 0.5], { lo: true }); orb(g, 0, 2.1 * k, 0, 0.04 * k, 0.04 * k, 0.04 * k, ARC, { lo: true }); } } });
+
+// the Owlbear: a big bulky bear with an owl's head: a feathery face disc, huge eyes, a hooked beak and ear tufts, and claws
+const OB = [0.45, 0.3, 0.18], OBF = [0.72, 0.58, 0.4], OBD = [0.28, 0.18, 0.1];
+quadDef('owlbear', 'Owlbear', '🦉', { cat: 'mythical', L: 1.9, H: 1.15, W: 0.64, bodyH: 0.64, col: OB, legR: 0.2, hoof: [0.9, 0.88, 0.8], speed: 1.6, fluffy: true, headY: 0.7, head: g => {
+  orb(g, 0, 1.42, 0.85, 0.6, 0.55, 0.5, OBF, { bump: 0.05 });                                            // a feathery chest
+  orb(g, 0, 1.85, 1.05, 0.42, 0.42, 0.38, OB, { bump: 0.04 });                                           // the owl head
+  for (const s of [-1, 1]) {
+    orb(g, s * 0.16, 1.88, 1.3, 0.17, 0.18, 0.08, OBF);                                                   // the face disc around each eye
+    orb(g, s * 0.16, 1.9, 1.37, 0.1, 0.1, 0.05, [1, 0.8, 0.15]); orb(g, s * 0.16, 1.9, 1.41, 0.05, 0.06, 0.03, COL.black, { lo: true });   // huge eyes
+    cyl(g, [s * 0.24, 2.18, 0.98], [s * 0.34, 2.48, 0.9], 0.07, 0.01, OBD, 6);                           // ear tufts
+    for (let c = -1; c <= 1; c++) cyl(g, [s * 0.42 + c * 0.08, 0.06, 0.7], [s * 0.42 + c * 0.1, 0.02, 0.92], 0.04, 0.005, [0.9, 0.88, 0.8], 5);   // front claws
+  }
+  cyl(g, [0, 1.8, 1.38], [0, 1.6, 1.52], 0.07, 0.015, [0.95, 0.8, 0.25], 8); cyl(g, [0, 1.6, 1.52], [0, 1.5, 1.45], 0.02, 0.005, [0.95, 0.8, 0.25], 6);   // hooked beak
+}, tail: g => { for (let i = 0; i < 5; i++) cyl(g, [(i - 2) * 0.08, 1.25, -0.9], [(i - 2) * 0.16, 1.05, -1.25], 0.05, 0.01, OBD, 5); },
+  extra: g => { for (let i = 0; i < 10; i++) { const a = i / 10 * 6.283; orb(g, Math.cos(a) * 0.55, 1.5 + Math.sin(i * 1.7) * 0.1, Math.sin(a) * 0.5 + 0.3, 0.16, 0.12, 0.16, i % 2 ? OBF : OB, { lo: true }); } } });   // shaggy feathers round the shoulders
 /* =====================================================================
    Placing, erasing and undo
    ===================================================================== */
-for (const id of CATS.find(c => c.id === 'conspiracy').items) CAT[id].shop = 'pack_ct';
+CAT.killerrobot.shop = 'killerrobot'; CAT.alienrobot.shop = 'alienrobot'; CAT.owlbear.shop = 'owlbear';
+for (const id of CATS.find(c => c.id === 'conspiracy').items) CAT[id].shop = CAT[id].shop || 'pack_ct';
 for (const id of CATS.find(c => c.id === 'legendary').items) CAT[id].shop = id === 'cosmicdragon' ? 'cosmic' : 'pack_legend';
 const SIZES = [0.5, 1, 1.75, 3], SIZE_NAMES = ['Small', 'Medium', 'Big', 'Giant'], SIZE_SHORT = ['S', 'M', 'L', 'XL'];
 // the brush on the left: how many things go down at once, and how wide the land tools reach
 // some things are bigger (or smaller) than their size button says, and the biggest monsters are limited to 3 of each per island
-const GROW = { dragon: 2.6, icedragon: 2.6, stormdragon: 2.6, waterdragon: 2.6, golddragon: 3.4, cosmicdragon: 4.6, cerberus: 0.6, roc: 1, hydra: 1.6, seaserpent: 2.2, troll: 0.62, fairy: 1, griffin: 1.2, nessie: 1.6, kraken: 1.4, chupacabra: 1 }, ONLY3 = new Set(['dragon', 'icedragon', 'stormdragon', 'waterdragon', 'golddragon', 'cosmicdragon', 'hydra', 'seaserpent', 'nessie', 'kraken']);
+const GROW = { dragon: 2.6, icedragon: 2.6, stormdragon: 2.6, waterdragon: 2.6, golddragon: 3.4, cosmicdragon: 4.6, cerberus: 0.6, roc: 1, killerrobot: 1, alienrobot: 1, owlbear: 1.25, hydra: 1.6, seaserpent: 2.2, troll: 0.62, fairy: 1, griffin: 1.2, nessie: 1.6, kraken: 1.4, chupacabra: 1 }, ONLY3 = new Set(['dragon', 'icedragon', 'stormdragon', 'waterdragon', 'golddragon', 'cosmicdragon', 'hydra', 'seaserpent', 'nessie', 'kraken']);
 const AUTO_MAX = 6000;                  // towns, caves and spawning stop adding things by themselves past this many (you can place as many as you like)
 // people, animals and monsters are 0.7 times the size they used to be (so the islands are more to scale), except the big monsters
 const SHRINK = 0.7, growOf = id => GROW[id] || (['people', 'creatures', 'mythical', 'conspiracy', 'legendary'].includes(CAT[id].cat) ? SHRINK : 1);
@@ -3767,13 +3824,14 @@ function updateLife(dt, time) {
 // [health, damage, reach, how far it sees] at Medium size
 const STATS = {
   skeleton: [10, 2, 1.4, 22], zombie: [9, 1.6, 1.3, 18], demon: [22, 4, 1.8, 26], troll: [45, 6, 2.6, 22], minotaur: [35, 5, 2.2, 24],
+  killerrobot: [200, 8, 1.6, 26], alienrobot: [150, 6, 1.4, 24], owlbear: [64, 7, 2, 18],
   nessie: [1250, 25, 8, 30], kraken: [19500 / 14, 15, 18, 26], bigfoot: [40, 5.5, 2.4, 20], alien: [100 / 7, 3, 1.4, 22], chupacabra: [60, 6, 1.6, 20],
   griffin: [70 / 3, 5, 2.4, 20], fairy: [2, 0, 0, 0], yeti: [40, 5.5, 2.4, 20], dragon: [900, 24, 4.5, 40], icedragon: [900, 24, 4.5, 40], stormdragon: [900, 24, 4.5, 40], waterdragon: [900, 24, 4.5, 40], golddragon: [25000 / 34, 26, 4.5, 40], cosmicdragon: [35000 / 46, 40, 4.5, 45], cerberus: [10000 / 6, 16, 3.5, 24], roc: [900, 0, 0, 0], hydra: [1437.5, 18, 4, 24], seaserpent: [1000, 18, 5, 22], goblin: [7, 1.5, 1.2, 20],
   knight: [100 / 7, 3.5, 1.6, 20], king: [14, 2.5, 1.4, 18], pirate: [12, 2.6, 1.5, 18],
   lion: [26, 4.5, 1.8, 18], tiger: [26, 4.5, 1.8, 18], wolf: [12, 2.5, 1.4, 16], bear: [24, 4, 1.8, 16], polarbear: [28, 4.5, 1.9, 16], fox: [6, 1.4, 1.0, 12], croc: [20, 4, 1.8, 10], shark: [18, 4, 2.0, 14], dino: [40, 6, 2.6, 20],
   human: [10, 2, 1.4, 18], elf: [9, 2.2, 1.6, 24], dwarf: [13, 2.5, 1.4, 16], orc: [13, 2.8, 1.5, 22], animal: [5, 0, 0, 0],
 };
-const FACTION = { icedragon: 'monster', stormdragon: 'monster', waterdragon: 'monster', golddragon: 'monster', cosmicdragon: 'monster', cerberus: 'monster', skeleton: 'undead', zombie: 'undead', demon: 'monster', yeti: 'monster', griffin: 'predator', nessie: 'monster', kraken: 'monster', bigfoot: 'monster', alien: 'monster', chupacabra: 'predator', minotaur: 'monster', dragon: 'monster', hydra: 'monster', seaserpent: 'monster',
+const FACTION = { killerrobot: 'monster', alienrobot: 'monster', owlbear: 'predator', icedragon: 'monster', stormdragon: 'monster', waterdragon: 'monster', golddragon: 'monster', cosmicdragon: 'monster', cerberus: 'monster', skeleton: 'undead', zombie: 'undead', demon: 'monster', yeti: 'monster', griffin: 'predator', nessie: 'monster', kraken: 'monster', bigfoot: 'monster', alien: 'monster', chupacabra: 'predator', minotaur: 'monster', dragon: 'monster', hydra: 'monster', seaserpent: 'monster',
   troll: 'orcfriend', goblin: 'orcfriend', ghost: 'ghost',
   lion: 'predator', tiger: 'predator', wolf: 'predator', bear: 'predator', polarbear: 'predator', fox: 'predator', croc: 'predator', shark: 'predator', dino: 'predator' };
 const PEOPLE_FACS = new Set(['human', 'elf', 'dwarf']);
@@ -3790,11 +3848,13 @@ function healthTxt(o) { const max = maxHpOf(o), hp = o.hp === undefined ? max : 
 function statOf(o) { return STATS[CAT[o.t].id] || STATS[o.fac] || STATS.animal; }
 const attacks = f => f && f !== 'animal' && f !== 'ghost';
 const isCiv = o => !!o.race && !o.soldier && !o.ruler;     // ordinary townsfolk
+const bulk = o => { const d = CAT[o.t]; return d.h * d.r * o.s * o.s * (o.race && o.ag < 18 ? 0.4 : 1); };
 function hostile(a, b) {
   const fa = a.fac, fb = b.fac;
   if (a.inside || b.inside || b.dive > 0.5 || (b.held && b.held.kraken)) return false;
   if (isCiv(a) || (isCiv(b) && a.race)) return false;          // townsfolk never start fights, and soldiers don't go after other towns' townsfolk
   if (!fa || !fb || fa === 'ghost' || fb === 'ghost' || a === b) return false;
+  if ((fa === 'monster' || fa === 'undead' || fa === 'predator') && a.t !== b.t && bulk(b) < bulk(a) * 0.9) return true;   // anything smaller is fair game
   if (fa === 'predator') return fb !== 'predator' && !(fb === 'animal' && CAT[b.t].r * b.s > CAT[a.t].r * a.s * 1.3);   // hungry animals go after people and other animals (but not ones much bigger than them, like elephants)
   if (fb === 'predator') return fa !== 'animal';                // people and monsters fight back; other animals just run
   const evil = f => f === 'monster' || f === 'undead';
@@ -4744,7 +4804,7 @@ const LIKES = ['apples', 'sunny days', 'naps', 'singing', 'the sea', 'stories', 
 const JOBS = { human: ['farmer', 'baker', 'blacksmith', 'fisher', 'builder', 'shopkeeper', 'shepherd', 'carpenter'], elf: ['archer', 'gardener', 'singer', 'healer', 'scout', 'weaver'],
   dwarf: ['miner', 'blacksmith', 'brewer', 'stonemason', 'jeweller', 'tunnel digger'], orc: ['hunter', 'drummer', 'cook', 'scout', 'boar tamer', 'axe sharpener'] };
 const GENTLE_MYTH = ['unicorn', 'phoenix', 'pegasus', 'mermaid', 'fairy'];   // these get proper names and are 'he' or 'she'
-const AGE_RANGE = { dragon: [120, 900], icedragon: [120, 900], stormdragon: [120, 900], waterdragon: [120, 900], golddragon: [500, 2000], cosmicdragon: [1000, 10000], cerberus: [300, 3000], roc: [50, 500], hydra: [300, 1000], seaserpent: [200, 800], phoenix: [500, 1500], unicorn: [40, 200], nessie: [500, 1500], kraken: [300, 1000], bigfoot: [20, 200], alien: [50, 400], chupacabra: [5, 40], pegasus: [10, 120], griffin: [20, 150], mermaid: [16, 300], yeti: [30, 300], fairy: [10, 500], ghost: [150, 600], skeleton: [80, 400],
+const AGE_RANGE = { killerrobot: [1, 30], alienrobot: [1, 60], owlbear: [3, 40], dragon: [120, 900], icedragon: [120, 900], stormdragon: [120, 900], waterdragon: [120, 900], golddragon: [500, 2000], cosmicdragon: [1000, 10000], cerberus: [300, 3000], roc: [50, 500], hydra: [300, 1000], seaserpent: [200, 800], phoenix: [500, 1500], unicorn: [40, 200], nessie: [500, 1500], kraken: [300, 1000], bigfoot: [20, 200], alien: [50, 400], chupacabra: [5, 40], pegasus: [10, 120], griffin: [20, 150], mermaid: [16, 300], yeti: [30, 300], fairy: [10, 500], ghost: [150, 600], skeleton: [80, 400],
   zombie: [20, 90], demon: [100, 999], troll: [60, 250], minotaur: [40, 160], goblin: [8, 40], dino: [5, 30], dog: [1, 12], cat: [1, 14] };
 const hashStr = s => { let h = 7; for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); };
 function lifeInfo(o) {                    // fill in the name, age and personality the first time someone looks
@@ -4756,6 +4816,8 @@ function lifeInfo(o) {                    // fill in the name, age and personali
     if (o.race) o.nm = byGn(FIRST_NAMES[o.race]);
     else if (o.t === 'mermaid' || o.t === 'fairy') o.nm = byGn(FIRST_NAMES.elf);
     else if (o.t === 'nessie') o.nm = 'Nessie';
+    else if (o.t === 'killerrobot') o.nm = pick(['KR', 'XR', 'ZX', 'MK', 'RX', 'T']) + '-' + (100 + Math.floor(Math.random() * 900));
+    else if (o.t === 'alienrobot') o.nm = pick(['Zorb', 'Blip', 'Xylo', 'Quark', 'Glorp', 'Orbo']) + '-bot ' + (1 + Math.floor(Math.random() * 9));
     else if (o.t === 'alien') o.nm = pick(['Zorb', 'Blip', 'Xylo', 'Quark', 'Nebulo', 'Glorp', 'Zib', 'Orbo', 'Vrrp', 'Kweeble']) + '-' + (1 + Math.floor(Math.random() * 99));
     else if (d.cat === 'conspiracy' || d.cat === 'legendary') o.nm = pick(BEAST_NAMES[0]) + pick(BEAST_NAMES[1]);
     else if (d.cat === 'mythical' && !GENTLE_MYTH.includes(o.t)) o.nm = pick(BEAST_NAMES[0]) + pick(BEAST_NAMES[1]);
@@ -4847,7 +4909,7 @@ function fillInspect() {
         + row('Health', healthTxt(o))
         + row('Doing', doing);
       // the story so far
-      const he = (d.cat === 'mythical' && !GENTLE_MYTH.includes(o.t)) || (d.cat === 'conspiracy' && o.t !== 'alien') || d.cat === 'legendary' ? 'it' : o.gn === 'f' ? 'she' : 'he';
+      const he = (d.cat === 'mythical' && !GENTLE_MYTH.includes(o.t)) || (d.cat === 'conspiracy' && o.t !== 'alien') || o.t === 'owlbear' || d.cat === 'legendary' ? 'it' : o.gn === 'f' ? 'she' : 'he';
       const He = he[0].toUpperCase() + he.slice(1), bits = [];
       bits.push(o.bi ? `${esc(o.nm)} was born in ${esc(o.bi)}.` : o.mv ? `${esc(o.nm)} lives in ${esc(o.mv)}.` : o.race ? `${esc(o.nm)} came to the island with the first ${CAT[o.race].name.toLowerCase()}s.` : d.cat === 'people' ? `${esc(o.nm)} is a ${esc(o.tr)} ${esc(d.name.toLowerCase())} who loves ${esc(o.lk)}.` : `${esc(o.nm)} is ${/^[aeiou]/i.test(d.name) ? 'an' : 'a'} ${esc(d.name.toLowerCase())} living on the island.`);
       if (o.ruler) bits.push(`${He} was crowned ruler of ${t ? esc(t.name) : 'a town'}.`);
@@ -5336,12 +5398,14 @@ function defeat(v, by) {
 const near3 = o => Math.hypot(o.x - cam.tx, o.z - cam.tz) < cam.dist * 1.4 + 40;
 // elves shoot an arrow that flies to the target; everyone else hits up close
 let arrows = [];
+const SHOOTERS = { alien: 'green', alienrobot: 'green', killerrobot: 'red' };
 function strike(o, f) {
   if (o.t === 'kraken') { krakenGrab(o, f); return; }
-  if (o.t === 'alien' && !o.gone && !f.gone) {              // a blaster bolt
-    arrows.push({ x: o.x + Math.sin(o.r) * 0.45 * o.s + Math.cos(o.r) * 0.34 * o.s, y: o.y + 0.96 * o.s, z: o.z + Math.cos(o.r) * 0.45 * o.s - Math.sin(o.r) * 0.34 * o.s, f, from: o, t: 0, bolt: true });
+  if (SHOOTERS[o.t] && !o.gone && !f.gone) {              // a blaster bolt (or the killer robot's laser)
+    const k = CAT[o.t].h / 1.9 * o.s;
+    arrows.push({ x: o.x + Math.sin(o.r) * 0.5 * k + Math.cos(o.r) * 0.34 * k, y: o.y + 0.97 * k, z: o.z + Math.cos(o.r) * 0.5 * k - Math.sin(o.r) * 0.34 * k, f, from: o, t: 0, bolt: true, col: SHOOTERS[o.t] });
     o.lunge = 0.3;
-    if (near3(o)) tone('square', 1900, 260, 0.16, 0.045, 0, 3000);
+    if (near3(o)) { if (o.t === 'killerrobot') tone('sawtooth', 1200, 180, 0.22, 0.05, 0, 2500); else tone('square', 1900, 260, 0.16, 0.045, 0, 3000); }
     return;
   }
   if (o.race === 'elf' && !o.gone && !f.gone) {
@@ -5417,7 +5481,7 @@ function fightStep(o, d, dt, time) {
   const st = statOf(o), dist = Math.hypot(f.x - o.x, f.z - o.z);
   if (dist > st[3] * Math.sqrt(o.s) * 1.8) { o.foe = null; return false; }
   if (DRAGONS.has(o.t) && dragonBreath(o, f, dist, dt)) { o.y = groundY(o, d); o.tx = undefined; o.wait = 0; return true; }
-  const reach = (o.race === 'elf' || o.t === 'alien' ? 15 * Math.sqrt(o.s) : st[2] * o.s) + CAT[f.t].r * f.s * 0.6;   // elves are archers: they shoot from far away
+  const reach = (o.race === 'elf' || SHOOTERS[o.t] ? 15 * Math.sqrt(o.s) : st[2] * o.s) + CAT[f.t].r * f.s * 0.6;   // elves are archers: they shoot from far away
   if (o.windup > 0) {                                  // winding up to hit
     o.windup -= dt; o.moving = false;
     let dy = Math.atan2(f.x - o.x, f.z - o.z) - o.r; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); o.r += clamp(dy, -4 * dt, 4 * dt);
@@ -5497,9 +5561,9 @@ function drawFx() {
     if (!arrowMesh) { const g = new Geo(512); cyl(g, [0, 0, -0.45], [0, 0, 0.35], 0.025, 0.025, COL.plank, 6); coneS(g, 0, 0, 0, 0.001, 0.001, COL.iron); cyl(g, [0, 0, 0.35], [0, 0, 0.5], 0.06, 0.001, COL.iron, 6); tri(g, [0, 0, -0.45], [0, 0.1, -0.3], [0, 0, -0.25], [1, 0, 0], 0, COL.red, COL.red, COL.red, 0, 0, 0); tri(g, [0, 0, -0.45], [0.1, 0, -0.3], [0, 0, -0.25], [0, 1, 0], 0, COL.red, COL.red, COL.red, 0, 0, 0); arrowMesh = makeMesh(g); }
     for (const a of arrows) if (!a.bolt) drawMesh(arrowMesh, mChain(mT(a.x, a.y, a.z), mRy(Math.atan2(a.vx || 0, a.vz || 1)), mRx(-Math.atan2(a.vy || 0, Math.hypot(a.vx || 0, a.vz || 1))), mS(1.4)), 0);
     if (arrows.some(a => a.bolt)) {                    // blaster bolts: short glowing streaks
-      if (!boltMesh) { const g = new Geo(512); orb(g, 0, 0, 0, 0.06, 0.06, 0.45, [0.55, 1, 0.5]); boltMesh = makeMesh(g); }
+      if (!boltMesh) { const mk = c => { const g = new Geo(512); orb(g, 0, 0, 0, 0.06, 0.06, 0.45, c); return makeMesh(g); }; boltMesh = { green: mk([0.55, 1, 0.5]), red: mk([1, 0.3, 0.25]) }; }
       gl.uniform1f(progWorld.u.uEmit, 1);
-      for (const a of arrows) if (a.bolt) drawMesh(boltMesh, mChain(mT(a.x, a.y, a.z), mRy(Math.atan2(a.vx || 0, a.vz || 1)), mRx(-Math.atan2(a.vy || 0, Math.hypot(a.vx || 0, a.vz || 1)))), 0);
+      for (const a of arrows) if (a.bolt) drawMesh(boltMesh[a.col] || boltMesh.green, mChain(mT(a.x, a.y, a.z), mRy(Math.atan2(a.vx || 0, a.vz || 1)), mRx(-Math.atan2(a.vy || 0, Math.hypot(a.vx || 0, a.vz || 1)))), 0);
       gl.uniform1f(progWorld.u.uEmit, 0);
     }
   }
@@ -6369,10 +6433,20 @@ function buildShop() {
   if (shopTab === 'shop') {
     let html = shop.free ? '<p class="freeNote">✨ Creator mode: everything in the Shop is free on this device.</p>'
       : '<p class="tagline" style="font-size:14px">Earn 🪙 15 coins every time you complete an achievement (you can complete each one again and again). See them under 🏆 Achievements.</p>';
+    const btnFor = it => { const own = owns(it.id); return own && it.sky ? (shop.sky === it.id ? 'Using ✓' : 'Use') : own ? 'Owned ✓' : shop.coins >= it.price ? 'Buy' : `Need ${(it.price - shop.coins).toLocaleString()} more`; };
+    const price = it => shop.free || owns(it.id) ? (owns(it.id) && !shop.free ? 'Owned' : 'Free') : '🪙 ' + it.price.toLocaleString();
+    // the two packs on either side, and the Cosmic Dragon in the middle: name and price at the top, what it is in the middle, little pictures at the bottom
+    html += '<div class="bigrow">' + ['pack_ct', 'cosmic', 'pack_legend'].map(id => {
+      const it = SHOP_BY[id], inside = Object.keys(CAT).filter(k => CAT[k].shop === id);
+      return `<div class="big${id === 'cosmic' ? ' star' : ''}${owns(id) ? ' owned' : ''}"><div class="bt"><b>${it.icon} ${it.name}</b><span class="cp">${price(it)}</span></div>
+        <div class="bd">${it.desc}</div>
+        <div class="minis${inside.length === 1 ? ' one' : ''}">${inside.map(k => `<div class="mini"><img src="${creatureThumb(k)}" alt=""><span>${CAT[k].name}</span></div>`).join('')}</div>
+        <button data-buy="${id}">${btnFor(it)}</button></div>`;
+    }).join('') + '</div>';
     for (const it of SHOP_ITEMS) {
-      const own = owns(it.id);
-      const btn = own && it.sky ? (shop.sky === it.id ? 'Using ✓' : 'Use') : own ? 'Owned ✓' : shop.coins >= it.price ? 'Buy' : `Need ${(it.price - shop.coins).toLocaleString()} more`;
-      html += `<div class="card${own ? ' owned' : ''}"><div class="ci">${it.icon}</div><div class="cb"><b>${it.name}</b><span>${it.desc}</span></div><div class="cp">${shop.free || own ? '' : '🪙 ' + it.price.toLocaleString()}</div><button data-buy="${it.id}">${btn}</button></div>`;
+      if (['pack_ct', 'cosmic', 'pack_legend'].includes(it.id)) continue;
+      const pic = it.creature ? `<img class="cimg" src="${creatureThumb(it.creature)}" alt="">` : it.icon;
+      html += `<div class="card${owns(it.id) ? ' owned' : ''}"><div class="ci">${pic}</div><div class="cb"><b>${it.name}</b><span>${it.desc}</span></div><div class="cp">${shop.free || owns(it.id) ? '' : '🪙 ' + it.price.toLocaleString()}</div><button data-buy="${it.id}">${btnFor(it)}</button></div>`;
     }
     if (SHOP_ITEMS.some(it => it.sky && owns(it.id))) html += `<div class="card"><div class="ci">☀️</div><div class="cb"><b>Normal sky</b><span>Each island's own sky.</span></div><div class="cp"></div><button data-buy="">${shop.sky ? 'Use' : 'Using ✓'}</button></div>`;
     list.innerHTML = html;
@@ -6399,6 +6473,41 @@ function buyItem(id) {
   [523, 659, 784, 1046].forEach((f, i) => tone('triangle', f, f, 0.2, 0.08, i * 0.09));
   toast(`🛒 You got ${it.icon} ${it.name}!`, 2200);
   buildShop(); buildPalette(); updateShopBtn();
+}
+// little pictures of creatures for the Shop: each one is drawn once by the game into a small picture, and kept
+let thumbFbo = null;
+const thumbCache = {}, THUMB_FRAME = { nessie: [7, 8], kraken: [5, 7], cerberus: [3.6, 4.5], roc: [3, 11], dragon: [3.4, 6], cosmicdragon: [3.4, 6] };
+function creatureThumb(id) {
+  if (thumbCache[id]) return thumbCache[id];
+  const N = 160, d = CAT[id];
+  if (!d) return '';
+  try {
+    if (!thumbFbo) {
+      thumbFbo = gl.createFramebuffer();
+      const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, N, N, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      const depth = gl.createRenderbuffer(); gl.bindRenderbuffer(gl.RENDERBUFFER, depth); gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT24, N, N);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, thumbFbo);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0); gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depth);
+    }
+    const o = makeObj(id, 0, 0, 0, 1); o.y = 50; o.phase = 1.3; o.fac = null; o.dive = 0; o.moving = false;
+    const fr = THUMB_FRAME[id] || (DRAGONS.has(id) ? THUMB_FRAME.dragon : [d.h, d.r * 2.2]), H = fr[0], W = fr[1];
+    const at = [0, 50 + H * 0.45, 0], dist = Math.max(H, W * 0.8) * 0.68 / Math.tan(0.3), ang = 0.75;
+    const eye = [at[0] + Math.sin(ang) * dist, at[1] + dist * 0.28, at[2] + Math.cos(ang) * dist];
+    const keepEye = camEye;
+    perspective(proj, 0.6, 1, 0.05, 2000); lookAt(view, eye, at, [0, 1, 0]); mul4(vp, proj, view); camEye = eye;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, thumbFbo); gl.viewport(0, 0, N, N);
+    gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST); gl.disable(gl.BLEND);
+    setWorldUniforms(1); gl.uniform1f(progWorld.u.uFogD, 1e6); gl.uniform1f(progWorld.u.uFogEnd, 1e7); gl.uniform1f(progWorld.u.uShadowOn, 0); drawProg = progWorld;
+    drawOne(o, 1, false, 0);
+    const px = new Uint8Array(N * N * 4); gl.readPixels(0, 0, N, N, gl.RGBA, gl.UNSIGNED_BYTE, px);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null); camEye = keepEye;
+    const c = document.createElement('canvas'); c.width = c.height = N; const cx = c.getContext('2d'), img = cx.createImageData(N, N);
+    for (let y = 0; y < N; y++) img.data.set(px.subarray((N - 1 - y) * N * 4, (N - y) * N * 4), y * N * 4);   // (WebGL's picture is upside down)
+    cx.putImageData(img, 0, 0);
+    return (thumbCache[id] = c.toDataURL());
+  } catch (e) { gl.bindFramebuffer(gl.FRAMEBUFFER, null); return ''; }
 }
 function openTowns() { if (state !== 'play') return; saveIsland(); state = 'towns'; buildTownPanel(); show('towns'); }
 document.querySelectorAll('.musicToggle').forEach(b => b.onclick = () => { initAudio(); settings.music = !settings.music; setBus(musicBus, settings.music); writeSettings(); updateAudioToggles(); });
