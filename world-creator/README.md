@@ -92,7 +92,7 @@ The **🛒 Shop** button (top right, and in the Menu) opens the Shop. It shows y
 - **Creator mode:** a secret link (not written down here) makes everything in the Shop free in the browser it's opened in. The game only keeps a scrambled version of it, and takes it out of the address bar once it's been used.
 - **Special effects:** Snow (a pale cloud with snowflakes; puts out fires like rain), Thunderstorm (a dark cloud with heavy rain and a lightning strike every 1 to 3 seconds that zaps whatever is under it), Rainbow (a seven-coloured arch for 30 seconds), Fireworks (rockets that burst into 40 coloured sparks, for 15 seconds) and Meteor shower (burning rocks that fall for 10 seconds, blast small craters and start fires).
 - **Cosmic Dragon** (❤️ 35,000 at Medium, in Legendary): the biggest dragon (about 4.6 times Medium, against the golden dragon's 3.4), with glowing nebula skin (swirls of deep blue, purple and pink, sprinkled with stars) and **Celestial Breath**: a shimmering stream of stars that hits hard and bursts into coloured stardust where it lands. Up to 3 per island.
-- Shop data is saved under  (coins, what you own, achievement counts, the sky in use, and creator mode).
+- Shop data is saved under worldcreator.shop (coins, what you own, achievement counts, the sky in use, and creator mode).
 
 ## Towns
 
