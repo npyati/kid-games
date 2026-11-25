@@ -1854,7 +1854,7 @@ function quadDef(id, name, icon, o) {
   return def(id, o.cat || 'creatures', name, icon, { r: Math.max(L, W) * 0.7, h: H + (o.headY || 0.4), move: o.move || 'walk', speed: o.speed || 1.6, place: o.place || 'land', amph: o.amph, hop: o.hop, wings: o.wings,
     body: g => { orb(g, 0, H, 0, W, o.bodyH || W * 0.95, L / 2, o.col, { bump: o.fluffy ? 0.05 : 0 }); if (o.belly) orb(g, 0, H - W * 0.3, 0.05, W * 0.85, W * 0.6, L * 0.4, o.belly); o.head(g); if (o.tail) o.tail(g); if (o.extra) o.extra(g); },
     legs: { at: [[-W * 0.55, H - W * 0.3, L * 0.3], [W * 0.55, H - W * 0.3, L * 0.3], [-W * 0.55, H - W * 0.3, -L * 0.3], [W * 0.55, H - W * 0.3, -L * 0.3]], amp: o.hop ? 0.25 : 0.5, gait: o.hop ? 'hop' : 'quad', len: legLen,
-      make: g => { cyl(g, [0, 0.05, 0], [0, -(H - W * 0.3) + 0.06, 0], o.legR || W * 0.22, (o.legR || W * 0.22) * 0.8, o.legCol || o.col, 10); orb(g, 0, -(H - W * 0.3) + 0.05, 0.02, (o.legR || W * 0.22) * 1.05, 0.06, (o.legR || W * 0.22) * 1.25, o.hoof || shade(o.legCol || o.col, 0.6), { lo: true }); } } });
+      make: g => { cyl(g, [0, 0.05, 0], [0, -(H - W * 0.3) + 0.06, 0], o.legR || W * 0.22, (o.legR || W * 0.22) * 0.8, o.legCol || o.col, 10); orb(g, 0, -(H - W * 0.3) + 0.05, 0.02, (o.legR || W * 0.22) * 1.05, 0.06, (o.legR || W * 0.22) * 1.25, o.hoof || shade(o.legCol || o.col, 0.6), { lo: true }); if (o.paw) o.paw(g, -(H - W * 0.3) + 0.05); } } });
 }
 function eyes(g, x, y, z, r = 0.05) { for (const s of [-1, 1]) { orb(g, s * x, y, z, r, r, r * 0.7, COL.white, { lo: true }); orb(g, s * x, y, z + r * 0.5, r * 0.55, r * 0.55, r * 0.4, COL.dark, { lo: true }); } }
 quadDef('dog', 'Dog', '🐕', { L: 0.95, H: 0.55, W: 0.24, col: [0.7, 0.48, 0.26], speed: 2.4, head: g => {
@@ -3372,20 +3372,35 @@ personDef('alienrobot', 'Alien robot', '👾', { cat: 'conspiracy', k: 1.15, ski
   box(g, 0.34 * k, y + 0.92 * k, 0.16 * k, 0.07 * k, 0.09 * k, 0.24 * k, AR2); cyl(g, [0.34 * k, y + 0.97 * k, 0.27 * k], [0.34 * k, y + 0.97 * k, 0.42 * k], 0.022 * k, 0.018 * k, [0.4, 0.42, 0.48], 8);   // blaster
 }, glow: { flicker: 'pulse', make: g => { const k = 1.15; orb(g, 0.34 * k, 0.97 * k, 0.43 * k, 0.03 * k, 0.03 * k, 0.03 * k, [0.5, 1, 0.5], { lo: true }); orb(g, 0, 2.1 * k, 0, 0.04 * k, 0.04 * k, 0.04 * k, ARC, { lo: true }); } } });
 
-// the Owlbear: a big bulky bear with an owl's head: a feathery face disc, huge eyes, a hooked beak and ear tufts, and claws
-const OB = [0.45, 0.3, 0.18], OBF = [0.72, 0.58, 0.4], OBD = [0.28, 0.18, 0.1];
-quadDef('owlbear', 'Owlbear', '🦉', { cat: 'mythical', L: 1.9, H: 1.15, W: 0.64, bodyH: 0.64, col: OB, legR: 0.2, hoof: [0.9, 0.88, 0.8], speed: 1.6, fluffy: true, headY: 0.7, head: g => {
-  orb(g, 0, 1.42, 0.85, 0.6, 0.55, 0.5, OBF, { bump: 0.05 });                                            // a feathery chest
-  orb(g, 0, 1.85, 1.05, 0.42, 0.42, 0.38, OB, { bump: 0.04 });                                           // the owl head
-  for (const s of [-1, 1]) {
-    orb(g, s * 0.16, 1.88, 1.3, 0.17, 0.18, 0.08, OBF);                                                   // the face disc around each eye
-    orb(g, s * 0.16, 1.9, 1.37, 0.1, 0.1, 0.05, [1, 0.8, 0.15]); orb(g, s * 0.16, 1.9, 1.41, 0.05, 0.06, 0.03, COL.black, { lo: true });   // huge eyes
-    cyl(g, [s * 0.24, 2.18, 0.98], [s * 0.34, 2.48, 0.9], 0.07, 0.01, OBD, 6);                           // ear tufts
-    for (let c = -1; c <= 1; c++) cyl(g, [s * 0.42 + c * 0.08, 0.06, 0.7], [s * 0.42 + c * 0.1, 0.02, 0.92], 0.04, 0.005, [0.9, 0.88, 0.8], 5);   // front claws
-  }
-  cyl(g, [0, 1.8, 1.38], [0, 1.6, 1.52], 0.07, 0.015, [0.95, 0.8, 0.25], 8); cyl(g, [0, 1.6, 1.52], [0, 1.5, 1.45], 0.02, 0.005, [0.95, 0.8, 0.25], 6);   // hooked beak
-}, tail: g => { for (let i = 0; i < 5; i++) cyl(g, [(i - 2) * 0.08, 1.25, -0.9], [(i - 2) * 0.16, 1.05, -1.25], 0.05, 0.01, OBD, 5); },
-  extra: g => { for (let i = 0; i < 10; i++) { const a = i / 10 * 6.283; orb(g, Math.cos(a) * 0.55, 1.5 + Math.sin(i * 1.7) * 0.1, Math.sin(a) * 0.5 + 0.3, 0.16, 0.12, 0.16, i % 2 ? OBF : OB, { lo: true }); } } });   // shaggy feathers round the shoulders
+// the Owlbear: a big bulky bear with an owl's head. A face disc of layered feathers, angry feathery brows, huge eyes with a glint,
+// a two-part hooked beak, tall ear tufts and crown feathers; a ruff round its neck, overlapping feathers on its chest and front that
+// turn into shaggy bear fur and a shoulder hump further back; furry legs with big paws and long claws; and a fanned feather tail.
+const OB = [0.45, 0.3, 0.18], OBF = [0.72, 0.58, 0.4], OBD = [0.28, 0.18, 0.1], OBW = [0.9, 0.82, 0.66], OBC = [0.93, 0.9, 0.82], OBK = [0.95, 0.78, 0.22];
+quadDef('owlbear', 'Owlbear', '🦉', { cat: 'mythical', L: 1.9, H: 1.15, W: 0.64, bodyH: 0.64, col: OB, legR: 0.2, hoof: OBD, speed: 1.6, fluffy: true, headY: 0.7,
+  paw: (g, fy) => { orb(g, 0, fy + 0.04, 0.08, 0.23, 0.1, 0.27, OB, { bump: 0.05 }); for (let c = -1.5; c <= 1.5; c++) { orb(g, c * 0.09, fy + 0.03, 0.3, 0.05, 0.045, 0.06, OBD, { lo: true }); cyl(g, [c * 0.09, fy + 0.04, 0.34], [c * 0.11, fy - 0.02, 0.5], 0.03, 0.004, OBC, 5); } },
+  head: g => {
+    orb(g, 0, 1.85, 1.05, 0.42, 0.42, 0.38, OB, { bump: 0.04 });                                                       // the owl head
+    for (const s of [-1, 1]) {
+      for (let r = 0; r < 3; r++) orb(g, s * 0.16, 1.88, 1.37 + r * 0.02, 0.2 - r * 0.04, 0.21 - r * 0.04, 0.06, [OBF, OBW, OBF][r]);   // the face disc: rings of feathers
+      orb(g, s * 0.16, 1.9, 1.44, 0.1, 0.1, 0.05, [1, 0.8, 0.15]); orb(g, s * 0.16, 1.9, 1.48, 0.055, 0.065, 0.03, COL.black, { lo: true }); orb(g, s * 0.13, 1.93, 1.505, 0.016, 0.016, 0.008, COL.white, { lo: true });   // huge eyes with a glint
+      cyl(g, [s * 0.05, 2.0, 1.46], [s * 0.27, 2.07, 1.36], 0.035, 0.02, OBD, 6);                                     // angry feathery brows
+      for (let i = 0; i < 3; i++) cyl(g, [s * (0.22 + i * 0.03), 2.15, 1.0 - i * 0.03], [s * (0.3 + i * 0.05), 2.5 - i * 0.07, 0.9 - i * 0.05], 0.05, 0.008, i ? OB : OBD, 5);   // tall ear tufts
+      for (let i = 0; i < 4; i++) orb(g, s * 0.34, 1.75 - i * 0.07, 1.12 - i * 0.04, 0.09, 0.06, 0.1, i % 2 ? OBF : OB, { lo: true });   // cheek feathers
+    }
+    for (let i = 0; i < 7; i++) orb(g, (i % 3 - 1) * 0.12, 2.18 - Math.floor(i / 3) * 0.04, 1.08 - Math.floor(i / 3) * 0.16, 0.12, 0.05, 0.12, i % 2 ? OBD : OB, { lo: true });   // layered crown feathers
+    cyl(g, [0, 1.84, 1.44], [0, 1.66, 1.6], 0.075, 0.02, OBK, 8); cyl(g, [0, 1.66, 1.6], [0, 1.55, 1.54], 0.022, 0.005, OBK, 6);   // the hooked upper beak
+    cyl(g, [0, 1.7, 1.45], [0, 1.62, 1.53], 0.05, 0.015, shade(OBK, 0.8), 6);                                         // the lower beak
+    for (const s of [-1, 1]) orb(g, s * 0.03, 1.78, 1.51, 0.012, 0.01, 0.008, OBD, { lo: true });                    // nostrils
+    orb(g, 0, 1.42, 0.85, 0.6, 0.55, 0.5, OBF, { bump: 0.05 });                                                      // a feathery chest
+    for (let i = 0; i < 16; i++) { const a = i / 16 * 6.283; coneS(g, Math.cos(a) * 0.44, 1.62, 1.0 + Math.sin(a) * 0.36, 0.08, -0.2, i % 2 ? OBF : OBW, 5); }   // a ruff of feathers round the neck
+    for (let row = 0; row < 4; row++) for (let i = 0; i < 6; i++) { const x = (i - 2.5) * 0.17, y = 1.55 - row * 0.15; orb(g, x, y, 1.18 - row * 0.04 - Math.abs(x) * 0.5, 0.11, 0.07, 0.06, (row + i) % 2 ? OBF : OBW, { lo: true }); }   // overlapping chest feathers
+  },
+  tail: g => { for (let i = 0; i < 7; i++) { const a = (i - 3) * 0.22; tri(g, [0, 1.2, -0.85], [Math.sin(a) * 0.55 - 0.06, 1.0 + Math.cos(a) * 0.1, -0.85 - Math.cos(a) * 0.5], [Math.sin(a) * 0.55 + 0.06, 1.0 + Math.cos(a) * 0.1, -0.85 - Math.cos(a) * 0.5], [0, 1, 0], 0, OB, i % 2 ? OBD : OBF, OBD, 0, 0, 0); } },
+  extra: g => {
+    for (let i = 0; i < 12; i++) { const a = i / 12 * 6.283; orb(g, Math.cos(a) * 0.55, 1.5 + Math.sin(i * 1.7) * 0.1, Math.sin(a) * 0.5 + 0.3, 0.16, 0.12, 0.16, i % 2 ? OBF : OB, { lo: true }); }   // feathers round the shoulders
+    orb(g, 0, 1.68, -0.05, 0.45, 0.28, 0.5, OB, { bump: 0.06 });                                                      // a bear's shoulder hump
+    for (let i = 0; i < 30; i++) { const a = i * 2.4, z = -0.85 + (i % 6) * 0.2, yy = 1.35 + Math.cos(a) * 0.35; coneS(g, Math.sin(a) * 0.6, yy, z, 0.05, -0.1, i % 3 ? OB : shade(OB, 0.85), 5); }   // shaggy bear fur on the back half
+  } });
 /* =====================================================================
    Placing, erasing and undo
    ===================================================================== */
