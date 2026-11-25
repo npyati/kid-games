@@ -3678,7 +3678,7 @@ function scatterStart() {
     }
   };
   // trees and plants that fit the island (fewer per square metre on the big islands, so there's room to build)
-  const NATURE_CAP = 900, f = Math.min(2.2, Math.pow(ISL.shape === 'chain' ? ISL.R / 150 : ISL.R / 365, 2));
+  const NATURE_CAP = 2200, f = 2 * Math.min(2.2, Math.pow(ISL.shape === 'chain' ? ISL.R / 150 : ISL.R / 365, 2));   // (lots of nature to start with)
   if (ISL.nature.length) {
     const total = ISL.nature.reduce((a, b) => a + b[1], 0), k = Math.min(f, NATURE_CAP / total);
     for (const [id, n] of ISL.nature) if (CAT[id]) tryPlace(id, Math.round(n * k));
