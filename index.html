@@ -82,6 +82,31 @@ footer a{color:var(--muted)}
    art is an inline SVG (viewBox 0 0 320 180) shown at the top of the card. */
 const GAMES = [
   {
+    folder: 'fishpocalypse',
+    title: 'Fishpocalypse',
+    blurb: 'Cast your line off the pier and watch it sink through seven 3D ocean zones, from the Sunlit Shallows to the lava of the Fishpocalypse Rift. Reel in 35 creatures (every zone has a rare one and a mythical one), fill a gigantic aquarium, and buy heavier sinkers to go deeper.',
+    tags: ['Fishing', '3D', 'Collecting', 'Controller'],
+    accent: '#3cc4f0', artBg: '#5ab4f0',
+    art: `<svg viewBox="0 0 320 180" aria-hidden="true">
+      <defs><linearGradient id="fpSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5fc8e8"/><stop offset=".3" stop-color="#1f7a80"/><stop offset=".55" stop-color="#163c70"/><stop offset=".8" stop-color="#0a0f2a"/><stop offset="1" stop-color="#5a1408"/></linearGradient></defs>
+      <rect width="320" height="40" fill="#8fd0f5"/>
+      <circle cx="40" cy="18" r="11" fill="#fff3a6"/>
+      <rect y="38" width="320" height="142" fill="url(#fpSea)"/>
+      <path d="M0 40 Q20 36 40 40 T80 40 T120 40 T160 40 T200 40 T240 40 T280 40 T320 40" stroke="#bfefff" stroke-width="3" fill="none"/>
+      <rect x="168" y="30" width="152" height="6" fill="#a87a4a"/>
+      ${[184,216,248,280,312].map(x => `<rect x="${x}" y="36" width="4" height="22" fill="#6a4a2a"/>`).join('')}
+      <g transform="translate(196 30)"><rect x="-4" y="-18" width="8" height="12" rx="3" fill="#e8433a"/><circle cy="-23" r="5" fill="#f5c89a"/><ellipse cy="-27" rx="9" ry="2" fill="#f0d070"/><path d="M3 -14 L-30 -40" stroke="#8a5a2a" stroke-width="2"/></g>
+      <line x1="166" y1="-10" x2="148" y2="142" stroke="#fff" stroke-width="1.2" opacity=".8"/>
+      ${[[40,70,'#7ab84a'],[60,74,'#5a8a2a'],[270,72,'#5a8a2a'],[290,68,'#7ab84a']].map(([x,y,c]) => `<path d="M${x} 104 Q${x - 6} ${y + 10} ${x} ${y} Q${x + 6} ${y - 10} ${x} ${y - 24}" stroke="${c}" stroke-width="4" fill="none"/>`).join('')}
+      ${[[60,96],[250,112],[92,126],[226,140],[120,150]].map(([x,y]) => `<circle cx="${x}" cy="${y}" r="2" fill="#9fe8ff" opacity=".9"/>`).join('')}
+      <g transform="translate(96 62)"><path d="M0 0 q12 -8 24 0 q-12 8 -24 0Z" fill="#ff7a1a"/><path d="M0 0 l-7 -6 v12Z" fill="#ff7a1a"/><rect x="8" y="-5" width="3" height="10" fill="#fff"/><circle cx="19" cy="-1" r="1.6" fill="#111"/></g>
+      <g transform="translate(150 150)"><circle r="16" fill="#ff3a1a" opacity=".25"/><path d="M-14 0 q14 -12 30 0 q-16 12 -30 0Z" fill="#2a0a14"/><path d="M-14 0 l-9 -8 v16Z" fill="#b8101a"/><path d="M2 -8 l2 -6 l2 4 l2 -5 l2 5 l2 -4 l1 6Z" fill="#ffd23f"/><circle cx="9" cy="-2" r="2" fill="#ff2a1a"/><path d="M14 2 l-6 1" stroke="#fff" stroke-width="1"/></g>
+      <path d="M148 140 v6 q0 5 5 5" stroke="#c8d0d8" stroke-width="2" fill="none"/>
+      <rect x="296" y="50" width="10" height="120" rx="3" fill="#0b1030" opacity=".5"/>
+      <rect x="298" y="${50 + 30}" width="6" height="4" fill="#ffd23f"/>
+    </svg>`,
+  },
+  {
     folder: 'gobble-grid',
     title: 'Gobble Grid',
     blurb: 'Steer your Gobbler around the grid and gobble every square that fits the rule. Dodge monsters and beat the Cyclops boss.',

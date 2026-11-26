@@ -1,0 +1,2654 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fishpocalypse</title>
+<meta name="description" content="Cast your line from the pier, sink through seven ocean zones, and fill a gigantic aquarium.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@700;800;900&display=swap">
+<style>
+:root{
+  --night:#0d1640;--panel:#16205a;--panel2:#1d2a70;--edge:#3d4fb8;--cream:#fff5dc;--muted:#a9b4ea;
+  --sun:#ffd23f;--sea:#3cc4f0;--berry:#d6407f;--ink:#0b1030;--myth:#ffb3ff;--rare:#7fe0ff;
+  --display:"Lilita One","Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif;
+  --body:"Nunito","Avenir Next","Segoe UI",system-ui,sans-serif;
+  color-scheme:dark;
+}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--night);color:var(--cream);font-family:var(--body);font-weight:800;-webkit-user-select:none;user-select:none}
+#cv{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+button{font-family:inherit}
+.hide{display:none!important}
+
+/* ---------- HUD ---------- */
+#hud{position:fixed;top:0;left:0;right:0;display:flex;gap:8px;align-items:flex-start;pointer-events:none;z-index:4;
+  padding:10px max(12px,env(safe-area-inset-right)) 0 max(12px,env(safe-area-inset-left))}
+#hud>*{pointer-events:auto}
+.coins{background:rgba(11,16,48,.78);border:3px solid var(--edge);border-radius:18px;padding:6px 14px 6px 8px;display:flex;flex-direction:column;gap:2px}
+.coins .row{display:flex;align-items:center;gap:8px;font-size:22px;font-family:var(--display);font-weight:400}
+.coin{display:inline-block;width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff3a0,#ffd23f 45%,#d69a10);border:2px solid #8a5a00;flex:none}
+.coins .rate{font-size:14px;color:#9ff0a0;font-family:var(--body);font-weight:900}
+.coins .gear{font-size:13px;color:var(--muted)}
+.spacer{flex:1}
+.hbtn{font-family:var(--display);font-size:18px;background:var(--panel);color:var(--cream);border:3px solid var(--edge);border-radius:14px;padding:7px 14px;cursor:pointer}
+.hbtn:hover{border-color:var(--sun)}
+
+#act{position:fixed;left:50%;bottom:max(22px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:4;
+  font-family:var(--display);font-size:26px;background:var(--sun);color:var(--ink);border:4px solid #fff3a6;border-radius:20px;
+  padding:12px 26px;cursor:pointer;box-shadow:0 6px 0 #b8860b;white-space:nowrap}
+#act:active{transform:translateX(-50%) translateY(3px);box-shadow:0 3px 0 #b8860b}
+#act small{font-family:var(--body);font-size:14px;font-weight:900;opacity:.7;margin-left:8px}
+
+.lbl{position:fixed;left:0;top:0;transform:translate(-50%,-100%);z-index:3;pointer-events:none;white-space:nowrap;
+  font-family:var(--display);font-size:20px;color:#fff;text-shadow:0 2px 0 #0b1030,0 0 6px #0b1030}
+.lbl.sign{font-size:26px;color:var(--sun);text-shadow:0 3px 0 #7a2a50,0 0 8px #0b1030}
+.lbl.fishname{font-size:17px;background:rgba(11,16,48,.8);border:2px solid var(--edge);border-radius:10px;padding:3px 10px;text-shadow:none}
+.lbl.fishname b{color:#9ff0a0;font-family:var(--body);font-weight:900;font-size:14px;margin-left:6px}
+.lbl.myth{border-color:var(--myth);color:var(--myth)}
+.lbl.pop{font-size:22px;color:var(--sun)}
+
+/* ---------- Ocean HUD (sinking and reeling) ---------- */
+#ocean{position:fixed;inset:0;pointer-events:none;z-index:2}
+#depth{position:absolute;top:84px;left:50%;transform:translateX(-50%);text-align:center;text-shadow:0 3px 0 rgba(0,0,0,.5)}
+#depth .m{font-family:var(--display);font-size:44px;line-height:1}
+#depth .z{font-size:18px;color:var(--muted)}
+#banner{position:absolute;top:28%;left:0;right:0;text-align:center;opacity:0;transition:opacity .4s}
+#banner.on{opacity:1}
+#banner .n{font-family:var(--display);font-size:clamp(34px,7vw,60px);color:var(--sun);text-shadow:0 4px 0 #7a2a50,0 0 14px #000}
+#banner .s{font-size:20px;text-shadow:0 2px 0 #000}
+#gauge{position:absolute;right:max(14px,env(safe-area-inset-right));top:120px;bottom:120px;width:150px}
+#gauge .seg{position:absolute;right:0;width:18px;border:2px solid rgba(255,255,255,.5);box-sizing:border-box}
+#gauge .seg.locked{opacity:.35}
+#gauge .nm{position:absolute;right:26px;transform:translateY(-50%);font-size:13px;text-align:right;text-shadow:0 1px 0 #000,0 0 4px #000;line-height:1.1}
+#gauge .nm.locked{opacity:.45}
+#gauge .mark{position:absolute;right:-6px;width:30px;height:6px;margin-top:-3px;background:var(--sun);border-radius:3px;box-shadow:0 0 8px var(--sun)}
+#gauge .limit{position:absolute;right:-8px;width:34px;height:0;border-top:3px dashed #ff6a5a}
+#gauge .limit span{position:absolute;right:38px;top:-10px;font-size:12px;color:#ffb0a8;white-space:nowrap;text-shadow:0 1px 0 #000}
+@media (max-width:640px){#depth{top:124px}#depth .m{font-size:34px}#gauge{top:180px;width:110px}#gauge .nm{font-size:12px}}
+#otext{position:absolute;bottom:130px;left:0;right:0;text-align:center;font-size:20px;text-shadow:0 2px 0 #000,0 0 6px #000}
+#fight{position:absolute;left:50%;bottom:max(24px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(560px,86vw);text-align:center}
+#fight .say{font-family:var(--display);font-size:clamp(26px,5vw,40px);text-shadow:0 3px 0 #000;margin-bottom:10px}
+#fight .say.warn{color:#ff6a5a;animation:shake .15s infinite}
+@keyframes shake{0%{transform:translateX(-3px)}50%{transform:translateX(3px)}100%{transform:translateX(-3px)}}
+.bar{height:24px;border:3px solid #fff;border-radius:14px;background:rgba(0,0,0,.45);overflow:hidden;margin:6px 0;position:relative}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#4ee06a,#9ff0a0)}
+.bar.t i{background:linear-gradient(90deg,#4ee06a,#ffd23f 60%,#ff4a3a)}
+.bar span{position:absolute;inset:0;font-size:14px;line-height:18px;color:#fff;text-shadow:0 1px 0 #000}
+
+/* ---------- Aquarium bar ---------- */
+#aqbar{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:4;display:flex;gap:10px;align-items:center;
+  background:rgba(11,16,48,.8);border:3px solid var(--edge);border-radius:18px;padding:8px 10px 8px 16px;white-space:nowrap}
+#aqbar .t{font-size:16px}
+#aqbar .t b{font-family:var(--display);font-weight:400;font-size:20px;color:var(--sea)}
+
+/* ---------- Overlays ---------- */
+.ov{position:fixed;inset:0;background:rgba(6,10,34,.66);display:none;align-items:center;justify-content:center;z-index:10;padding:14px;box-sizing:border-box}
+.ov.on{display:flex}
+.ov.clear{background:transparent;align-items:flex-end}
+.panel{background:var(--panel);border:4px solid var(--edge);border-radius:24px;width:100%;max-width:720px;max-height:100%;overflow:auto;padding:22px;box-sizing:border-box;
+  box-shadow:0 12px 0 rgba(0,0,0,.25)}
+.panel h2{font-family:var(--display);font-weight:400;font-size:34px;margin:0 0 10px;color:var(--sun)}
+.panel h3{font-family:var(--display);font-weight:400;font-size:24px;margin:16px 0 8px;color:var(--sea)}
+.panel p{margin:6px 0;font-size:17px;line-height:1.45}
+.col{display:flex;flex-direction:column;gap:10px;align-items:stretch;max-width:340px;margin:16px auto 0}
+.btn{display:block;text-align:center;text-decoration:none;font-family:var(--display);font-size:22px;background:var(--panel2);color:var(--cream);border:3px solid var(--edge);border-radius:16px;padding:10px 16px;cursor:pointer}
+.btn:hover{border-color:var(--sun)}
+.btn.go{background:var(--sun);color:var(--ink);border-color:#fff3a6}
+.btn.small{font-size:17px;padding:7px 12px}
+.btn.ghost{background:transparent}
+.btn.dim{opacity:.55}
+body.kbnav .btn:focus,body.kbnav .item:focus,body.kbnav .hbtn:focus,body.kbnav #act:focus{outline:5px solid var(--sun);outline-offset:3px}
+.btn:focus-visible,.item:focus-visible{outline:5px solid var(--sun);outline-offset:3px}
+.row2{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+.row2 .btn{flex:1;min-width:180px}
+
+/* title */
+#ovTitle{background:linear-gradient(180deg,rgba(6,10,34,.15),rgba(6,10,34,.8))}
+#ovTitle .panel{background:rgba(22,32,90,.88);text-align:center;max-width:560px}
+.logo{font-family:var(--display);font-weight:400;font-size:clamp(46px,11vw,82px);line-height:.95;margin:0;color:var(--sun);
+  text-shadow:0 5px 0 var(--berry),0 10px 0 #4a1a50;letter-spacing:.01em}
+.tagl{color:var(--muted);font-size:18px;margin:10px 0 0}
+
+/* shop */
+.items{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.item{text-align:left;background:var(--panel2);color:var(--cream);border:3px solid var(--edge);border-radius:16px;padding:10px 12px;cursor:pointer;display:flex;flex-direction:column;gap:3px;font-size:14px}
+.item .nm{font-family:var(--display);font-size:20px}
+.item .ds{color:var(--muted);font-size:14px}
+.item .pr{display:flex;align-items:center;gap:6px;font-size:17px;margin-top:4px}
+.item.own{border-color:#4ee06a}
+.item.own .pr{color:#9ff0a0}
+.item.cant .pr{color:#ff9a8a}
+.item.locked{opacity:.5}
+.item .sw{display:inline-block;width:14px;height:14px;border-radius:50%;vertical-align:middle;margin-right:6px;border:2px solid rgba(255,255,255,.6)}
+.have{display:flex;align-items:center;gap:8px;font-size:20px;font-family:var(--display);font-weight:400}
+
+/* dex */
+.zrow{margin-bottom:12px}
+.zrow h3{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.zrow h3 small{font-family:var(--body);font-size:14px;color:var(--muted)}
+.tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.tile{background:rgba(0,0,0,.25);border:2px solid var(--edge);border-radius:12px;padding:4px;text-align:center;font-size:12px;line-height:1.2;min-width:0}
+.tile canvas,.tile img{width:100%;aspect-ratio:3/2;display:block}
+.tile.m{border-color:var(--myth)}
+.tile.r{border-color:var(--rare)}
+.tile .k{font-size:11px;color:var(--muted)}
+.tile.m .k{color:var(--myth)}
+.tile.r .k{color:var(--rare)}
+@media (max-width:520px){.tiles{grid-template-columns:repeat(3,1fr)}}
+
+/* catch card */
+#ovCard .panel{max-width:560px;text-align:center;margin-bottom:max(8px,env(safe-area-inset-bottom));background:rgba(22,32,90,.93)}
+#ovCard .panel.m{border-color:var(--myth);box-shadow:0 0 30px rgba(255,179,255,.6)}
+#ovCard .panel.r{border-color:var(--rare)}
+.badge{display:inline-block;font-family:var(--display);font-size:18px;padding:3px 14px;border-radius:999px;background:var(--edge);margin:0 4px 6px}
+.badge.m{background:linear-gradient(90deg,#ff7ad9,#ffd23f,#7fe0ff);color:var(--ink)}
+.badge.r{background:var(--rare);color:var(--ink)}
+.badge.new{background:#4ee06a;color:var(--ink)}
+.earn{font-size:18px;color:#9ff0a0;margin:8px 0}
+.fact{color:var(--muted)}
+
+#toast{position:fixed;left:50%;top:84px;transform:translateX(-50%);z-index:20;background:rgba(11,16,48,.92);border:3px solid var(--sun);border-radius:14px;padding:8px 16px;font-size:17px;opacity:0;transition:opacity .25s;pointer-events:none;text-align:center;max-width:86vw}
+#toast.on{opacity:1}
+#soundHint{position:fixed;left:50%;bottom:6px;transform:translateX(-50%);z-index:21;font-size:13px;color:var(--muted);background:rgba(11,16,48,.8);border-radius:10px;padding:3px 10px;pointer-events:none}
+#fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:5}
+#nogl{position:fixed;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:20px;font-size:20px}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="labels"></div>
+
+<div id="hud" class="hide">
+  <div class="coins">
+    <div class="row"><span class="coin"></span><span id="coinTxt">0</span></div>
+    <div class="rate" id="rateTxt">+0 coins a second</div>
+    <div class="gear" id="gearTxt"></div>
+  </div>
+  <div class="spacer"></div>
+  <button class="hbtn" id="dexBtn">Fishdex</button>
+  <button class="hbtn" id="menuBtn">Menu</button>
+</div>
+
+<div id="ocean" class="hide">
+  <div id="depth"><div class="m" id="depthM">0 m</div><div class="z" id="depthZ"></div></div>
+  <div id="banner"><div class="n" id="bannerN"></div><div class="s" id="bannerS"></div></div>
+  <div id="gauge"></div>
+  <div id="otext"></div>
+  <div id="fight" class="hide">
+    <div class="say" id="fightSay">Hold to reel!</div>
+    <div class="bar"><i id="pBar"></i><span>Reel it in</span></div>
+    <div class="bar t"><i id="tBar"></i><span>Line pull</span></div>
+  </div>
+</div>
+
+<button id="act" class="hide"></button>
+
+<div id="aqbar" class="hide">
+  <div class="t">Your Aquarium · <b id="aqCount">0</b> fish · <span id="aqRate">0</span> coins a second</div>
+  <button class="btn small" id="aqBack">Back to the beach</button>
+</div>
+
+<div id="fade"></div>
+<div id="toast"></div>
+<div id="soundHint" class="hide">Click once to turn on sound</div>
+<div id="nogl">Fishpocalypse needs WebGL 2, which this browser doesn't have. Try Chrome, Edge, Firefox or Safari.<br><br><a href="../" style="color:#ffd23f">All games</a></div>
+
+<!-- Title -->
+<div class="ov" id="ovTitle"><div class="panel">
+  <h1 class="logo">Fishpocalypse</h1>
+  <p class="tagl">Cast your line off the pier, sink through seven ocean zones, catch rare and mythical fish, and fill a gigantic aquarium.</p>
+  <div class="col">
+    <button class="btn go" id="tPlay">Play</button>
+    <button class="btn" id="tHow">How to play</button>
+    <button class="btn" id="tMusic">Music: on</button>
+    <button class="btn" id="tSfx">Sounds: on</button>
+    <a class="btn ghost" href="../">All games</a>
+    <button class="btn ghost small" id="tReset">Start over</button>
+  </div>
+</div></div>
+
+<!-- Pause -->
+<div class="ov" id="ovPause"><div class="panel" style="max-width:420px;text-align:center">
+  <h2>Paused</h2>
+  <div class="col">
+    <button class="btn go" id="pResume">Keep playing</button>
+    <button class="btn" id="pDex">Fishdex</button>
+    <button class="btn" id="pHow">How to play</button>
+    <button class="btn" id="pMusic">Music: on</button>
+    <button class="btn" id="pSfx">Sounds: on</button>
+    <button class="btn" id="pTitle">Title screen</button>
+    <a class="btn ghost" href="../">All games</a>
+  </div>
+</div></div>
+
+<!-- How to play -->
+<div class="ov" id="ovHow"><div class="panel">
+  <h2>How to play</h2>
+  <p><b>1. Walk</b> to the end of the long pier. <b>2. Cast</b> your line and watch your hook sink through the zones of the ocean. <b>3.</b> When it stops, a fish from that zone bites. <b>Hold</b> to reel it in, and <b>let go</b> when it thrashes so the line doesn't pull too hard.</p>
+  <p>Every fish goes into your <b>Aquarium</b> (the giant glass dome), and every fish there makes coins every second, even while you're fishing. Spend coins at the <b>Tackle Shop</b> on heavier sinkers to go deeper, faster reels, and luckier bait.</p>
+  <p>Every zone has three common fish, one <span style="color:var(--rare)">rare</span> one and one <span style="color:var(--myth)">mythical</span> one. Deeper zones have fish worth much more. Press <b>Stop here</b> on the way down to fish a shallower zone.</p>
+  <h3>Controls</h3>
+  <p><b>Keyboard:</b> WASD or arrow keys to walk, Q and E (or drag with the mouse) to turn the camera, Space to cast, stop and reel (hold), Esc for the menu.</p>
+  <p><b>Mouse or touch:</b> tap the ground to walk there, drag to turn the camera, tap the yellow button to cast, hold anywhere to reel.</p>
+  <p><b>Xbox controller:</b> left stick to walk, right stick to turn the camera, A to cast, stop and reel (hold A or RT), B to go back, Y for the Fishdex, Start for the menu.</p>
+  <div class="row2"><button class="btn go" id="hBack">Got it</button></div>
+</div></div>
+
+<!-- Shop -->
+<div class="ov" id="ovShop"><div class="panel" id="shopPanel"></div></div>
+<!-- Fishdex -->
+<div class="ov" id="ovDex"><div class="panel" id="dexPanel"></div></div>
+<!-- Catch card -->
+<div class="ov clear" id="ovCard"><div class="panel" id="cardPanel"></div></div>
+<!-- Welcome back -->
+<div class="ov" id="ovAway"><div class="panel" style="max-width:460px;text-align:center">
+  <h2>Welcome back!</h2>
+  <p id="awayTxt"></p>
+  <div class="row2"><button class="btn go" id="awayOk">Yay!</button></div>
+</div></div>
+<!-- Start over -->
+<div class="ov" id="ovReset"><div class="panel" style="max-width:460px;text-align:center">
+  <h2>Start over?</h2>
+  <p>This lets all your fish go and sets your coins back to zero. You can't undo it.</p>
+  <div class="row2"><button class="btn go" id="rNo">Keep my fish</button><button class="btn" id="rYes">Yes, start over</button></div>
+</div></div>
+
+<script>
+'use strict';
+/* =====================================================================
+   Small helpers
+   ===================================================================== */
+const TAU = Math.PI * 2;
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const lerp = (a, b, t) => a + (b - a) * t;
+const rand = (a, b) => a + Math.random() * (b - a);
+const smooth = t => t * t * (3 - 2 * t);
+function H(h) { h = h.replace('#', ''); return [parseInt(h.slice(0, 2), 16) / 255, parseInt(h.slice(2, 4), 16) / 255, parseInt(h.slice(4, 6), 16) / 255]; }
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function fmt(n) {
+  n = Math.floor(n);
+  if (n < 1e6) return n.toLocaleString('en-US');
+  const u = n < 1e9 ? [1e6, 'million'] : n < 1e12 ? [1e9, 'billion'] : [1e12, 'trillion'];
+  const v = n / u[0];
+  let s = v < 10 ? v.toFixed(2) : v < 100 ? v.toFixed(1) : v.toFixed(0);
+  if (s.indexOf('.') >= 0) s = s.replace(/0+$/, '').replace(/\.$/, '');
+  return s + ' ' + u[1];
+}
+function fmtRate(n) { return n < 10 ? (Math.round(n * 10) / 10).toString() : fmt(n); }
+function esc(s) { return String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch])); }
+
+/* =====================================================================
+   The ocean: seven zones. Each zone is the same height in the 3D ocean (60 units),
+   so sinking through each one takes about the same time.
+   ===================================================================== */
+const ZONE_H = 60;
+const ZONES = [
+  { name: 'Sunlit Shallows', short: 'Shallows', top: 0, bottom: 20, val: 1, fog: ['#5fc8e8', '#3aa6d0'], light: 1.0, lamp: 0.0, fogD: 34, dots: '#ffffff' },
+  { name: 'Kelp Forest', short: 'Kelp Forest', top: 20, bottom: 80, val: 5, fog: ['#2f9aa8', '#1f7a80'], light: 0.85, lamp: 0.1, fogD: 28, dots: '#d8fff0' },
+  { name: 'Twilight Zone', short: 'Twilight', top: 80, bottom: 300, val: 25, fog: ['#1d5a8a', '#163c70'], light: 0.5, lamp: 0.45, fogD: 24, dots: '#7ff0ff' },
+  { name: 'Midnight Zone', short: 'Midnight', top: 300, bottom: 1500, val: 125, fog: ['#10204e', '#0a1232'], light: 0.2, lamp: 0.9, fogD: 20, dots: '#9fe8ff' },
+  { name: 'The Abyss', short: 'Abyss', top: 1500, bottom: 5000, val: 625, fog: ['#0a0f2a', '#070a1c'], light: 0.12, lamp: 1.0, fogD: 18, dots: '#c8b0ff' },
+  { name: 'The Trench', short: 'Trench', top: 5000, bottom: 11000, val: 3000, fog: ['#1a1636', '#1e1428'], light: 0.22, lamp: 1.3, fogD: 22, dots: '#e0e0ff' },
+  { name: 'The Fishpocalypse Rift', short: 'The Rift', top: 11000, bottom: 20000, val: 15000, fog: ['#2a0a0c', '#4a1206'], light: 0.25, lamp: 0.8, fogD: 22, dots: '#ff9a3a' },
+];
+ZONES.forEach(z => { z.fogA = H(z.fog[0]); z.fogB = H(z.fog[1]); z.dotC = H(z.dots); });
+const OCEAN_BOTTOM = ZONES.length * ZONE_H;       // 420 units
+// depth in meters <-> how far down the 3D column (units). Inside a zone the meters grow like a log scale.
+function depthToVis(d) {
+  for (let i = ZONES.length - 1; i >= 0; i--) {
+    const z = ZONES[i];
+    if (d >= z.top || i === 0) {
+      const f = (Math.log(1 + Math.min(d, z.bottom)) - Math.log(1 + z.top)) / (Math.log(1 + z.bottom) - Math.log(1 + z.top));
+      return (i + clamp(f, 0, 1)) * ZONE_H;
+    }
+  }
+  return 0;
+}
+function visToDepth(v) {
+  v = clamp(v, 0, OCEAN_BOTTOM - 0.001);
+  const i = Math.floor(v / ZONE_H), f = v / ZONE_H - i, z = ZONES[i];
+  return Math.exp(Math.log(1 + z.top) + f * (Math.log(1 + z.bottom) - Math.log(1 + z.top))) - 1;
+}
+const zoneAtVis = v => clamp(Math.floor(v / ZONE_H), 0, ZONES.length - 1);
+
+/* =====================================================================
+   The shop
+   ===================================================================== */
+const HOOKS = [
+  { name: 'Tin Hook', depth: 20, cost: 0, col: '#b8c0c8' },
+  { name: 'Iron Sinker', depth: 80, cost: 150, col: '#6d6f78' },
+  { name: 'Steel Sinker', depth: 300, cost: 3000, col: '#a9c4d8' },
+  { name: 'Gold Sinker', depth: 1500, cost: 60000, col: '#ffd23f' },
+  { name: 'Diamond Sinker', depth: 5000, cost: 1500000, col: '#8ff0ff' },
+  { name: 'Titan Sinker', depth: 11000, cost: 30000000, col: '#c18cff' },
+  { name: 'Doom Anchor', depth: 20000, cost: 600000000, col: '#ff5a3a' },
+];
+const REELS = [
+  { name: 'Old Reel', speed: 1, cost: 0 },
+  { name: 'Fast Reel', speed: 1.4, cost: 400 },
+  { name: 'Turbo Reel', speed: 1.9, cost: 15000 },
+  { name: 'Mega Reel', speed: 2.6, cost: 2000000 },
+  { name: 'Rocket Reel', speed: 3.4, cost: 100000000 },
+];
+const BAITS = [
+  { name: 'Worm', rare: 1, myth: 1, cost: 0, col: '#ff8aa0' },
+  { name: 'Shiny Lure', rare: 1.5, myth: 2, cost: 1000, col: '#e0e8ff' },
+  { name: 'Glow Lure', rare: 2, myth: 3.5, cost: 150000, col: '#7fffd0' },
+  { name: 'Mythic Bait', rare: 2.5, myth: 6, cost: 20000000, col: '#ff7ad9' },
+];
+
+/* =====================================================================
+   Every creature. z = zone, r = c (common), r (rare) or m (mythical),
+   len = how long it is in meters, kind = which model builder makes it.
+   Facts about real animals must be true.
+   ===================================================================== */
+const SPECIES = [
+  // Sunlit Shallows
+  { name: 'Sardine', z: 0, r: 'c', kind: 'fish', len: 0.3, o: { c1: '#7fa6c8', c2: '#eef4fa', h: 0.22, w: 0.14, stripe: '#3d5f8a' }, fact: 'Sardines swim together in huge groups called schools.' },
+  { name: 'Clownfish', z: 0, r: 'c', kind: 'fish', len: 0.25, o: { c1: '#ff7a1a', h: 0.42, w: 0.24, bands: [0.28, 0.02, -0.24], band: '#ffffff', fin: '#ff7a1a' }, fact: 'Clownfish live safely inside stinging sea anemones.' },
+  { name: 'Pufferfish', z: 0, r: 'c', kind: 'puffer', len: 0.35, o: { c1: '#e8c86a', c2: '#fff4d0', spots: '#8a6a2a' }, fact: 'A pufferfish gulps water to puff up into a spiky ball.' },
+  { name: 'Seahorse', z: 0, r: 'r', kind: 'seahorse', len: 0.3, o: { c1: '#ffb03a', c2: '#ffd98a' }, fact: 'Seahorse dads carry the eggs in a pouch until the babies hatch.' },
+  { name: 'Sunscale Dragonet', z: 0, r: 'm', kind: 'fish', len: 0.6, o: { c1: '#ffd23f', c2: '#fff3a0', h: 0.3, w: 0.22, fin: '#ff9a1a', wings: '#ffb84a', horns: '#ff9a1a', spots: '#ff9a1a', glow: '#fff08a' }, fact: 'A tiny golden dragon of the sea. Old fishing stories say it only bites on sunny days.' },
+  // Kelp Forest
+  { name: 'Kelp Bass', z: 1, r: 'c', kind: 'fish', len: 0.6, o: { c1: '#7a7a4a', c2: '#c8c08a', h: 0.28, w: 0.17, fin: '#5a5a32', spots: '#d8d0a0' }, fact: 'Kelp bass hide among the tall kelp and dart out to catch smaller fish.' },
+  { name: 'Garibaldi', z: 1, r: 'c', kind: 'fish', len: 0.35, o: { c1: '#ff6a10', h: 0.48, w: 0.2, fin: '#ff5a00' }, fact: 'The bright orange Garibaldi is the official state marine fish of California.' },
+  { name: 'Octopus', z: 1, r: 'c', kind: 'octo', len: 0.8, o: { c1: '#d65a4a', c2: '#f08a7a' }, fact: 'An octopus has three hearts and blue blood.' },
+  { name: 'Leafy Sea Dragon', z: 1, r: 'r', kind: 'seahorse', len: 0.4, o: { c1: '#c8a040', c2: '#e8d070', leaves: '#7ab84a' }, fact: 'Leafy sea dragons have leaf-shaped fins, so they look just like floating seaweed.' },
+  { name: 'Kelpie', z: 1, r: 'm', kind: 'kelpie', len: 2.2, o: { c1: '#3fa88a', c2: '#8fe0c0', mane: '#2f7a3a', glow: '#9fffd8' }, fact: 'A magic water horse from old Scottish stories, with a mane made of seaweed.' },
+  // Twilight Zone
+  { name: 'Lanternfish', z: 2, r: 'c', kind: 'fish', len: 0.25, o: { c1: '#4a5a7a', c2: '#8a9ab8', h: 0.24, w: 0.14, fin: '#3a4a68', dots: '#7ff0ff', eye: 1.4 }, fact: 'Lanternfish have glowing spots on their bodies that make their own light.' },
+  { name: 'Hatchetfish', z: 2, r: 'c', kind: 'fish', len: 0.25, o: { c1: '#b8c8d8', c2: '#eef4fa', h: 0.62, w: 0.1, fin: '#8a9ab0', dots: '#7fd0ff', eye: 1.6 }, fact: 'Hatchetfish are thin and silver, shaped like the blade of a tiny axe.' },
+  { name: 'Squid', z: 2, r: 'c', kind: 'squid', len: 0.9, o: { c1: '#e89a8a', c2: '#f8c8b8' }, fact: 'Squid squirt clouds of ink to hide and escape.' },
+  { name: 'Swordfish', z: 2, r: 'r', kind: 'fish', len: 2.5, o: { c1: '#3a5a9a', c2: '#d8e2f0', h: 0.2, w: 0.14, fin: '#2a3a6a', bill: true, dorsal: 1.8 }, fact: 'A swordfish swings its long, flat bill to stun the fish it eats.' },
+  { name: 'Moonhorn', z: 2, r: 'm', kind: 'fish', len: 1.4, o: { c1: '#c8d8ff', c2: '#ffffff', h: 0.32, w: 0.2, fin: '#a8b8ff', horn: '#fff6c0', dots: '#ffffff', glow: '#cfe0ff' }, fact: 'A shining fish with a unicorn horn. Sailors say it swims up to look at the moon.' },
+  // Midnight Zone
+  { name: 'Anglerfish', z: 3, r: 'c', kind: 'fish', len: 0.6, o: { c1: '#3a2f3a', c2: '#5a4a52', h: 0.55, w: 0.45, fin: '#2a222a', teeth: true, lure: '#b8ffef', eye: 0.8 }, fact: 'An anglerfish waves a glowing lure on its head to attract food.' },
+  { name: 'Gulper Eel', z: 3, r: 'c', kind: 'eel', len: 1.5, o: { c1: '#2a2a3a', c2: '#3a3a52', thick: 0.05, gulp: true, tip: '#ff6ad0' }, fact: 'The gulper eel has a giant mouth that opens wide like a net.' },
+  { name: 'Vampire Squid', z: 3, r: 'c', kind: 'octo', len: 0.5, o: { c1: '#8a1a2a', c2: '#b83040', web: true, ears: true, eyeC: '#4af0ff' }, fact: 'Despite its spooky name, the vampire squid eats bits of falling "marine snow", not blood.' },
+  { name: 'Giant Squid', z: 3, r: 'r', kind: 'squid', len: 5, o: { c1: '#c8503a', c2: '#e88a6a', big: true }, fact: 'Giant squid have eyes as big as dinner plates, among the biggest eyes of any animal.' },
+  { name: 'Phantom Shark', z: 3, r: 'm', kind: 'shark', len: 3.5, o: { c1: '#bfe8ff', c2: '#ffffff', ghost: true, glow: '#9fe8ff' }, fact: 'A see-through shark that glows in the dark. Nobody has ever seen it twice.' },
+  // The Abyss
+  { name: 'Dumbo Octopus', z: 4, r: 'c', kind: 'octo', len: 0.5, o: { c1: '#ff9ab0', c2: '#ffc8d4', web: true, ears: true }, fact: 'Dumbo octopuses swim by flapping fins that look like elephant ears.' },
+  { name: 'Tripod Fish', z: 4, r: 'c', kind: 'fish', len: 0.8, o: { c1: '#6a6a7a', c2: '#9a9aaa', h: 0.18, w: 0.12, fin: '#4a4a5a', tripod: true, eye: 0.7 }, fact: 'Tripod fish stand on the sea floor on three very long fins, like a camera tripod.' },
+  { name: 'Giant Isopod', z: 4, r: 'c', kind: 'bug', len: 0.5, o: { c1: '#c8b8a0', c2: '#a89880' }, fact: 'Giant isopods are cousins of the little pill bugs that live in gardens.' },
+  { name: 'Frilled Shark', z: 4, r: 'r', kind: 'eel', len: 2, o: { c1: '#6a5a4a', c2: '#8a7a6a', thick: 0.07, frills: '#a05a4a', teeth: true, sharkFins: true }, fact: 'The frilled shark is long like an eel and has frilly gills around its neck.' },
+  { name: 'Sea Serpent', z: 4, r: 'm', kind: 'eel', len: 7, o: { c1: '#2f8a6a', c2: '#bfe8a0', thick: 0.06, spikes: '#ffd23f', horns: '#ffe8a0', glow: '#7fffc0' }, fact: "A giant sea serpent from old sailors' tales, as long as a ship." },
+  // The Trench
+  { name: 'Snailfish', z: 5, r: 'c', kind: 'fish', len: 0.4, o: { c1: '#f0c8d0', c2: '#fff0f4', h: 0.26, w: 0.16, fin: '#e0a8b8', tadpole: true, eye: 0.8 }, fact: 'Snailfish have been found living deeper than any other fish, more than 8,000 meters down.' },
+  { name: 'Sea Pig', z: 5, r: 'c', kind: 'seapig', len: 0.4, o: { c1: '#f0a8c0', c2: '#ffd0e0' }, fact: 'A sea pig is a kind of sea cucumber that walks along the sea floor on little tube feet.' },
+  { name: 'Supergiant Amphipod', z: 5, r: 'c', kind: 'bug', len: 0.3, o: { c1: '#f4f0e8', c2: '#d8d0c0', curl: true }, fact: 'Supergiant amphipods look like big shrimp and scuttle around in the deepest trenches.' },
+  { name: 'Megalodon', z: 5, r: 'r', kind: 'shark', len: 10, o: { c1: '#6a7a8a', c2: '#e0e4e8', teeth: true }, fact: 'Megalodon was a giant shark that lived millions of years ago. Maybe one is still hiding down here!' },
+  { name: 'Kraken', z: 5, r: 'm', kind: 'octo', len: 8, o: { c1: '#6a1a4a', c2: '#9a3a6a', eyeC: '#ffd23f', kraken: true, glow: '#ff6ad0' }, fact: "A giant sea monster from old Norse sailors' stories, big enough to grab a ship." },
+  // The Fishpocalypse Rift
+  { name: 'Zombie Cod', z: 6, r: 'c', kind: 'fish', len: 1, o: { c1: '#7a9a6a', c2: '#a8c098', h: 0.26, w: 0.16, fin: '#5a7a4a', stitches: true, xEye: true }, fact: "It has been swimming around for a hundred years, and it still isn't tired." },
+  { name: 'Skeleton Fish', z: 6, r: 'c', kind: 'fish', len: 0.9, o: { c1: '#e8e4d8', h: 0.3, w: 0.16, fin: '#c8c4b8', bones: true, eyeC: '#ff4a2a' }, fact: 'Nothing left but bones, but somehow it still swims.' },
+  { name: 'Lava Shark', z: 6, r: 'c', kind: 'shark', len: 4, o: { c1: '#2a1a1a', c2: '#4a2a20', lava: '#ff7a1a', teeth: true, glow: '#ff5a1a' }, fact: 'It swims through the glowing lava cracks at the bottom of the world.' },
+  { name: 'Triclops Grouper', z: 6, r: 'r', kind: 'fish', len: 2, o: { c1: '#8a4ab8', c2: '#c8a0e8', h: 0.38, w: 0.26, fin: '#6a2a98', eyes3: true, teeth: true, spots: '#e8d040' }, fact: 'Three eyes means it can see you three times as well.' },
+  { name: 'Doomfin', z: 6, r: 'm', kind: 'fish', len: 8, o: { c1: '#2a0a14', c2: '#6a1a2a', h: 0.36, w: 0.24, fin: '#b8101a', crown: true, teeth: true, eyeC: '#ff2a1a', lava: '#ff9a2a', dorsal: 1.6, glow: '#ff3a1a' }, fact: 'The King of the Fishpocalypse. He started the whole thing, and now he lives in your aquarium.' },
+];
+// coins per second: commons 1, 1.3, 1.6 times the zone value; rare 5 times; mythical 25 times
+(() => {
+  const seen = {};
+  SPECIES.forEach((s, i) => {
+    s.id = i;
+    const z = ZONES[s.z];
+    if (s.r === 'c') { seen[s.z] = (seen[s.z] || 0) + 1; s.mult = [1, 1.3, 1.6][seen[s.z] - 1]; s.weight = [30, 27, 23][seen[s.z] - 1]; }
+    else if (s.r === 'r') { s.mult = 5; s.weight = 16; }
+    else { s.mult = 25; s.weight = 4; }
+    s.val = z.val * s.mult;
+    // how big it looks in the game: small fish are drawn a bit bigger so you can see them
+    s.vis = 0.7 + s.len * 0.75;
+  });
+})();
+const RARITY = { c: 'Common', r: 'Rare', m: 'Mythical' };
+function pickSpecies(z) {
+  const b = BAITS[save.bait];
+  const list = SPECIES.filter(s => s.z === z);
+  const w = list.map(s => s.weight * (s.r === 'r' ? b.rare : s.r === 'm' ? b.myth : 1));
+  let t = Math.random() * w.reduce((a, c) => a + c, 0);
+  for (let i = 0; i < list.length; i++) { t -= w[i]; if (t <= 0) return list[i].id; }
+  return list[0].id;
+}
+function rollSize() { return Math.round((Math.random() < 0.15 ? rand(1.15, 1.5) : rand(0.8, 1.05)) * 100) / 100; }
+const fishValue = f => SPECIES[f[0]].val * f[1];
+
+/* =====================================================================
+   Saved game. Key: fishpocalypse.v1. Every value is checked when it loads.
+   ===================================================================== */
+const SAVE_KEY = 'fishpocalypse.v1';
+function defaultSave() { return { v: 1, coins: 0, hook: 0, reel: 0, bait: 0, fish: [], dex: {}, total: 0, music: true, sfx: true, t: Date.now() }; }
+function loadSave() {
+  const s = defaultSave();
+  let raw = null;
+  try { raw = localStorage.getItem(SAVE_KEY); } catch (e) { return s; }
+  if (!raw) return s;
+  let d = null;
+  try { d = JSON.parse(raw); } catch (e) { d = null; }
+  if (!d || typeof d !== 'object' || Array.isArray(d)) { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} return s; }
+  const num = (v, lo, hi, def) => (typeof v === 'number' && isFinite(v)) ? clamp(v, lo, hi) : def;
+  const int = (v, lo, hi) => Math.floor(num(v, lo, hi, lo));
+  s.coins = num(d.coins, 0, 1e15, 0);
+  s.hook = int(d.hook, 0, HOOKS.length - 1);
+  s.reel = int(d.reel, 0, REELS.length - 1);
+  s.bait = int(d.bait, 0, BAITS.length - 1);
+  if (Array.isArray(d.fish)) {
+    for (const f of d.fish) {
+      if (s.fish.length >= 50000) break;
+      if (Array.isArray(f) && Number.isInteger(f[0]) && f[0] >= 0 && f[0] < SPECIES.length && typeof f[1] === 'number' && isFinite(f[1]))
+        s.fish.push([f[0], Math.round(clamp(f[1], 0.8, 1.5) * 100) / 100]);
+    }
+  }
+  if (d.dex && typeof d.dex === 'object' && !Array.isArray(d.dex)) {
+    for (const k of Object.keys(d.dex)) {
+      const i = Number(k), v = d.dex[k];
+      if (Number.isInteger(i) && i >= 0 && i < SPECIES.length && Number.isInteger(v) && v > 0) s.dex[i] = Math.min(v, 1e9);
+    }
+  }
+  for (const f of s.fish) if (!s.dex[f[0]]) s.dex[f[0]] = 1;     // every fish in the tank is in the Fishdex
+  s.total = Math.max(int(d.total, 0, 1e9), s.fish.length);
+  s.music = typeof d.music === 'boolean' ? d.music : true;
+  s.sfx = typeof d.sfx === 'boolean' ? d.sfx : true;
+  s.t = num(d.t, 0, Date.now(), Date.now());
+  return s;
+}
+let save = loadSave();
+let lastSaved = 0;
+function saveGame() {
+  save.t = Date.now(); lastSaved = performance.now();
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {}
+}
+let incomeRate = 0;
+function recalcRate() { let r = 0; for (const f of save.fish) r += fishValue(f); incomeRate = r; }
+recalcRate();
+// coins your fish made while the game was closed (up to one hour's worth)
+const AWAY_MAX = 3600;
+let awayGain = 0;
+(() => {
+  const secs = clamp((Date.now() - save.t) / 1000, 0, AWAY_MAX);
+  if (secs > 60 && incomeRate > 0) { awayGain = incomeRate * secs; save.coins += awayGain; }
+})();
+
+/* =====================================================================
+   WebGL 2 setup and shaders
+   ===================================================================== */
+const canvas = $('cv');
+const gl = canvas.getContext('webgl2', { antialias: true, alpha: false });
+if (!gl) { $('nogl').style.display = 'flex'; throw new Error('no webgl2'); }
+
+const MAIN_VS = `#version 300 es
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec4 aNor;
+layout(location=2) in vec4 aCol;
+uniform mat4 uVP; uniform mat4 uModel; uniform vec4 uWig;
+out vec3 vN; out vec3 vCol; out vec3 vW; out float vM;
+void main(){
+  vec3 p = aPos; float s = aCol.a;
+  if (uWig.x > 0.0 && s > 0.0) {
+    if (uWig.w < 0.5) p.z += sin(uWig.z - p.x * uWig.y) * uWig.x * s;          // fish: a wave runs down the body to the tail
+    else { p.x += sin(uWig.z + p.y * uWig.y) * uWig.x * s; p.z += cos(uWig.z * 0.8 + p.y * uWig.y * 0.9) * uWig.x * s; }   // tentacles and kelp
+  }
+  vec4 w = uModel * vec4(p, 1.0);
+  vW = w.xyz; vN = mat3(uModel) * aNor.xyz; vM = aNor.w; vCol = aCol.rgb;
+  gl_Position = uVP * w;
+}`;
+const MAIN_FS = `#version 300 es
+precision highp float;
+in vec3 vN; in vec3 vCol; in vec3 vW; in float vM;
+uniform vec3 uSun, uCam, uFogC, uAmbTop, uAmbBot, uSunC, uTint;
+uniform float uFogD, uLamp, uEmit, uAlpha;
+uniform vec4 uFlat;
+out vec4 o;
+void main(){
+  if (uFlat.w > 0.5) { o = vec4(uFlat.rgb, 1.0); return; }
+  vec3 col = vCol * uTint;
+  vec3 c;
+  vec3 v = uCam - vW; float dl = length(v);
+  if (vM > 0.5) c = col;                       // glowing parts (lures, spots, lava) ignore the light
+  else {
+    vec3 n = normalize(vN + vec3(0.0, 1e-4, 0.0));
+    if (vM > -0.5 && !gl_FrontFacing) n = -n;
+    float d = dot(n, uSun);
+    float diff = clamp((d + 0.25) / 1.25, 0.0, 1.0);
+    vec3 amb = mix(uAmbBot, uAmbTop, n.y * 0.5 + 0.5);
+    c = col * (amb + uSunC * diff);
+    c += col * uLamp * exp(-dl / 7.0) * (0.45 + 0.55 * abs(dot(n, v / max(dl, 1e-3))));   // a soft light around the camera in the deep
+    c = mix(c, col * 1.25, uEmit);
+  }
+  float f = 1.0 - exp(-pow(dl / uFogD, 2.0));
+  if (vM > 0.5) f *= 0.55;
+  o = vec4(mix(c, uFogC, clamp(f, 0.0, 1.0)), uAlpha);
+}`;
+const SKY_VS = `#version 300 es
+out vec2 vNdc;
+void main(){
+  vec2 p = vec2((gl_VertexID << 1) & 2, gl_VertexID & 2) * 2.0 - 1.0;
+  vNdc = p; gl_Position = vec4(p, 0.9999, 1.0);
+}`;
+const SKY_FS = `#version 300 es
+precision highp float;
+in vec2 vNdc;
+uniform vec3 uFwd, uRight, uUp, uTop, uHor, uBot, uSun; uniform float uTanY, uAspect, uSunOn, uTime;
+out vec4 o;
+void main(){
+  vec3 d = normalize(uFwd + uRight * vNdc.x * uTanY * uAspect + uUp * vNdc.y * uTanY);
+  vec3 c = d.y > 0.0 ? mix(uHor, uTop, pow(d.y, 0.6)) : mix(uHor, uBot, pow(-d.y, 0.55));
+  if (uSunOn > 0.5) {
+    float s = max(dot(d, uSun), 0.0);
+    c += vec3(1.0, 0.95, 0.75) * (smoothstep(0.9975, 0.999, s) + pow(s, 40.0) * 0.25);
+    if (d.y > 0.02) {           // a few soft clouds
+      vec2 q = d.xz / (d.y + 0.15) * 1.4 + vec2(uTime * 0.01, 0.0);
+      float cl = sin(q.x * 1.3) * sin(q.y * 1.7 + sin(q.x * 0.7)) + sin(q.x * 2.9 + q.y * 1.1) * 0.5;
+      c = mix(c, vec3(1.0), smoothstep(0.6, 1.2, cl) * 0.75 * smoothstep(0.02, 0.2, d.y));
+    }
+  } else {                       // under water: wobbly light from above
+    float w = sin(d.x * 9.0 + uTime * 0.9) * sin(d.z * 8.0 - uTime * 0.7);
+    c += uTop * 0.25 * smoothstep(0.3, 1.0, d.y) * (0.6 + 0.4 * w);
+  }
+  o = vec4(c, 1.0);
+}`;
+const WATER_VS = `#version 300 es
+layout(location=0) in vec3 aPos;
+uniform mat4 uVP;
+out vec3 vW;
+void main(){ vW = aPos; gl_Position = uVP * vec4(aPos, 1.0); }`;
+const WATER_FS = `#version 300 es
+precision highp float;
+in vec3 vW;
+uniform float uTime; uniform vec3 uCam, uSun, uTop, uHor;
+out vec4 o;
+vec2 wave(vec2 p, vec2 dir, float freq, float amp, float spd){ return dir * cos(dot(p, dir) * freq + uTime * spd) * amp * freq; }
+void main(){
+  vec2 p = vW.xz;
+  vec2 g = wave(p, normalize(vec2(0.9, 0.4)), 0.5, 0.05, 1.2) + wave(p, normalize(vec2(-0.5, 0.8)), 1.1, 0.035, 1.9)
+         + wave(p, normalize(vec2(0.2, -1.0)), 2.3, 0.014, 2.7) + wave(p, normalize(vec2(-0.9, -0.3)), 3.9, 0.008, 3.5);
+  vec3 n = normalize(vec3(-g.x, 1.0, -g.y));
+  vec3 v = normalize(uCam - vW);
+  float fres = 0.05 + 0.95 * pow(1.0 - max(dot(n, v), 0.0), 4.0);
+  vec3 r = reflect(-v, n); r.y = abs(r.y);
+  vec3 sky = mix(uHor, uTop, pow(r.y, 0.6));
+  vec3 col = mix(vec3(0.05, 0.42, 0.55), sky, fres);
+  col += vec3(1.0, 0.95, 0.8) * pow(max(dot(r, uSun), 0.0), 200.0) * 2.0;
+  float dist = length(uCam - vW);
+  col = mix(col, uHor, smoothstep(120.0, 260.0, dist));
+  o = vec4(col, mix(0.72, 0.96, fres));
+}`;
+const LINE_VS = `#version 300 es
+layout(location=0) in vec3 aPos;
+uniform mat4 uVP;
+void main(){ gl_Position = uVP * vec4(aPos, 1.0); }`;
+const LINE_FS = `#version 300 es
+precision highp float;
+uniform vec4 uCol;
+out vec4 o;
+void main(){ o = uCol; }`;
+
+function compile(vs, fs) {
+  const mk = (type, src) => {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+    return s;
+  };
+  const p = gl.createProgram();
+  gl.attachShader(p, mk(gl.VERTEX_SHADER, vs));
+  gl.attachShader(p, mk(gl.FRAGMENT_SHADER, fs));
+  gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+  const u = {};
+  const n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
+  for (let i = 0; i < n; i++) { const info = gl.getActiveUniform(p, i); u[info.name] = gl.getUniformLocation(p, info.name); }
+  return { p, u };
+}
+const progMain = compile(MAIN_VS, MAIN_FS);
+const progSky = compile(SKY_VS, SKY_FS);
+const progWater = compile(WATER_VS, WATER_FS);
+const progLine = compile(LINE_VS, LINE_FS);
+const emptyVao = gl.createVertexArray();
+
+/* =====================================================================
+   Geometry builder (from Wildwood). One vertex = 20 bytes:
+   position (3 floats), normal + mode (4 bytes), color + wiggle (4 bytes).
+   Mode: 1 = glowing (not lit), -1 = solid, 0 = flip the normal by side (thin fins).
+   ===================================================================== */
+class Geo {
+  constructor(cap) { this.cap = cap; this.n = 0; this.alloc(cap); }
+  alloc(cap) {
+    const old = this.buf;
+    this.buf = new ArrayBuffer(cap * 20);
+    if (old) new Uint8Array(this.buf).set(new Uint8Array(old));
+    this.f = new Float32Array(this.buf); this.i8 = new Int8Array(this.buf); this.u8 = new Uint8Array(this.buf);
+    this.cap = cap;
+  }
+  v(x, y, z, nx, ny, nz, m, r, g, b, s) {
+    if (this.n === this.cap) this.alloc(this.cap * 2);
+    const i = this.n++, o = i * 5, bo = i * 20;
+    this.f[o] = x; this.f[o + 1] = y; this.f[o + 2] = z;
+    this.i8[bo + 12] = nx * 127; this.i8[bo + 13] = ny * 127; this.i8[bo + 14] = nz * 127; this.i8[bo + 15] = m * 127;
+    this.u8[bo + 16] = cl01(r) * 255; this.u8[bo + 17] = cl01(g) * 255; this.u8[bo + 18] = cl01(b) * 255; this.u8[bo + 19] = cl01(s) * 255;
+  }
+  // set the wiggle amount of every vertex from `start` on, from its position
+  wig(start, fn) {
+    for (let i = start; i < this.n; i++) { const o = i * 5; this.u8[i * 20 + 19] = cl01(fn(this.f[o], this.f[o + 1], this.f[o + 2])) * 255; }
+  }
+}
+const cl01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+function norm3(x, y, z) { const l = Math.hypot(x, y, z) || 1; return [x / l, y / l, z / l]; }
+function faceN(a, b, c) {
+  const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2];
+  const vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+  return norm3(uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx);
+}
+function tri(g, a, b, c, n, m, ca, cb, cc, sa, sb, sc) {
+  g.v(a[0], a[1], a[2], n[0], n[1], n[2], m, ca[0], ca[1], ca[2], sa);
+  g.v(b[0], b[1], b[2], n[0], n[1], n[2], m, cb[0], cb[1], cb[2], sb);
+  g.v(c[0], c[1], c[2], n[0], n[1], n[2], m, cc[0], cc[1], cc[2], sc);
+}
+function shade(c, k) { return [c[0] * k, c[1] * k, c[2] * k]; }
+function mixc(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
+
+function makeMesh(geo) {
+  if (!geo || geo.n === 0) return null;
+  const vao = gl.createVertexArray();
+  gl.bindVertexArray(vao);
+  const vbo = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+  gl.bufferData(gl.ARRAY_BUFFER, new Uint8Array(geo.buf, 0, geo.n * 20), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.BYTE, true, 20, 12);
+  gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 4, gl.UNSIGNED_BYTE, true, 20, 16);
+  gl.bindVertexArray(null);
+  return { vao, vbo, count: geo.n };
+}
+function freeMesh(m) { if (m) { gl.deleteVertexArray(m.vao); gl.deleteBuffer(m.vbo); } }
+
+/* ---------- shapes (from Wildwood) ---------- */
+const PHI = (1 + Math.sqrt(5)) / 2;
+const ICO_V = [[-1, PHI, 0], [1, PHI, 0], [-1, -PHI, 0], [1, -PHI, 0], [0, -1, PHI], [0, 1, PHI], [0, -1, -PHI], [0, 1, -PHI], [PHI, 0, -1], [PHI, 0, 1], [-PHI, 0, -1], [-PHI, 0, 1]].map(v => norm3(v[0], v[1], v[2]));
+const ICO_F = [[0, 11, 5], [0, 5, 1], [0, 1, 7], [0, 7, 10], [0, 10, 11], [1, 5, 9], [5, 11, 4], [11, 10, 2], [10, 7, 6], [7, 1, 8], [3, 9, 4], [3, 4, 2], [3, 2, 6], [3, 6, 8], [3, 8, 9], [4, 9, 5], [2, 4, 11], [6, 2, 10], [8, 6, 7], [9, 8, 1]];
+function subdivide(V0, F0) {
+  const V = V0.map(v => v.slice()), F = [], mid = new Map();
+  const m = (a, b) => {
+    const k = a < b ? a + '_' + b : b + '_' + a;
+    if (!mid.has(k)) { const p = V[a], q = V[b]; V.push(norm3(p[0] + q[0], p[1] + q[1], p[2] + q[2])); mid.set(k, V.length - 1); }
+    return mid.get(k);
+  };
+  for (const [a, b, c] of F0) { const ab = m(a, b), bc = m(b, c), ca = m(c, a); F.push([a, ab, ca], [b, bc, ab], [c, ca, bc], [ab, bc, ca]); }
+  return [V, F];
+}
+const [ICO1_V, ICO1_F] = subdivide(ICO_V, ICO_F);
+const [ICO2_V, ICO2_F] = subdivide(ICO1_V, ICO1_F);
+const SHAPE_RNG = mulberry32(777);
+
+// lumpy low-poly ball (rocks, bushes)
+function blob(g, cx, cy, cz, rx, ry, rz, col, rng, jit, mode, cutBelow) {
+  const pts = ICO1_V.map(v => {
+    const k = 1 + (rng() - 0.5) * jit;
+    return [cx + v[0] * rx * k, cy + v[1] * ry * k, cz + v[2] * rz * k];
+  });
+  if (cutBelow !== undefined) for (const p of pts) if (p[1] < cutBelow) p[1] = cutBelow;
+  for (const f of ICO1_F) {
+    const a = pts[f[0]], b = pts[f[1]], c = pts[f[2]];
+    let n = faceN(a, b, c);
+    const mx = (a[0] + b[0] + c[0]) / 3 - cx, my = (a[1] + b[1] + c[1]) / 3 - cy, mz = (a[2] + b[2] + c[2]) / 3 - cz;
+    if (n[0] * mx + n[1] * my + n[2] * mz < 0) n = [-n[0], -n[1], -n[2]];
+    const fc = shade(col, 0.88 + rng() * 0.24);
+    tri(g, a, b, c, n, mode, fc, fc, fc, 0, 0, 0);
+  }
+}
+// smooth ellipsoid with a color for each face from a function (stripes, spots, bellies); smooth normals
+function ell(g, cx, cy, cz, rx, ry, rz, col, mode = -1, lvl = 2, cutBelow) {
+  const VV = lvl === 2 ? ICO2_V : lvl === 1 ? ICO1_V : ICO_V, FF = lvl === 2 ? ICO2_F : lvl === 1 ? ICO1_F : ICO_F;
+  const fn = typeof col === 'function' ? col : null;
+  for (const f of FF) {
+    const P = f.map(i => { const v = VV[i]; return [cx + v[0] * rx, Math.max(cy + v[1] * ry, cutBelow === undefined ? -1e9 : cutBelow), cz + v[2] * rz]; });
+    const N = f.map(i => { const v = VV[i]; return norm3(v[0] / rx, v[1] / ry, v[2] / rz); });
+    const mx = (P[0][0] + P[1][0] + P[2][0]) / 3, my = (P[0][1] + P[1][1] + P[2][1]) / 3, mz = (P[0][2] + P[1][2] + P[2][2]) / 3;
+    const c = fn ? fn((mx - cx) / rx, (my - cy) / ry, (mz - cz) / rz, mx, my, mz) : col;
+    for (let k = 0; k < 3; k++) g.v(P[k][0], P[k][1], P[k][2], N[k][0], N[k][1], N[k][2], mode, c[0], c[1], c[2], 0);
+  }
+}
+// tube between two points
+function tube(g, p0, p1, r0, r1, sides, col, caps, mode = -1, col1) {
+  const ax = norm3(p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]);
+  let u = Math.abs(ax[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
+  let ux = u[1] * ax[2] - u[2] * ax[1], uy = u[2] * ax[0] - u[0] * ax[2], uz = u[0] * ax[1] - u[1] * ax[0];
+  [ux, uy, uz] = norm3(ux, uy, uz);
+  const wx = ax[1] * uz - ax[2] * uy, wy = ax[2] * ux - ax[0] * uz, wz = ax[0] * uy - ax[1] * ux;
+  const ring = [];
+  for (let i = 0; i <= sides; i++) {
+    const a = i / sides * TAU, c = Math.cos(a), s = Math.sin(a);
+    ring.push([ux * c + wx * s, uy * c + wy * s, uz * c + wz * s]);
+  }
+  const c0 = col, c1 = col1 || col;
+  for (let i = 0; i < sides; i++) {
+    const d0 = ring[i], d1 = ring[i + 1];
+    const a0 = [p0[0] + d0[0] * r0, p0[1] + d0[1] * r0, p0[2] + d0[2] * r0];
+    const a1 = [p0[0] + d1[0] * r0, p0[1] + d1[1] * r0, p0[2] + d1[2] * r0];
+    const b0 = [p1[0] + d0[0] * r1, p1[1] + d0[1] * r1, p1[2] + d0[2] * r1];
+    const b1 = [p1[0] + d1[0] * r1, p1[1] + d1[1] * r1, p1[2] + d1[2] * r1];
+    g.v(a0[0], a0[1], a0[2], d0[0], d0[1], d0[2], mode, c0[0], c0[1], c0[2], 0);
+    g.v(a1[0], a1[1], a1[2], d1[0], d1[1], d1[2], mode, c0[0], c0[1], c0[2], 0);
+    g.v(b1[0], b1[1], b1[2], d1[0], d1[1], d1[2], mode, c1[0], c1[1], c1[2], 0);
+    g.v(a0[0], a0[1], a0[2], d0[0], d0[1], d0[2], mode, c0[0], c0[1], c0[2], 0);
+    g.v(b1[0], b1[1], b1[2], d1[0], d1[1], d1[2], mode, c1[0], c1[1], c1[2], 0);
+    g.v(b0[0], b0[1], b0[2], d0[0], d0[1], d0[2], mode, c1[0], c1[1], c1[2], 0);
+    if (caps) {
+      tri(g, p0, a1, a0, [-ax[0], -ax[1], -ax[2]], mode, c0, c0, c0, 0, 0, 0);
+      tri(g, p1, b0, b1, ax, mode, c1, c1, c1, 0, 0, 0);
+    }
+  }
+}
+// a chain of tubes through a list of points, getting thinner from r0 to r1
+function chain(g, pts, r0, r1, sides, col, mode = -1, col1) {
+  for (let i = 0; i < pts.length - 1; i++) {
+    const t0 = i / (pts.length - 1), t1 = (i + 1) / (pts.length - 1);
+    tube(g, pts[i], pts[i + 1], lerp(r0, r1, t0), lerp(r0, r1, t1), sides, col1 ? mixc(col, col1, t0) : col, false, mode, col1 ? mixc(col, col1, t1) : col);
+    if (i > 0) ell(g, pts[i][0], pts[i][1], pts[i][2], lerp(r0, r1, t0), lerp(r0, r1, t0), lerp(r0, r1, t0), col1 ? mixc(col, col1, t0) : col, mode, 0);
+  }
+}
+// a cone from a circle to a point
+function cone(g, base, tip, r, sides, col, mode = -1) { tube(g, base, tip, r, 0.0001, sides, col, true, mode); }
+// a flat, two-sided triangle (fins, leaves, wings)
+function flat(g, a, b, c, col, mode = 0) {
+  const n = faceN(a, b, c);
+  tri(g, a, b, c, n, mode, col, col, col, 0, 0, 0);
+}
+function box(g, x, y, z, w, h, d, col, mode = -1) {
+  const x0 = x - w / 2, x1 = x + w / 2, y1 = y + h, z0 = z - d / 2, z1 = z + d / 2;
+  const P = [[x0, y, z0], [x1, y, z0], [x1, y1, z0], [x0, y1, z0], [x0, y, z1], [x1, y, z1], [x1, y1, z1], [x0, y1, z1]];
+  const F = [[0, 3, 2, 1, [0, 0, -1]], [4, 5, 6, 7, [0, 0, 1]], [0, 4, 7, 3, [-1, 0, 0]], [1, 2, 6, 5, [1, 0, 0]], [3, 7, 6, 2, [0, 1, 0]], [0, 1, 5, 4, [0, -1, 0]]];
+  for (const [a, b, c, e, n] of F) {
+    const k = n[1] > 0 ? 1.05 : n[1] < 0 ? 0.6 : n[0] ? 0.92 : 0.98, cc = mode === 1 ? col : shade(col, k);
+    tri(g, P[a], P[b], P[c], n, mode, cc, cc, cc, 0, 0, 0);
+    tri(g, P[a], P[c], P[e], n, mode, cc, cc, cc, 0, 0, 0);
+  }
+}
+
+/* ---------- matrices (column-major, like Wildwood) ---------- */
+function perspective(out, fovy, aspect, near, far) {
+  const f = 1 / Math.tan(fovy / 2), nf = 1 / (near - far);
+  out.fill(0);
+  out[0] = f / aspect; out[5] = f; out[10] = (far + near) * nf; out[11] = -1; out[14] = 2 * far * near * nf;
+}
+function mul4(out, a, b) {
+  for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) {
+    out[c * 4 + r] = a[r] * b[c * 4] + a[4 + r] * b[c * 4 + 1] + a[8 + r] * b[c * 4 + 2] + a[12 + r] * b[c * 4 + 3];
+  }
+}
+// model matrix: move to (x,y,z), turn by yaw (around up; 0 = facing +x, PI/2 = facing -z),
+// pitch (nose up), roll, then scale. Models face +x.
+function mTRS(out, x, y, z, yaw, pitch, roll, sx, sy, sz) {
+  if (sy === undefined) { sy = sx; sz = sx; }
+  const cy = Math.cos(yaw), syw = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch), cr = Math.cos(roll), sr = Math.sin(roll);
+  const r00 = cy * cp, r01 = -cy * sp * cr + syw * sr, r02 = cy * sp * sr + syw * cr;
+  const r10 = sp, r11 = cp * cr, r12 = -cp * sr;
+  const r20 = -syw * cp, r21 = syw * sp * cr + cy * sr, r22 = -syw * sp * sr + cy * cr;
+  out[0] = r00 * sx; out[1] = r10 * sx; out[2] = r20 * sx; out[3] = 0;
+  out[4] = r01 * sy; out[5] = r11 * sy; out[6] = r21 * sy; out[7] = 0;
+  out[8] = r02 * sz; out[9] = r12 * sz; out[10] = r22 * sz; out[11] = 0;
+  out[12] = x; out[13] = y; out[14] = z; out[15] = 1;
+  return out;
+}
+function xform(m, p) { return [m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12], m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13], m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14]]; }
+const yawTo = (dx, dz) => Math.atan2(-dz, dx);
+
+const proj = new Float32Array(16), view = new Float32Array(16), vp = new Float32Array(16);
+const cam = { eye: [0, 5, 10], fwd: [0, 0, -1], right: [1, 0, 0], up: [0, 1, 0], fovy: 60 * Math.PI / 180, aspect: 1 };
+function setCamera(eye, target) {
+  const f = norm3(target[0] - eye[0], target[1] - eye[1], target[2] - eye[2]);
+  let r = [f[1] * 0 - f[2] * 1, f[2] * 0 - f[0] * 0, f[0] * 1 - f[1] * 0];
+  r = norm3(r[0], r[1], r[2]);
+  const u = [r[1] * f[2] - r[2] * f[1], r[2] * f[0] - r[0] * f[2], r[0] * f[1] - r[1] * f[0]];
+  cam.eye = eye.slice(); cam.fwd = f; cam.right = r; cam.up = u;
+  view[0] = r[0]; view[4] = r[1]; view[8] = r[2]; view[12] = -(r[0] * eye[0] + r[1] * eye[1] + r[2] * eye[2]);
+  view[1] = u[0]; view[5] = u[1]; view[9] = u[2]; view[13] = -(u[0] * eye[0] + u[1] * eye[1] + u[2] * eye[2]);
+  view[2] = -f[0]; view[6] = -f[1]; view[10] = -f[2]; view[14] = f[0] * eye[0] + f[1] * eye[1] + f[2] * eye[2];
+  view[3] = 0; view[7] = 0; view[11] = 0; view[15] = 1;
+  perspective(proj, cam.fovy, cam.aspect, 0.1, 600);
+  mul4(vp, proj, view);
+}
+// where a 3D point lands on the screen (CSS pixels), or null if it's behind the camera
+function project(p) {
+  const x = vp[0] * p[0] + vp[4] * p[1] + vp[8] * p[2] + vp[12];
+  const y = vp[1] * p[0] + vp[5] * p[1] + vp[9] * p[2] + vp[13];
+  const w = vp[3] * p[0] + vp[7] * p[1] + vp[11] * p[2] + vp[15];
+  if (w < 0.1) return null;
+  return [(x / w * 0.5 + 0.5) * innerWidth, (1 - (y / w * 0.5 + 0.5)) * innerHeight];
+}
+// the ray from the camera through a point on the screen
+function screenRay(sx, sy) {
+  const nx = sx / innerWidth * 2 - 1, ny = 1 - sy / innerHeight * 2, t = Math.tan(cam.fovy / 2);
+  return norm3(cam.fwd[0] + cam.right[0] * nx * t * cam.aspect + cam.up[0] * ny * t,
+    cam.fwd[1] + cam.right[1] * nx * t * cam.aspect + cam.up[1] * ny * t,
+    cam.fwd[2] + cam.right[2] * nx * t * cam.aspect + cam.up[2] * ny * t);
+}
+
+/* =====================================================================
+   Creature models. Every model faces +x and is about 1 unit long; it's
+   scaled up by the species' size when drawn. The wiggle byte says how much
+   each vertex sways when it swims (0 at the head, 1 at the tail).
+   ===================================================================== */
+const hash3 = (x, y, z) => { const s = Math.sin(x * 127.1 + y * 311.7 + z * 74.7) * 43758.5453; return s - Math.floor(s); };
+const BLACK = [0.06, 0.05, 0.07], WHITE = [0.97, 0.97, 0.95];
+
+function eyeAt(g, x, y, z, r, side, pupil, glow) {
+  ell(g, x, y, z, r, r, r * 0.6, WHITE, -1, 1);
+  ell(g, x + r * 0.25, y, z + side * r * 0.45, r * 0.55, r * 0.55, r * 0.3, pupil || BLACK, glow ? 1 : -1, 1);
+  ell(g, x + r * 0.45, y + r * 0.3, z + side * r * 0.62, r * 0.18, r * 0.18, r * 0.08, WHITE, 1, 0);
+}
+function teethRow(g, x0, x1, y, z0, z1, n, down) {
+  for (let i = 0; i < n; i++) {
+    const t = n === 1 ? 0.5 : i / (n - 1), x = lerp(x0, x1, t), z = lerp(z0, z1, t);
+    cone(g, [x, y, z], [x + 0.005, y + (down ? -1 : 1) * 0.04, z], 0.012, 4, WHITE);
+  }
+}
+// a point on the surface of an ellipsoid at (x, y) on one side, for decorations
+function onSurf(cx, rx, ry, rz, x, y, side) { const k = 1 - ((x - cx) / rx) ** 2 - (y / ry) ** 2; return [x, y, side * rz * Math.sqrt(Math.max(0.02, k)) * 1.04]; }
+function lavaCracks(g, cx, rx, ry, rz, col, rng) {
+  for (const side of [-1, 1]) for (let i = 0; i < 4; i++) {
+    let x = cx - rx * 0.6 + rng() * rx * 1.1, y = (rng() - 0.5) * ry * 1.1;
+    const pts = [onSurf(cx, rx, ry, rz, x, y, side)];
+    for (let k = 0; k < 3; k++) { x += (rng() - 0.3) * rx * 0.25; y += (rng() - 0.5) * ry * 0.5; y = clamp(y, -ry * 0.8, ry * 0.8); x = clamp(x, cx - rx * 0.85, cx + rx * 0.85); pts.push(onSurf(cx, rx, ry, rz, x, y, side)); }
+    chain(g, pts, 0.012, 0.008, 4, col, 1);
+  }
+}
+function bodyColor(o, c1, c2) {
+  const st = o.stripe && H(o.stripe), bd = o.band && H(o.band), sp = o.spots && H(o.spots);
+  return (nx, ny, nz, x, y, z) => {
+    let c = c1;
+    if (c2) c = mixc(c1, c2, smooth(clamp((-ny - 0.05) / 0.4, 0, 1)));
+    if (st && Math.abs(ny - 0.15) < 0.13) c = st;
+    if (o.bands) for (const b of o.bands) { const d = Math.abs(x - b); if (d < 0.05) c = d < 0.036 ? bd : BLACK; }
+    if (sp && ny > -0.3 && hash3(Math.round(x * 40), Math.round(y * 40), Math.round(z * 40)) > 0.82) c = sp;
+    return c;
+  };
+}
+
+function buildFish(g, o) {
+  const c1 = H(o.c1), c2 = o.c2 ? H(o.c2) : null, fin = o.fin ? H(o.fin) : shade(c1, 0.75);
+  const rx = 0.36, cx = 0.04, ry = (o.h || 0.3) / 2, rz = (o.w || 0.18) / 2, rng = mulberry32(o.c1.length * 31 + Math.round(ry * 1000));
+  const ek = o.eye || 1, er = clamp(0.035 * ek * (0.6 + ry * 2.2), 0.02, 0.07);
+  const ex = cx + rx * 0.7, ey = ry * 0.28, ez = rz * Math.sqrt(Math.max(0.05, 1 - 0.49 - 0.0784)) * 0.95;
+  if (o.bones) {
+    // just bones: spine, ribs and a skull
+    const bone = c1;
+    tube(g, [-0.36, 0, 0], [0.22, 0, 0], 0.014, 0.018, 6, bone, true);
+    for (let i = 0; i < 7; i++) {
+      const x = -0.26 + i * 0.065, k = Math.sqrt(Math.max(0.05, 1 - ((x - cx) / rx) ** 2));
+      for (const s of [-1, 1]) chain(g, [[x, 0, 0], [x + 0.02, s * ry * 0.6 * k, rz * 0.7 * k], [x + 0.01, s * ry * k, 0]], 0.008, 0.006, 4, bone);
+    }
+    ell(g, 0.3, 0.01, 0, 0.11, ry * 0.75, rz * 0.9, bone, -1, 1);
+    for (const s of [-1, 1]) {
+      ell(g, 0.32, ry * 0.2, s * rz * 0.6, 0.035, 0.035, 0.03, BLACK, -1, 1);
+      ell(g, 0.33, ry * 0.2, s * rz * 0.7, 0.016, 0.016, 0.012, H(o.eyeC || '#ff4a2a'), 1, 0);
+    }
+    tube(g, [0.38, -0.04, 0], [0.42, -0.06, 0], 0.025, 0.02, 6, bone, true);
+    teethRow(g, 0.34, 0.42, -0.03, rz * 0.4, 0, 3, true);
+  } else {
+    ell(g, cx, 0, 0, rx, ry, rz, bodyColor(o, c1, c2));
+    if (o.tadpole) ell(g, -0.25, 0, 0, 0.2, ry * 0.55, rz * 0.6, bodyColor(o, c1, c2));
+    // eyes
+    const pc = o.eyeC ? H(o.eyeC) : BLACK;
+    for (const s of [-1, 1]) {
+      if (o.xEye && s > 0) {
+        tube(g, [ex - er, ey - er, ez * s + 0.005 * s], [ex + er, ey + er, ez * s + 0.005 * s], 0.008, 0.008, 4, BLACK, true);
+        tube(g, [ex - er, ey + er, ez * s + 0.005 * s], [ex + er, ey - er, ez * s + 0.005 * s], 0.008, 0.008, 4, BLACK, true);
+      } else eyeAt(g, ex, ey, ez * s, er, s, pc, !!o.eyeC);
+    }
+    if (o.eyes3) eyeAt(g, ex - 0.07, ry * 0.85, 0, er * 0.9, 1, pc, false);
+    // mouth
+    ell(g, cx + rx * 0.97, -ry * 0.12, 0, 0.02, 0.012 + ry * 0.08, rz * 0.35, BLACK, -1, 1);
+    if (o.teeth) { teethRow(g, cx + rx * 0.8, cx + rx * 0.98, -ry * 0.02, rz * 0.5, 0.0, 4, true); teethRow(g, cx + rx * 0.8, cx + rx * 0.98, -ry * 0.3, -rz * 0.5, 0.0, 4, false); }
+    // glowing dots
+    if (o.dots) { const dc = H(o.dots); for (const s of [-1, 1]) for (let i = 0; i < 6; i++) { const p = onSurf(cx, rx, ry, rz, -0.22 + i * 0.08, -ry * 0.55, s); ell(g, p[0], p[1], p[2], 0.016, 0.016, 0.01, dc, 1, 0); } }
+    if (o.stitches) {
+      const sc = [0.25, 0.15, 0.15];
+      for (const s of [-1, 1]) {
+        const pts = [-0.18, -0.06, 0.06, 0.16].map((x, i) => onSurf(cx, rx, ry, rz, x, ry * (0.35 - i * 0.12), s));
+        chain(g, pts, 0.006, 0.006, 4, sc);
+        for (const p of pts) tube(g, [p[0], p[1] - 0.03, p[2]], [p[0], p[1] + 0.03, p[2]], 0.005, 0.005, 4, sc, true);
+      }
+    }
+    if (o.lava) lavaCracks(g, cx, rx, ry, rz, H(o.lava), rng);
+  }
+  // tail
+  const tb = [cx - rx * 0.88, 0, 0];
+  if (o.tadpole) {
+    flat(g, [-0.38, 0, 0], [-0.58, ry * 0.5, 0], [-0.62, 0, 0], fin); flat(g, [-0.38, 0, 0], [-0.62, 0, 0], [-0.58, -ry * 0.5, 0], fin);
+  } else {
+    const th = ry * 1.25 + 0.05;
+    flat(g, tb, [-0.55, th, 0], [-0.46, 0, 0], fin); flat(g, tb, [-0.46, 0, 0], [-0.55, -th, 0], fin);
+  }
+  // fins
+  const dh = ry * 0.9 + 0.07 * (o.dorsal || 1);
+  flat(g, [-0.15, ry * 0.85, 0], [0.16, ry * 0.8, 0], [-0.07, dh + 0.02, 0], fin);
+  flat(g, [-0.15, ry * 0.85, 0], [-0.07, dh + 0.02, 0], [-0.24, ry * 0.5 + 0.03, 0], fin);
+  flat(g, [-0.06, -ry * 0.85, 0], [0.06, -ry * 0.85, 0], [-0.1, -ry - 0.06, 0], fin);
+  for (const s of [-1, 1]) flat(g, [0.16, -ry * 0.25, s * rz * 0.9], [0.02, -ry * 0.55, s * (rz + 0.07)], [0.04, -ry * 0.05, s * (rz + 0.05)], fin);
+  // extras
+  if (o.lure) {
+    chain(g, [[0.2, ry * 0.92, 0], [0.3, ry + 0.12, 0], [0.44, ry + 0.14, 0], [0.5, ry + 0.06, 0]], 0.008, 0.006, 4, fin);
+    ell(g, 0.5, ry + 0.04, 0, 0.04, 0.04, 0.04, H(o.lure), 1, 1);
+  }
+  if (o.bill) cone(g, [cx + rx * 0.9, -ry * 0.05, 0], [0.98, 0, 0], 0.03, 6, shade(c1, 0.85));
+  if (o.horn) {
+    const hc = H(o.horn);
+    cone(g, [ex - 0.02, ry * 0.75, 0], [ex + 0.3, ry + 0.3, 0], 0.035, 8, hc, 1);
+  }
+  if (o.horns) { const hc = H(o.horns); for (const s of [-1, 1]) cone(g, [ex - 0.04, ry * 0.8, s * 0.035], [ex - 0.14, ry + 0.12, s * 0.07], 0.02, 5, hc); }
+  if (o.wings) {
+    const wc = H(o.wings);
+    for (const s of [-1, 1]) {
+      flat(g, [0.1, ry * 0.6, s * rz * 0.7], [-0.16, ry * 0.6, s * rz * 0.7], [0.0, ry + 0.18, s * (rz + 0.3)], wc);
+      flat(g, [-0.16, ry * 0.6, s * rz * 0.7], [-0.2, ry + 0.08, s * (rz + 0.36)], [0.0, ry + 0.18, s * (rz + 0.3)], wc);
+    }
+  }
+  if (o.crown) {
+    const gold = H('#ffd23f'), cxr = ex - 0.1, cy = ry * 0.88;
+    for (let i = 0; i < 7; i++) {
+      const a = i / 7 * TAU, px = cxr + Math.cos(a) * 0.07, pz = Math.sin(a) * 0.06;
+      cone(g, [px, cy, pz], [px, cy + 0.12, pz], 0.025, 4, gold, 1);
+      if (i % 2 === 0) ell(g, px, cy + 0.03, pz, 0.014, 0.014, 0.014, H('#ff3a6a'), 1, 0);
+    }
+    tube(g, [cxr, cy - 0.01, 0], [cxr, cy + 0.04, 0], 0.085, 0.085, 12, gold, false, 1);
+  }
+  if (o.tripod) {
+    const lc = shade(fin, 1.2);
+    for (const s of [-1, 1]) tube(g, [0.06, -ry * 0.9, s * 0.03], [0.16, -ry - 0.45, s * 0.08], 0.008, 0.004, 4, lc, true);
+    tube(g, [-0.44, -ry * 0.3, 0], [-0.58, -ry - 0.45, 0], 0.008, 0.004, 4, lc, true);
+  }
+}
+function buildShark(g, o) {
+  const c1 = H(o.c1), c2 = H(o.c2 || '#e8eef4'), fin = shade(c1, 0.85), rng = mulberry32(99);
+  const col = (nx, ny) => mixc(c1, c2, smooth(clamp((-ny - 0.1) / 0.35, 0, 1)));
+  ell(g, 0, 0, 0, 0.42, 0.11, 0.11, col);
+  ell(g, 0.3, -0.005, 0, 0.17, 0.075, 0.085, col);
+  flat(g, [-0.36, 0, 0], [-0.6, 0.24, 0], [-0.46, 0.02, 0], fin);
+  flat(g, [-0.36, 0, 0], [-0.46, 0.02, 0], [-0.54, -0.13, 0], fin);
+  flat(g, [-0.06, 0.09, 0], [0.12, 0.09, 0], [-0.04, 0.3, 0], fin);
+  flat(g, [-0.3, 0.05, 0], [-0.24, 0.05, 0], [-0.3, 0.1, 0], fin);
+  for (const s of [-1, 1]) {
+    flat(g, [0.14, -0.05, s * 0.09], [-0.02, -0.16, s * 0.3], [0.04, -0.05, s * 0.1], fin);
+    eyeAt(g, 0.36, 0.035, s * 0.062, 0.018, s, o.eyeC ? H(o.eyeC) : BLACK, false);
+    for (let i = 0; i < 4; i++) tube(g, [0.17 + i * 0.022, -0.04, s * 0.1], [0.16 + i * 0.022, 0.035, s * 0.1], 0.004, 0.004, 4, shade(c1, 0.55), true);
+  }
+  ell(g, 0.36, -0.06, 0, 0.07, 0.018, 0.06, [0.25, 0.08, 0.1], -1, 1);
+  if (o.teeth) { teethRow(g, 0.31, 0.42, -0.05, 0.05, 0, 5, true); teethRow(g, 0.31, 0.42, -0.07, -0.05, 0, 5, false); }
+  if (o.lava) lavaCracks(g, 0, 0.42, 0.11, 0.11, H(o.lava), rng);
+}
+function buildEel(g, o) {
+  const c1 = H(o.c1), c2 = H(o.c2), th = o.thick || 0.06, N = 16;
+  const col = (nx, ny) => mixc(c1, c2, smooth(clamp((-ny) / 0.5, 0, 1)));
+  for (let i = 0; i <= N; i++) {
+    const u = i / N, x = 0.44 - u * 0.94, r = th * (1 - u * 0.75);
+    ell(g, x, 0, 0, Math.max(r * 1.3, 0.035), r, r * 0.85, col, -1, 1);
+  }
+  ell(g, 0.47, 0.005, 0, th * 1.7, th * 1.1, th * 0.95, col, -1, 2);
+  for (const s of [-1, 1]) eyeAt(g, 0.52, th * 0.45, s * th * 0.75, Math.max(0.014, th * 0.32), s, o.glow ? H('#ffd23f') : BLACK, !!o.glow);
+  if (o.gulp) {
+    const jc = shade(c1, 0.7);
+    for (const s of [-1, 1]) {
+      flat(g, [0.46, 0.0, 0], [0.74, 0.16, s * 0.11], [0.74, -0.18, s * 0.11], jc);
+    }
+    flat(g, [0.46, 0.0, 0], [0.74, 0.16, 0.11], [0.74, 0.16, -0.11], jc);
+    flat(g, [0.46, 0.0, 0], [0.74, -0.18, 0.11], [0.74, -0.18, -0.11], jc);
+    tube(g, [0.74, 0.16, -0.11], [0.74, 0.16, 0.11], 0.008, 0.008, 4, jc, true);
+    tube(g, [0.74, -0.18, -0.11], [0.74, -0.18, 0.11], 0.008, 0.008, 4, jc, true);
+  }
+  if (o.tip) ell(g, -0.52, 0, 0, 0.03, 0.03, 0.03, H(o.tip), 1, 1);
+  if (o.teeth) teethRow(g, 0.5, 0.58, -th * 0.4, th * 0.5, 0, 4, true);
+  if (o.frills) { const fc = H(o.frills); for (let i = 0; i < 10; i++) { const a = i / 10 * TAU; flat(g, [0.38, Math.cos(a) * th, Math.sin(a) * th], [0.42, Math.cos(a) * th, Math.sin(a) * th], [0.37, Math.cos(a) * th * 1.9, Math.sin(a) * th * 1.9], fc); } }
+  if (o.spikes) { const sc = H(o.spikes); for (let i = 1; i < N - 1; i++) { const u = i / N, x = 0.44 - u * 0.94, r = th * (1 - u * 0.75); cone(g, [x, r * 0.8, 0], [x - 0.02, r + 0.05, 0], 0.016, 4, sc); } }
+  if (o.horns) { const hc = H(o.horns); for (const s of [-1, 1]) chain(g, [[0.46, th * 0.9, s * th * 0.5], [0.4, th * 2, s * th * 0.9], [0.32, th * 2.6, s * th * 1.1]], 0.016, 0.004, 5, hc); }
+  if (o.sharkFins) { const fc = shade(c1, 0.8); flat(g, [-0.1, th * 0.6, 0], [-0.22, th * 0.5, 0], [-0.2, th * 1.6, 0], fc); flat(g, [-0.34, 0, 0], [-0.52, th * 0.8, 0], [-0.52, -th * 0.8, 0], fc); }
+}
+function buildOcto(g, o) {
+  const c1 = H(o.c1), c2 = H(o.c2), kr = !!o.kraken, n = 8;
+  const col = (nx, ny, nz, x, y, z) => hash3(Math.round(x * 30), Math.round(y * 30), Math.round(z * 30)) > 0.85 ? c2 : c1;
+  ell(g, -0.03, 0.22, 0, 0.2, 0.26, 0.19, col);
+  ell(g, 0.04, 0.03, 0, 0.17, 0.12, 0.17, c1);
+  const tips = [];
+  for (let i = 0; i < n; i++) {
+    const a = (i + 0.5) / n * TAU, ca = Math.cos(a), sa = Math.sin(a);
+    const L = kr ? 0.62 : 0.48, pts = [];
+    for (let k = 0; k <= 6; k++) { const u = k / 6, r = 0.1 + u * 0.24 + Math.sin(u * 3) * 0.04, y = -u * L + (u > 0.75 ? (u - 0.75) * 0.3 : 0); pts.push([0.03 + ca * r, y, sa * r]); }
+    chain(g, pts, kr ? 0.06 : 0.045, 0.01, 6, c1, -1, c2);
+    tips.push(pts);
+    if (kr) for (let k = 1; k < 6; k++) { const p = pts[k]; ell(g, p[0] - ca * 0.035, p[1] - 0.01, p[2] - sa * 0.035, 0.012, 0.012, 0.012, c2, -1, 0); }
+  }
+  if (o.web) { const wc = shade(c1, 0.75); for (let i = 0; i < n; i++) { const A = tips[i], B = tips[(i + 1) % n]; flat(g, [0.03, 0.02, 0], A[3], B[3], wc); flat(g, A[3], B[3], A[1], wc); } }
+  if (o.ears) for (const s of [-1, 1]) ell(g, -0.04, 0.36, s * 0.2, 0.1, 0.02, 0.1, shade(c1, 0.9), -1, 1);
+  const pc = o.eyeC ? H(o.eyeC) : BLACK;
+  for (const s of [-1, 1]) eyeAt(g, 0.13, 0.13, s * 0.1, kr ? 0.06 : 0.045, s, pc, !!o.eyeC);
+  if (kr) for (const s of [-1, 1]) eyeAt(g, 0.06, 0.28, s * 0.13, 0.035, s, pc, true);
+}
+function buildSquid(g, o) {
+  const c1 = H(o.c1), c2 = H(o.c2), big = !!o.big;
+  const col = (nx, ny, nz, x, y, z) => hash3(Math.round(x * 40), Math.round(y * 40), Math.round(z * 40)) > 0.8 ? c2 : c1;
+  ell(g, 0.14, 0, 0, 0.3, 0.075, 0.075, col);
+  for (const s of [-1, 1]) { flat(g, [0.26, 0, s * 0.06], [0.46, 0, s * 0.03], [0.36, 0, s * 0.19], shade(c1, 0.9)); }
+  ell(g, -0.18, 0, 0, 0.08, 0.06, 0.065, c1);
+  for (const s of [-1, 1]) eyeAt(g, -0.16, 0.015, s * 0.06, big ? 0.04 : 0.03, s, BLACK, false);
+  for (let i = 0; i < 8; i++) {
+    const a = i / 8 * TAU, ca = Math.cos(a) * 0.035, sa = Math.sin(a) * 0.035;
+    chain(g, [[-0.23, ca, sa], [-0.33, ca * 1.6, sa * 1.6], [-0.43, ca * 2.2, sa * 2.2], [-0.5, ca * 2.5, sa * 2.5]], 0.016, 0.004, 5, c1, -1, c2);
+  }
+  for (const s of [-1, 1]) {
+    chain(g, [[-0.23, 0, s * 0.02], [-0.4, -0.01, s * 0.03], [-0.56, 0, s * 0.035], [-0.66, 0, s * 0.03]], 0.008, 0.006, 4, c1);
+    ell(g, -0.68, 0, s * 0.03, 0.035, 0.016, 0.02, c2, -1, 1);
+  }
+}
+function buildPuffer(g, o) {
+  const c1 = H(o.c1), c2 = H(o.c2), sp = H(o.spots), fin = shade(c1, 0.8);
+  ell(g, 0, 0, 0, 0.3, 0.28, 0.28, (nx, ny, nz, x, y, z) => ny < -0.2 ? c2 : hash3(Math.round(x * 30), Math.round(y * 30), Math.round(z * 30)) > 0.8 ? sp : c1);
+  for (const v of ICO1_V) { if (v[0] > 0.75) continue; cone(g, [v[0] * 0.27, v[1] * 0.25, v[2] * 0.25], [v[0] * 0.37, v[1] * 0.35, v[2] * 0.35], 0.018, 4, shade(c2, 0.9)); }
+  flat(g, [-0.27, 0, 0], [-0.44, 0.11, 0], [-0.44, -0.11, 0], fin);
+  for (const s of [-1, 1]) { flat(g, [0.05, -0.02, s * 0.27], [-0.05, 0.05, s * 0.37], [-0.06, -0.08, s * 0.35], fin); eyeAt(g, 0.18, 0.1, s * 0.18, 0.06, s, BLACK, false); }
+  ell(g, 0.3, -0.03, 0, 0.025, 0.03, 0.035, [0.5, 0.25, 0.2], -1, 1);
+}
+function buildSeahorse(g, o) {
+  const c1 = H(o.c1), c2 = H(o.c2);
+  const P = [[0.02, 0.38, 0], [-0.02, 0.27, 0], [0.02, 0.13, 0], [0.04, -0.01, 0], [0.0, -0.13, 0], [-0.06, -0.23, 0], [-0.05, -0.32, 0], [0.02, -0.36, 0], [0.06, -0.31, 0], [0.03, -0.27, 0]];
+  const R = [0.065, 0.055, 0.08, 0.085, 0.065, 0.045, 0.032, 0.024, 0.019, 0.015];
+  const col = (nx, ny, nz, x, y) => (Math.sin(y * 70) > 0.6 ? c2 : c1);
+  for (let i = 0; i < P.length; i++) {
+    ell(g, P[i][0], P[i][1], P[i][2], R[i], R[i], R[i] * 0.8, col, -1, 1);
+    if (i < P.length - 1) tube(g, P[i], P[i + 1], R[i] * 0.95, R[i + 1] * 0.95, 8, c1, false);
+  }
+  tube(g, [0.06, 0.37, 0], [0.22, 0.33, 0], 0.024, 0.018, 8, c1, true);
+  cone(g, [0.0, 0.42, 0], [-0.03, 0.5, 0], 0.025, 5, c2);
+  for (const s of [-1, 1]) eyeAt(g, 0.06, 0.39, s * 0.045, 0.022, s, BLACK, false);
+  flat(g, [-0.07, 0.0, 0], [-0.08, 0.14, 0], [-0.16, 0.06, 0], c2);
+  if (o.leaves) {
+    const lc = H(o.leaves), rng = mulberry32(5);
+    for (const i of [0, 1, 2, 3, 4, 5, 6]) for (const s of [-1, 1]) {
+      const p = P[i], a = rng() * TAU, L = 0.12 + rng() * 0.1;
+      const tip = [p[0] + Math.cos(a) * L * 0.6 - 0.04, p[1] + Math.sin(a) * L * 0.6, p[2] + s * L];
+      flat(g, [p[0], p[1] + 0.02, p[2]], [p[0] - 0.03, p[1] - 0.02, p[2]], tip, lc);
+      flat(g, [p[0], p[1] + 0.02, p[2]], tip, [tip[0] + 0.05, tip[1] + 0.03, tip[2] - s * 0.03], shade(lc, 1.15));
+    }
+  }
+}
+function buildBug(g, o) {
+  const c1 = H(o.c1), c2 = H(o.c2), curl = !!o.curl, N = 8, segs = [];
+  for (let i = 0; i < N; i++) {
+    const u = i / (N - 1);
+    if (curl) { const a = lerp(2.5, 0.45, u); segs.push([Math.cos(a) * 0.32, Math.sin(a) * 0.32 - 0.16, 0]); }
+    else segs.push([lerp(-0.4, 0.38, u), -0.04 * ((u * 2 - 1) ** 2), 0]);
+  }
+  for (let i = 0; i < N; i++) {
+    const p = segs[i], w = curl ? 0.08 : 0.2 * (0.75 + 0.25 * Math.sin(i / (N - 1) * Math.PI));
+    ell(g, p[0], p[1], p[2], 0.065, curl ? 0.09 : 0.12, w, (nx, ny) => ny < -0.4 ? c2 : c1, -1, 1);
+    for (const s of [-1, 1]) chain(g, [[p[0], p[1] - 0.05, s * w * 0.6], [p[0] + 0.02, p[1] - 0.12, s * (w * 0.6 + 0.08)], [p[0] + 0.05, p[1] - 0.2, s * (w * 0.6 + 0.1)]], 0.012, 0.006, 4, c2);
+  }
+  const h = segs[N - 1];
+  ell(g, h[0] + 0.06, h[1], 0, 0.06, curl ? 0.07 : 0.08, curl ? 0.07 : 0.13, c1, -1, 1);
+  for (const s of [-1, 1]) {
+    eyeAt(g, h[0] + 0.08, h[1] + 0.02, s * (curl ? 0.055 : 0.1), 0.022, s, BLACK, false);
+    chain(g, [[h[0] + 0.1, h[1] + 0.02, s * 0.03], [h[0] + 0.25, h[1] + 0.12, s * 0.12], [h[0] + 0.38, h[1] + 0.1, s * 0.22]], 0.01, 0.004, 4, c2);
+  }
+  const t = segs[0];
+  for (const s of [-1, 1]) flat(g, [t[0], t[1], 0], [t[0] - 0.12, t[1] - 0.02, s * 0.12], [t[0] - 0.1, t[1] + 0.04, s * 0.02], c2);
+}
+function buildSeapig(g, o) {
+  const c1 = H(o.c1), c2 = H(o.c2);
+  ell(g, 0, 0, 0, 0.4, 0.17, 0.18, (nx, ny, nz, x, y, z) => ny < -0.3 ? c2 : hash3(Math.round(x * 30), Math.round(y * 30), Math.round(z * 30)) > 0.9 ? shade(c1, 0.8) : c1);
+  for (let i = 0; i < 5; i++) for (const s of [-1, 1]) { const x = -0.26 + i * 0.13; chain(g, [[x, -0.12, s * 0.1], [x, -0.2, s * 0.13], [x + 0.01, -0.25, s * 0.14]], 0.03, 0.02, 6, c2); }
+  for (const [x, y, z, tx, ty, tz] of [[0.25, 0.12, 0.06, 0.32, 0.36, 0.1], [0.12, 0.15, 0.06, 0.16, 0.32, 0.12], [0.3, 0.1, 0.0, 0.42, 0.3, 0]]) {
+    chain(g, [[x, y, z], [lerp(x, tx, 0.5), lerp(y, ty, 0.6), lerp(z, tz, 0.5)], [tx, ty, tz]], 0.03, 0.012, 6, c1);
+    if (z) chain(g, [[x, y, -z], [lerp(x, tx, 0.5), lerp(y, ty, 0.6), -lerp(z, tz, 0.5)], [tx, ty, -tz]], 0.03, 0.012, 6, c1);
+  }
+  for (let i = 0; i < 8; i++) { const a = i / 8 * TAU; tube(g, [0.38, -0.06, 0], [0.45, -0.06 + Math.cos(a) * 0.06, Math.sin(a) * 0.06], 0.012, 0.006, 4, c2, true); }
+}
+function buildKelpie(g, o) {
+  const c1 = H(o.c1), c2 = H(o.c2), mane = H(o.mane), col = (nx, ny) => mixc(c1, c2, smooth(clamp(-ny / 0.5, 0, 1)));
+  ell(g, 0.02, 0, 0, 0.2, 0.12, 0.11, col);
+  tube(g, [0.12, 0.05, 0], [0.24, 0.24, 0], 0.08, 0.06, 10, c1, false);
+  tube(g, [0.24, 0.3, 0], [0.42, 0.22, 0], 0.065, 0.045, 10, c1, true);
+  ell(g, 0.25, 0.29, 0, 0.07, 0.07, 0.065, c1, -1, 1);
+  ell(g, 0.42, 0.21, 0, 0.05, 0.045, 0.045, c2, -1, 1);
+  for (const s of [-1, 1]) {
+    cone(g, [0.24, 0.34, s * 0.03], [0.22, 0.43, s * 0.04], 0.02, 5, c1);
+    eyeAt(g, 0.31, 0.31, s * 0.05, 0.02, s, H('#103a30'), false);
+    chain(g, [[0.12, -0.06, s * 0.06], [0.18, -0.18, s * 0.06], [0.22, -0.26, s * 0.07]], 0.035, 0.025, 6, c1);
+    flat(g, [0.2, -0.26, s * 0.07], [0.32, -0.3, s * 0.07], [0.22, -0.34, s * 0.07], shade(c2, 0.9));
+  }
+  for (let i = 0; i < 9; i++) {
+    const u = i / 8, p = [lerp(0.24, 0.04, u), lerp(0.36, 0.12, u), 0];
+    flat(g, p, [p[0] - 0.08, p[1] + 0.06, 0.04], [p[0] - 0.1, p[1] - 0.02, -0.04], mane);
+    flat(g, p, [p[0] - 0.11, p[1] + 0.02, -0.05], [p[0] - 0.06, p[1] - 0.06, 0.05], shade(mane, 1.2));
+  }
+  chain(g, [[-0.14, 0, 0], [-0.26, 0.02, 0], [-0.38, 0.05, 0], [-0.46, 0.06, 0]], 0.1, 0.03, 10, c1, -1, c2);
+  flat(g, [-0.46, 0.06, 0], [-0.62, 0.2, 0], [-0.56, 0.05, 0], c2);
+  flat(g, [-0.46, 0.06, 0], [-0.56, 0.05, 0], [-0.6, -0.09, 0], c2);
+}
+const BUILDERS = { fish: buildFish, shark: buildShark, eel: buildEel, octo: buildOcto, squid: buildSquid, puffer: buildPuffer, seahorse: buildSeahorse, bug: buildBug, seapig: buildSeapig, kelpie: buildKelpie };
+// how each kind swims: amplitude, wave frequency, speed, mode (0 = side to side, 1 = tentacles)
+const SWIM = { fish: [0.05, 9, 9, 0], shark: [0.05, 6, 5, 0], eel: [0.08, 11, 8, 0], octo: [0.06, 7, 3, 1], squid: [0.04, 10, 6, 0], puffer: [0.06, 8, 10, 0], seahorse: [0.03, 6, 2, 1], bug: [0, 0, 0, 0], seapig: [0, 0, 0, 0], kelpie: [0.05, 7, 6, 0] };
+const speciesMeshes = [];
+function speciesMesh(i) {
+  if (speciesMeshes[i]) return speciesMeshes[i];
+  const sp = SPECIES[i], g = new Geo(4096);
+  BUILDERS[sp.kind](g, sp.o);
+  if (sp.kind === 'octo') g.wig(0, (x, y) => clamp(-y / 0.45, 0, 1));
+  else if (sp.kind === 'seahorse') g.wig(0, (x, y) => clamp(-(y + 0.1) / 0.3, 0, 1));
+  else if (sp.kind === 'squid') g.wig(0, x => clamp((-0.2 - x) / 0.4, 0, 1));
+  else if (sp.kind === 'puffer') g.wig(0, x => clamp((-0.22 - x) / 0.2, 0, 1));
+  else if (sp.kind === 'eel') g.wig(0, x => clamp((0.45 - x) / 0.9, 0, 1) * 1.0);
+  else if (SWIM[sp.kind][0] > 0) g.wig(0, x => Math.pow(clamp((0.18 - x) / 0.7, 0, 1), 1.3));
+  return (speciesMeshes[i] = makeMesh(g));
+}
+
+/* ---------- sparkles around mythical fish, and a small glowing ball ---------- */
+const sparkleMesh = (() => { const g = new Geo(512), r = mulberry32(3); for (let i = 0; i < 14; i++) { const a = r() * TAU, y = r() - 0.5, d = 0.6 + r() * 0.3; ell(g, Math.cos(a) * d, y * 0.8, Math.sin(a) * d, 0.025, 0.025, 0.025, [1, 1, 1], 1, 0); } return makeMesh(g); })();
+const shadowMesh = (() => { const g = new Geo(256); for (let i = 0; i < 24; i++) { const a = i / 24 * TAU, b = (i + 1) / 24 * TAU; tri(g, [0, 0, 0], [Math.cos(b), 0, -Math.sin(b)], [Math.cos(a), 0, -Math.sin(a)], [0, 1, 0], 1, [0, 0, 0], [0, 0, 0], [0, 0, 0], 0, 0, 0); } return makeMesh(g); })();
+
+/* =====================================================================
+   The player: a kid in a straw hat. Separate parts so the legs and the
+   rod arm can move. Faces +x.
+   ===================================================================== */
+const SKIN = H('#f5c89a'), SHIRT = H('#e8433a'), SHORTS = H('#2a4a9a'), HAT = H('#f0d070');
+const playerMesh = (() => {
+  const g = new Geo(4096);
+  ell(g, 0, 1.02, 0, 0.2, 0.33, 0.27, SHIRT);
+  ell(g, 0, 0.74, 0, 0.19, 0.12, 0.25, SHORTS);
+  ell(g, 0, 1.55, 0, 0.25, 0.26, 0.25, SKIN);
+  for (const s of [-1, 1]) { ell(g, 0.21, 1.6, s * 0.09, 0.035, 0.045, 0.03, BLACK, -1, 1); ell(g, 0.17, 1.5, s * 0.15, 0.04, 0.025, 0.03, H('#ff9a8a'), -1, 1); }
+  tube(g, [0.235, 1.47, -0.06], [0.245, 1.46, 0.06], 0.012, 0.012, 4, H('#8a3a2a'), true);
+  ell(g, 0, 1.73, 0, 0.48, 0.035, 0.48, HAT);
+  ell(g, 0, 1.8, 0, 0.24, 0.13, 0.24, HAT, -1, 2, 1.74);
+  tube(g, [0, 1.76, 0], [0, 1.82, 0], 0.245, 0.245, 16, H('#d6407f'), false);
+  // left arm (the right arm holds the rod)
+  chain(g, [[0, 1.22, -0.27], [0.08, 0.98, -0.32], [0.14, 0.82, -0.3]], 0.07, 0.06, 8, SKIN);
+  return makeMesh(g);
+})();
+const legMesh = (() => {
+  const g = new Geo(1024);
+  tube(g, [0, 0, 0], [0, -0.3, 0], 0.09, 0.08, 8, SHORTS, true);
+  tube(g, [0, -0.3, 0], [0, -0.62, 0], 0.07, 0.065, 8, SKIN, true);
+  ell(g, 0.06, -0.66, 0, 0.13, 0.06, 0.08, H('#ffffff'), -1, 1);
+  return makeMesh(g);
+})();
+// arm with the rod; pivot at the shoulder. The rod points along +x when the arm angle is 0.
+const ROD_TIP = [2.55, 0.08, 0];
+const armMesh = (() => {
+  const g = new Geo(2048);
+  chain(g, [[0, 0, 0], [0.18, -0.12, 0], [0.34, -0.06, 0]], 0.07, 0.06, 8, SKIN);
+  tube(g, [0.2, -0.08, 0], [0.55, -0.04, 0], 0.04, 0.035, 8, H('#2a2a2a'), true);
+  tube(g, [0.55, -0.04, 0], ROD_TIP, 0.03, 0.012, 6, H('#8a5a2a'), true);
+  ell(g, 0.32, -0.12, 0.06, 0.06, 0.06, 0.03, H('#b8b8c0'), -1, 1);       // the reel
+  return makeMesh(g);
+})();
+
+/* =====================================================================
+   The beach: sand, the Aquarium dome, the Tackle Shop, palm trees and the
+   long pier. Ocean to the north (-z).
+   ===================================================================== */
+const AQ = { x: -30, z: 0, r: 14, door: [-14.6, 0], base: 0.8, top: 3 };
+const SHOP = { x: 18, z: 0, door: [14.4, 0] };
+const PIER = { x0: -1.6, x1: 1.6, z0: -15, z1: -66, endX: 4, endZ: -74, deck: 1.3 };
+const BOUNDS = { x0: -58, x1: 44, z0: -78, z1: 40 };
+function shoreZ(x) { return -25 + 2.5 * Math.sin(x * 0.09); }
+function sandH(x, z) {
+  let h = 0.55 + 0.18 * Math.sin(x * 0.21 + z * 0.13) * Math.cos(z * 0.17 - x * 0.05);
+  const sz = shoreZ(x);
+  if (z < sz) h -= (sz - z) * 0.22;
+  if (z > 28) h += (z - 28) * 0.14;
+  if (x < -48) h += (-48 - x) * 0.18;
+  if (x > 36) h += (x - 36) * 0.18;
+  return Math.max(h, -5);
+}
+function onPier(x, z) {
+  return (x > PIER.x0 && x < PIER.x1 && z < PIER.z0 + 0.5 && z > PIER.z1) || (Math.abs(x) < PIER.endX && z <= PIER.z1 + 0.2 && z > PIER.endZ);
+}
+function groundH(x, z) { return onPier(x, z) ? PIER.deck : sandH(x, z); }
+const PALMS = [[-8, 6], [8, -8], [26, 12], [-16, 22], [30, -14], [-46, 14], [-10, -16], [12, 26], [-44, -18], [40, 6]];
+
+function palm(g, x, z, rng) {
+  const y0 = sandH(x, z), lean = rng() * TAU, h = 6 + rng() * 2.5, pts = [];
+  for (let i = 0; i <= 6; i++) { const u = i / 6; pts.push([x + Math.cos(lean) * u * u * 1.6, y0 + u * h, z + Math.sin(lean) * u * u * 1.6]); }
+  chain(g, pts, 0.3, 0.17, 8, H('#9a7a4a'), -1, H('#7a5a32'));
+  for (let i = 1; i < 6; i++) tube(g, [pts[i][0], pts[i][1] - 0.05, pts[i][2]], [pts[i][0], pts[i][1] + 0.08, pts[i][2]], 0.28 - i * 0.02, 0.3 - i * 0.02, 8, H('#6a4a28'), false);
+  const top = pts[6], lc = H('#3f9a3a');
+  for (let k = 0; k < 8; k++) {
+    const a = k / 8 * TAU + rng(), L = 3 + rng(), ca = Math.cos(a), sa = Math.sin(a);
+    let prev = top;
+    for (let s = 1; s <= 4; s++) {
+      const u = s / 4, p = [top[0] + ca * L * u, top[1] + 0.6 * Math.sin(u * 2.2) - u * u * 1.8, top[2] + sa * L * u];
+      const w = 0.55 * Math.sin(u * Math.PI) + 0.1, px = -sa * w, pz = ca * w;
+      flat(g, prev, [p[0] + px, p[1], p[2] + pz], p, shade(lc, 0.9 + rng() * 0.2));
+      flat(g, prev, p, [p[0] - px, p[1], p[2] - pz], shade(lc, 0.8 + rng() * 0.2));
+      prev = p;
+    }
+  }
+  for (let k = 0; k < 3; k++) ell(g, top[0] + Math.cos(k * 2.1) * 0.25, top[1] - 0.25, top[2] + Math.sin(k * 2.1) * 0.25, 0.18, 0.2, 0.18, H('#6a4a22'), -1, 1);
+}
+let beachMesh = null, glassMesh = null, waterVao = null;
+function buildBeach() {
+  const g = new Geo(200000), rng = mulberry32(42);
+  // sand
+  const S = 2, X0 = -90, X1 = 70, Z0 = -90, Z1 = 70;
+  const dry = H('#ecd8a0'), wet = H('#c8b080'), deep = H('#9a9a78'), grass = H('#9abf5a');
+  const colAt = (x, y, z) => {
+    let c = y > 0.35 ? dry : y > -0.1 ? mixc(wet, dry, (y + 0.1) / 0.45) : mixc(deep, wet, clamp(1 + y / 3, 0, 1));
+    if (z > 31 || x < -52 || x > 40) c = mixc(c, grass, 0.55);
+    return shade(c, 0.95 + hash3(Math.round(x), 0, Math.round(z)) * 0.08);
+  };
+  for (let x = X0; x < X1; x += S) for (let z = Z0; z < Z1; z += S) {
+    const a = [x, sandH(x, z), z], b = [x + S, sandH(x + S, z), z], c = [x + S, sandH(x + S, z + S), z + S], d = [x, sandH(x, z + S), z + S];
+    const n1 = faceN(a, d, c), n2 = faceN(a, c, b);
+    const c1 = colAt(x + S * 0.3, (a[1] + c[1] + d[1]) / 3, z + S * 0.6), c2 = colAt(x + S * 0.6, (a[1] + b[1] + c[1]) / 3, z + S * 0.3);
+    tri(g, a, d, c, n1, -1, c1, c1, c1, 0, 0, 0); tri(g, a, c, b, n2, -1, c2, c2, c2, 0, 0, 0);
+  }
+  // grass tufts on the back dunes
+  for (let i = 0; i < 260; i++) {
+    const x = X0 + rng() * (X1 - X0), z = 30 + rng() * 38;
+    const y = sandH(x, z), gc = shade(H('#6aa83a'), 0.8 + rng() * 0.4);
+    for (let k = 0; k < 3; k++) cone(g, [x + (rng() - 0.5) * 0.4, y - 0.05, z + (rng() - 0.5) * 0.4], [x + (rng() - 0.5) * 0.8, y + 0.7 + rng() * 0.6, z + (rng() - 0.5) * 0.8], 0.08, 3, gc);
+  }
+  // rocks along the shore and shells
+  for (let i = 0; i < 40; i++) {
+    const x = -55 + rng() * 98, z = shoreZ(x) + (rng() - 0.3) * 6;
+    if (Math.abs(x) < 6) continue;
+    const r = 0.4 + rng() * 1.3;
+    blob(g, x, sandH(x, z), z, r * 1.3, r, r, shade(H('#8a8a90'), 0.8 + rng() * 0.3), rng, 0.35, -1);
+  }
+  for (let i = 0; i < 50; i++) {
+    const x = -50 + rng() * 90, z = -20 + rng() * 48, y = sandH(x, z);
+    if (Math.hypot(x - AQ.x, z - AQ.z) < AQ.r + 3) continue;
+    ell(g, x, y + 0.03, z, 0.12, 0.05, 0.1, [H('#ffb0c0'), H('#fff0d0'), H('#ffd0a0')][i % 3], -1, 0);
+  }
+  for (const [x, z] of PALMS) palm(g, x, z, rng);
+
+  // ---- the Aquarium: a giant glass dome ----
+  const stone = H('#dfe6ef'), metal = H('#8a9ab8');
+  tube(g, [AQ.x, -0.5, AQ.z], [AQ.x, AQ.base, AQ.z], AQ.r + 0.3, AQ.r + 0.3, 48, stone, false);
+  tube(g, [AQ.x, AQ.base, AQ.z], [AQ.x, AQ.base + 0.15, AQ.z], AQ.r + 0.4, AQ.r + 0.4, 48, metal, false);
+  tube(g, [AQ.x, AQ.top, AQ.z], [AQ.x, AQ.top + 0.25, AQ.z], AQ.r + 0.15, AQ.r + 0.15, 48, metal, false);
+  // floor inside the tank: sand, rocks, plants and coral
+  for (let i = 0; i < 48; i++) { const a = i / 48 * TAU, b = (i + 1) / 48 * TAU, R = AQ.r; tri(g, [AQ.x, AQ.base + 0.1, AQ.z], [AQ.x + Math.cos(b) * R, AQ.base + 0.1, AQ.z - Math.sin(b) * R], [AQ.x + Math.cos(a) * R, AQ.base + 0.1, AQ.z - Math.sin(a) * R], [0, 1, 0], -1, H('#e8d098'), H('#e8d098'), H('#e8d098'), 0, 0, 0); }
+  for (let i = 0; i < 26; i++) {
+    const a = rng() * TAU, d = rng() * (AQ.r - 2), x = AQ.x + Math.cos(a) * d, z = AQ.z + Math.sin(a) * d;
+    if (i % 3 === 0) blob(g, x, AQ.base, z, 0.8 + rng(), 0.7 + rng(), 0.8 + rng(), H('#8a8f9a'), rng, 0.4, -1);
+    else if (i % 3 === 1) { const cc = [H('#ff6a8a'), H('#ffb84a'), H('#b86aff'), H('#4ae0c0')][i % 4]; for (let k = 0; k < 4; k++) chain(g, [[x, AQ.base, z], [x + (rng() - 0.5) * 0.6, AQ.base + 0.6, z + (rng() - 0.5) * 0.6], [x + (rng() - 0.5), AQ.base + 1.1 + rng() * 0.5, z + (rng() - 0.5)]], 0.12, 0.06, 6, cc); }
+    else for (let k = 0; k < 3; k++) chain(g, [[x + k * 0.2, AQ.base, z], [x + k * 0.2 + 0.2, AQ.base + 1.4, z + 0.1], [x + k * 0.2 - 0.1, AQ.base + 2.6 + rng(), z - 0.1]], 0.1, 0.04, 5, H('#3f9a4a'));
+  }
+  // ribs of the dome
+  for (let k = 0; k < 12; k++) {
+    const ph = k / 12 * TAU, pts = [];
+    for (let i = 0; i <= 10; i++) { const t = i / 10 * Math.PI / 2; pts.push([AQ.x + Math.cos(ph) * (AQ.r + 0.1) * Math.cos(t), AQ.top + (AQ.r * 0.85 + 0.1) * Math.sin(t), AQ.z + Math.sin(ph) * (AQ.r + 0.1) * Math.cos(t)]); }
+    chain(g, pts, 0.16, 0.12, 6, metal);
+    tube(g, [AQ.x + Math.cos(ph) * (AQ.r + 0.1), AQ.base, AQ.z + Math.sin(ph) * (AQ.r + 0.1)], [AQ.x + Math.cos(ph) * (AQ.r + 0.1), AQ.top, AQ.z + Math.sin(ph) * (AQ.r + 0.1)], 0.16, 0.16, 6, metal, false);
+  }
+  ell(g, AQ.x, AQ.top + AQ.r * 0.85 + 0.2, AQ.z, 1, 0.5, 1, H('#ffd23f'), -1, 1);
+  // entrance building with a door, facing the beach
+  const ex = -14.9;
+  box(g, ex, 0, 0, 3.4, 5.2, 7, H('#f4f6fb'));
+  box(g, ex, 5.2, 0, 3.8, 0.4, 7.4, H('#3cc4f0'));
+  box(g, ex + 1.72, 0.2, 0, 0.12, 3.2, 2.6, H('#1a2a5a'));
+  box(g, ex + 1.75, 3.6, 0, 0.12, 1.2, 5.6, H('#16205a'));
+  for (const s of [-1, 1]) { tube(g, [ex + 2.3, 0, s * 1.6], [ex + 2.3, 3.4, s * 1.6], 0.14, 0.14, 8, H('#ffd23f'), true); }
+  box(g, ex + 1.3, 3.3, 0, 2.2, 0.15, 4, H('#ff7ad9'));
+  box(g, ex + 2.2, -0.3, 0, 1.4, 0.45, 3.2, H('#c8ced8'));
+
+  // ---- the Tackle Shop ----
+  const wood = H('#c88a4a'), dark = H('#5a3a22'), roof = H('#d6407f');
+  box(g, SHOP.x, 0, SHOP.z, 6, 3.4, 7, wood);
+  for (let i = 0; i < 6; i++) box(g, SHOP.x - 3.01, 0.3 + i * 0.55, SHOP.z, 0.05, 0.06, 7, shade(wood, 0.8));
+  const rx0 = SHOP.x - 3.6, rx1 = SHOP.x + 3.6, rz0 = SHOP.z - 4, rz1 = SHOP.z + 4, ey = 3.3, ry = 5.4;
+  flat(g, [rx0, ey, rz0], [SHOP.x, ry, rz0], [SHOP.x, ry, rz1], roof, -1); flat(g, [rx0, ey, rz0], [SHOP.x, ry, rz1], [rx0, ey, rz1], roof, -1);
+  flat(g, [rx1, ey, rz0], [SHOP.x, ry, rz1], [SHOP.x, ry, rz0], shade(roof, 0.85), -1); flat(g, [rx1, ey, rz0], [rx1, ey, rz1], [SHOP.x, ry, rz1], shade(roof, 0.85), -1);
+  for (const zz of [SHOP.z - 3.5, SHOP.z + 3.5]) flat(g, [SHOP.x - 3, 3.4, zz], [SHOP.x + 3, 3.4, zz], [SHOP.x, 5.3, zz], wood, 0);
+  box(g, SHOP.x - 3.02, 0, SHOP.z, 0.1, 2.5, 1.7, dark);
+  for (const s of [-1, 1]) { box(g, SHOP.x - 3.02, 1.2, SHOP.z + s * 2.3, 0.1, 1.1, 1.3, H('#8fd8ff')); box(g, SHOP.x - 3.05, 1.15, SHOP.z + s * 2.3, 0.06, 1.2, 0.08, dark); }
+  box(g, SHOP.x - 3.15, 2.7, SHOP.z, 0.12, 0.55, 4.6, H('#fff5dc'));
+  // a giant hook on the roof
+  const hk = H('#c8d0d8');
+  chain(g, [[SHOP.x, 5.3, SHOP.z], [SHOP.x, 7.2, SHOP.z], [SHOP.x, 8.4, SHOP.z]], 0.13, 0.13, 8, hk);
+  const hp = []; for (let i = 0; i <= 8; i++) { const a = Math.PI + i / 8 * Math.PI * 1.15; hp.push([SHOP.x + Math.cos(a) * 0.8 + 0.8, 5.9 + Math.sin(a) * 0.8, SHOP.z]); }
+  chain(g, [[SHOP.x, 6.0, SHOP.z], ...hp], 0.13, 0.08, 8, hk);
+  cone(g, hp[8], [hp[8][0] - 0.1, hp[8][1] + 0.5, hp[8][2]], 0.12, 6, hk);
+  for (const [bx, bz] of [[-3.8, 3.4], [-3.9, -3.3], [-3.2, -4.4]]) { tube(g, [SHOP.x + bx, 0, SHOP.z + bz], [SHOP.x + bx, 1.1, SHOP.z + bz], 0.45, 0.45, 12, H('#9a6a3a'), true); tube(g, [SHOP.x + bx, 0.25, SHOP.z + bz], [SHOP.x + bx, 0.35, SHOP.z + bz], 0.47, 0.47, 12, dark, false); tube(g, [SHOP.x + bx, 0.8, SHOP.z + bz], [SHOP.x + bx, 0.9, SHOP.z + bz], 0.47, 0.47, 12, dark, false); }
+
+  // ---- beach things ----
+  tube(g, [6, 0, 14], [6, 3, 14], 0.06, 0.06, 6, WHITE, true);
+  cone(g, [6, 2.6, 14], [6, 3.4, 14], 2.2, 12, H('#ff5a6a'));
+  cone(g, [6, 2.62, 14], [6, 3.42, 14], 1.2, 12, WHITE);
+  box(g, 8, sandH(8, 15), 15, 1.3, 0.04, 2.2, H('#3cc4f0'));
+  const sc = H('#e0c080'), cx0 = -5, cz0 = 17, cy0 = sandH(cx0, cz0);
+  box(g, cx0, cy0, cz0, 2.4, 0.8, 2.4, sc);
+  for (const [dx, dz] of [[-1.1, -1.1], [1.1, -1.1], [-1.1, 1.1], [1.1, 1.1]]) { tube(g, [cx0 + dx, cy0, cz0 + dz], [cx0 + dx, cy0 + 1.3, cz0 + dz], 0.35, 0.3, 8, sc, true); cone(g, [cx0 + dx, cy0 + 1.3, cz0 + dz], [cx0 + dx, cy0 + 1.9, cz0 + dz], 0.38, 8, sc); }
+  // the lighthouse on its rock
+  blob(g, 46, -1, -64, 8, 4, 7, H('#7a7a82'), rng, 0.3, -1);
+  for (let i = 0; i < 6; i++) tube(g, [46, 2 + i * 2.2, -64], [46, 4.2 + i * 2.2, -64], 1.6 - i * 0.1, 1.5 - i * 0.1, 14, i % 2 ? H('#e8352f') : WHITE, false);
+  tube(g, [46, 15.2, -64], [46, 15.5, -64], 1.6, 1.6, 14, H('#2a2a3a'), false);
+  ell(g, 46, 16.4, -64, 0.9, 0.9, 0.9, H('#fff3a0'), 1, 1);
+  cone(g, [46, 17.2, -64], [46, 19, -64], 1.4, 14, H('#e8352f'));
+  // islands far away
+  for (const [x, z, r] of [[-120, -200, 30], [90, -240, 40], [-30, -300, 50], [200, -120, 30]]) { blob(g, x, -2, z, r, r * 0.25, r * 0.7, H('#6a9a5a'), rng, 0.3, -1, -1.5); blob(g, x, -2, z, r * 1.08, r * 0.08, r * 0.76, H('#e8d8a0'), rng, 0.1, -1, -1.5); }
+
+  // ---- the pier ----
+  const plank = H('#a87a4a'), post = H('#6a4a2a');
+  for (let z = PIER.z0; z > PIER.z1; z -= 0.6) box(g, 0, PIER.deck - 0.18, z - 0.3, 3.2, 0.18, 0.55, shade(plank, 0.9 + hash3(z, 1, 2) * 0.2));
+  for (let z = PIER.z1; z > PIER.endZ; z -= 0.6) box(g, 0, PIER.deck - 0.18, z - 0.3, PIER.endX * 2, 0.18, 0.55, shade(plank, 0.9 + hash3(z, 3, 2) * 0.2));
+  for (let z = PIER.z0 - 1; z > PIER.endZ; z -= 4) for (const s of [-1, 1]) { const xx = z < PIER.z1 ? s * (PIER.endX - 0.2) : s * 1.5; tube(g, [xx, -5, z], [xx, PIER.deck + (z < PIER.z1 ? 1 : 0.0), z], 0.18, 0.18, 8, post, true); }
+  for (const s of [-1, 1]) { tube(g, [s * (PIER.endX - 0.2), PIER.deck + 0.95, PIER.z1], [s * (PIER.endX - 0.2), PIER.deck + 0.95, PIER.endZ + 0.2], 0.07, 0.07, 6, post, true); }
+  box(g, 0, 0.1, PIER.z0 + 0.8, 3.2, 0.9, 1.4, plank);
+  // a lamp post and a bucket at the end of the pier
+  tube(g, [-3.4, PIER.deck, PIER.z1 - 1], [-3.4, PIER.deck + 3.4, PIER.z1 - 1], 0.08, 0.08, 6, H('#2a2a3a'), true);
+  ell(g, -3.4, PIER.deck + 3.6, PIER.z1 - 1, 0.3, 0.35, 0.3, H('#fff3a0'), 1, 1);
+  tube(g, [2.6, PIER.deck, PIER.endZ + 1.5], [2.6, PIER.deck + 0.6, PIER.endZ + 1.5], 0.3, 0.36, 12, H('#3cc4f0'), true);
+  beachMesh = makeMesh(g);
+
+  // the glass of the dome (drawn see-through, after everything else)
+  const gg = new Geo(30000), glass = H('#bfefff');
+  ell(gg, AQ.x, AQ.top, AQ.z, AQ.r, AQ.r * 0.85, AQ.r, glass, 0, 2, AQ.top);
+  tube(gg, [AQ.x, AQ.base, AQ.z], [AQ.x, AQ.top, AQ.z], AQ.r, AQ.r, 48, glass, false, 0);
+  glassMesh = makeMesh(gg);
+
+  // the ocean: one big square
+  waterVao = gl.createVertexArray(); gl.bindVertexArray(waterVao);
+  const wb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, wb);
+  const W = 400;
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-W, 0, -W, W, 0, -W, W, 0, W, -W, 0, -W, W, 0, W, -W, 0, W]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 12, 0);
+  gl.bindVertexArray(null);
+}
+
+/* ---------- the hook on the end of the line (top of the line at 0,0,0) ---------- */
+let hookMesh = null, hookMeshKey = '';
+function buildHookMesh() {
+  const key = save.hook + '/' + save.bait;
+  if (key === hookMeshKey && hookMesh) return;
+  freeMesh(hookMesh);
+  const g = new Geo(2048), hc = H(HOOKS[save.hook].col), steel = H('#c8d0d8');
+  const big = 0.12 + save.hook * 0.025;
+  ell(g, 0, -0.1 - big, 0, big * 0.8, big * 1.2, big * 0.8, hc, save.hook >= 4 ? 1 : -1, 1);
+  if (save.hook === 6) for (const s of [-1, 1]) cone(g, [0, -0.1 - big * 2, 0], [s * 0.3, -0.1 - big * 2 + 0.25, 0], 0.06, 5, hc, 1);
+  const top = -0.12 - big * 2.3;
+  const hp = [[0, top, 0], [0, top - 0.35, 0]];
+  for (let i = 1; i <= 7; i++) { const a = Math.PI + i / 7 * Math.PI * 1.1; hp.push([0.12 + Math.cos(a) * 0.12, top - 0.35 + Math.sin(a) * 0.12, 0]); }
+  chain(g, hp, 0.018, 0.014, 5, steel);
+  cone(g, hp[hp.length - 1], [hp[hp.length - 1][0] - 0.02, hp[hp.length - 1][1] + 0.08, 0], 0.025, 4, steel);
+  const bc = H(BAITS[save.bait].col);
+  if (save.bait === 0) chain(g, [[0.02, top - 0.42, 0.02], [0.1, top - 0.5, 0.04], [0.16, top - 0.44, 0], [0.1, top - 0.38, -0.03], [0.14, top - 0.3, 0]], 0.03, 0.025, 6, bc);
+  else { ell(g, 0.08, top - 0.45, 0, 0.07, 0.04, 0.04, bc, save.bait >= 2 ? 1 : -1, 1); flat(g, [0.0, top - 0.45, 0], [-0.08, top - 0.4, 0], [-0.08, top - 0.5, 0], shade(bc, 0.8)); }
+  hookMesh = makeMesh(g); hookMeshKey = key;
+  HOOK_MOUTH[1] = top - 0.45;
+}
+const HOOK_MOUTH = [0.06, -0.8, 0];
+const bobberMesh = (() => { const g = new Geo(1024); ell(g, 0, 0.08, 0, 0.16, 0.16, 0.16, H('#e8352f'), -1, 1, 0.0); ell(g, 0, 0.0, 0, 0.16, 0.12, 0.16, WHITE, -1, 1); tube(g, [0, 0.2, 0], [0, 0.34, 0], 0.025, 0.02, 5, H('#e8352f'), true); return makeMesh(g); })();
+
+/* =====================================================================
+   The ocean column you sink through. The hook goes straight down x = 0, z = 0.
+   Zone i is from y = -60 i to y = -60 (i + 1).
+   ===================================================================== */
+let oceanMesh = null, kelpMesh = null, dotsMesh = null, surfMesh = null;
+function buildOcean() {
+  const g = new Geo(150000), rng = mulberry32(2024);
+  const spot = (minX = 4) => { for (;;) { const x = (rng() * 2 - 1) * 22, z = -3 - rng() * 22; if (Math.abs(x) > minX || z < -9) return [x, z]; } };
+  // Sunlit Shallows: rock towers with coral on the sides
+  for (let i = 0; i < 9; i++) {
+    const s = i % 2 ? 1 : -1, x = s * (9 + rng() * 9), z = -6 - rng() * 16, top = -8 - rng() * 20;
+    for (let y = -62; y < top; y += 3) blob(g, x + (rng() - 0.5), y, z + (rng() - 0.5), 2.4 + rng(), 2.2, 2.4 + rng(), shade(H('#9a8a7a'), 0.8 + rng() * 0.3), rng, 0.5, -1);
+    for (let k = 0; k < 10; k++) {
+      const cc = [H('#ff6a8a'), H('#ffb84a'), H('#b86aff'), H('#4ae0c0'), H('#ff8a3a')][k % 5];
+      const yy = top - rng() * 30, xx = x - s * (1.8 + rng()), zz = z + (rng() - 0.5) * 3;
+      for (let b = 0; b < 3; b++) chain(g, [[xx, yy, zz], [xx - s * 0.3 + (rng() - 0.5), yy + 0.8, zz + (rng() - 0.5)], [xx - s * 0.5 + (rng() - 0.5) * 1.5, yy + 1.6 + rng(), zz + (rng() - 0.5) * 1.5]], 0.25, 0.1, 6, cc);
+    }
+  }
+  // Twilight Zone: glowing jellyfish
+  for (let i = 0; i < 18; i++) {
+    const [x, z] = spot(5), y = -125 - rng() * 52, jc = [H('#ff7ad9'), H('#9a7aff'), H('#7ff0ff')][i % 3], r = 0.6 + rng() * 0.6;
+    ell(g, x, y, z, r, r * 0.7, r, shade(jc, 0.8), 1, 1, y);
+    for (let k = 0; k < 6; k++) { const a = k / 6 * TAU; chain(g, [[x + Math.cos(a) * r * 0.7, y, z + Math.sin(a) * r * 0.7], [x + Math.cos(a) * r * 0.6, y - r * 1.2, z + Math.sin(a) * r * 0.6], [x + Math.cos(a) * r * 0.8, y - r * 2.4, z + Math.sin(a) * r * 0.8]], 0.04, 0.02, 4, shade(jc, 0.6), 1); }
+  }
+  // glowing specks in the dark zones
+  for (let i = 0; i < 420; i++) {
+    const [x, z] = spot(2), y = -122 - rng() * 236, zc = ZONES[zoneAtVis(-y)], c = rng() < 0.5 ? zc.dotC : [H('#7fffd0'), H('#ff9ae0'), H('#9fd0ff')][i % 3];
+    const r = 0.04 + rng() * 0.08;
+    ell(g, x, y, z, r, r, r, c, 1, 0);
+  }
+  // The Abyss: a few huge pale jellies
+  for (let i = 0; i < 6; i++) {
+    const [x, z] = spot(8), y = -248 - rng() * 45, r = 2 + rng() * 1.5, jc = H('#bfd0ff');
+    ell(g, x, y, z - 8, r, r * 0.6, r, shade(jc, 0.5), 1, 1, y);
+    for (let k = 0; k < 8; k++) { const a = k / 8 * TAU; chain(g, [[x + Math.cos(a) * r * 0.8, y, z - 8 + Math.sin(a) * r * 0.8], [x + Math.cos(a) * r, y - r * 2, z - 8 + Math.sin(a) * r], [x + Math.cos(a) * r * 0.7, y - r * 4, z - 8 + Math.sin(a) * r * 0.7]], 0.08, 0.03, 4, shade(jc, 0.35), 1); }
+  }
+  // The Trench and the Rift: rock walls on both sides and behind
+  for (let y = -296; y > -424; y -= 2.6) {
+    const rift = y < -360;
+    const rc = rift ? H('#3a1a16') : H('#5a5470');
+    for (const s of [-1, 1]) {
+      const x = s * (8 + rng() * 3 + (rift ? 1.5 : 0));
+      blob(g, x, y, -4 - rng() * 6, 3 + rng() * 2, 2.4, 4 + rng() * 2, shade(rc, 0.8 + rng() * 0.4), rng, 0.5, -1);
+      if (rng() < (rift ? 0.7 : 0.25)) {
+        const cc = rift ? H('#ff7a1a') : H('#bfe8ff'), px = x - s * 2.6, pz = -3 - rng() * 5;
+        if (rift) chain(g, [[px, y + 1, pz], [px - s * 0.3, y, pz - 0.6], [px, y - 1.2, pz - 0.2], [px - s * 0.2, y - 2.2, pz - 0.7]], 0.12, 0.08, 4, cc, 1);
+        else for (let k = 0; k < 3; k++) cone(g, [px, y, pz], [px - s * (0.5 + rng()), y + 0.6 + rng(), pz + (rng() - 0.5)], 0.18, 5, cc, 1);
+      }
+    }
+    blob(g, (rng() - 0.5) * 16, y, -18 - rng() * 4, 5, 3, 3, shade(rc, 0.7 + rng() * 0.3), rng, 0.4, -1);
+  }
+  // the bottom of the world: lava with dark rocks
+  box(g, 0, -426, -10, 80, 2, 60, H('#ff5a1a'), 1);
+  for (let i = 0; i < 26; i++) blob(g, (rng() - 0.5) * 40, -424.5, -2 - rng() * 30, 1.5 + rng() * 3, 1 + rng(), 1.5 + rng() * 3, H('#2a1210'), rng, 0.5, -1);
+  oceanMesh = makeMesh(g);
+
+  // the Kelp Forest (its own mesh so it can sway)
+  const k = new Geo(60000);
+  for (let i = 0; i < 46; i++) {
+    const [x, z] = spot(3.5), y0 = -122, y1 = -58 - rng() * 6, kc = shade(H('#5a8a2a'), 0.8 + rng() * 0.4), pts = [];
+    for (let y = y0; y <= y1; y += 4) pts.push([x + Math.sin(y * 0.15 + i) * 0.6, y, z + Math.cos(y * 0.11 + i) * 0.6]);
+    chain(k, pts, 0.12, 0.08, 5, kc);
+    for (let j = 1; j < pts.length; j++) for (const s of [-1, 1]) {
+      const p = pts[j], a = rng() * TAU;
+      flat(k, p, [p[0] + Math.cos(a) * 0.3, p[1] + 2.2, p[2] + Math.sin(a) * 0.3], [p[0] + Math.cos(a) * 1.4 * s, p[1] + 1.1, p[2] + Math.sin(a) * 1.4 * s], shade(H('#7aa83a'), 0.8 + rng() * 0.4));
+    }
+    ell(k, pts[pts.length - 1][0], y1, pts[pts.length - 1][2], 0.3, 0.3, 0.3, H('#a8a83a'), -1, 0);
+  }
+  k.wig(0, () => 1);
+  kelpMesh = makeMesh(k);
+
+  // floating specks that drift past (one tile, drawn a few times around the camera)
+  const d = new Geo(20000);
+  for (let i = 0; i < 160; i++) { const r = 0.03 + rng() * 0.05; ell(d, (rng() - 0.5) * 30, -rng() * 30, 6 - rng() * 24, r, r, r, [1, 1, 1], 1, 0); }
+  dotsMesh = makeMesh(d);
+
+  // the bright surface seen from below, and rays of sunlight
+  const s = new Geo(2000);
+  tri(s, [-200, 0, -200], [200, 0, 200], [200, 0, -200], [0, -1, 0], 1, [0.75, 0.95, 1], [0.75, 0.95, 1], [0.75, 0.95, 1], 0, 0, 0);
+  tri(s, [-200, 0, -200], [-200, 0, 200], [200, 0, 200], [0, -1, 0], 1, [0.75, 0.95, 1], [0.75, 0.95, 1], [0.75, 0.95, 1], 0, 0, 0);
+  for (let i = 0; i < 14; i++) { const x = (rng() - 0.5) * 40, z = -4 - rng() * 20, w = 0.6 + rng() * 1.6; flat(s, [x - w, 0, z], [x + w, 0, z], [x + w + 6, -45, z - 2], [0.22, 0.32, 0.34], 1); flat(s, [x - w, 0, z], [x + w + 6, -45, z - 2], [x - w + 6, -45, z - 2], [0.22, 0.32, 0.34], 1); }
+  surfMesh = makeMesh(s);
+}
+
+/* =====================================================================
+   The Aquarium: a glass tunnel you walk through. It gets longer the more
+   fish you have, so there's always room.
+   ===================================================================== */
+let tunnelMesh = null, tunnelGlass = null, tunnelLen = 0;
+const TUN_R = 3.2, TANK_FLOOR = -6, TANK_Z = 34, TANK_TOP = 16;
+const tankLength = n => Math.round(40 + Math.min(n, 4000) * 0.7);
+const BOTTOM_KIND = sp => sp.kind === 'bug' || sp.kind === 'seapig' || !!sp.o.tripod;
+function buildTunnel(L) {
+  if (L === tunnelLen && tunnelMesh) return;
+  freeMesh(tunnelMesh); freeMesh(tunnelGlass);
+  tunnelLen = L;
+  const g = new Geo(200000), rng = mulberry32(7);
+  const X0 = -6, X1 = L + 6;
+  // walkway and the pillars under it
+  box(g, L / 2, -0.25, 0, L + 12, 0.25, 2.8, H('#8fa4c0'));
+  for (let x = X0; x < X1; x += 2) box(g, x + 1, -0.02, 0, 0.06, 0.04, 2.6, H('#8fa8c8'));
+  for (let x = 0; x < L; x += 12) box(g, x, TANK_FLOOR, 0, 1.2, -TANK_FLOOR - 0.25, 1.6, H('#7a8aa8'));
+  // ribs
+  for (let x = X0 + 2; x < X1; x += 6) {
+    const pts = []; for (let i = 0; i <= 12; i++) { const a = i / 12 * Math.PI; pts.push([x, Math.sin(a) * TUN_R, Math.cos(a) * TUN_R]); }
+    chain(g, pts, 0.1, 0.1, 6, H('#8a9ab8'));
+  }
+  // walls at both ends, with the door back to the beach
+  for (const [x, f] of [[X0, 1], [X1, -1]]) {
+    box(g, x - f * 0.5, TANK_FLOOR, 0, 1, TANK_TOP - TANK_FLOOR, TANK_Z * 2 + 6, H('#1d2a70'));
+  }
+  box(g, X0 + 0.02, 0, 0, 0.1, 2.8, 1.8, H('#ffd23f'));
+  box(g, X0 + 0.08, 0.15, 0, 0.1, 2.5, 1.5, H('#0b1030'));
+  // the sandy floor of the tank, and the back walls
+  const S = 4, sand = H('#e0c890');
+  for (let x = X0; x < X1; x += S) for (let z = -TANK_Z; z < TANK_Z; z += S) {
+    const hgt = (xx, zz) => TANK_FLOOR + Math.sin(xx * 0.3 + zz * 0.2) * 0.15 + Math.sin(zz * 0.7) * 0.1;
+    const a = [x, hgt(x, z), z], b = [x + S, hgt(x + S, z), z], c = [x + S, hgt(x + S, z + S), z + S], d = [x, hgt(x, z + S), z + S];
+    const cc = shade(sand, 0.92 + hash3(x, z, 1) * 0.12);
+    tri(g, a, d, c, faceN(a, d, c), -1, cc, cc, cc, 0, 0, 0); tri(g, a, c, b, faceN(a, c, b), -1, cc, cc, cc, 0, 0, 0);
+  }
+  for (const s of [-1, 1]) box(g, L / 2, TANK_FLOOR, s * (TANK_Z + 0.5), L + 12, TANK_TOP - TANK_FLOOR, 1, H('#2a4a8a'));
+  // decorations
+  for (let x = X0 + 3; x < X1 - 2; x += 3.2) for (const s of [-1, 1]) {
+    const z = s * (5 + rng() * (TANK_Z - 7)), r = rng();
+    if (r < 0.3) for (let k = 0; k < 3; k++) chain(g, [[x + k * 0.3, TANK_FLOOR, z], [x + k * 0.3 + 0.3, TANK_FLOOR + 2, z + 0.2], [x + k * 0.3 - 0.2, TANK_FLOOR + 4 + rng() * 2, z - 0.2]], 0.14, 0.05, 5, shade(H('#3f9a4a'), 0.8 + rng() * 0.4));
+    else if (r < 0.5) blob(g, x, TANK_FLOOR, z, 0.8 + rng() * 1.5, 0.6 + rng(), 0.8 + rng() * 1.5, shade(H('#8a8f9a'), 0.8 + rng() * 0.3), rng, 0.4, -1);
+    else if (r < 0.7) { const cc = [H('#ff6a8a'), H('#ffb84a'), H('#b86aff'), H('#4ae0c0')][Math.floor(rng() * 4)]; for (let k = 0; k < 4; k++) chain(g, [[x, TANK_FLOOR, z], [x + (rng() - 0.5), TANK_FLOOR + 0.8, z + (rng() - 0.5)], [x + (rng() - 0.5) * 1.6, TANK_FLOOR + 1.6 + rng(), z + (rng() - 0.5) * 1.6]], 0.2, 0.08, 6, cc); }
+    else if (r < 0.74) {               // a treasure chest
+      box(g, x, TANK_FLOOR, z, 1.2, 0.7, 0.8, H('#8a5a2a')); box(g, x, TANK_FLOOR + 0.7, z, 1.24, 0.3, 0.84, H('#6a4020'));
+      ell(g, x, TANK_FLOOR + 0.95, z, 0.4, 0.2, 0.3, H('#ffd23f'), 1, 1);
+    } else if (r < 0.77) {             // a little castle
+      box(g, x, TANK_FLOOR, z, 2, 1.6, 2, H('#c8b8a8'));
+      for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { tube(g, [x + dx, TANK_FLOOR, z + dz], [x + dx, TANK_FLOOR + 2.4, z + dz], 0.4, 0.4, 8, H('#d8c8b8'), true); cone(g, [x + dx, TANK_FLOOR + 2.4, z + dz], [x + dx, TANK_FLOOR + 3.2, z + dz], 0.5, 8, H('#d6407f')); }
+    }
+  }
+  tunnelMesh = makeMesh(g);
+  // the glass
+  const gg = new Geo(40000), gc = H('#bfefff');
+  for (let x = X0; x < X1; x += 4) for (let i = 0; i < 16; i++) {
+    const a0 = i / 16 * Math.PI, a1 = (i + 1) / 16 * Math.PI;
+    const p = (xx, a) => [xx, Math.sin(a) * TUN_R, Math.cos(a) * TUN_R];
+    const n = [0, Math.sin((a0 + a1) / 2), Math.cos((a0 + a1) / 2)];
+    tri(gg, p(x, a0), p(x + 4, a0), p(x + 4, a1), n, 0, gc, gc, gc, 0, 0, 0);
+    tri(gg, p(x, a0), p(x + 4, a1), p(x, a1), n, 0, gc, gc, gc, 0, 0, 0);
+  }
+  tunnelGlass = makeMesh(gg);
+}
+
+/* =====================================================================
+   Game state. Kept at the top level so tests can read and set it.
+   ===================================================================== */
+let scene = 'beach';        // beach | cast | ocean | catch | aquarium
+let T = 0;
+const player = { x: 0, z: 12, y: 0.6, yaw: Math.PI / 2, walk: 0, moving: 0, path: [], pending: null, arm: 0.6 };
+let camYaw = Math.PI / 2, camPitch = 0.38, camManualT = 0;
+const camPos = [0, 6, 22], camLook = [0, 1, 12];
+let castAnim = null, ocean = null, aq = null, catchShow = null;
+let fadeT = 0, fadeDir = 0, fadeCb = null;
+const keys = {};
+let pointerHeld = false;
+
+const AQ_SPOT = [-12.3, 0], SHOP_SPOT = [14.0, 0];
+function turnTo(a, b, k) { let d = ((b - a) % TAU + TAU * 1.5) % TAU - Math.PI; return a + clamp(d, -k, k); }
+function walkable(x, z, inTank) {
+  if (inTank) return true;
+  if (x < BOUNDS.x0 || x > BOUNDS.x1 || z < BOUNDS.z0 || z > BOUNDS.z1) return false;
+  if (onPier(x, z)) return true;
+  if (sandH(x, z) < 0.12) return false;
+  if (Math.hypot(x - AQ.x, z - AQ.z) < AQ.r + 0.7) return false;
+  if (x > -16.9 && x < -12.9 && Math.abs(z) < 3.9) return false;
+  if (x > 14.6 && x < 21.4 && Math.abs(z - SHOP.z) < 3.9) return false;
+  for (const [px, pz] of PALMS) if (Math.hypot(x - px, z - pz) < 0.6) return false;
+  if (Math.abs(x + 5) < 1.7 && Math.abs(z - 17) < 1.7) return false;
+  return true;
+}
+function spotHere() {
+  if (scene !== 'beach' || castAnim) return null;
+  if (Math.hypot(player.x - AQ_SPOT[0], player.z - AQ_SPOT[1]) < 2.4) return 'aquarium';
+  if (Math.hypot(player.x - SHOP_SPOT[0], player.z - SHOP_SPOT[1]) < 2.4) return 'shop';
+  if (onPier(player.x, player.z) && player.z < PIER.z1 - 1.5) return 'cast';
+  return null;
+}
+function doSpot(s) {
+  if (s === 'aquarium') enterAquarium();
+  else if (s === 'shop') openShop();
+  else if (s === 'cast') startCast();
+}
+function moveInput() {
+  let mx = 0, my = 0;
+  if (keys.KeyA || keys.ArrowLeft) mx -= 1;
+  if (keys.KeyD || keys.ArrowRight) mx += 1;
+  if (keys.KeyW || keys.ArrowUp) my += 1;
+  if (keys.KeyS || keys.ArrowDown) my -= 1;
+  mx += pad.lx; my -= pad.ly;
+  const m = Math.hypot(mx, my); if (m > 1) { mx /= m; my /= m; }
+  return [mx, my];
+}
+function walkStep(p, dt, inTank) {
+  let turn = 0;
+  if (keys.KeyQ) turn += 1; if (keys.KeyE) turn -= 1;
+  turn -= pad.rx;
+  if (turn) { camYaw += turn * 2.4 * dt; camManualT = 2; }
+  camManualT -= dt;
+  const [mx, my] = moveInput();
+  const fx = Math.cos(camYaw), fz = -Math.sin(camYaw), rx = Math.sin(camYaw), rz = Math.cos(camYaw);
+  let dx = fx * my + rx * mx, dz = fz * my + rz * mx;
+  if (mx || my) { p.path = []; p.pending = null; }
+  else if (p.path.length) {
+    const t = p.path[0], tx = t[0] - p.x, tz = t[1] - p.z, d = Math.hypot(tx, tz);
+    if (d < 0.35) { p.path.shift(); if (!p.path.length && p.pending) { const s = p.pending; p.pending = null; doSpot(s); } }
+    else { dx = tx / d; dz = tz / d; if (p.path.length === 1 && d < 1.2) { dx *= Math.max(0.35, d / 1.2); dz *= Math.max(0.35, d / 1.2); } }
+  }
+  const sp = Math.hypot(dx, dz);
+  p.moving = sp;
+  if (sp > 0.05) {
+    const v = 8.5 * dt, ox = p.x, oz = p.z;
+    if (walkable(p.x + dx * v, p.z, inTank)) p.x += dx * v;
+    if (walkable(p.x, p.z + dz * v, inTank)) p.z += dz * v;
+    if (inTank) { p.x = clamp(p.x, -4.5, tunnelLen + 3); p.z = clamp(p.z, -1.1, 1.1); }
+    if (p.path.length && Math.hypot(p.x - ox, p.z - oz) < v * 0.2) { p.path = []; p.pending = null; }   // stuck: give up
+    p.yaw = turnTo(p.yaw, yawTo(dx, dz), 12 * dt);
+    p.walk += dt * sp * 11;
+    if (camManualT <= 0 && my > 0.2) camYaw = turnTo(camYaw, p.yaw, dt * 0.9 * sp);
+  } else p.walk = 0;
+}
+function updateBeach(dt) {
+  if (castAnim) { updateCast(dt); return; }
+  walkStep(player, dt, false);
+  player.y = lerp(player.y, groundH(player.x, player.z), 1 - Math.exp(-dt * 14));
+  player.arm = lerp(player.arm, 0.6, 1 - Math.exp(-dt * 6));
+}
+// where you tapped on the beach: walk there (and into the building or onto the pier)
+function beachTap(sx, sy) {
+  const d = screenRay(sx, sy);
+  if (d[1] > -0.01) return;
+  const t = (0.6 - cam.eye[1]) / d[1], x = cam.eye[0] + d[0] * t, z = cam.eye[2] + d[2] * t;
+  const toPier = (endZ, pend) => { player.path = []; if (!onPier(player.x, player.z)) player.path.push([0, -13.5]); player.path.push([0, endZ]); player.pending = pend; };
+  if (Math.hypot(x - AQ.x, z - AQ.z) < AQ.r + 3 || (x < -12 && x > -17 && Math.abs(z) < 4)) { player.path = [AQ_SPOT.slice()]; player.pending = 'aquarium'; }
+  else if (x > 13 && x < 22 && Math.abs(z) < 5) { player.path = [SHOP_SPOT.slice()]; player.pending = 'shop'; }
+  else if (z < PIER.z1 && Math.abs(x) < 14) toPier(-70, 'cast');
+  else if (Math.abs(x) < 6 && z < -14) toPier(clamp(z, PIER.z1 + 1, -15), null);
+  else if (walkable(x, z)) {
+    player.path = [];
+    if (onPier(player.x, player.z)) player.path.push([0, -14.5]);
+    player.path.push([x, z]); player.pending = null;
+  }
+}
+
+/* ---------- casting ---------- */
+function startCast() {
+  player.path = []; player.pending = null;
+  player.x = clamp(player.x, -3, 3); player.z = Math.min(player.z, PIER.z1 - 2);
+  player.yaw = Math.PI / 2;
+  castAnim = { t: 0, from: null, land: [player.x + rand(-1.5, 1.5), 0, player.z - 15], splashed: false, bob: null };
+  sfx.cast();
+}
+function armAngle(t) { return t < 0.35 ? lerp(0.6, 2.3, smooth(t / 0.35)) : t < 0.5 ? lerp(2.3, 0.15, (t - 0.35) / 0.15) : 0.15; }
+function updateCast(dt) {
+  const c = castAnim; c.t += dt;
+  player.arm = armAngle(c.t);
+  const tip = rodTip();
+  if (c.t < 0.45) c.bob = tip;
+  else {
+    if (!c.from) c.from = tip.slice();
+    const u = clamp((c.t - 0.45) / 0.9, 0, 1);
+    c.bob = [lerp(c.from[0], c.land[0], u), lerp(c.from[1], c.land[1], u) + Math.sin(u * Math.PI) * 6, lerp(c.from[2], c.land[2], u)];
+    if (u >= 1) {
+      if (!c.splashed) { c.splashed = true; sfx.splash(); splash(c.land, 1); }
+      c.bob = [c.land[0], -Math.min(0.6, (c.t - 1.35) * 0.5), c.land[2]];
+    }
+  }
+  if (c.t > 1.9 && !fadeDir) fadeTo(() => { castAnim = null; beginOcean(); });
+}
+function rodTip() { return xform(armMatrix(player), ROD_TIP); }
+const _m = new Float32Array(16), _m2 = new Float32Array(16);
+function armMatrix(p) {
+  const cy = Math.cos(p.yaw), sy = Math.sin(p.yaw);
+  const lx = 0.02, ly = 1.22, lz = 0.27;               // the right shoulder
+  return mTRS(_m2, p.x + cy * lx + sy * lz, p.y + ly, p.z - sy * lx + cy * lz, p.yaw, p.arm, 0, 1);
+}
+
+/* ---------- splashes and bubbles: little balls that fly and fall ---------- */
+const drops = [];
+function splash(at, k) { for (let i = 0; i < 26 * k; i++) { const a = rand(0, TAU), s = rand(1, 4) * k; drops.push({ x: at[0], y: at[1] + 0.1, z: at[2], vx: Math.cos(a) * s * 0.4, vy: rand(3, 7) * k, vz: Math.sin(a) * s * 0.4, t: 0 }); } }
+function updateDrops(dt) { for (let i = drops.length - 1; i >= 0; i--) { const d = drops[i]; d.t += dt; d.vy -= 18 * dt; d.x += d.vx * dt; d.y += d.vy * dt; d.z += d.vz * dt; if (d.y < -0.2 || d.t > 2) drops.splice(i, 1); } }
+const dropMesh = (() => { const g = new Geo(256); ell(g, 0, 0, 0, 1, 1, 1, [0.85, 0.95, 1], 1, 0); return makeMesh(g); })();
+
+/* =====================================================================
+   Sinking, the bite, reeling in, and coming back up
+   ===================================================================== */
+function beginOcean() {
+  scene = 'ocean';
+  buildHookMesh();
+  const maxVis = depthToVis(HOOKS[save.hook].depth) - 0.04 * ZONE_H;
+  ocean = { phase: 'sink', vis: 0, maxVis, t: 0, zone: -1, amb: [], ambT: 0.3, sp: -1, size: 1, biter: null, p: 0, tension: 0, thrash: false, thrashT: 0, slip: 0, riseT: 0, v0: 0, wait: 0, tick: 0, camY: 0, S: 1 };
+  buildGauge();
+  camPos[0] = 2.5; camPos[1] = 1; camPos[2] = 8;
+  fadeFrom();
+  setMusic('deep');
+}
+function stopHere() {
+  const o = ocean;
+  if (!o || o.phase !== 'sink') return;
+  o.phase = 'wait'; o.wait = rand(0.9, 2.0);
+  o.sp = pickSpecies(zoneAtVis(o.vis)); o.size = rollSize();
+  o.S = SPECIES[o.sp].vis * Math.sqrt(o.size);
+  sfx.stop();
+}
+function oceanHookY() { return -ocean.vis; }
+function updateOcean(dt) {
+  const o = ocean; o.t += dt;
+  if (o.phase === 'sink') {
+    o.vis += Math.min(24, 5 + o.vis * 1.2) * dt;
+    if (o.vis >= o.maxVis) { o.vis = o.maxVis; stopHere(); }
+  } else if (o.phase === 'wait') {
+    o.wait -= dt;
+    if (o.wait <= 0) {
+      const side = Math.random() < 0.5 ? -1 : 1, hy = oceanHookY() + HOOK_MOUTH[1];
+      o.biter = { x: side * (12 + o.S * 2), y: hy + rand(-1, 1), z: -1.5 - o.S * 0.3, yaw: side > 0 ? Math.PI : 0 };
+      o.phase = 'approach';
+    }
+  } else if (o.phase === 'approach') {
+    const b = o.biter, tx = HOOK_MOUTH[0] - b.x, ty = oceanHookY() + HOOK_MOUTH[1] - b.y, tz = 0 - b.z, d = Math.hypot(tx, ty, tz);
+    const v = (5 + o.S * 1.2) * dt;
+    // the fish's nose has to reach the hook, not its middle
+    const reach = 0.45 * o.S;
+    if (d <= reach + v) { o.phase = 'fight'; o.p = 0.06; o.tension = 0; o.thrash = false; o.thrashT = thrashGap(); sfx.bite(); shakeT = 0.4; rumble(0.6, 0.4, 250); }
+    else { b.x += tx / d * v; b.y += ty / d * v; b.z += tz / d * v; b.yaw = yawTo(tx, tz); }
+  } else if (o.phase === 'fight') {
+    updateFight(dt);
+  } else if (o.phase === 'rise') {
+    o.riseT += dt;
+    const u = clamp(o.riseT / 2.4, 0, 1);
+    o.vis = o.v0 * (1 - smooth(u));
+    if (u >= 1 && !fadeDir) { sfx.splash(); fadeTo(finishCatch); }
+  }
+  // which zone are we in?
+  const z = zoneAtVis(o.vis);
+  if (z !== o.zone) {
+    o.zone = z;
+    if (o.phase === 'sink' && o.t > 0.2) { showBanner(z); sfx.zone(); }
+    else if (o.zone >= 0 && o.phase === 'sink') showBanner(z);
+  }
+  // fish swimming by
+  o.ambT -= dt;
+  if (o.ambT <= 0 && o.amb.length < 9) {
+    o.ambT = rand(0.5, 1.4);
+    const zl = SPECIES.filter(s => s.z === z && (s.r === 'c' || Math.random() < 0.15));
+    const sp = zl[Math.floor(Math.random() * zl.length)], side = Math.random() < 0.5 ? -1 : 1;
+    o.amb.push({ sp: sp.id, x: side * 24, y: oceanHookY() + rand(-9, 9) - (o.phase === 'sink' ? 10 : 0), z: rand(-16, -3), vx: -side * rand(2.5, 4.5), ph: rand(0, TAU), s: sp.vis * rand(0.8, 1.1) });
+  }
+  for (let i = o.amb.length - 1; i >= 0; i--) { const a = o.amb[i]; a.x += a.vx * dt; a.ph += dt; if (Math.abs(a.x) > 26 || Math.abs(a.y + o.vis) > 30) o.amb.splice(i, 1); }
+}
+function thrashGap() { const r = SPECIES[ocean.sp].r; return r === 'm' ? rand(1.1, 2.1) : r === 'r' ? rand(1.5, 2.8) : rand(2.0, 3.6); }
+function reelHeld() { return !!(keys.Space || keys.Enter || keys.KeyE || pad.a || pad.rt || pointerHeld); }
+function updateFight(dt) {
+  const o = ocean, sp = SPECIES[o.sp];
+  const rf = sp.r === 'm' ? 0.6 : sp.r === 'r' ? 0.8 : 1;
+  const base = 0.30 / (1 + sp.z * 0.12) * rf * REELS[save.reel].speed;
+  o.thrashT -= dt;
+  if (o.thrash) { if (o.thrashT <= 0) { o.thrash = false; o.thrashT = thrashGap(); } }
+  else if (o.thrashT <= 0) { o.thrash = true; o.thrashT = rand(0.8, 1.3); sfx.thrash(); rumble(0.3, 0.6, 200); }
+  const hold = reelHeld();
+  if (hold) {
+    o.p += base * (o.thrash ? 0.35 : 1) * dt;
+    o.tension += (o.thrash ? 0.95 : -0.35) * dt;
+    o.tick -= dt; if (o.tick <= 0) { o.tick = 0.08; sfx.reel(); }
+  } else {
+    o.p -= (o.thrash ? 0.05 : 0.015) * dt;
+    o.tension -= 0.7 * dt;
+  }
+  o.tension = clamp(o.tension, 0, 1);
+  o.slip -= dt;
+  if (o.tension >= 1) {
+    o.p = Math.max(0, o.p - 0.2); o.tension = 0.35; o.slip = 1.5; o.thrash = false; o.thrashT = thrashGap() * 0.6;
+    sfx.slip(); rumble(0.8, 0.8, 300);
+  }
+  o.p = clamp(o.p, 0, 1);
+  if (o.p >= 1) { o.phase = 'rise'; o.riseT = 0; o.v0 = o.vis; sfx.reelUp(); }
+}
+function finishCatch() {
+  const o = ocean, sp = SPECIES[o.sp], size = o.size;
+  const isNew = !save.dex[sp.id];
+  save.fish.push([sp.id, size]);
+  save.dex[sp.id] = (save.dex[sp.id] || 0) + 1;
+  save.total++;
+  const bonus = Math.round(sp.val * size * 20);
+  save.coins += bonus;
+  recalcRate(); saveGame();
+  catchShow = { sp: sp.id, size, isNew, bonus, depth: visToDepth(o.maxVis < o.v0 ? o.v0 : o.v0), t: 0 };
+  catchShow.depth = visToDepth(o.v0);
+  ocean = null;
+  scene = 'catch';
+  player.x = 0; player.z = -70; player.y = PIER.deck; player.yaw = Math.PI / 2; player.arm = 1.1;
+  fadeFrom();
+  setMusic('beach');
+  showCard();
+  if (sp.r === 'm') sfx.myth(); else sfx.caught();
+}
+function endCatch(goAquarium) {
+  catchShow = null;
+  scene = 'beach'; player.arm = 0.6; camYaw = Math.PI / 2;
+  if (goAquarium) enterAquarium();
+}
+
+/* ---------- the aquarium ---------- */
+function makeTankFish(i) {
+  const f = save.fish[i], sp = SPECIES[f[0]], r = mulberry32(i * 7919 + 13), L = tunnelLen;
+  const s = sp.vis * Math.sqrt(f[1]);
+  let x = r() * L, y = TANK_FLOOR + 1 + r() * (TANK_TOP - TANK_FLOOR - 4), z = (r() < 0.5 ? -1 : 1) * (5 + r() * (TANK_Z - 7));
+  if (BOTTOM_KIND(sp)) y = TANK_FLOOR + 0.3 * s;
+  return { i, sp: f[0], s, x, y, z, yaw: r() * TAU, pitch: 0, tx: x, ty: y, tz: z, ph: r() * TAU, sp0: clamp(0.9 + s * 0.25, 0.8, 3.5) * (BOTTOM_KIND(sp) ? 0.3 : 1), retarget: 0, rng: r };
+}
+function enterAquarium() {
+  const go = () => {
+    scene = 'aquarium';
+    buildTunnel(tankLength(save.fish.length));
+    aq = { p: { x: -3, z: 0, y: 0, yaw: 0, walk: 0, moving: 0, path: [], pending: null, arm: 0.6 }, fish: [], popT: 1, label: null, labelT: 0 };
+    for (let i = 0; i < save.fish.length; i++) aq.fish.push(makeTankFish(i));
+    camYaw = 0; camPos[0] = -9; camPos[1] = 2; camPos[2] = 0;
+    fadeFrom();
+  };
+  if (scene === 'beach' || scene === 'catch') fadeTo(go); else go();
+}
+function leaveAquarium() {
+  fadeTo(() => {
+    scene = 'beach'; aq = null;
+    player.x = AQ_SPOT[0] + 1.2; player.z = AQ_SPOT[1]; player.yaw = 0; player.path = []; camYaw = 0;
+    fadeFrom();
+  });
+}
+function updateAquarium(dt) {
+  const p = aq.p;
+  walkStep(p, dt, true);
+  for (const f of aq.fish) {
+    const sp = SPECIES[f.sp];
+    f.retarget -= dt;
+    const dx = f.tx - f.x, dy = f.ty - f.y, dz = f.tz - f.z, d = Math.hypot(dx, dy, dz);
+    if (d < 1 || f.retarget <= 0) {
+      const r = f.rng;
+      f.tx = clamp(f.x + (r() - 0.5) * 30, 0, tunnelLen);
+      f.tz = (f.z < 0 ? -1 : 1) * (5 + r() * (TANK_Z - 7)); if (r() < 0.12) f.tz = -f.tz;
+      f.ty = BOTTOM_KIND(sp) ? TANK_FLOOR + 0.3 * f.s : TANK_FLOOR + 1 + f.s * 0.5 + r() * (TANK_TOP - TANK_FLOOR - 3 - f.s);
+      f.retarget = 6 + r() * 10;
+      continue;
+    }
+    const want = yawTo(dx, dz);
+    f.yaw = turnTo(f.yaw, want, dt * 1.2);
+    const v = f.sp0 * dt;
+    f.x += Math.cos(f.yaw) * v; f.z -= Math.sin(f.yaw) * v;
+    f.y += clamp(dy, -1, 1) * v * 0.4;
+    f.pitch = lerp(f.pitch, clamp(dy / Math.max(2, Math.hypot(dx, dz)), -0.4, 0.4), dt * 2);
+    // stay out of the glass tunnel
+    const rr = TUN_R + 0.6 + f.s * 0.45, ry = f.y, dd = Math.hypot(ry, f.z);
+    if (dd < rr) { const k = rr / Math.max(dd, 0.01); f.y = Math.max(f.y * k, f.y); f.z = f.z * k + (Math.abs(f.z) < 0.01 ? 0.5 : 0); }
+    f.y = clamp(f.y, TANK_FLOOR + 0.25 * f.s, TANK_TOP - 1);
+    f.z = clamp(f.z, -TANK_Z + 1, TANK_Z - 1);
+    f.ph += dt * SWIM[sp.kind][2] * (0.6 + f.sp0 * 0.25);
+  }
+}
+
+/* =====================================================================
+   Drawing
+   ===================================================================== */
+const U = progMain.u;
+const ENV = {
+  beach: { sun: norm3(0.4, 0.75, 0.35), sunC: [0.7, 0.64, 0.54], ambTop: [0.42, 0.5, 0.64], ambBot: [0.4, 0.35, 0.27], fog: H('#cfeaf7'), fogD: 230, lamp: 0, top: H('#3d8fe0'), hor: H('#cfeaf7'), bot: H('#cfeaf7'), sunOn: 1 },
+  aquarium: { sun: norm3(0.2, 1, 0.3), sunC: [0.55, 0.7, 0.75], ambTop: [0.5, 0.65, 0.75], ambBot: [0.3, 0.35, 0.4], fog: H('#2a8ac0'), fogD: 40, lamp: 0.25, top: H('#9fe0ff'), hor: H('#2a8ac0'), bot: H('#1a4a80'), sunOn: 0 },
+};
+function oceanEnv(vis) {
+  const i = zoneAtVis(vis), z = ZONES[i], n = ZONES[Math.min(i + 1, ZONES.length - 1)], f = vis / ZONE_H - i;
+  const k = smooth(clamp((f - 0.75) / 0.25, 0, 1));
+  const fog = mixc(mixc(z.fogA, z.fogB, f), n.fogA, k);
+  const light = lerp(z.light, n.light, k), lamp = lerp(z.lamp, n.lamp, k);
+  return { sun: norm3(0.15, 1, 0.25), sunC: shade([0.6, 0.8, 0.85], light), ambTop: shade([0.55, 0.7, 0.8], 0.25 + light * 0.75), ambBot: shade([0.25, 0.3, 0.35], 0.3 + light * 0.7),
+    fog, fogD: lerp(z.fogD, n.fogD, k), lamp, top: mixc(fog, [0.8, 0.95, 1], clamp(light * 0.5, 0, 0.5)), hor: fog, bot: shade(fog, 0.55), sunOn: 0 };
+}
+let env = ENV.beach;
+function useMain() {
+  gl.useProgram(progMain.p);
+  gl.uniformMatrix4fv(U.uVP, false, vp);
+  gl.uniform3fv(U.uSun, env.sun); gl.uniform3fv(U.uCam, cam.eye); gl.uniform3fv(U.uFogC, env.fog);
+  gl.uniform3fv(U.uAmbTop, env.ambTop); gl.uniform3fv(U.uAmbBot, env.ambBot); gl.uniform3fv(U.uSunC, env.sunC);
+  gl.uniform1f(U.uFogD, env.fogD); gl.uniform1f(U.uLamp, env.lamp);
+  gl.uniform4f(U.uFlat, 0, 0, 0, 0);
+}
+const ID = mTRS(new Float32Array(16), 0, 0, 0, 0, 0, 0, 1);
+function draw(mesh, M, o) {
+  if (!mesh) return;
+  gl.uniformMatrix4fv(U.uModel, false, M || ID);
+  const w = o && o.wig;
+  gl.uniform4f(U.uWig, w ? w[0] : 0, w ? w[1] : 0, w ? w[2] : 0, w ? w[3] : 0);
+  gl.uniform1f(U.uEmit, (o && o.emit) || 0);
+  gl.uniform1f(U.uAlpha, o && o.alpha !== undefined ? o.alpha : 1);
+  const t = o && o.tint; gl.uniform3f(U.uTint, t ? t[0] : 1, t ? t[1] : 1, t ? t[2] : 1);
+  gl.bindVertexArray(mesh.vao);
+  gl.drawArrays(gl.TRIANGLES, 0, mesh.count);
+}
+function drawSky() {
+  gl.useProgram(progSky.p);
+  const u = progSky.u;
+  gl.uniform3fv(u.uFwd, cam.fwd); gl.uniform3fv(u.uRight, cam.right); gl.uniform3fv(u.uUp, cam.up);
+  gl.uniform1f(u.uTanY, Math.tan(cam.fovy / 2)); gl.uniform1f(u.uAspect, cam.aspect);
+  gl.uniform3fv(u.uTop, env.top); gl.uniform3fv(u.uHor, env.hor); gl.uniform3fv(u.uBot, env.bot); gl.uniform3fv(u.uSun, env.sun);
+  gl.uniform1f(u.uSunOn, env.sunOn); gl.uniform1f(u.uTime, T);
+  gl.depthMask(false);
+  gl.bindVertexArray(emptyVao); gl.drawArrays(gl.TRIANGLES, 0, 3);
+  gl.depthMask(true);
+}
+// one creature. phase drives the swimming wave.
+const _fm = new Float32Array(16), _sm = new Float32Array(16);
+function drawCreature(id, x, y, z, yaw, pitch, roll, S, phase, extra) {
+  const sp = SPECIES[id], sw = SWIM[sp.kind];
+  const myth = sp.r === 'm' || sp.o.ghost;
+  const emit = (myth ? 0.18 + 0.12 * Math.sin(T * 3 + phase) : 0) + (sp.o.ghost ? 0.35 : 0) + (extra || 0);
+  draw(speciesMesh(id), mTRS(_fm, x, y, z, yaw, pitch, roll, S), { wig: sw[0] ? [sw[0], sw[1], phase, sw[3]] : null, emit });
+  if (sp.r === 'm' && sp.o.glow) draw(sparkleMesh, mTRS(_sm, x, y, z, T * 1.3 + phase, 0, 0, S * 0.75), { tint: H(sp.o.glow) });
+}
+const UPRIGHT = { octo: 1, seahorse: 1 };
+function drawPlayer(p) {
+  draw(playerMesh, mTRS(_fm, p.x, p.y, p.z, p.yaw, 0, 0, 1));
+  const cy = Math.cos(p.yaw), sy = Math.sin(p.yaw), sw = Math.sin(p.walk) * 0.7 * Math.min(1, p.moving * 1.5);
+  for (const s of [-1, 1]) draw(legMesh, mTRS(_fm, p.x + sy * 0.11 * s, p.y + 0.68, p.z + cy * 0.11 * s, p.yaw, sw * s, 0, 1));
+  draw(armMesh, armMatrix(p));
+}
+function drawShadow(x, y, z, r) {
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
+  draw(shadowMesh, mTRS(_fm, x, y + 0.03, z, 0, 0, 0, r, 1, r), { alpha: 0.28 });
+  gl.depthMask(true); gl.disable(gl.BLEND);
+}
+// fishing line
+const lineVao = gl.createVertexArray(), lineVbo = gl.createBuffer();
+gl.bindVertexArray(lineVao); gl.bindBuffer(gl.ARRAY_BUFFER, lineVbo);
+gl.bufferData(gl.ARRAY_BUFFER, 64 * 12, gl.DYNAMIC_DRAW);
+gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 12, 0);
+gl.bindVertexArray(null);
+const lineBuf = new Float32Array(64 * 3);
+function drawLine(a, b, sag, col) {
+  const N = 24;
+  for (let i = 0; i <= N; i++) { const t = i / N; lineBuf[i * 3] = lerp(a[0], b[0], t); lineBuf[i * 3 + 1] = lerp(a[1], b[1], t) - Math.sin(t * Math.PI) * sag; lineBuf[i * 3 + 2] = lerp(a[2], b[2], t); }
+  gl.useProgram(progLine.p);
+  gl.uniformMatrix4fv(progLine.u.uVP, false, vp);
+  gl.uniform4fv(progLine.u.uCol, col || [1, 1, 1, 0.85]);
+  gl.bindVertexArray(lineVao); gl.bindBuffer(gl.ARRAY_BUFFER, lineVbo);
+  gl.bufferSubData(gl.ARRAY_BUFFER, 0, lineBuf.subarray(0, (N + 1) * 3));
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  gl.drawArrays(gl.LINE_STRIP, 0, N + 1);
+  gl.disable(gl.BLEND);
+  gl.useProgram(progMain.p);
+}
+
+/* ---------- the fish swimming around inside the dome on the beach ---------- */
+let domeFish = [], domeFishN = -1;
+function refreshDomeFish() {
+  if (domeFishN === save.fish.length) return;
+  domeFishN = save.fish.length;
+  domeFish = [];
+  const seen = new Set();
+  for (let i = save.fish.length - 1; i >= 0 && domeFish.length < 16; i--) {
+    const id = save.fish[i][0];
+    if (seen.has(id) && domeFish.length < 8) continue;
+    seen.add(id);
+    const r = mulberry32(i + 1), sp = SPECIES[id];
+    domeFish.push({ id, a: r() * TAU, rad: 3 + r() * 8, y: AQ.base + 1.5 + r() * 7, v: (0.15 + r() * 0.2) * (r() < 0.5 ? 1 : -1), S: Math.min(sp.vis, 3.2) });
+  }
+}
+
+/* ---------- labels that float over the 3D world (DOM) ---------- */
+const labelPool = [];
+let labelIdx = 0;
+function addLabel(html, p, cls) {
+  const s = project(p);
+  if (!s || s[0] < -200 || s[0] > innerWidth + 200 || s[1] < -50 || s[1] > innerHeight + 80) return;
+  let el = labelPool[labelIdx];
+  if (!el) { el = document.createElement('div'); $('labels').appendChild(el); labelPool.push(el); }
+  labelIdx++;
+  if (el._h !== html) { el.innerHTML = html; el._h = html; }
+  const c = 'lbl ' + (cls || ''); if (el.className !== c) el.className = c;
+  el.style.display = '';
+  el.style.transform = `translate(${s[0].toFixed(1)}px,${s[1].toFixed(1)}px) translate(-50%,-100%)`;
+}
+function endLabels() { for (let i = labelIdx; i < labelPool.length; i++) labelPool[i].style.display = 'none'; labelIdx = 0; }
+
+/* ---------- each scene ---------- */
+let shakeT = 0;
+function smoothCam(eye, look, dt, k = 6) {
+  const a = 1 - Math.exp(-dt * k);
+  for (let i = 0; i < 3; i++) { camPos[i] = lerp(camPos[i], eye[i], a); camLook[i] = lerp(camLook[i], look[i], a); }
+  let e = camPos.slice();
+  if (shakeT > 0) { e[0] += (Math.random() - 0.5) * shakeT * 0.6; e[1] += (Math.random() - 0.5) * shakeT * 0.6; }
+  setCamera(e, camLook);
+}
+function followCam(p, dist, pitch, dt, inTank) {
+  const fx = Math.cos(camYaw), fz = -Math.sin(camYaw);
+  const tgt = [p.x, p.y + 1.4, p.z];
+  let eye = [tgt[0] - fx * dist * Math.cos(pitch), tgt[1] + dist * Math.sin(pitch), tgt[2] - fz * dist * Math.cos(pitch)];
+  if (inTank) { eye[2] = clamp(eye[2], -2.3, 2.3); eye[1] = clamp(eye[1], 0.6, 2.6); eye[0] = clamp(eye[0], -5.6, tunnelLen + 5.6); }
+  else eye[1] = Math.max(eye[1], groundH(eye[0], eye[2]) + 0.8, 0.8);
+  smoothCam(eye, tgt, dt, 8);
+}
+function renderBeach(dt) {
+  env = ENV.beach;
+  if (scene === 'catch' && catchShow) {
+    const S = Math.min(SPECIES[catchShow.sp].vis, 3.4), tip = rodTip();
+    const fy = tip[1] - 0.5 - S * 0.5;
+    smoothCam([5.5 + S * 1.4, 3.4 + S * 0.4, -70.4 + S * 0.2], [0.4, (1.9 + fy) / 2 - 1.3, -71.4], dt, 4);
+  } else if (castAnim) {
+    const b = castAnim.bob || rodTip();
+    smoothCam([player.x + 3.5, player.y + 4.5, player.z + 7], [lerp(player.x, b[0], 0.6), 1.4, lerp(player.z, b[2], 0.6)], dt, 3);
+  } else followCam(player, 10, camPitch, dt, false);
+  drawSky();
+  useMain();
+  draw(beachMesh);
+  // fish in the dome
+  refreshDomeFish();
+  for (const f of domeFish) {
+    const a = f.a + T * f.v, x = AQ.x + Math.cos(a) * f.rad, z = AQ.z - Math.sin(a) * f.rad;
+    const yaw = a + (f.v > 0 ? Math.PI / 2 : -Math.PI / 2);
+    drawCreature(f.id, x, f.y + Math.sin(T * 0.7 + f.a) * 0.4, z, yaw, 0, 0, f.S, T * 6 + f.a);
+  }
+  drawPlayer(player);
+  // the hooked fish being shown off
+  if (scene === 'catch' && catchShow) {
+    const sp = SPECIES[catchShow.sp], S = Math.min(sp.vis, 3.4), tip = rodTip();
+    const up = UPRIGHT[sp.kind];
+    const top = [tip[0], tip[1] - 0.5, tip[2]];
+    drawLine(tip, top, 0, [1, 1, 1, 0.9]);
+    drawCreature(sp.id, top[0], top[1] - (up ? 0.48 : 0.45) * S, top[2], T * 0.8, up ? 0 : Math.PI / 2, 0, S, T * 7, 0.05);
+  }
+  // the line while casting
+  if (castAnim && castAnim.bob) {
+    const tip = rodTip(), b = castAnim.bob;
+    drawLine(tip, b, castAnim.t > 1.3 ? 1.2 : 0.2, [1, 1, 1, 0.8]);
+    draw(bobberMesh, mTRS(_fm, b[0], b[1], b[2], 0, 0, 0, 1.4));
+  } else if (scene === 'beach') {
+    const tip = rodTip(); drawLine(tip, [tip[0], tip[1] - 1.1, tip[2]], 0, [1, 1, 1, 0.7]);
+  }
+  for (const d of drops) draw(dropMesh, mTRS(_fm, d.x, d.y, d.z, 0, 0, 0, 0.09));
+  drawShadow(player.x, groundH(player.x, player.z), player.z, 0.55);
+  // see-through things last
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
+  gl.useProgram(progWater.p);
+  gl.uniformMatrix4fv(progWater.u.uVP, false, vp); gl.uniform1f(progWater.u.uTime, T);
+  gl.uniform3fv(progWater.u.uCam, cam.eye); gl.uniform3fv(progWater.u.uSun, env.sun); gl.uniform3fv(progWater.u.uTop, env.top); gl.uniform3fv(progWater.u.uHor, env.hor);
+  gl.bindVertexArray(waterVao); gl.drawArrays(gl.TRIANGLES, 0, 6);
+  useMain();
+  draw(glassMesh, null, { alpha: 0.28, emit: 0.3 });
+  gl.depthMask(true); gl.disable(gl.BLEND);
+  // signs
+  addLabel('Aquarium', [-13.1, 4.6, 0], 'sign');
+  addLabel('Tackle Shop', [14.8, 3.6, 0], 'sign');
+  if (scene === 'beach' && !castAnim) addLabel('Fish here ▼', [0, 4.2 + Math.sin(T * 3) * 0.25, -71], 'sign');
+}
+function renderOcean(dt) {
+  const o = ocean, hy = oceanHookY();
+  env = oceanEnv(o.vis);
+  const S = o.S;
+  const fighting = o.phase === 'fight' || o.phase === 'rise';
+  const sw = fighting ? (o.thrash ? Math.sin(T * 15) * 0.7 : Math.sin(T * 2.5) * 0.15) : Math.sin(T * 1.3) * 0.05;
+  const hx = sw * Math.min(S, 3) * 0.4;
+  const look = [hx * 0.5, hy - (fighting ? 0.4 + S * 0.5 : 0.5), 0];
+  const back = fighting ? 3.8 + S * 1.7 : o.phase === 'approach' ? 6.5 + S : 6;
+  smoothCam([look[0] + 2.2, look[1] + 1 + (o.phase === 'sink' ? 1.5 : 0), back], look, dt, o.phase === 'rise' || o.phase === 'sink' ? 30 : 5);
+  drawSky();
+  useMain();
+  draw(oceanMesh);
+  draw(kelpMesh, null, { wig: [0.5, 0.25, T * 0.8, 1] });
+  const base = Math.floor(-camPos[1] / 30) * 30;
+  for (let k = -1; k <= 1; k++) draw(dotsMesh, mTRS(_fm, 0, -(base + k * 30), 0, 0, 0, 0, 1), { tint: ZONES[zoneAtVis(o.vis)].dotC });
+  // fish swimming by
+  for (const a of o.amb) drawCreature(a.sp, a.x, a.y, a.z, a.vx > 0 ? 0 : Math.PI, 0, 0, a.s, a.ph * 8);
+  // the hook and the line
+  const hookPos = [hx, hy, 0];
+  draw(hookMesh, mTRS(_fm, hookPos[0], hookPos[1], hookPos[2], fighting ? 0 : T * 0.5, 0, sw * 0.3, 1));
+  drawLine([hx * 0.2, hy + 40, 0], hookPos, 0, [1, 1, 1, 0.7]);
+  // the fish that bites
+  const sp = o.sp >= 0 ? SPECIES[o.sp] : null;
+  if (o.phase === 'approach' && o.biter) {
+    const b = o.biter;
+    drawCreature(sp.id, b.x, b.y, b.z, b.yaw, 0, 0, S, T * 9);
+  } else if (fighting) {
+    const up = UPRIGHT[sp.kind], mx = hx + HOOK_MOUTH[0], my = hy + HOOK_MOUTH[1];
+    drawCreature(sp.id, mx, my - (up ? 0.48 : 0.45) * S, 0, Math.PI / 2 + sw * 0.8, up ? 0 : Math.PI / 2, sw * 0.4, S, T * (o.thrash ? 20 : 8));
+  }
+  // the bright surface above
+  if (camPos[1] > -75) {
+    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE); gl.depthMask(false);
+    draw(surfMesh, null, { alpha: clamp(0.3 + camPos[1] / 120, 0.05, 0.3) });
+    gl.depthMask(true); gl.disable(gl.BLEND);
+  }
+}
+function renderAquarium(dt) {
+  env = ENV.aquarium;
+  const p = aq.p;
+  followCam(p, 4.6, 0.22, dt, true);
+  drawSky();
+  useMain();
+  draw(tunnelMesh);
+  const cx = cam.eye[0];
+  let best = null, bestD = 1e9;
+  for (const f of aq.fish) {
+    if (Math.abs(f.x - cx) > 70) continue;
+    drawCreature(f.sp, f.x, f.y, f.z, f.yaw, f.pitch, 0, f.s, f.ph);
+    const d = Math.hypot(f.x - p.x, f.y - p.y, f.z - p.z) - f.s;
+    if (d < bestD) { const s = project([f.x, f.y, f.z]); if (s && s[0] > 0 && s[0] < innerWidth && s[1] > 0 && s[1] < innerHeight) { bestD = d; best = f; } }
+  }
+  drawPlayer(p);
+  drawShadow(p.x, 0, p.z, 0.5);
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
+  draw(tunnelGlass, null, { alpha: 0.12, emit: 0.5 });
+  gl.depthMask(true); gl.disable(gl.BLEND);
+  // name tags: the fish you tapped, or the closest one
+  aq.labelT -= dt;
+  const show = aq.labelT > 0 && aq.label ? aq.label : (bestD < 14 ? best : null);
+  if (show) {
+    const sp = SPECIES[show.sp], f = save.fish[show.i];
+    addLabel(`${esc(sp.name)}<b>+${fmtRate(fishValue(f))}/s</b>`, [show.x, show.y + show.s * 0.55 + 0.3, show.z], 'fishname' + (sp.r === 'm' ? ' myth' : ''));
+  }
+  // coins popping up from fish
+  aq.popT -= dt;
+  if (aq.popT <= 0 && aq.fish.length) {
+    aq.popT = clamp(3 / aq.fish.length, 0.25, 1.2);
+    const near = aq.fish.filter(f => Math.abs(f.x - p.x) < 25);
+    if (near.length) { const f = near[Math.floor(Math.random() * near.length)]; (aq.pops || (aq.pops = [])).push({ x: f.x, y: f.y + f.s * 0.5, z: f.z, t: 0, txt: '+' + fmtRate(fishValue(save.fish[f.i])) }); }
+  }
+  if (aq.pops) for (let i = aq.pops.length - 1; i >= 0; i--) {
+    const c = aq.pops[i]; c.t += dt;
+    if (c.t > 1.4) { aq.pops.splice(i, 1); continue; }
+    addLabel(`<span class="coin" style="width:16px;height:16px;vertical-align:-2px"></span> ${c.txt}`, [c.x, c.y + c.t * 1.2, c.z], 'pop');
+  }
+  addLabel('Back to the beach', [-5.8, 3.3, 0], 'sign');
+}
+
+/* ---------- pictures of each creature for the Fishdex (drawn once, off screen) ---------- */
+const thumbs = {};
+let thumbFbo = null, thumbTex = null, thumbRb = null;
+const TW = 240, THh = 160;
+function thumb(id, sil) {
+  const key = id + (sil ? 's' : '');
+  if (thumbs[key]) return thumbs[key];
+  if (!thumbFbo) {
+    thumbFbo = gl.createFramebuffer(); thumbTex = gl.createTexture(); thumbRb = gl.createRenderbuffer();
+    gl.bindTexture(gl.TEXTURE_2D, thumbTex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, TW, THh, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.bindRenderbuffer(gl.RENDERBUFFER, thumbRb); gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, TW, THh);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, thumbFbo);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, thumbTex, 0);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, thumbRb);
+  }
+  gl.bindFramebuffer(gl.FRAMEBUFFER, thumbFbo);
+  gl.viewport(0, 0, TW, THh);
+  gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  const saveFov = cam.fovy, saveAsp = cam.aspect;
+  cam.fovy = 32 * Math.PI / 180; cam.aspect = TW / THh;
+  setCamera([0.3, 0.2, 2.05], [0.05, -0.02, 0]);
+  env = { ...ENV.beach, fogD: 1000 };
+  useMain();
+  if (sil) gl.uniform4f(U.uFlat, 0.2, 0.25, 0.55, 1);
+  const sp = SPECIES[id];
+  draw(speciesMesh(id), mTRS(_fm, sp.kind === 'eel' ? -0.08 : 0, 0, 0, -0.35, 0, 0, sp.kind === 'eel' ? 0.9 : 1), { wig: null, emit: sp.r === 'm' ? 0.2 : 0 });
+  gl.uniform4f(U.uFlat, 0, 0, 0, 0);
+  const px = new Uint8Array(TW * THh * 4);
+  gl.readPixels(0, 0, TW, THh, gl.RGBA, gl.UNSIGNED_BYTE, px);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  cam.fovy = saveFov; cam.aspect = saveAsp;
+  const c2 = document.createElement('canvas'); c2.width = TW; c2.height = THh;
+  const x2 = c2.getContext('2d'), img = x2.createImageData(TW, THh);
+  for (let y = 0; y < THh; y++) img.data.set(px.subarray((THh - 1 - y) * TW * 4, (THh - y) * TW * 4), y * TW * 4);
+  x2.putImageData(img, 0, 0);
+  return (thumbs[key] = c2.toDataURL());
+}
+
+/* =====================================================================
+   Sound: Web Audio, started by the first click or key press
+   ===================================================================== */
+let actx = null, sfxBus = null, musicBus = null, noiseBuf = null;
+function initAudio() {
+  if (!actx) {
+    try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+    const master = actx.createGain(); master.gain.value = 0.85; master.connect(actx.destination);
+    sfxBus = actx.createGain(); sfxBus.gain.value = save.sfx ? 1 : 0; sfxBus.connect(master);
+    musicBus = actx.createGain(); musicBus.gain.value = save.music ? 0.32 : 0; musicBus.connect(master);
+    noiseBuf = actx.createBuffer(1, actx.sampleRate, actx.sampleRate);
+    const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    mus.next = actx.currentTime + 0.3;
+  }
+  if (actx.state === 'suspended') actx.resume().catch(() => {});
+}
+const audioOn = () => actx && actx.state === 'running';
+function tone(f, dur, { type = 'triangle', vol = 0.2, at = 0, to = 0, bus } = {}) {
+  if (!audioOn()) return;
+  const t0 = actx.currentTime + at, o = actx.createOscillator(), g = actx.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t0); if (to) o.frequency.exponentialRampToValueAtTime(to, t0 + dur);
+  g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g); g.connect(bus || sfxBus); o.start(t0); o.stop(t0 + dur + 0.05);
+}
+function noise(dur, { vol = 0.3, freq = 1200, q = 0.8, at = 0, type = 'lowpass', to = 0 } = {}) {
+  if (!audioOn()) return;
+  const t0 = actx.currentTime + at, s = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
+  s.buffer = noiseBuf; f.type = type; f.frequency.setValueAtTime(freq, t0); f.Q.value = q; if (to) f.frequency.exponentialRampToValueAtTime(to, t0 + dur);
+  g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  s.connect(f); f.connect(g); g.connect(sfxBus); s.start(t0); s.stop(t0 + dur + 0.05);
+}
+const sfx = {
+  click: () => tone(700, 0.06, { type: 'square', vol: 0.04 }),
+  cast: () => { noise(0.45, { vol: 0.25, freq: 3000, to: 600, type: 'bandpass', q: 1.5 }); tone(600, 0.35, { to: 220, vol: 0.06 }); },
+  splash: () => { noise(0.6, { vol: 0.45, freq: 1400, to: 300 }); noise(0.25, { vol: 0.2, freq: 4000, type: 'highpass', at: 0.03 }); },
+  stop: () => tone(330, 0.15, { type: 'sine', vol: 0.15 }),
+  zone: () => { tone(392, 0.4, { type: 'sine', vol: 0.12 }); tone(587, 0.5, { type: 'sine', vol: 0.1, at: 0.15 }); },
+  bite: () => { tone(520, 0.12, { type: 'square', vol: 0.1 }); tone(780, 0.18, { type: 'square', vol: 0.1, at: 0.1 }); noise(0.3, { vol: 0.25, freq: 900 }); },
+  reel: () => tone(1500, 0.025, { type: 'square', vol: 0.025 }),
+  thrash: () => { noise(0.4, { vol: 0.25, freq: 700, to: 300 }); tone(140, 0.3, { type: 'sawtooth', vol: 0.05 }); },
+  slip: () => { tone(420, 0.45, { to: 140, type: 'sawtooth', vol: 0.08 }); noise(0.3, { vol: 0.2, freq: 500 }); },
+  reelUp: () => [0, 1, 2, 3, 4].forEach(i => tone(400 + i * 120, 0.08, { type: 'square', vol: 0.05, at: i * 0.06 })),
+  caught: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.28, { vol: 0.14, at: i * 0.09 })),
+  myth: () => { [523, 659, 784, 1047, 1319, 1568, 2093].forEach((f, i) => tone(f, 0.5, { vol: 0.12, at: i * 0.1 })); [1047, 1319, 1568].forEach((f, i) => tone(f, 1.2, { type: 'sine', vol: 0.08, at: 0.8 + i * 0.02 })); },
+  coin: () => { tone(1320, 0.08, { type: 'square', vol: 0.05 }); tone(1760, 0.14, { type: 'square', vol: 0.05, at: 0.06 }); },
+  buy: () => { [784, 988, 1175, 1568].forEach((f, i) => tone(f, 0.18, { type: 'square', vol: 0.05, at: i * 0.07 })); },
+  no: () => tone(180, 0.22, { type: 'square', vol: 0.07 }),
+};
+// music: a bouncy beach tune and a slow, deep-sea one
+const SONGS = {
+  beach: { step: 60 / 112 / 2, mel: [72, 0, 76, 79, 81, 0, 79, 76, 74, 0, 76, 74, 72, 0, 69, 0, 72, 0, 76, 79, 81, 0, 84, 81, 79, 0, 76, 74, 72, 0, 0, 0], bass: [48, 45, 41, 43], type: 'triangle', vol: 0.16 },
+  deep: { step: 60 / 70 / 2, mel: [69, 0, 0, 72, 0, 0, 71, 0, 69, 0, 0, 64, 0, 0, 0, 0, 65, 0, 0, 69, 0, 0, 67, 0, 64, 0, 0, 0, 0, 0, 0, 0], bass: [45, 41, 43, 40], type: 'sine', vol: 0.14 },
+};
+const mus = { song: 'beach', want: 'beach', next: 0, step: 0 };
+function setMusic(s) { mus.want = s; }
+const midi = n => 440 * Math.pow(2, (n - 69) / 12);
+function note(f, t0, dur, type, vol) {
+  const o = actx.createOscillator(), g = actx.createGain();
+  o.type = type; o.frequency.value = f;
+  g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g); g.connect(musicBus); o.start(t0); o.stop(t0 + dur + 0.05);
+}
+function musicTick() {
+  if (!audioOn() || !save.music) { if (actx) mus.next = actx.currentTime + 0.1; return; }
+  while (mus.next < actx.currentTime + 0.3) {
+    if (mus.step % 32 === 0 && mus.song !== mus.want) { mus.song = mus.want; mus.step = 0; }
+    const S = SONGS[mus.song], i = mus.step % 32, t0 = Math.max(mus.next, actx.currentTime);
+    if (S.mel[i]) note(midi(S.mel[i]), t0, S.step * (mus.song === 'deep' ? 3 : 1.6), S.type, S.vol);
+    const root = S.bass[Math.floor(i / 8)];
+    if (mus.song === 'beach') { if (i % 4 === 0) note(midi(root), t0, S.step * 1.6, 'sine', 0.22); if (i % 4 === 2) note(midi(root + 7), t0, S.step * 1.2, 'sine', 0.12); }
+    else if (i % 8 === 0) note(midi(root - 12), t0, S.step * 8, 'sine', 0.2);
+    mus.next += S.step; mus.step++;
+  }
+}
+
+/* =====================================================================
+   Controller (standard Xbox layout), polled every frame
+   ===================================================================== */
+const pad = { lx: 0, ly: 0, rx: 0, ry: 0, a: false, rt: false, btn: [], prev: [], connected: false, navT: 0, navDir: '' };
+let lastInput = 'mouse';
+function deadzone(x, y) { const m = Math.hypot(x, y); if (m < 0.15) return [0, 0]; const k = Math.min(1, (m - 0.15) / 0.85) / m; return [x * k, y * k]; }
+function pollPad(dt) {
+  let list = [];
+  try { list = navigator.getGamepads ? Array.from(navigator.getGamepads() || []) : []; } catch (e) { list = []; }
+  const gp = list.find(p => p && p.connected !== false && p.buttons && p.buttons.length >= 10) || null;
+  if (!!gp !== pad.connected) {
+    pad.connected = !!gp;
+    toast(gp ? 'Controller connected' : 'Controller disconnected');
+    if (!gp && !topOv() && scene !== 'catch') openPause();
+  }
+  pad.prev = pad.btn;
+  if (!gp) { pad.btn = []; pad.lx = pad.ly = pad.rx = pad.ry = 0; pad.a = pad.rt = false; return; }
+  pad.btn = gp.buttons.map(b => !!b && (b.pressed || b.value > 0.5));
+  [pad.lx, pad.ly] = deadzone(gp.axes[0] || 0, gp.axes[1] || 0);
+  [pad.rx, pad.ry] = deadzone(gp.axes[2] || 0, gp.axes[3] || 0);
+  pad.a = !!pad.btn[0]; pad.rt = !!(gp.buttons[7] && gp.buttons[7].value > 0.3);
+  const pressed = i => pad.btn[i] && !pad.prev[i];
+  if (pad.btn.some(Boolean) || Math.abs(pad.lx) + Math.abs(pad.ly) > 0.3) { lastInput = 'pad'; document.body.classList.add('kbnav'); }
+  if (topOv()) {
+    let dir = '';
+    if (pad.btn[12] || pad.ly < -0.5) dir = 'up'; else if (pad.btn[13] || pad.ly > 0.5) dir = 'down';
+    else if (pad.btn[14] || pad.lx < -0.5) dir = 'left'; else if (pad.btn[15] || pad.lx > 0.5) dir = 'right';
+    if (dir && (dir !== pad.navDir || pad.navT <= 0)) { navMove(dir); pad.navT = dir === pad.navDir ? 0.14 : 0.38; }
+    pad.navDir = dir; pad.navT -= dt;
+    if (pressed(0)) { const el = focused(); if (el) el.click(); else focusFirst(); }
+    if (pressed(1)) ovBack();
+    if (pressed(9) && topOv() === 'ovPause') ovBack();
+    // the controller sticks shouldn't also walk while a menu is open
+    pad.lx = pad.ly = pad.rx = 0; pad.a = pad.rt = false;
+  } else {
+    if (pressed(0)) pressAction();
+    if (pressed(1)) pressBack();
+    if (pressed(9)) openPause();
+    if (pressed(3)) openDex();
+  }
+}
+function rumble(strong, weak, ms) {
+  try {
+    const gp = (navigator.getGamepads ? Array.from(navigator.getGamepads() || []) : []).find(p => p && p.connected);
+    const act = gp && gp.vibrationActuator;
+    if (act && act.playEffect) act.playEffect('dual-rumble', { duration: ms, strongMagnitude: strong, weakMagnitude: weak }).catch(() => {});
+  } catch (e) {}
+}
+
+/* =====================================================================
+   Actions (the yellow button, Space, A)
+   ===================================================================== */
+function pressAction() {
+  if (topOv() || fadeDir) return;
+  if (scene === 'beach') { const s = spotHere(); if (s) doSpot(s); }
+  else if (scene === 'ocean' && ocean.phase === 'sink') stopHere();
+  else if (scene === 'aquarium' && aq.p.x < -3.6) leaveAquarium();
+}
+function pressBack() {
+  if (topOv() || fadeDir) return;
+  if (scene === 'aquarium') leaveAquarium();
+}
+function actionLabel() {
+  if (topOv() || fadeDir) return null;
+  if (scene === 'beach') { const s = spotHere(); return s === 'aquarium' ? 'Go in the Aquarium' : s === 'shop' ? 'Open the Tackle Shop' : s === 'cast' ? 'Cast!' : null; }
+  if (scene === 'ocean' && ocean.phase === 'sink') return 'Stop here!';
+  if (scene === 'aquarium' && aq.p.x < -3.6) return 'Back to the beach';
+  return null;
+}
+
+/* =====================================================================
+   Keyboard and pointer
+   ===================================================================== */
+let stickyKeys = new Set();
+addEventListener('keydown', e => {
+  initAudio();
+  if (lastInput !== 'kb') { lastInput = 'kb'; }
+  document.body.classList.add('kbnav');
+  const k = e.code;
+  if (topOv()) {
+    if (e.repeat && (k === 'Space' || k === 'Enter')) { e.preventDefault(); return; }
+    if (k === 'ArrowUp' || k === 'ArrowDown' || k === 'ArrowLeft' || k === 'ArrowRight') { navMove(k.slice(5).toLowerCase()); e.preventDefault(); }
+    else if (k === 'Escape' || k === 'Backspace') { ovBack(); e.preventDefault(); }
+    else if ((k === 'Space' || k === 'Enter') && !focused()) { focusFirst(); e.preventDefault(); }
+    return;
+  }
+  keys[k] = true;
+  if (k === 'Escape' || k === 'KeyP') { openPause(); e.preventDefault(); return; }
+  if (!e.repeat) {
+    if (k === 'Space' || k === 'Enter') pressAction();
+    if (k === 'Backspace' || k === 'KeyB') pressBack();
+    if (k === 'KeyF') openDex();
+  }
+  if (['Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Backspace'].includes(k)) e.preventDefault();
+});
+addEventListener('keyup', e => {
+  keys[e.code] = false;
+  if (stickyKeys.has(e.code)) { stickyKeys.delete(e.code); e.preventDefault(); }   // a key held from before a menu opened doesn't press its buttons
+}, true);
+addEventListener('blur', () => { for (const k in keys) keys[k] = false; pointerHeld = false; });
+const ptr = { down: false, x: 0, y: 0, moved: 0, id: -1 };
+canvas.addEventListener('pointerdown', e => {
+  initAudio(); lastInput = 'mouse'; document.body.classList.remove('kbnav');
+  ptr.down = true; ptr.x = e.clientX; ptr.y = e.clientY; ptr.moved = 0; ptr.id = e.pointerId;
+  pointerHeld = true;
+  try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+});
+canvas.addEventListener('pointermove', e => {
+  if (!ptr.down || e.pointerId !== ptr.id) return;
+  const dx = e.clientX - ptr.x, dy = e.clientY - ptr.y;
+  ptr.moved += Math.abs(dx) + Math.abs(dy); ptr.x = e.clientX; ptr.y = e.clientY;
+  if (ptr.moved > 10 && (scene === 'beach' || scene === 'aquarium') && !castAnim) { camYaw -= dx * 0.006; camPitch = clamp(camPitch + dy * 0.003, 0.12, 0.9); camManualT = 2; }
+});
+function ptrUp(e) {
+  if (!ptr.down || e.pointerId !== ptr.id) return;
+  ptr.down = false; pointerHeld = false;
+  if (ptr.moved < 12 && !topOv() && !fadeDir) {
+    if (scene === 'beach' && !castAnim) beachTap(e.clientX, e.clientY);
+    else if (scene === 'aquarium') aqTap(e.clientX, e.clientY);
+  }
+}
+canvas.addEventListener('pointerup', ptrUp);
+canvas.addEventListener('pointercancel', ptrUp);
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+function aqTap(sx, sy) {
+  let best = null, bd = 60;
+  for (const f of aq.fish) { const s = project([f.x, f.y, f.z]); if (!s) continue; const d = Math.hypot(s[0] - sx, s[1] - sy); if (d < bd + f.s * 10 && Math.hypot(f.x - cam.eye[0], f.z - cam.eye[2]) < 50) { bd = d; best = f; } }
+  if (best) { aq.label = best; aq.labelT = 4; return; }
+  const d = screenRay(sx, sy);
+  if (d[1] < -0.01) { const t = -cam.eye[1] / d[1], x = cam.eye[0] + d[0] * t, z = cam.eye[2] + d[2] * t; if (Math.abs(z) < 3) aq.p.path = [[clamp(x, -4.4, tunnelLen + 2.8), clamp(z, -1, 1)]]; }
+}
+
+/* =====================================================================
+   Menus (overlays). The whole menu works with the d-pad or stick plus A and B.
+   ===================================================================== */
+const ovStack = [];
+let ovOpenedAt = 0;
+const topOv = () => ovStack[ovStack.length - 1] || null;
+function openOv(id) {
+  if (topOv()) $(topOv()).classList.remove('on');
+  ovStack.push(id); $(id).classList.add('on');
+  ovOpenedAt = performance.now();
+  stickyKeys = new Set(Object.keys(keys).filter(k => keys[k]));
+  for (const k in keys) keys[k] = false;
+  pointerHeld = false;
+  if (lastInput !== 'mouse') focusFirst(); else if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+}
+function closeOv() {
+  const id = ovStack.pop();
+  if (id) $(id).classList.remove('on');
+  if (topOv()) { $(topOv()).classList.add('on'); if (lastInput !== 'mouse') focusFirst(); }
+  else if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+}
+function ovBack() {
+  const id = topOv();
+  if (!id || id === 'ovTitle') return;
+  if (id === 'ovCard') { closeOv(); endCatch(false); return; }
+  closeOv();
+}
+const focusables = () => { const id = topOv(); return id ? Array.from($(id).querySelectorAll('button, a.btn')).filter(el => el.offsetParent !== null) : []; };
+const focused = () => { const el = document.activeElement; return el && focusables().includes(el) ? el : null; };
+function focusFirst() { const f = focusables(); const el = f.find(x => x.dataset.first) || f[0]; if (el) { el.focus({ preventScroll: true }); el.scrollIntoView({ block: 'nearest' }); } }
+function navMove(dir) {
+  const list = focusables(), cur = focused();
+  if (!cur) { focusFirst(); return; }
+  const r0 = cur.getBoundingClientRect(), cx = r0.left + r0.width / 2, cy = r0.top + r0.height / 2;
+  const dx = dir === 'left' ? -1 : dir === 'right' ? 1 : 0, dy = dir === 'up' ? -1 : dir === 'down' ? 1 : 0;
+  let best = null, bs = 1e9;
+  for (const el of list) {
+    if (el === cur) continue;
+    const r = el.getBoundingClientRect(), ex = r.left + r.width / 2 - cx, ey = r.top + r.height / 2 - cy;
+    const along = ex * dx + ey * dy; if (along < 4) continue;
+    const across = Math.abs(ex * dy) + Math.abs(ey * dx);
+    const s = along + across * 2.2; if (s < bs) { bs = s; best = el; }
+  }
+  if (best) { best.focus({ preventScroll: true }); best.scrollIntoView({ block: 'nearest' }); sfx.click(); }
+}
+// keyboard "clicks" (Enter/Space) right after a menu opens are ignored, so one press doesn't do two things
+document.addEventListener('click', e => { if (e.detail === 0 && performance.now() - ovOpenedAt < 250 && e.target.closest('.ov')) { e.stopPropagation(); e.preventDefault(); } }, true);
+
+function startPlaying() {
+  closeOv();
+  $('hud').classList.remove('hide');
+  if (awayGain > 0) { $('awayTxt').innerHTML = `While you were away, your fish made <b style="color:var(--sun)">${fmt(awayGain)} coins</b>!`; awayGain = 0; openOv('ovAway'); }
+  else if (save.total === 0) toast('Walk to the end of the long pier and cast your line!', 4);
+}
+function openPause() { if (topOv() || $('hud').classList.contains('hide')) return; syncToggles(); openOv('ovPause'); }
+function openDex() { if ((topOv() && topOv() !== 'ovPause') || $('hud').classList.contains('hide')) return; renderDex(); openOv('ovDex'); }
+function openShop() { renderShop(); openOv('ovShop'); }
+function syncToggles() {
+  for (const id of ['tMusic', 'pMusic']) $(id).textContent = 'Music: ' + (save.music ? 'on' : 'off');
+  for (const id of ['tSfx', 'pSfx']) $(id).textContent = 'Sounds: ' + (save.sfx ? 'on' : 'off');
+}
+function toggleMusic() { save.music = !save.music; if (musicBus) musicBus.gain.setTargetAtTime(save.music ? 0.32 : 0, actx.currentTime, 0.1); syncToggles(); saveGame(); }
+function toggleSfx() { save.sfx = !save.sfx; if (sfxBus) sfxBus.gain.setTargetAtTime(save.sfx ? 1 : 0, actx.currentTime, 0.05); syncToggles(); saveGame(); sfx.click(); }
+$('tPlay').onclick = () => { initAudio(); startPlaying(); };
+$('tHow').onclick = () => openOv('ovHow');
+$('pHow').onclick = () => openOv('ovHow');
+$('hBack').onclick = () => closeOv();
+$('tMusic').onclick = $('pMusic').onclick = toggleMusic;
+$('tSfx').onclick = $('pSfx').onclick = toggleSfx;
+$('tReset').onclick = () => openOv('ovReset');
+$('rNo').onclick = () => closeOv();
+$('rYes').onclick = () => {
+  const m = save.music, s = save.sfx;
+  save = defaultSave(); save.music = m; save.sfx = s; recalcRate(); saveGame(); domeFishN = -1; awayGain = 0;
+  closeOv(); toast('Starting over with a fresh Tin Hook');
+};
+$('pResume').onclick = () => closeOv();
+$('pDex').onclick = () => { renderDex(); openOv('ovDex'); };
+$('pTitle').onclick = () => {
+  closeOv(); saveGame();
+  if (scene === 'ocean' || scene === 'aquarium' || scene === 'catch') { ocean = null; aq = null; catchShow = null; castAnim = null; scene = 'beach'; player.x = 0; player.z = 12; player.yaw = Math.PI / 2; camYaw = Math.PI / 2; setMusic('beach'); }
+  $('hud').classList.add('hide'); syncToggles(); openOv('ovTitle');
+};
+$('awayOk').onclick = () => closeOv();
+$('menuBtn').onclick = () => { initAudio(); openPause(); };
+$('dexBtn').onclick = () => { initAudio(); openDex(); };
+$('act').onclick = () => { initAudio(); pressAction(); };
+$('aqBack').onclick = () => { initAudio(); if (!topOv() && !fadeDir) leaveAquarium(); };
+// the yellow button also works as the reel button: holding it counts as holding to reel
+$('act').addEventListener('pointerdown', () => { pointerHeld = true; });
+addEventListener('pointerup', () => { if (!ptr.down) pointerHeld = false; });
+
+/* ---------- the Tackle Shop ---------- */
+const SHOP_ROWS = [
+  { key: 'hook', title: 'Sinkers: go deeper', list: HOOKS, desc: (it, i) => `Reaches ${fmt(it.depth)} m: ${ZONES[i].name}`, sw: it => it.col },
+  { key: 'reel', title: 'Reels: reel in faster', list: REELS, desc: it => it.speed === 1 ? 'The reel you started with' : `Reels in ${it.speed}× as fast`, sw: () => '#c8d0d8' },
+  { key: 'bait', title: 'Bait: rare and mythical fish bite more', list: BAITS, desc: it => it.rare === 1 ? 'A wiggly worm' : `Rare fish ×${it.rare}, mythical fish ×${it.myth}`, sw: it => it.col },
+];
+function renderShop(keepFocus) {
+  const fk = keepFocus && focused() && focused().dataset.k ? focused().dataset.k + focused().dataset.i : null;
+  let h = `<h2>Tackle Shop</h2><div class="have"><span class="coin"></span>${fmt(save.coins)} coins</div>`;
+  for (const row of SHOP_ROWS) {
+    const owned = save[row.key];
+    h += `<h3>${row.title}</h3><div class="items">`;
+    row.list.forEach((it, i) => {
+      let cls = 'item', pr;
+      if (i <= owned) { cls += ' own'; pr = i === owned ? 'Using it ✓' : 'Owned ✓'; }
+      else if (i === owned + 1) { if (save.coins < it.cost) cls += ' cant'; pr = `<span class="coin"></span>${fmt(it.cost)}`; }
+      else { cls += ' locked'; pr = `<span class="coin"></span>${fmt(it.cost)} · buy the one before first`; }
+      const first = i === owned + 1 && row.key === 'hook' ? ' data-first="1"' : '';
+      h += `<button class="${cls}" data-k="${row.key}" data-i="${i}"${first}><span class="nm"><span class="sw" style="background:${row.sw(it)}"></span>${esc(it.name)}</span><span class="ds">${esc(row.desc(it, i))}</span><span class="pr">${pr}</span></button>`;
+    });
+    h += '</div>';
+  }
+  h += `<div class="row2"><button class="btn go" id="shopClose">Done</button></div>`;
+  $('shopPanel').innerHTML = h;
+  $('shopClose').onclick = () => closeOv();
+  $('shopPanel').querySelectorAll('.item').forEach(b => b.onclick = () => buy(b.dataset.k, +b.dataset.i));
+  if (fk) { const el = $('shopPanel').querySelector(`[data-k="${fk.slice(0, 4)}"][data-i="${fk.slice(4)}"]`); if (el) el.focus({ preventScroll: true }); }
+}
+function buy(key, i) {
+  const row = SHOP_ROWS.find(r => r.key === key), it = row.list[i], owned = save[key];
+  if (i <= owned) { toast(i === owned ? `You're already using the ${it.name}` : `You already have something better`); return; }
+  if (i > owned + 1) { sfx.no(); toast(`Buy the ${row.list[owned + 1].name} first`); return; }
+  if (save.coins < it.cost) { sfx.no(); toast(`You need ${fmt(it.cost - save.coins)} more coins`); return; }
+  save.coins -= it.cost; save[key] = i; saveGame(); sfx.buy();
+  toast(key === 'hook' ? `You got the ${it.name}! Now you can reach ${ZONES[i].name}.` : `You got the ${it.name}!`, 3);
+  renderShop(true);
+}
+
+/* ---------- the Fishdex ---------- */
+function renderDex() {
+  const found = Object.keys(save.dex).length;
+  let h = `<h2>Fishdex</h2><p>You've found <b style="color:var(--sun)">${found} of ${SPECIES.length}</b> creatures and caught <b>${fmt(save.total)}</b> fish in all.</p>`;
+  ZONES.forEach((z, zi) => {
+    const reach = zi <= save.hook;
+    h += `<div class="zrow"><h3>${esc(z.name)} <small>${fmt(z.top)}–${fmt(z.bottom)} m${reach ? '' : ` · needs the ${esc(HOOKS[zi].name)}`}</small></h3><div class="tiles">`;
+    for (const sp of SPECIES.filter(s => s.z === zi)) {
+      const n = save.dex[sp.id] || 0;
+      h += `<div class="tile ${sp.r === 'c' ? '' : sp.r}"><img alt="" src="${thumb(sp.id, !n)}"><div>${n ? esc(sp.name) : '???'}</div><div class="k">${RARITY[sp.r]}${n ? ` · ×${fmt(n)}` : ''}</div></div>`;
+    }
+    h += '</div></div>';
+  });
+  h += `<div class="row2"><button class="btn go" id="dexClose">Close</button></div>`;
+  $('dexPanel').innerHTML = h;
+  $('dexClose').onclick = () => closeOv();
+}
+
+/* ---------- the catch card ---------- */
+function showCard() {
+  const c = catchShow, sp = SPECIES[c.sp], v = sp.val * c.size;
+  const badges = (c.isNew ? '<span class="badge new">NEW!</span>' : '') + `<span class="badge ${sp.r === 'c' ? '' : sp.r}">${sp.r === 'm' ? 'MYTHICAL!' : RARITY[sp.r]}</span>` + (c.size >= 1.15 ? '<span class="badge">Big one!</span>' : '');
+  $('cardPanel').className = 'panel ' + (sp.r === 'c' ? '' : sp.r);
+  $('cardPanel').innerHTML = `<div>${badges}</div><h2>${sp.r === 'm' ? '✨ ' : ''}${esc(sp.name)}${sp.r === 'm' ? ' ✨' : ''}</h2>
+    <p>From ${esc(ZONES[sp.z].name)}, ${fmt(c.depth)} m down</p>
+    <div class="earn">+${fmtRate(v)} coins every second · +${fmt(c.bonus)} coins now</div>
+    <p class="fact">${esc(sp.fact)}</p>
+    <div class="row2"><button class="btn go" id="cKeep" data-first="1">Keep fishing</button><button class="btn" id="cAq">See it in the Aquarium</button></div>`;
+  $('cKeep').onclick = () => { closeOv(); endCatch(false); };
+  $('cAq').onclick = () => { closeOv(); endCatch(true); };
+  openOv('ovCard');
+}
+
+/* ---------- the ocean HUD ---------- */
+function buildGauge() {
+  let h = '';
+  ZONES.forEach((z, i) => {
+    const lock = i > save.hook ? ' locked' : '';
+    h += `<div class="seg${lock}" style="top:${i / ZONES.length * 100}%;height:${100 / ZONES.length}%;background:${z.fog[1]}"></div>`;
+    h += `<div class="nm${lock}" style="top:${(i + 0.5) / ZONES.length * 100}%">${esc(z.short)}</div>`;
+  });
+  h += `<div class="limit" style="top:${ocean.maxVis / OCEAN_BOTTOM * 100}%"><span>Hook limit</span></div><div class="mark" id="gMark"></div>`;
+  $('gauge').innerHTML = h;
+}
+let bannerT = 0;
+function showBanner(z) {
+  $('bannerN').textContent = ZONES[z].name;
+  $('bannerS').textContent = `${fmt(ZONES[z].top)}–${fmt(ZONES[z].bottom)} m`;
+  $('banner').classList.add('on'); bannerT = 2.2;
+}
+let toastT = 0;
+function toast(msg, secs) { $('toast').textContent = msg; $('toast').classList.add('on'); toastT = secs || 2.4; }
+const txt = (id, s) => { const el = $(id); if (el._t !== s) { el.textContent = s; el._t = s; } };
+function show(id, on) { const el = $(id); if (el._on !== on) { el.classList.toggle('hide', !on); el._on = on; } }
+function updateUI(dt) {
+  txt('coinTxt', fmt(save.coins));
+  txt('rateTxt', `+${fmtRate(incomeRate)} coins a second`);
+  txt('gearTxt', `${HOOKS[save.hook].name} · ${fmt(HOOKS[save.hook].depth)} m`);
+  const lbl = actionLabel();
+  show('act', !!lbl);
+  if (lbl) {
+    const key = lastInput === 'pad' ? 'A' : lastInput === 'kb' ? 'Space' : '';
+    const h = esc(lbl) + (key ? `<small>${key}</small>` : '');
+    if ($('act')._h !== h) { $('act').innerHTML = h; $('act')._h = h; }
+  }
+  const inOcean = scene === 'ocean' && ocean;
+  show('ocean', !!inOcean);
+  if (inOcean) {
+    const o = ocean, d = visToDepth(o.vis), z = ZONES[zoneAtVis(o.vis)];
+    txt('depthM', `${fmt(d)} m`); txt('depthZ', z.name);
+    const m = $('gMark'); if (m) m.style.top = (o.vis / OCEAN_BOTTOM * 100) + '%';
+    const fighting = o.phase === 'fight';
+    show('fight', fighting);
+    txt('otext', o.phase === 'sink' ? (o.vis < o.maxVis - 1 ? `Sinking… your ${HOOKS[save.hook].name} stops at ${fmt(HOOKS[save.hook].depth)} m` : '') : o.phase === 'wait' ? 'Waiting for a bite…' : o.phase === 'approach' ? 'Something is coming!' : o.phase === 'rise' ? `Reeling up a ${SPECIES[o.sp].name}!` : '');
+    if (fighting) {
+      $('pBar').style.width = (o.p * 100).toFixed(1) + '%';
+      $('tBar').style.width = (o.tension * 100).toFixed(1) + '%';
+      const say = o.slip > 0 ? 'Too tight! It swam back down.' : o.thrash ? "LET GO! It's pulling hard!" : (lastInput === 'pad' ? 'Hold A to reel!' : lastInput === 'kb' ? 'Hold Space to reel!' : 'Hold to reel!');
+      txt('fightSay', say);
+      $('fightSay').classList.toggle('warn', o.thrash || o.slip > 0);
+    }
+  }
+  show('aqbar', scene === 'aquarium' && !!aq);
+  if (scene === 'aquarium' && aq) { txt('aqCount', fmt(save.fish.length)); txt('aqRate', fmtRate(incomeRate)); }
+  bannerT -= dt; if (bannerT <= 0) $('banner').classList.remove('on');
+  toastT -= dt; if (toastT <= 0) $('toast').classList.remove('on');
+  show('soundHint', lastInput === 'pad' && !audioOn());
+}
+
+/* ---------- fading between places ---------- */
+function fadeTo(cb) { fadeDir = 1; fadeCb = cb; }
+function fadeFrom() { fadeDir = -1; }
+function updateFade(dt) {
+  if (fadeDir === 1) { fadeT += dt * 3.2; if (fadeT >= 1) { fadeT = 1; fadeDir = 0; const c = fadeCb; fadeCb = null; if (c) c(); if (fadeDir === 0) fadeDir = -1; } }
+  else if (fadeDir === -1) { fadeT -= dt * 2.6; if (fadeT <= 0) { fadeT = 0; fadeDir = 0; } }
+  $('fade').style.opacity = fadeT.toFixed(3);
+}
+
+/* =====================================================================
+   Main loop
+   ===================================================================== */
+function resize() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 1.75);
+  const w = Math.floor(innerWidth * dpr), h = Math.floor(innerHeight * dpr);
+  if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+  cam.aspect = innerWidth / Math.max(1, innerHeight);
+  cam.fovy = (cam.aspect < 0.8 ? 72 : 58) * Math.PI / 180;
+}
+let lastFrame = performance.now(), lastIncome = Date.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - lastFrame) / 1000); lastFrame = now;
+  T += dt;
+  resize();
+  pollPad(dt);
+  // coins come in all the time, even in menus (up to an hour at once if the tab was hidden)
+  const nowMs = Date.now(), secs = clamp((nowMs - lastIncome) / 1000, 0, AWAY_MAX); lastIncome = nowMs;
+  save.coins += incomeRate * secs;
+  const paused = ovStack.some(id => id !== 'ovCard');
+  const gdt = paused ? 0 : dt;
+  shakeT = Math.max(0, shakeT - dt);
+  if (scene === 'beach') updateBeach(gdt);
+  else if (scene === 'ocean') updateOcean(gdt);
+  else if (scene === 'aquarium') updateAquarium(gdt);
+  updateDrops(gdt);
+  updateFade(dt);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.viewport(0, 0, canvas.width, canvas.height);
+  gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  if (scene === 'ocean' && ocean) renderOcean(dt);
+  else if (scene === 'aquarium' && aq) renderAquarium(dt);
+  else renderBeach(dt);
+  endLabels();
+  updateUI(dt);
+  musicTick();
+  if (performance.now() - lastSaved > 5000) saveGame();
+  requestAnimationFrame(frame);
+}
+addEventListener('visibilitychange', () => { if (document.hidden) saveGame(); });
+addEventListener('pagehide', saveGame);
+
+// start
+gl.enable(gl.DEPTH_TEST);
+gl.disable(gl.CULL_FACE);
+buildBeach();
+buildOcean();
+syncToggles();
+resize();
+setCamera([0, 6, 22], [0, 1, 12]);
+openOv('ovTitle');
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
