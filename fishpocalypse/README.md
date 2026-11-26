@@ -24,21 +24,21 @@ Giants longer than 8 m hang sideways on the line during the fight so the whole m
 
 ## Zones and creatures
 
-Every zone has eight creatures: four common, two rare and two mythical (56 in all). Bites are weighted 24 / 21 / 19 / 16 for the commons, 9 / 7 for the rares and 2.5 / 1.5 for the mythicals. The King Leviathan is the Rift's second mythical. It shows as **Legendary** and has a weight of 1. Bait multiplies the rare and mythical weights. The Fishdex lists each zone common first, then rare, then mythical.
+Every zone has eight creatures: six common, one rare and one mythical. The Rift also has the King Leviathan, which shows as **Legendary** (56 creatures in all). Bites are weighted 17 / 16 / 15 / 13 / 12 / 12 for the commons, 12 for the rare, 3 for the mythical and 1 for the King Leviathan. Bait multiplies the rare and mythical weights. The Fishdex lists each zone common first, then rare, then mythical.
 
 | Zone | Depth | Coins/s (base) | Common | Rare | Mythical |
 |---|---|---|---|---|---|
-| Sunlit Shallows | 0–20 m | 1 | Sardine, Clownfish, Pufferfish, Blue Tang | Seahorse, Sea Turtle | Sunscale Dragonet, Rainbow Ray |
-| Kelp Forest | 20–80 m | 5 | Kelp Bass, Garibaldi, Octopus, Moon Jelly | Leafy Sea Dragon, Wolf Eel | Kelpie, Treasure Turtle |
-| Twilight Zone | 80–300 m | 25 | Lanternfish, Hatchetfish, Squid, Barreleye | Swordfish, Manta Ray | Moonhorn, Star Jelly |
-| Midnight Zone | 300–1,500 m | 125 | Anglerfish, Gulper Eel, Vampire Squid, Viperfish | Giant Squid, Atolla Jellyfish | Phantom Shark, Shadow Ray |
-| The Abyss | 1,500–5,000 m | 625 | Dumbo Octopus, Tripod Fish, Giant Isopod, Black Swallower | Frilled Shark, Goblin Shark | Sea Serpent, Ancient Turtle |
-| The Trench | 5,000–11,000 m | 3,000 | Snailfish, Sea Pig, Supergiant Amphipod, Rattail | Megalodon, Big Red Jellyfish | Kraken, Crystal Dragon |
-| The Fishpocalypse Rift | 11,000–20,000 m | 15,000 | Zombie Cod, Skeleton Fish, Lava Shark, Fire Jelly | Triclops Grouper, Magma Turtle | Doomfin, **King Leviathan** (legendary) |
+| Sunlit Shallows | 0–20 m | 1 | Sardine, Clownfish, Pufferfish, Blue Tang, Sea Turtle, Rainbow Ray | Seahorse | Sunscale Dragonet |
+| Kelp Forest | 20–80 m | 5 | Kelp Bass, Garibaldi, Octopus, Moon Jelly, Wolf Eel, Treasure Turtle | Leafy Sea Dragon | Kelpie |
+| Twilight Zone | 80–300 m | 25 | Lanternfish, Hatchetfish, Squid, Barreleye, Manta Ray, Star Jelly | Swordfish | Moonhorn |
+| Midnight Zone | 300–1,500 m | 125 | Anglerfish, Gulper Eel, Vampire Squid, Viperfish, Atolla Jellyfish, Shadow Ray | Giant Squid | Phantom Shark |
+| The Abyss | 1,500–5,000 m | 625 | Dumbo Octopus, Tripod Fish, Giant Isopod, Black Swallower, Goblin Shark, Ancient Turtle | Frilled Shark | Sea Serpent |
+| The Trench | 5,000–11,000 m | 3,000 | Snailfish, Sea Pig, Supergiant Amphipod, Rattail, Big Red Jellyfish, Crystal Dragon | Megalodon | Kraken |
+| The Fishpocalypse Rift | 11,000–20,000 m | 15,000 | Zombie Cod, Skeleton Fish, Lava Shark, Fire Jelly, Magma Turtle | Triclops Grouper | Doomfin, and **King Leviathan** (legendary) |
 
 The newer creatures are at the end of `SPECIES`, so old saves (which store each fish by its number) still point at the right ones.
 
-A creature's coins per second = zone base × (1, 1.3, 1.6 or 2 for the four commons, 5 or 6 for the rares, 25 or 30 for the mythicals, 50 for the King Leviathan) × its size (0.8–1.05 usually, 1.15–1.5 for a "Big one", 15% of the time). Facts about real animals are written to be true. Mythical ones glow, sparkle and have a bigger fanfare.
+A creature's coins per second = zone base × (1, 1.2, 1.4, 1.6, 1.8 or 2 for the six commons, 5 for the rare, 25 for the mythical, 50 for the King Leviathan) × its size (0.8–1.05 usually, 1.15–1.5 for a "Big one", 15% of the time). Facts about real animals are written to be true. Mythical ones glow, sparkle and have a bigger fanfare.
 
 The Sea Serpent and the Megalodon have huge open jaws full of teeth. The King Leviathan is like the Sea Serpent but bigger (40 m). He is black with red stripes, and has big curved horns, red spikes and frills, glowing red eyes and the same giant jaws.
 
@@ -52,7 +52,7 @@ Buy each item after the one before it.
 - **Reels** (reel speed): Old 1× · Fast 400 (1.4×) · Turbo 15,000 (1.9×) · Mega 2 million (2.6×) · Rocket 100 million (3.4×).
 - **Bait** (rare × / mythical ×): Worm · Shiny Lure 1,000 (1.5 / 2) · Glow Lure 150,000 (2 / 3.5) · Mythic Bait 20 million (2.5 / 6).
 
-Pacing check (a script that casts over and over and buys the next sinker as soon as it can): the Iron Sinker after about 1–1.5 minutes, Steel about 4, Gold about 8, Diamond about 13, Titan about 24, and the Doom Anchor after about 50–60 minutes. With 8 creatures per zone, the average catch is worth about 9% more than it was with 5, so the game is now a little faster.
+Pacing check (a script that casts over and over and buys the next sinker as soon as it can): the Iron Sinker after about 1–1.5 minutes, Steel about 4, Gold about 8, Diamond about 13, Titan about 24, and the Doom Anchor after about 50–60 minutes. With 8 creatures per zone (only one of them rare and one mythical), the average catch is worth about 8% less than it was with 5, so the game is now a little slower.
 
 ## The Aquarium
 
