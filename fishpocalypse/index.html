@@ -381,7 +381,7 @@ const SPECIES = [
   { name: 'Tripod Fish', z: 4, r: 'c', kind: 'fish', len: 0.8, o: { c1: '#6a6a7a', c2: '#9a9aaa', h: 0.18, w: 0.12, fin: '#4a4a5a', tripod: true, eye: 0.7 }, fact: 'Tripod fish stand on the sea floor on three very long fins, like a camera tripod.' },
   { name: 'Giant Isopod', z: 4, r: 'c', kind: 'bug', len: 0.5, o: { c1: '#c8b8a0', c2: '#a89880' }, fact: 'Giant isopods are cousins of the little pill bugs that live in gardens.' },
   { name: 'Frilled Shark', z: 4, r: 'r', kind: 'eel', len: 2, o: { c1: '#6a5a4a', c2: '#8a7a6a', thick: 0.07, frills: '#a05a4a', teeth: true, sharkFins: true }, fact: 'The frilled shark is long like an eel and has frilly gills around its neck.' },
-  { name: 'Sea Serpent', z: 4, r: 'm', kind: 'eel', len: 25, o: { c1: '#2f8a6a', c2: '#bfe8a0', thick: 0.06, jaws: true, spikes: '#ffd23f', horns: '#ffe8a0', glow: '#7fffc0' }, fact: "A giant sea serpent from old sailors' tales, as long as a ship." },
+  { name: 'Sea Serpent', z: 4, r: 'm', kind: 'eel', len: 32, o: { c1: '#2f8a6a', c2: '#bfe8a0', thick: 0.06, jaws: true, spikes: '#ffd23f', horns: '#ffe8a0', glow: '#7fffc0' }, fact: "A giant sea serpent from old sailors' tales, as long as a ship." },
   // The Trench
   { name: 'Snailfish', z: 5, r: 'c', kind: 'fish', len: 0.4, o: { c1: '#f0c8d0', c2: '#fff0f4', h: 0.26, w: 0.16, fin: '#e0a8b8', tadpole: true, eye: 0.8 }, fact: 'Snailfish have been found living deeper than any other fish, more than 8,000 meters down.' },
   { name: 'Sea Pig', z: 5, r: 'c', kind: 'seapig', len: 0.4, o: { c1: '#f0a8c0', c2: '#ffd0e0' }, fact: 'A sea pig is a kind of sea cucumber that walks along the sea floor on little tube feet.' },
@@ -415,7 +415,7 @@ const SPECIES = [
   { name: 'Crystal Dragon', z: 5, r: 'c', kind: 'fish', len: 14, o: { c1: '#9ff0ff', c2: '#e8ffff', h: 0.3, w: 0.2, fin: '#6ad8ff', wings: '#bff8ff', horns: '#ffffff', teeth: true, dots: '#ffffff', dorsal: 1.6, glow: '#bff8ff' }, fact: 'A dragon made of glowing ice crystals. It lives where the water is the coldest.' },
   { name: 'Fire Jelly', z: 6, r: 'c', kind: 'jelly', len: 0.8, o: { c1: '#ff7a1a', c2: '#ffb84a', glow: '#ff9a3a' }, fact: "Its tentacles are as hot as a campfire. Don't touch!" },
   { name: 'Magma Turtle', z: 6, r: 'c', kind: 'turtle', len: 3, o: { c1: '#3a2a26', c2: '#5a3a30', shell: '#2a1a18', lava: '#ff7a1a', eyeC: '#ffb03a' }, fact: 'Its shell is made of cooled lava rock, and it takes naps inside volcanoes.' },
-  { name: 'King Leviathan', z: 6, r: 'm', king: true, kind: 'eel', len: 40, o: { c1: '#140a0c', c2: '#c01818', stripes: '#c01818', thick: 0.075, jaws: true, bigHorns: '#3a0808', spikes: '#e01818', frills: '#e01818', eyeC: '#ff2a1a', glow: '#ff3a2a' }, fact: 'The king of all sea monsters, even bigger than the Sea Serpent. The Doomfin bows to him.' },
+  { name: 'King Leviathan', z: 6, r: 'm', king: true, kind: 'eel', len: 50, o: { c1: '#140a0c', c2: '#c01818', stripes: '#c01818', thick: 0.075, jaws: true, bigHorns: '#3a0808', spikes: '#e01818', frills: '#e01818', eyeC: '#ff2a1a', glow: '#ff3a2a' }, fact: 'The king of all sea monsters, even bigger than the Sea Serpent. The Doomfin bows to him.' },
 ];
 const RARITY = { c: 'Common', r: 'Rare', m: 'Mythical' };
 // Every zone has 6 commons, 1 rare and 1 mythical (the Rift also has the legendary King Leviathan).
@@ -1010,40 +1010,42 @@ function buildShark(g, o) {
     eyeAt(g, 0.36, 0.035, s * 0.062, 0.018, s, o.eyeC ? H(o.eyeC) : BLACK, false);
     for (let i = 0; i < 4; i++) tube(g, [0.17 + i * 0.022, -0.04, s * 0.1], [0.16 + i * 0.022, 0.035, s * 0.1], 0.004, 0.004, 4, shade(c1, 0.55), true);
   }
-  ell(g, 0.36, -0.06, 0, 0.07, 0.018, 0.06, [0.25, 0.08, 0.1], -1, 1);
+  if (!o.jaws) ell(g, 0.36, -0.06, 0, 0.07, 0.018, 0.06, [0.25, 0.08, 0.1], -1, 1);
   if (o.teeth) { teethRow(g, 0.31, 0.42, -0.05, 0.05, 0, 5, true); teethRow(g, 0.31, 0.42, -0.07, -0.05, 0, 5, false); }
   if (o.lava) lavaCracks(g, 0, 0.42, 0.11, 0.11, H(o.lava), rng);
   if (o.snout) { ell(g, 0.5, 0.02, 0, 0.17, 0.022, 0.055, c1, -1, 1); }
   if (o.jaws) {
-    // a wide-open mouth: the lower jaw swings down from a hinge under the cheeks, with rows of big triangle teeth
-    const H0 = [0.2, -0.085], T0 = [0.42, -0.2], jx = T0[0] - H0[0], jy = T0[1] - H0[1], jl = Math.hypot(jx, jy);
-    const ux = jx / jl, uy = jy / jl, gum = H('#8a1a28'), dark = H('#4a0a14'), jawC = mixc(c1, c2, 0.55);
-    // inside of the mouth, and the cheeks closing its sides
-    ell(g, 0.31, -0.115, 0, 0.11, 0.04, 0.058, dark, -1, 1);
-    for (const s of [-1, 1]) flat(g, [H0[0], H0[1], s * 0.06], [0.45, -0.062, s * 0.035], [T0[0], T0[1] + 0.01, s * 0.035], gum);
-    // the lower jaw: one smooth flat plate, tilted open, that joins the throat
-    const ang = Math.atan2(jy, jx), ca = Math.cos(ang), sa = Math.sin(ang), mx = H0[0] + jx * 0.5, my = H0[1] + jy * 0.5;
-    const jaw = (lx, ly) => [mx + lx * ca - ly * sa, my + lx * sa + ly * ca];
-    const st = g.n;
-    ell(g, 0, 0, 0, jl * 0.62, 0.028, 0.072, jawC, -1, 2);
-    for (let k = st; k < g.n; k++) {
-      const o = k * 5, x = g.f[o], y = g.f[o + 1], b = k * 20, nx = g.i8[b + 12] / 127, ny = g.i8[b + 13] / 127;
-      g.f[o] = mx + x * ca - y * sa; g.f[o + 1] = my + x * sa + y * ca;
-      g.i8[b + 12] = Math.round((nx * ca - ny * sa) * 127); g.i8[b + 13] = Math.round((nx * sa + ny * ca) * 127);
+    // a huge toothy grin along both sides of the head, with rows of sharp white teeth
+    const surfZ = (x, y) => {
+      const kH = 1 - ((x - 0.3) / 0.17) ** 2 - ((y + 0.005) / 0.075) ** 2, kB = 1 - (x / 0.42) ** 2 - (y / 0.11) ** 2;
+      return Math.max(0.085 * Math.sqrt(Math.max(0, kH)), 0.11 * Math.sqrt(Math.max(0, kB)));
+    };
+    const bottom = x => Math.min(-0.005 - 0.075 * Math.sqrt(Math.max(0, 1 - ((x - 0.3) / 0.17) ** 2)), -0.11 * Math.sqrt(Math.max(0, 1 - (x / 0.42) ** 2)));
+    const N = 12, X0 = 0.2, X1 = 0.445, mouthC = H('#5a0a18'), gumC = H('#b8303c');
+    const xs = [], yb = [], yt = [];
+    for (let i = 0; i <= N; i++) {
+      const t = i / N, x = lerp(X0, X1, t), b = bottom(x) + 0.012;
+      xs.push(x); yb.push(b); yt.push(b + 0.064 * Math.sin(Math.min(t * 1.5, 1) * Math.PI / 2));
     }
-    ell(g, 0.17, -0.075, 0, 0.09, 0.035, 0.085, col, -1, 2);     // throat
-    // upper teeth hang from the edge of the snout
-    const upY = x => -0.005 - 0.075 * Math.sqrt(Math.max(0, 1 - ((x - 0.3) / 0.17) ** 2)) + 0.01;
-    const upZ = x => 0.085 * Math.sqrt(Math.max(0, 1 - ((x - 0.3) / 0.17) ** 2)) * 0.82;
-    for (let i = 0; i < 7; i++) {
-      const x = lerp(0.25, 0.44, i / 6), y = upY(x);
-      for (const s of [-1, 1]) cone(g, [x, y, s * upZ(x)], [x + 0.004, y - 0.038, s * upZ(x)], 0.011, 4, WHITE);
-    }
-    // lower teeth stand up along the top of the jaw
-    for (let i = 0; i < 7; i++) {
-      const lx = lerp(-0.05, 0.11, i / 6), k = Math.sqrt(Math.max(0, 1 - (lx / (jl * 0.62)) ** 2));
-      const base = jaw(lx, 0.022 * k), tip = jaw(lx - 0.004, 0.022 * k + 0.036), z = 0.072 * k * 0.72;
-      for (const s of [-1, 1]) cone(g, [base[0], base[1], s * z], [tip[0], tip[1], s * z], 0.01, 4, WHITE);
+    for (const sd of [-1, 1]) {
+      const P = (x, y, lift) => [x, y, sd * (surfZ(x, y) + lift)];
+      for (let i = 0; i < N; i++) {
+        flat(g, P(xs[i], yb[i], 0.004), P(xs[i + 1], yb[i + 1], 0.004), P(xs[i + 1], yt[i + 1], 0.004), mouthC);
+        flat(g, P(xs[i], yb[i], 0.004), P(xs[i + 1], yt[i + 1], 0.004), P(xs[i], yt[i], 0.004), mouthC);
+        // a thin pink gum line along the top and bottom edges
+        flat(g, P(xs[i], yt[i] - 0.006, 0.005), P(xs[i + 1], yt[i + 1] - 0.006, 0.005), P(xs[i + 1], yt[i + 1], 0.005), gumC);
+        flat(g, P(xs[i], yt[i] - 0.006, 0.005), P(xs[i + 1], yt[i + 1], 0.005), P(xs[i], yt[i], 0.005), gumC);
+        flat(g, P(xs[i], yb[i], 0.005), P(xs[i + 1], yb[i + 1], 0.005), P(xs[i + 1], yb[i + 1] + 0.006, 0.005), gumC);
+        flat(g, P(xs[i], yb[i], 0.005), P(xs[i + 1], yb[i + 1] + 0.006, 0.005), P(xs[i], yb[i] + 0.006, 0.005), gumC);
+      }
+      // teeth: top ones point down, bottom ones point up, in between each other
+      for (let k = 0; k < 8; k++) {
+        const t = 0.16 + k / 7 * 0.8, x = lerp(X0, X1, t), i = Math.min(N - 1, Math.floor(t * N)), f = t * N - i;
+        const top = lerp(yt[i], yt[i + 1], f), bot = lerp(yb[i], yb[i + 1], f), gap = top - bot, w = 0.009 + gap * 0.1;
+        flat(g, P(x - w, top - 0.004, 0.007), P(x + w, top - 0.004, 0.007), P(x, top - 0.004 - gap * 0.5, 0.007), WHITE);
+        const x2 = x - 0.5 / 7 * 0.8 * (X1 - X0), i2 = Math.max(0, Math.min(N - 1, Math.floor(((x2 - X0) / (X1 - X0)) * N)));
+        if (x2 > X0 + 0.02) { const b2 = yb[i2] + 0.004, g2 = yt[i2] - yb[i2]; flat(g, P(x2 - w, b2, 0.007), P(x2 + w, b2, 0.007), P(x2, b2 + g2 * 0.45, 0.007), WHITE); }
+      }
     }
   }
 }
@@ -2007,7 +2009,7 @@ function beachedCamera(c) {
   const h = Math.max(2.2, S * (lift + (side ? -bb[2] : bb[4])));     // how tall the picture needs to be
   const tanV = Math.tan(cam.fovy / 2), tanH = tanV * cam.aspect;
   // the catch card covers the bottom half of the screen, so the picture goes in the top half
-  const D = Math.max(6, (w / 2) / tanH * 1.1, h / (tanV * 0.85));
+  const D = Math.max(6, (w / 2) / tanH * (1.1 + Math.min(0.2, S / 160)), h / (tanV * 0.85));
   const gy = sandH(cx, BEACH_SHOT.z);
   return { eye: [cx + D * 0.2, gy + 1 + D * 0.25, BEACH_SHOT.z - D], look: [cx, gy - 0.4 - (cam.aspect < 0.8 ? D * 0.12 : 0), BEACH_SHOT.z] };
 }
