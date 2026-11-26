@@ -143,6 +143,10 @@ body.kbnav .btn:focus,body.kbnav .item:focus,body.kbnav .hbtn:focus,body.kbnav #
 #ovCard .panel.r{border-color:var(--rare)}
 .badge{display:inline-block;font-family:var(--display);font-size:18px;padding:3px 14px;border-radius:999px;background:var(--edge);margin:0 4px 6px}
 .badge.m{background:linear-gradient(90deg,#ff7ad9,#ffd23f,#7fe0ff);color:var(--ink)}
+.badge.m.s{background:linear-gradient(90deg,#3a1a9a,#8a3aff,#2a8aff,#7ff0ff);color:#fff;box-shadow:0 0 14px #8a6aff}
+.tile.s{border-color:#9a7aff;box-shadow:0 0 12px #7a5aff}
+.tile.s .k{color:#b8a8ff}
+.unlock{font-size:17px;color:#d8c8ff;background:rgba(122,74,232,.35);border:2px solid #9a7aff;border-radius:12px;padding:8px 12px}
 .badge.r{background:var(--rare);color:var(--ink)}
 .badge.new{background:#4ee06a;color:var(--ink)}
 .earn{font-size:18px;color:#9ff0a0;margin:8px 0}
@@ -227,7 +231,7 @@ body.kbnav .btn:focus,body.kbnav .item:focus,body.kbnav .hbtn:focus,body.kbnav #
   <h2>How to play</h2>
   <p><b>1. Walk</b> to the end of the long pier. <b>2. Cast</b> your line and watch your hook sink through the zones of the ocean. <b>3.</b> When it stops, a fish from that zone bites. <b>Hold</b> to reel it in, and <b>let go</b> when it thrashes so the line doesn't pull too hard.</p>
   <p>Every fish goes into your <b>Aquarium</b> (the giant glass dome), and every fish there makes coins every second, even while you're fishing. Spend coins at the <b>Tackle Shop</b> on heavier sinkers to go deeper, faster reels, and luckier bait.</p>
-  <p>Every zone has eight creatures: six common ones, one <span style="color:var(--rare)">rare</span> one and one <span style="color:var(--myth)">mythical</span> one. The deepest zone hides the legendary King Leviathan. Deeper zones have fish worth much more. Press <b>Stop here</b> on the way down to fish a shallower zone.</p><p>Big creatures are life size! They're too heavy to hold up, so you get a picture of them lying on the beach next to you.</p>
+  <p>Every zone has eight creatures: six common ones, one <span style="color:var(--rare)">rare</span> one and one <span style="color:var(--myth)">mythical</span> one. The deepest zone hides the legendary King Leviathan. Deeper zones have fish worth much more. Press <b>Stop here</b> on the way down to fish a shallower zone.</p><p>Big creatures are life size! They're too heavy to hold up, so you get a picture of them lying on the beach next to you.</p><p>Catch the Doomfin <i>and</i> the King Leviathan to open a secret place. Something enormous lives there, with its own <b style="color:#b8a8ff">Secret</b> tier.</p>
   <h3>Controls</h3>
   <p><b>Keyboard:</b> WASD or arrow keys to walk, Q and E (or drag with the mouse) to turn the camera, Space to cast, stop and reel (hold), Esc for the menu.</p>
   <p><b>Mouse or touch:</b> tap the ground to walk there, drag to turn the camera, tap the yellow button to cast, hold anywhere to reel.</p>
@@ -241,6 +245,12 @@ body.kbnav .btn:focus,body.kbnav .item:focus,body.kbnav .hbtn:focus,body.kbnav #
 <div class="ov" id="ovDex"><div class="panel" id="dexPanel"></div></div>
 <!-- Catch card -->
 <div class="ov clear" id="ovCard"><div class="panel" id="cardPanel"></div></div>
+<!-- Where to fish (after the Underwater Palace is open) -->
+<div class="ov" id="ovWhere"><div class="panel" style="max-width:520px;text-align:center">
+  <h2>Where do you want to fish?</h2>
+  <div class="row2"><button class="btn go" id="wOcean" data-first="1">The Ocean</button><button class="btn" id="wPalace">✨ The Underwater Palace</button></div>
+  <div class="row2"><button class="btn" id="wBack">Back</button></div>
+</div></div>
 <!-- Welcome back -->
 <div class="ov" id="ovAway"><div class="panel" style="max-width:460px;text-align:center">
   <h2>Welcome back!</h2>
@@ -299,9 +309,12 @@ const ZONES = [
   { name: 'The Abyss', short: 'Abyss', top: 1500, bottom: 5000, val: 625, fog: ['#0a0f2a', '#070a1c'], light: 0.12, lamp: 1.0, fogD: 18, dots: '#c8b0ff' },
   { name: 'The Trench', short: 'Trench', top: 5000, bottom: 11000, val: 3000, fog: ['#1a1636', '#1e1428'], light: 0.22, lamp: 1.3, fogD: 22, dots: '#e0e0ff' },
   { name: 'The Fishpocalypse Rift', short: 'The Rift', top: 11000, bottom: 20000, val: 15000, fog: ['#2a0a0c', '#4a1206'], light: 0.25, lamp: 0.8, fogD: 22, dots: '#ff9a3a' },
+  // the secret zone: only reached through the portal by the pier, after catching the Doomfin and the King Leviathan
+  { name: 'The Underwater Palace', short: 'Palace', top: 20000, bottom: 30000, val: 75000, fog: ['#3a4ab8', '#4a3aa0'], light: 0.95, lamp: 0.7, fogD: 75, dots: '#ffe8a0', secret: true },
 ];
 ZONES.forEach(z => { z.fogA = H(z.fog[0]); z.fogB = H(z.fog[1]); z.dotC = H(z.dots); });
-const OCEAN_BOTTOM = ZONES.length * ZONE_H;       // 420 units
+const NORMAL_ZONES = 7, PALACE_Z = 7;
+const OCEAN_BOTTOM = NORMAL_ZONES * ZONE_H;       // 420 units: the bottom of the Rift. The palace is below that (420 to 480).
 // depth in meters <-> how far down the 3D column (units). Inside a zone the meters grow like a log scale.
 function depthToVis(d) {
   for (let i = ZONES.length - 1; i >= 0; i--) {
@@ -314,7 +327,7 @@ function depthToVis(d) {
   return 0;
 }
 function visToDepth(v) {
-  v = clamp(v, 0, OCEAN_BOTTOM - 0.001);
+  v = clamp(v, 0, ZONES.length * ZONE_H - 0.001);
   const i = Math.floor(v / ZONE_H), f = v / ZONE_H - i, z = ZONES[i];
   return Math.exp(Math.log(1 + z.top) + f * (Math.log(1 + z.bottom) - Math.log(1 + z.top))) - 1;
 }
@@ -416,6 +429,15 @@ const SPECIES = [
   { name: 'Fire Jelly', z: 6, r: 'c', kind: 'jelly', len: 0.8, o: { c1: '#ff7a1a', c2: '#ffb84a', glow: '#ff9a3a' }, fact: "Its tentacles are as hot as a campfire. Don't touch!" },
   { name: 'Magma Turtle', z: 6, r: 'c', kind: 'turtle', len: 3, o: { c1: '#3a2a26', c2: '#5a3a30', shell: '#2a1a18', lava: '#ff7a1a', eyeC: '#ffb03a' }, fact: 'Its shell is made of cooled lava rock, and it takes naps inside volcanoes.' },
   { name: 'King Leviathan', z: 6, r: 'm', king: true, kind: 'eel', len: 50, o: { c1: '#140a0c', c2: '#c01818', stripes: '#c01818', thick: 0.075, jaws: true, bigHorns: '#3a0808', spikes: '#e01818', frills: '#e01818', eyeC: '#ff2a1a', glow: '#ff3a2a' }, fact: 'The king of all sea monsters, even bigger than the Sea Serpent. The Doomfin bows to him.' },
+  // ---- the Underwater Palace (secret zone) ----
+  { name: 'Pearl Angelfish', z: 7, r: 'c', kind: 'fish', len: 0.5, o: { c1: '#f8e8f0', c2: '#ffffff', h: 0.7, w: 0.12, fin: '#f0b8d8', spots: '#ffc8e0' }, fact: 'It polishes the pearls in the palace every morning with its fins.' },
+  { name: 'Crown Jelly', z: 7, r: 'c', kind: 'jelly', len: 0.6, o: { c1: '#ffc83f', c2: '#ffe88a', stars: '#ffffff', glow: '#fff0a0' }, fact: "A little golden jellyfish shaped like a crown. It never takes it off, not even to sleep." },
+  { name: 'Palace Turtle', z: 7, r: 'c', kind: 'turtle', len: 1.5, o: { c1: '#7ab8e8', c2: '#e8f0ff', shell: '#3a5ab8', gems: true }, fact: 'It carries letters from one end of the palace to the other. It takes a while.' },
+  { name: 'Sapphire Ray', z: 7, r: 'c', kind: 'ray', len: 2, o: { c1: '#2a5ae8', c2: '#e0e8ff', spots: '#bfe0ff' }, fact: 'Its wings sparkle like the blue tiles on the palace floor.' },
+  { name: 'Butler Eel', z: 7, r: 'c', kind: 'eel', len: 1.5, o: { c1: '#1a1a22', c2: '#f4f4f4', thick: 0.06 }, fact: 'It greets every visitor at the palace gate with a polite little bow.' },
+  { name: 'Seahorse Knight', z: 7, r: 'r', kind: 'seahorse', len: 0.6, o: { c1: '#c8d0e0', c2: '#8a9ab8' }, fact: 'A brave knight in shiny armor. It guards the palace and never falls asleep on duty.' },
+  { name: 'Coral Queen', z: 7, r: 'm', kind: 'fish', len: 6, o: { c1: '#ff7a9a', c2: '#ffd0dc', h: 0.42, w: 0.22, fin: '#ff4a7a', crown: true, wings: '#ffb0c8', dorsal: 1.4, spots: '#ffffff', glow: '#ffc0d8' }, fact: 'The ruler of the Underwater Palace. Her crown is made of living coral.' },
+  { name: 'Celestial Leviathan', z: 7, r: 'm', secret: true, kind: 'eel', len: 70, o: { c1: '#6a2ae8', c2: '#c8b8ff', grad: ['#9a3aff', '#2a7aff'], thick: 0.075, jaws: true, bigHorns: '#f0e8ff', mane: ['#e8e0ff', '#b07aff', '#7ad8ff', '#ffffff'], limbs: '#4a3ac8', tails: 6, tailGlow: '#7ff0ff', stars: '#ffffff', eyeC: '#7ff0ff', glow: '#b8d0ff' }, fact: 'A 100-meter dragon made of starlight, with a mane of horns, six legs and six tails. Almost nobody has ever seen one.' },
 ];
 const RARITY = { c: 'Common', r: 'Rare', m: 'Mythical' };
 // Every zone has 6 commons, 1 rare and 1 mythical (the Rift also has the legendary King Leviathan).
@@ -429,15 +451,19 @@ const RARITY = { c: 'Common', r: 'Rare', m: 'Mythical' };
     else if (s.r === 'r') { s.mult = 5; s.weight = 12; }
     else { s.mult = 25; s.weight = 3; }
     if (s.king) { s.mult = 50; s.weight = 1; }
+    if (s.secret) { s.mult = 100; s.weight = 1; }
     s.val = z.val * s.mult;
     // how big it looks in the game: life size for big creatures (1 unit = 1 meter), small fish a bit bigger so you can see them
     s.vis = Math.max(0.7 + s.len * 0.75, s.len);
-    s.rname = s.king ? 'Legendary' : RARITY[s.r];
+    s.rname = s.secret ? 'Secret' : s.king ? 'Legendary' : RARITY[s.r];
   });
 })();
 // the Fishdex shows each zone's creatures common first, then rare, then mythical
 const RANK = { c: 0, r: 1, m: 2 };
-function zoneSpecies(z) { return SPECIES.filter(s => s.z === z).sort((a, b) => RANK[a.r] - RANK[b.r] || !!a.king - !!b.king || a.id - b.id); }
+function zoneSpecies(z) { return SPECIES.filter(s => s.z === z).sort((a, b) => RANK[a.r] - RANK[b.r] || !!(a.king || a.secret) - !!(b.king || b.secret) || a.id - b.id); }
+// the Underwater Palace opens once you've caught both the Doomfin and the King Leviathan
+const DOOMFIN_ID = SPECIES.findIndex(s => s.name === 'Doomfin'), KING_ID = SPECIES.findIndex(s => s.king);
+const palaceOpen = () => !!(save.dex[DOOMFIN_ID] && save.dex[KING_ID]);
 function pickSpecies(z) {
   const b = BAITS[save.bait];
   const list = SPECIES.filter(s => s.z === z);
@@ -1052,7 +1078,9 @@ function buildShark(g, o) {
 function buildEel(g, o) {
   const c1 = H(o.c1), c2 = H(o.c2), th = o.thick || 0.06, N = 16;
   const st = o.stripes ? H(o.stripes) : null;
+  const gA = o.grad ? H(o.grad[0]) : null, gB = o.grad ? H(o.grad[1]) : null;
   const col = st ? (nx, ny, nz, x) => (ny < -0.35 ? c2 : Math.sin(x * 70) > 0.55 ? st : c1)
+    : gA ? (nx, ny, nz, x) => mixc(mixc(gA, gB, clamp((0.45 - x) / 0.95, 0, 1)), c2, smooth(clamp((-ny - 0.2) / 0.5, 0, 1)))   // purple at the head, blue at the tail
     : (nx, ny) => mixc(c1, c2, smooth(clamp((-ny) / 0.5, 0, 1)));
   for (let i = 0; i <= N; i++) {
     const u = i / N, x = 0.44 - u * 0.94, r = th * (1 - u * 0.75);
@@ -1077,6 +1105,44 @@ function buildEel(g, o) {
     }
     for (const s of [-1, 1]) eyeAt(g, 0.45, th * 0.85, s * th * 0.72, Math.max(0.014, th * 0.34), s, eyeC, !!(o.glow || o.eyeC));
   } else for (const s of [-1, 1]) eyeAt(g, 0.52, th * 0.45, s * th * 0.75, Math.max(0.014, th * 0.32), s, eyeC, !!(o.glow || o.eyeC));
+  if (o.mane) {
+    // a mane of horns all the way around the head, like a lion's
+    const mc = o.mane.map(H);
+    for (let ring = 0; ring < 2; ring++) for (let i = 0; i < 18; i++) {
+      const a = (i + ring * 0.5) / 18 * TAU, ca = Math.cos(a), sa = Math.sin(a), x0 = 0.4 - ring * 0.05, L = th * (3.4 - ring * 0.9);
+      chain(g, [[x0, ca * th * 0.9, sa * th * 0.9], [x0 - 0.04, ca * L * 0.65, sa * L * 0.65], [x0 - 0.1 - ring * 0.02, ca * L, sa * L]], th * 0.3, 0.003, 5, mc[(i + ring) % mc.length]);
+    }
+  }
+  if (o.limbs) {
+    // three pairs of legs with white claws
+    const lc = H(o.limbs);
+    for (const u of [0.16, 0.4, 0.64]) {
+      const x = 0.44 - u * 0.94, r = th * (1 - u * 0.75);
+      for (const sd of [-1, 1]) {
+        const hip = [x, -r * 0.2, sd * r * 0.7], knee = [x + 0.03, -r * 1.5, sd * r * 2.1], foot = [x + 0.06, -r * 2.7, sd * r * 2.3];
+        chain(g, [hip, knee, foot], r * 0.45, r * 0.28, 6, lc);
+        for (const k of [-1, 0, 1]) cone(g, foot, [foot[0] + 0.035, foot[1] - r * 0.25, foot[2] + k * r * 0.4], r * 0.12, 4, WHITE);
+      }
+    }
+  }
+  if (o.tails) {
+    // a bunch of tails fanning out, with glowing tips
+    const tc = H(o.tailGlow || o.c2), base = gB || c1;
+    for (let k = 0; k < o.tails; k++) {
+      const a = k / o.tails * TAU + 0.3, ca = Math.cos(a), sa = Math.sin(a);
+      const pts = [[-0.46, 0, 0], [-0.56, ca * 0.03, sa * 0.03], [-0.67, ca * 0.07, sa * 0.075], [-0.8, ca * 0.095, sa * 0.1]];
+      chain(g, pts, th * 0.3, 0.008, 6, base, -1, tc);
+      ell(g, pts[3][0], pts[3][1], pts[3][2], 0.016, 0.016, 0.016, tc, 1, 1);
+    }
+  }
+  if (o.stars) {
+    // little glowing stars along its back
+    const scol = H(o.stars), rr = mulberry32(31);
+    for (let i = 0; i < 46; i++) {
+      const u = rr() * 0.95, x = 0.44 - u * 0.94, r = th * (1 - u * 0.75), a = (rr() - 0.5) * 2.4;
+      ell(g, x, Math.cos(a) * r * 1.01, Math.sin(a) * r * 0.87, th * 0.08, th * 0.08, th * 0.08, scol, 1, 0);
+    }
+  }
   if (o.bigHorns) {
     const hc = H(o.bigHorns);
     for (const s of [-1, 1]) {
@@ -1382,7 +1448,7 @@ function sandH(x, z) {
   if (z < sz) h -= (sz - z) * 0.22;
   if (z > 28) h += (z - 28) * 0.14;
   if (x < -60) h += (-60 - x) * 0.18;
-  if (x > 50) h += (x - 50) * 0.18;
+  if (x > 120) h += (x - 120) * 0.18;
   return Math.max(h, -5);
 }
 function onPier(x, z) {
@@ -1414,7 +1480,7 @@ let beachMesh = null, glassMesh = null, waterVao = null;
 function buildBeach() {
   const g = new Geo(200000), rng = mulberry32(42);
   // sand
-  const S = 2, X0 = -90, X1 = 70, Z0 = -90, Z1 = 70;
+  const S = 2, X0 = -90, X1 = 140, Z0 = -90, Z1 = 70;
   const dry = H('#ecd8a0'), wet = H('#c8b080'), deep = H('#9a9a78'), grass = H('#9abf5a');
   const colAt = (x, y, z) => {
     let c = y > 0.35 ? dry : y > -0.1 ? mixc(wet, dry, (y + 0.1) / 0.45) : mixc(deep, wet, clamp(1 + y / 3, 0, 1));
@@ -1507,11 +1573,11 @@ function buildBeach() {
   box(g, cx0, cy0, cz0, 2.4, 0.8, 2.4, sc);
   for (const [dx, dz] of [[-1.1, -1.1], [1.1, -1.1], [-1.1, 1.1], [1.1, 1.1]]) { tube(g, [cx0 + dx, cy0, cz0 + dz], [cx0 + dx, cy0 + 1.3, cz0 + dz], 0.35, 0.3, 8, sc, true); cone(g, [cx0 + dx, cy0 + 1.3, cz0 + dz], [cx0 + dx, cy0 + 1.9, cz0 + dz], 0.38, 8, sc); }
   // the lighthouse on its rock
-  blob(g, 46, -1, -64, 8, 4, 7, H('#7a7a82'), rng, 0.3, -1);
-  for (let i = 0; i < 6; i++) tube(g, [46, 2 + i * 2.2, -64], [46, 4.2 + i * 2.2, -64], 1.6 - i * 0.1, 1.5 - i * 0.1, 14, i % 2 ? H('#e8352f') : WHITE, false);
-  tube(g, [46, 15.2, -64], [46, 15.5, -64], 1.6, 1.6, 14, H('#2a2a3a'), false);
-  ell(g, 46, 16.4, -64, 0.9, 0.9, 0.9, H('#fff3a0'), 1, 1);
-  cone(g, [46, 17.2, -64], [46, 19, -64], 1.4, 14, H('#e8352f'));
+  blob(g, -72, -1, -58, 8, 4, 7, H('#7a7a82'), rng, 0.3, -1);
+  for (let i = 0; i < 6; i++) tube(g, [-72, 2 + i * 2.2, -58], [-72, 4.2 + i * 2.2, -58], 1.6 - i * 0.1, 1.5 - i * 0.1, 14, i % 2 ? H('#e8352f') : WHITE, false);
+  tube(g, [-72, 15.2, -58], [-72, 15.5, -58], 1.6, 1.6, 14, H('#2a2a3a'), false);
+  ell(g, -72, 16.4, -58, 0.9, 0.9, 0.9, H('#fff3a0'), 1, 1);
+  cone(g, [-72, 17.2, -58], [-72, 19, -58], 1.4, 14, H('#e8352f'));
   // islands far away
   for (const [x, z, r] of [[-120, -200, 30], [90, -240, 40], [-30, -300, 50], [200, -120, 30]]) { blob(g, x, -2, z, r, r * 0.25, r * 0.7, H('#6a9a5a'), rng, 0.3, -1, -1.5); blob(g, x, -2, z, r * 1.08, r * 0.08, r * 0.76, H('#e8d8a0'), rng, 0.1, -1, -1.5); }
 
@@ -1652,6 +1718,85 @@ function buildOcean() {
 }
 
 /* =====================================================================
+   The Underwater Palace (secret zone, y -420 to -480) and the portal
+   to it by the pier. Marble floor, columns, gold domes, towers and
+   glowing lanterns. The hook stops in the great hall in front of it.
+   ===================================================================== */
+const PORTAL = [12, -82];
+let palaceMesh = null, portalMesh = null;
+function buildPalace() {
+  const g = new Geo(300000), rng = mulberry32(777), Y = -490;
+  const m1 = H('#eef0fc'), m2 = H('#b8c4f0'), gold = H('#ffd23f'), wall = H('#dfe2fa'), wall2 = H('#c8ccf4'), roof = H('#7a4ae8'), roof2 = H('#3a6ae8'), glow = H('#9fe8ff'), win = H('#ffe8a0');
+  // checkered marble floor
+  for (let x = -150; x < 150; x += 6) for (let z = -130; z < 70; z += 6) {
+    const c = (Math.round(x / 6) + Math.round(z / 6)) % 2 ? m1 : m2;
+    tri(g, [x, Y, z], [x, Y, z + 6], [x + 6, Y, z + 6], [0, 1, 0], -1, c, c, c, 0, 0, 0);
+    tri(g, [x, Y, z], [x + 6, Y, z + 6], [x + 6, Y, z], [0, 1, 0], -1, c, c, c, 0, 0, 0);
+  }
+  // a building with a row of columns, glowing windows and a gold roof edge
+  const hall = (cx, cz, w, h, d, k) => {
+    box(g, cx, Y, cz, w, h, d, k ? wall2 : wall);
+    box(g, cx, Y + h, cz, w + 1.2, 1.2, d + 1.2, gold);
+    for (let i = 0; i < Math.floor(w / 7); i++) {
+      const x = cx - w / 2 + 3.5 + i * 7;
+      for (let r = 0; r < Math.floor((h - 4) / 7); r++) box(g, x, Y + 4 + r * 7, cz + d / 2 + 0.05, 2.2, 3.6, 0.2, win, 1);
+      tube(g, [x, Y, cz + d / 2 + 2], [x, Y + h, cz + d / 2 + 2], 0.9, 0.9, 10, m1, false);
+      box(g, x, Y + h - 1, cz + d / 2 + 2, 2.6, 1, 2.6, gold);
+    }
+  };
+  hall(0, -48, 70, 30, 18, 0);
+  hall(-80, -60, 50, 22, 18, 1);
+  hall(80, -60, 50, 22, 18, 1);
+  // the great dome and its golden spire
+  ell(g, 0, Y + 31, -48, 15, 15, 15, roof, -1, 2, Y + 31);
+  tube(g, [0, Y + 31, -48], [0, Y + 33, -48], 15.5, 15.5, 24, gold, false);
+  cone(g, [0, Y + 45, -48], [0, Y + 58, -48], 1.4, 8, gold);
+  ell(g, 0, Y + 46, -48, 2, 2, 2, gold, -1, 1);
+  // the grand door with steps
+  box(g, 0, Y, -38.9, 10, 16, 0.4, H('#2a1a5a'));
+  box(g, 0, Y + 16, -38.7, 12, 1.4, 0.6, gold);
+  for (let i = 0; i < 4; i++) box(g, 0, Y + i * 0.6, -36 + i * -0.8, 22 - i * 2, 0.6, 3, m1);
+  // towers with pointed roofs
+  for (const [x, z, r, h] of [[-40, -46, 5, 44], [40, -46, 5, 44], [-110, -58, 4, 34], [110, -58, 4, 34], [-55, -30, 3, 26], [55, -30, 3, 26]]) {
+    tube(g, [x, Y, z], [x, Y + h, z], r, r, 16, wall, false);
+    for (let k = 1; k < 4; k++) box(g, x, Y + h * k / 4, z + r - 0.1, 1.6, 3, 0.6, win, 1);
+    tube(g, [x, Y + h, z], [x, Y + h + 1, z], r + 0.8, r + 0.8, 16, gold, false);
+    cone(g, [x, Y + h + 1, z], [x, Y + h + 1 + r * 2.6, z], r + 0.6, 16, x % 2 ? roof2 : roof);
+    ell(g, x, Y + h + 1.4 + r * 2.6, z, 0.8, 0.8, 0.8, gold, -1, 1);
+  }
+  // two rows of columns leading up to the palace, with glowing lanterns between them
+  for (let z = -30; z <= 40; z += 10) for (const sd of [-1, 1]) {
+    const x = sd * 22;
+    tube(g, [x, Y, z], [x, Y + 22, z], 1.3, 1.3, 12, m1, false);
+    box(g, x, Y, z, 3.4, 1.2, 3.4, m2); box(g, x, Y + 21, z, 3.4, 1.4, 3.4, gold);
+    const lx = sd * 12;
+    tube(g, [lx, Y, z + 5], [lx, Y + 6, z + 5], 0.25, 0.25, 6, gold, false);
+    ell(g, lx, Y + 6.8, z + 5, 0.9, 1.1, 0.9, glow, 1, 1);
+  }
+  // corals, sea plants, treasure chests and piles of gold around the courtyard
+  for (let i = 0; i < 220; i++) {
+    const x = (rng() - 0.5) * 280, z = -125 + rng() * 190;
+    if (Math.abs(x) < 28 && z > -40) continue;
+    if (Math.abs(x) < 95 && z < -36 && z > -72) continue;
+    const r = rng();
+    if (r < 0.45) { const cc = [H('#ff6a8a'), H('#ffb84a'), H('#b86aff'), H('#4ae0c0'), H('#7ab8ff')][i % 5]; for (let k = 0; k < 5; k++) chain(g, [[x, Y, z], [x + (rng() - 0.5) * 1.5, Y + 1.5, z + (rng() - 0.5) * 1.5], [x + (rng() - 0.5) * 3, Y + 3 + rng() * 2, z + (rng() - 0.5) * 3]], 0.35, 0.12, 6, cc); }
+    else if (r < 0.75) for (let k = 0; k < 3; k++) chain(g, [[x + k * 0.5, Y, z], [x + k * 0.5 + 0.5, Y + 4, z + 0.3], [x + k * 0.5 - 0.4, Y + 8 + rng() * 6, z - 0.3]], 0.25, 0.08, 5, shade(H('#3faa7a'), 0.8 + rng() * 0.4));
+    else if (r < 0.88) { box(g, x, Y, z, 2.4, 1.4, 1.6, H('#8a5a2a')); box(g, x, Y + 1.4, z, 2.5, 0.6, 1.7, H('#6a4020')); ell(g, x, Y + 1.9, z, 0.8, 0.4, 0.6, gold, 1, 1); }
+    else for (let k = 0; k < 8; k++) ell(g, x + (rng() - 0.5) * 2, Y + 0.2 + k * 0.08, z + (rng() - 0.5) * 2, 0.35, 0.1, 0.35, gold, -1, 0);
+  }
+  // glowing crystals near the hall
+  for (let i = 0; i < 30; i++) { const x = (rng() - 0.5) * 120, z = -30 - rng() * 10; if (Math.abs(x) < 8) continue; cone(g, [x, Y, z], [x + (rng() - 0.5) * 2, Y + 3 + rng() * 5, z + (rng() - 0.5) * 2], 0.6 + rng() * 0.6, 5, [H('#bfa8ff'), H('#9fe8ff'), H('#ffb8f0')][i % 3], 1); }
+  palaceMesh = makeMesh(g);
+
+  // the portal: a swirling ring of glowing purple and blue lights on the water
+  const p = new Geo(4096), pc = [H('#b07aff'), H('#7ad8ff'), H('#ffffff')];
+  for (let i = 0; i < 24; i++) { const a = i / 24 * TAU, r = 3.2 + (i % 2) * 0.4; ell(p, Math.cos(a) * r, 0, Math.sin(a) * r, 0.45, 0.25, 0.45, pc[i % 3], 1, 1); }
+  for (let i = 0; i < 24; i++) { const a = i / 24 * TAU, b = (i + 1) / 24 * TAU, c1 = H('#4a2ab8'), c2 = H('#9a7aff'); tri(p, [0, 0, 0], [Math.cos(b) * 3.2, 0, -Math.sin(b) * 3.2], [Math.cos(a) * 3.2, 0, -Math.sin(a) * 3.2], [0, 1, 0], 1, c2, c1, c1, 0, 0, 0); }
+  for (let k = 0; k < 3; k++) { const a = k / 3 * TAU; chain(p, [[0, 0.05, 0], [Math.cos(a) * 1.2, 0.05, Math.sin(a) * 1.2], [Math.cos(a + 0.9) * 2.2, 0.05, Math.sin(a + 0.9) * 2.2], [Math.cos(a + 1.6) * 3, 0.05, Math.sin(a + 1.6) * 3]], 0.12, 0.06, 4, H('#e8e0ff'), 1); }
+  portalMesh = makeMesh(p);
+}
+
+/* =====================================================================
    The Aquarium: a glass tunnel you walk through. It gets longer the more
    fish you have, so there's always room.
    ===================================================================== */
@@ -1756,7 +1901,7 @@ function spotHere() {
 function doSpot(s) {
   if (s === 'aquarium') enterAquarium();
   else if (s === 'shop') openShop();
-  else if (s === 'cast') startCast();
+  else if (s === 'cast') { if (palaceOpen()) openOv('ovWhere'); else startCast(false); }
 }
 function moveInput() {
   let mx = 0, my = 0;
@@ -1820,11 +1965,12 @@ function beachTap(sx, sy) {
 }
 
 /* ---------- casting ---------- */
-function startCast() {
+function startCast(palace) {
   player.path = []; player.pending = null;
   player.x = clamp(player.x, -3, 3); player.z = Math.min(player.z, PIER.z1 - 2);
   player.yaw = Math.PI / 2;
-  castAnim = { t: 0, from: null, land: [player.x + rand(-1.5, 1.5), 0, player.z - 15], splashed: false, bob: null };
+  // the palace portal is in the water just past the end of the pier
+  castAnim = { t: 0, from: null, land: palace ? [PORTAL[0], 0, PORTAL[1]] : [player.x + rand(-1.5, 1.5), 0, player.z - 15], splashed: false, bob: null, palace: !!palace };
   sfx.cast();
 }
 function armAngle(t) { return t < 0.35 ? lerp(0.6, 2.3, smooth(t / 0.35)) : t < 0.5 ? lerp(2.3, 0.15, (t - 0.35) / 0.15) : 0.15; }
@@ -1842,7 +1988,7 @@ function updateCast(dt) {
       c.bob = [c.land[0], -Math.min(0.6, (c.t - 1.35) * 0.5), c.land[2]];
     }
   }
-  if (c.t > 1.9 && !fadeDir) fadeTo(() => { castAnim = null; beginOcean(); });
+  if (c.t > 1.9 && !fadeDir) fadeTo(() => { const p = c.palace; castAnim = null; beginOcean(p); });
 }
 function rodTip() { return xform(armMatrix(player), ROD_TIP); }
 const _m = new Float32Array(16), _m2 = new Float32Array(16);
@@ -1861,13 +2007,15 @@ const dropMesh = (() => { const g = new Geo(256); ell(g, 0, 0, 0, 1, 1, 1, [0.85
 /* =====================================================================
    Sinking, the bite, reeling in, and coming back up
    ===================================================================== */
-function beginOcean() {
+function beginOcean(palace) {
   scene = 'ocean';
   buildHookMesh();
-  const maxVis = depthToVis(HOOKS[save.hook].depth) - 0.04 * ZONE_H;
-  ocean = { phase: 'sink', vis: 0, maxVis, t: 0, zone: -1, amb: [], ambT: 0.3, sp: -1, size: 1, biter: null, p: 0, tension: 0, thrash: false, thrashT: 0, slip: 0, riseT: 0, v0: 0, wait: 0, tick: 0, camY: 0, S: 1 };
+  // through the portal, the hook starts at the top of the palace and stops halfway down its great hall
+  const top = palace ? PALACE_Z * ZONE_H : 0;
+  const maxVis = palace ? top + ZONE_H * 0.66 : depthToVis(HOOKS[save.hook].depth) - 0.04 * ZONE_H;
+  ocean = { phase: 'sink', vis: top, top, palace: !!palace, maxVis, t: 0, zone: -1, amb: [], ambT: 0.3, sp: -1, size: 1, biter: null, p: 0, tension: 0, thrash: false, thrashT: 0, slip: 0, riseT: 0, v0: 0, wait: 0, tick: 0, camY: 0, S: 1 };
   buildGauge();
-  camPos[0] = 2.5; camPos[1] = 1; camPos[2] = 8;
+  camPos[0] = 2.5; camPos[1] = 1 - top; camPos[2] = 8;
   fadeFrom();
   setMusic('deep');
 }
@@ -1903,8 +2051,9 @@ function updateOcean(dt) {
     updateFight(dt);
   } else if (o.phase === 'rise') {
     o.riseT += dt;
-    const u = clamp(o.riseT / 2.4, 0, 1);
-    o.vis = o.v0 * (1 - smooth(u));
+    // the Celestial Leviathan is so heavy it comes up slowly
+    const u = clamp(o.riseT / (SPECIES[o.sp].secret ? 5 : 2.4), 0, 1);
+    o.vis = lerp(o.v0, o.top, smooth(u));
     if (u >= 1 && !fadeDir) { sfx.splash(); fadeTo(finishCatch); }
   }
   // which zone are we in?
@@ -1924,12 +2073,13 @@ function updateOcean(dt) {
   }
   for (let i = o.amb.length - 1; i >= 0; i--) { const a = o.amb[i]; a.x += a.vx * dt; a.ph += dt; if (Math.abs(a.x) > 26 || Math.abs(a.y + o.vis) > 30) o.amb.splice(i, 1); }
 }
-function thrashGap() { const r = SPECIES[ocean.sp].r; return r === 'm' ? rand(1.1, 2.1) : r === 'r' ? rand(1.5, 2.8) : rand(2.0, 3.6); }
+function thrashGap() { const r = SPECIES[ocean.sp].r; if (SPECIES[ocean.sp].secret) return rand(0.9, 1.6); return r === 'm' ? rand(1.1, 2.1) : r === 'r' ? rand(1.5, 2.8) : rand(2.0, 3.6); }
 function reelHeld() { return !!(keys.Space || keys.Enter || keys.KeyE || pad.a || pad.rt || pointerHeld); }
 function updateFight(dt) {
   const o = ocean, sp = SPECIES[o.sp];
   const rf = sp.r === 'm' ? 0.6 : sp.r === 'r' ? 0.8 : 1;
-  const base = 0.30 / (1 + sp.z * 0.12) * rf * REELS[save.reel].speed;
+  // the Celestial Leviathan is much, much harder to reel in
+  const base = 0.30 / (1 + Math.min(sp.z, 6) * 0.12) * rf * REELS[save.reel].speed * (sp.secret ? 0.3 : 1);
   o.thrashT -= dt;
   if (o.thrash) { if (o.thrashT <= 0) { o.thrash = false; o.thrashT = thrashGap(); } }
   else if (o.thrashT <= 0) { o.thrash = true; o.thrashT = rand(0.8, 1.3); sfx.thrash(); rumble(0.3, 0.6, 200); }
@@ -1939,7 +2089,7 @@ function updateFight(dt) {
     o.tension += (o.thrash ? 0.95 : -0.35) * dt;
     o.tick -= dt; if (o.tick <= 0) { o.tick = 0.08; sfx.reel(); }
   } else {
-    o.p -= (o.thrash ? 0.05 : 0.015) * dt;
+    o.p -= (o.thrash ? (sp.secret ? 0.01 : 0.05) : 0.015) * dt;   // the Celestial Leviathan pulls back less, so even the Old Reel can land it (slowly)
     o.tension -= 0.7 * dt;
   }
   o.tension = clamp(o.tension, 0, 1);
@@ -1953,7 +2103,7 @@ function updateFight(dt) {
 }
 function finishCatch() {
   const o = ocean, sp = SPECIES[o.sp], size = o.size;
-  const isNew = !save.dex[sp.id];
+  const isNew = !save.dex[sp.id], wasOpen = palaceOpen();
   save.fish.push([sp.id, size]);
   save.dex[sp.id] = (save.dex[sp.id] || 0) + 1;
   save.total++;
@@ -1965,14 +2115,16 @@ function finishCatch() {
   catchShow = { sp: sp.id, size, isNew, bonus, depth: visToDepth(o.v0), t: 0, S, beached: S > BEACHED_MIN };
   ocean = null;
   scene = 'catch';
-  if (catchShow.beached) { player.x = BEACH_SHOT.x; player.z = BEACH_SHOT.z - 0.7; player.y = sandH(player.x, player.z); player.yaw = Math.PI / 2; player.arm = 1.5; snapBeachedCam(); }
+  if (catchShow.beached) { player.x = BEACH_SHOT.x; player.z = BEACH_SHOT.z - (S > 12 ? 5.5 : 0.7);   /* in front of giants so you can still see the kid */ player.y = sandH(player.x, player.z); player.yaw = Math.PI / 2; player.arm = 1.5; snapBeachedCam(); }
   else { player.x = 0; player.z = -70; player.y = PIER.deck; player.yaw = Math.PI / 2; player.arm = 1.1; }
   fadeFrom();
   setMusic('beach');
+  if (!wasOpen && palaceOpen()) catchShow.unlocked = true;
   showCard();
   if (sp.r === 'm') sfx.myth(); else sfx.caught();
 }
 function endCatch(goAquarium) {
+  if (catchShow && catchShow.unlocked) setTimeout(() => toast('The Underwater Palace is open! Cast from the end of the pier to go there.', 6), 600);
   const beached = catchShow && catchShow.beached;
   if (beached && !goAquarium) {
     // walk back out to the end of the pier, ready for the next cast
@@ -2011,7 +2163,7 @@ function beachedCamera(c) {
   // the catch card covers the bottom half of the screen, so the picture goes in the top half
   const D = Math.max(6, (w / 2) / tanH * (1.1 + Math.min(0.2, S / 160)), h / (tanV * 0.85));
   const gy = sandH(cx, BEACH_SHOT.z);
-  return { eye: [cx + D * 0.2, gy + 1 + D * 0.25, BEACH_SHOT.z - D], look: [cx, gy - 0.4 - (cam.aspect < 0.8 ? D * 0.12 : 0), BEACH_SHOT.z] };
+  return { eye: [cx - D * (S > 30 ? 0.15 : -0.2), gy + 1 + D * 0.25, BEACH_SHOT.z - D], look: [cx, gy - 0.4 - (cam.aspect < 0.8 ? D * 0.12 : 0), BEACH_SHOT.z] };
 }
 function snapBeachedCam() { const k = beachedCamera(catchShow); for (let i = 0; i < 3; i++) { camPos[i] = k.eye[i]; camLook[i] = k.look[i]; } }
 
@@ -2276,6 +2428,11 @@ function renderBeach(dt) {
   // signs
   addLabel('Aquarium', [-13.1, 4.6, 0], 'sign');
   addLabel('Tackle Shop', [14.8, 3.6, 0], 'sign');
+  if (palaceOpen()) {
+    draw(portalMesh, mTRS(_fm, PORTAL[0], 0.08, PORTAL[1], T * 0.8, 0, 0, 1 + Math.sin(T * 2) * 0.05));
+    draw(portalMesh, mTRS(_fm, PORTAL[0], 0.1, PORTAL[1], -T * 1.3, 0, 0, 0.6));
+    if (scene === 'beach' && !castAnim) addLabel('✨ Underwater Palace', [PORTAL[0], 5.5 + Math.sin(T * 2.5) * 0.2, PORTAL[1]], 'sign');
+  }
   if (scene === 'beach' && !castAnim) addLabel('Fish here ▼', [0, 4.2 + Math.sin(T * 3) * 0.25, -71], 'sign');
 }
 function renderOcean(dt) {
@@ -2291,15 +2448,15 @@ function renderOcean(dt) {
   if (horiz) speciesMesh(sp.id);
   const hcx = horiz ? hx + HOOK_MOUTH[0] - (sp.bb[3] - (sp.bb[0] + sp.bb[3]) / 2) * S : 0;
   const look = horiz && fighting ? [hcx, hy - 0.6 - S * 0.06, 0] : [hx * 0.5, hy - (fighting ? 0.4 + S * 0.5 : 0.5), 0];
-  const back = fighting ? (horiz ? 5 + S * 0.78 : 3.8 + Math.min(S, 8) * 1.7 + Math.max(0, S - 8) * 1.25) : o.phase === 'approach' ? 6.5 + S : 6;
+  const back = fighting ? (horiz ? 5 + S * (sp.bb[3] - sp.bb[0]) * 0.62 : 3.8 + Math.min(S, 8) * 1.7 + Math.max(0, S - 8) * 1.25) : o.phase === 'approach' ? 6.5 + S : 6;
   // life-size monsters are far from the camera, so push the fog back to keep them in sight
   if (o.phase !== 'sink') env.fogD = Math.max(env.fogD, back * 1.4);
   const bigGlow = S > 4 ? clamp((S - 4) / 10, 0, 1) * 0.35 : 0;
   smoothCam([look[0] + 2.2, look[1] + 1 + (o.phase === 'sink' ? 1.5 : 0), back], look, dt, o.phase === 'rise' || o.phase === 'sink' ? 30 : 5);
   drawSky();
   useMain();
-  draw(oceanMesh);
-  draw(kelpMesh, null, { wig: [0.5, 0.25, T * 0.8, 1] });
+  if (o.palace) draw(palaceMesh);
+  else { draw(oceanMesh); draw(kelpMesh, null, { wig: [0.5, 0.25, T * 0.8, 1] }); }
   const base = Math.floor(-camPos[1] / 30) * 30;
   for (let k = -1; k <= 1; k++) draw(dotsMesh, mTRS(_fm, 0, -(base + k * 30), 0, 0, 0, 0, 1), { tint: ZONES[zoneAtVis(o.vis)].dotC });
   // fish swimming by
@@ -2395,7 +2552,8 @@ function thumb(id, sil) {
   useMain();
   if (sil) gl.uniform4f(U.uFlat, 0.2, 0.25, 0.55, 1);
   const sp = SPECIES[id];
-  draw(speciesMesh(id), mTRS(_fm, sp.kind === 'eel' ? -0.08 : sp.kind === 'ray' ? 0.08 : 0, 0, 0, -0.35, 0, sp.kind === 'ray' ? 0.9 : 0, sp.kind === 'eel' ? 0.9 : sp.kind === 'ray' ? 0.85 : 1), { wig: null, emit: sp.r === 'm' ? 0.2 : 0 });
+  const tm = speciesMesh(id), tl = sp.bb[3] - sp.bb[0], long = tl > 1.25, ts = long ? 1.15 / tl : 1;
+  draw(tm, mTRS(_fm, long ? -(sp.bb[0] + sp.bb[3]) / 2 * ts : sp.kind === 'eel' ? -0.08 : sp.kind === 'ray' ? 0.08 : 0, long ? -(sp.bb[1] + sp.bb[4]) / 2 * ts : 0, 0, -0.35, 0, sp.kind === 'ray' ? 0.9 : 0, long ? ts : sp.kind === 'eel' ? 0.9 : sp.kind === 'ray' ? 0.85 : 1), { wig: null, emit: sp.r === 'm' ? 0.2 : 0 });
   gl.uniform4f(U.uFlat, 0, 0, 0, 0);
   const px = new Uint8Array(TW * THh * 4);
   gl.readPixels(0, 0, TW, THh, gl.RGBA, gl.UNSIGNED_BYTE, px);
@@ -2679,6 +2837,9 @@ function syncToggles() {
 function toggleMusic() { save.music = !save.music; if (musicBus) musicBus.gain.setTargetAtTime(save.music ? 0.32 : 0, actx.currentTime, 0.1); syncToggles(); saveGame(); }
 function toggleSfx() { save.sfx = !save.sfx; if (sfxBus) sfxBus.gain.setTargetAtTime(save.sfx ? 1 : 0, actx.currentTime, 0.05); syncToggles(); saveGame(); sfx.click(); }
 $('tPlay').onclick = () => { initAudio(); startPlaying(); };
+$('wOcean').onclick = () => { closeOv(); startCast(false); };
+$('wPalace').onclick = () => { closeOv(); startCast(true); };
+$('wBack').onclick = () => closeOv();
 $('tHow').onclick = () => openOv('ovHow');
 $('pHow').onclick = () => openOv('ovHow');
 $('hBack').onclick = () => closeOv();
@@ -2750,11 +2911,12 @@ function renderDex() {
   const found = Object.keys(save.dex).length;
   let h = `<h2>Fishdex</h2><p>You've found <b style="color:var(--sun)">${found} of ${SPECIES.length}</b> creatures and caught <b>${fmt(save.total)}</b> fish in all.</p>`;
   ZONES.forEach((z, zi) => {
-    const reach = zi <= save.hook;
-    h += `<div class="zrow"><h3>${esc(z.name)} <small>${fmt(z.top)}–${fmt(z.bottom)} m${reach ? '' : ` · needs the ${esc(HOOKS[zi].name)}`}</small></h3><div class="tiles">`;
+    if (z.secret && !palaceOpen()) { h += '<div class="zrow"><h3>??? <small>A secret place… catch the Doomfin and the King Leviathan to find it</small></h3></div>'; return; }
+    const reach = z.secret || zi <= save.hook;
+    h += `<div class="zrow"><h3>${esc(z.name)} <small>${z.secret ? 'secret zone · through the portal by the pier' : `${fmt(z.top)}–${fmt(z.bottom)} m`}${reach ? '' : ` · needs the ${esc(HOOKS[zi].name)}`}</small></h3><div class="tiles">`;
     for (const sp of zoneSpecies(zi)) {
       const n = save.dex[sp.id] || 0;
-      h += `<div class="tile ${sp.r === 'c' ? '' : sp.r}"><img alt="" src="${thumb(sp.id, !n)}"><div>${n ? esc(sp.name) : '???'}</div><div class="k">${sp.rname}${n ? ` · ×${fmt(n)}` : ''}</div></div>`;
+      h += `<div class="tile ${sp.r === 'c' ? '' : sp.r}${sp.secret ? ' s' : ''}"><img alt="" src="${thumb(sp.id, !n)}"><div>${n ? esc(sp.name) : '???'}</div><div class="k">${sp.rname}${n ? ` · ×${fmt(n)}` : ''}</div></div>`;
     }
     h += '</div></div>';
   });
@@ -2766,12 +2928,12 @@ function renderDex() {
 /* ---------- the catch card ---------- */
 function showCard() {
   const c = catchShow, sp = SPECIES[c.sp], v = sp.val * c.size;
-  const badges = (c.isNew ? '<span class="badge new">NEW!</span>' : '') + `<span class="badge ${sp.r === 'c' ? '' : sp.r}">${sp.r === 'm' ? sp.rname.toUpperCase() + '!' : sp.rname}</span>` + (c.size >= 1.15 ? '<span class="badge">Big one!</span>' : '');
+  const badges = (c.isNew ? '<span class="badge new">NEW!</span>' : '') + `<span class="badge ${sp.r === 'c' ? '' : sp.r}">${sp.r === 'm' ? sp.rname.toUpperCase() + '!' : sp.rname}</span>`.replace('class="badge m"', sp.secret ? 'class="badge m s"' : 'class="badge m"') + (c.size >= 1.15 ? '<span class="badge">Big one!</span>' : '');
   $('cardPanel').className = 'panel ' + (sp.r === 'c' ? '' : sp.r);
   $('cardPanel').innerHTML = `<div>${badges}</div><h2>${sp.r === 'm' ? '✨ ' : ''}${esc(sp.name)}${sp.r === 'm' ? ' ✨' : ''}</h2>
     <p>From ${esc(ZONES[sp.z].name)}, ${fmt(c.depth)} m down</p>
     <div class="earn">+${fmtRate(v)} coins every second · +${fmt(c.bonus)} coins now</div>
-    <p class="fact">${esc(sp.fact)}</p>
+    <p class="fact">${esc(sp.fact)}</p>${c.unlocked ? '<p class="unlock">🔓 You unlocked a secret place: <b>the Underwater Palace</b>! Cast from the end of the pier to go there.</p>' : ''}
     <div class="row2"><button class="btn go" id="cKeep" data-first="1">Keep fishing</button><button class="btn" id="cAq">See it in the Aquarium</button></div>`;
   $('cKeep').onclick = () => { closeOv(); endCatch(false); };
   $('cAq').onclick = () => { closeOv(); endCatch(true); };
@@ -2779,14 +2941,16 @@ function showCard() {
 }
 
 /* ---------- the ocean HUD ---------- */
+function gaugeY(v) { return ocean.palace ? (v - ocean.top) / ZONE_H * 100 : v / OCEAN_BOTTOM * 100; }
 function buildGauge() {
   let h = '';
-  ZONES.forEach((z, i) => {
-    const lock = i > save.hook ? ' locked' : '';
-    h += `<div class="seg${lock}" style="top:${i / ZONES.length * 100}%;height:${100 / ZONES.length}%;background:${z.fog[1]}"></div>`;
-    h += `<div class="nm${lock}" style="top:${(i + 0.5) / ZONES.length * 100}%">${esc(z.short)}</div>`;
+  const list = ocean.palace ? [PALACE_Z] : ZONES.map((z, i) => i).filter(i => i < NORMAL_ZONES), n = list.length;
+  list.forEach((i, k) => {
+    const z = ZONES[i], lock = !ocean.palace && i > save.hook ? ' locked' : '';
+    h += `<div class="seg${lock}" style="top:${k / n * 100}%;height:${100 / n}%;background:${z.fog[1]}"></div>`;
+    h += `<div class="nm${lock}" style="top:${(k + 0.5) / n * 100}%">${esc(z.short)}</div>`;
   });
-  h += `<div class="limit" style="top:${ocean.maxVis / OCEAN_BOTTOM * 100}%"><span>Hook limit</span></div><div class="mark" id="gMark"></div>`;
+  h += `<div class="limit" style="top:${gaugeY(ocean.maxVis)}%"><span>Hook limit</span></div><div class="mark" id="gMark"></div>`;
   $('gauge').innerHTML = h;
 }
 let bannerT = 0;
@@ -2815,10 +2979,10 @@ function updateUI(dt) {
   if (inOcean) {
     const o = ocean, d = visToDepth(o.vis), z = ZONES[zoneAtVis(o.vis)];
     txt('depthM', `${fmt(d)} m`); txt('depthZ', z.name);
-    const m = $('gMark'); if (m) m.style.top = (o.vis / OCEAN_BOTTOM * 100) + '%';
+    const m = $('gMark'); if (m) m.style.top = gaugeY(o.vis) + '%';
     const fighting = o.phase === 'fight';
     show('fight', fighting);
-    txt('otext', o.phase === 'sink' ? (o.vis < o.maxVis - 1 ? `Sinking… your ${HOOKS[save.hook].name} stops at ${fmt(HOOKS[save.hook].depth)} m` : '') : o.phase === 'wait' ? 'Waiting for a bite…' : o.phase === 'approach' ? 'Something is coming!' : o.phase === 'rise' ? `Reeling up a ${SPECIES[o.sp].name}!` : '');
+    txt('otext', o.phase === 'sink' ? (o.palace ? 'Sinking into the Underwater Palace…' : o.vis < o.maxVis - 1 ? `Sinking… your ${HOOKS[save.hook].name} stops at ${fmt(HOOKS[save.hook].depth)} m` : '') : o.phase === 'wait' ? 'Waiting for a bite…' : o.phase === 'approach' ? 'Something is coming!' : o.phase === 'rise' ? `Reeling up a ${SPECIES[o.sp].name}!` : '');
     if (fighting) {
       $('pBar').style.width = (o.p * 100).toFixed(1) + '%';
       $('tBar').style.width = (o.tension * 100).toFixed(1) + '%';
@@ -2890,6 +3054,7 @@ gl.enable(gl.DEPTH_TEST);
 gl.disable(gl.CULL_FACE);
 buildBeach();
 buildOcean();
+buildPalace();
 syncToggles();
 resize();
 setCamera([0, 6, 22], [0, 1, 12]);

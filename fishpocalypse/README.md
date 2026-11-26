@@ -35,6 +35,7 @@ Every zone has eight creatures: six common, one rare and one mythical. The Rift 
 | The Abyss | 1,500–5,000 m | 625 | Dumbo Octopus, Tripod Fish, Giant Isopod, Black Swallower, Goblin Shark, Ancient Turtle | Frilled Shark | Sea Serpent |
 | The Trench | 5,000–11,000 m | 3,000 | Snailfish, Sea Pig, Supergiant Amphipod, Rattail, Big Red Jellyfish, Crystal Dragon | Megalodon | Kraken |
 | The Fishpocalypse Rift | 11,000–20,000 m | 15,000 | Zombie Cod, Skeleton Fish, Lava Shark, Fire Jelly, Magma Turtle | Triclops Grouper | Doomfin, and **King Leviathan** (legendary) |
+| The Underwater Palace (secret) | 20,000–30,000 m | 75,000 | Pearl Angelfish, Crown Jelly, Palace Turtle, Sapphire Ray, Butler Eel | Seahorse Knight | Coral Queen, and **Celestial Leviathan** (secret) |
 
 The newer creatures are at the end of `SPECIES`, so old saves (which store each fish by its number) still point at the right ones.
 
@@ -43,6 +44,16 @@ A creature's coins per second = zone base × (1, 1.2, 1.4, 1.6, 1.8 or 2 for the
 The Sea Serpent has huge open jaws full of teeth, and the Megalodon has a giant toothy grin along both sides of its head. The King Leviathan is like the Sea Serpent but bigger (50 m). He is black with red stripes, and has big curved horns, red spikes and frills, glowing red eyes and the same giant jaws.
 
 The models are built from shapes in code (`BUILDERS`: fish, shark, eel, octopus, squid, puffer, seahorse, bug, sea pig, kelpie, turtle, ray, jelly), each about 1 unit long facing +x, then scaled by `vis = max(0.7 + length × 0.75, length)`. One unit is one meter, so big creatures are **life size**: Megalodon 16 m, Kraken 22 m, Sea Serpent 32 m, King Leviathan 50 m. Small fish are drawn a bit bigger so you can see them. Mythical creatures are made big on purpose too. Swimming is a wave in the vertex shader (`uWig`). Mode 0 swings side to side (fish), mode 1 sways tentacles, and mode 2 flaps (ray wings, turtle flippers). `speciesMesh` also stores each model's bounding box (`sp.bb`), which the beach picture and the sideways fight pose use. Each vertex stores how much it wiggles (head 0, tail 1).
+
+## The Underwater Palace (secret zone)
+
+Once you've caught both the **Doomfin** and the **King Leviathan** (`palaceOpen()`, worked out from the Fishdex), the catch card says "You unlocked a secret place", a toast repeats it, and a swirling purple portal appears in the water past the end of the pier (`PORTAL`, `portalMesh`). From then on, casting from the pier opens a small menu (`ovWhere`): **The Ocean** or **The Underwater Palace**. The palace cast lands in the portal, and the hook starts at the top of the palace (zone 7, `PALACE_Z`, 420–480 units down the column, below the Rift) and stops in the great hall. You don't need a sinker for it. The gauge shows just the palace.
+
+The palace (`buildPalace`, drawn instead of the ocean while `ocean.palace` is set) has a checkered marble floor, a long hall with columns and glowing windows, a great purple dome with a gold spire, towers with pointed roofs, rows of columns with glowing lanterns, coral, sea plants, treasure chests, piles of gold and glowing crystals. Before it's unlocked, the Fishdex shows its row as "??? A secret place… catch the Doomfin and the King Leviathan to find it".
+
+**Celestial Leviathan** (Secret tier, the rarest thing in the game: weight 1, coins ×100): about 100 m long counting its tails (`len` 70). It's purple at the head fading to blue at the tail, with glowing stars along its back, big horns, a mane of horns all the way around its head like a lion's, giant jaws, three pairs of legs with white claws and six tails with glowing tips. Reeling it in is much slower (×0.3 reel speed, thrashes every 0.9–1.6 s), but it slips back less when you let go, so any reel can land it: about 76 s with the Old Reel and 22 s with the Mega Reel (tested by a script that holds when it's not thrashing). It also rises slowly (5 s instead of 2.4). Its card and Fishdex tile have their own purple-and-blue **Secret** badge.
+
+The beach was made longer to the east (the dunes start at x 120 instead of 50) so the 100 m picture fits on the sand, and the lighthouse moved to the west side so it doesn't block the camera.
 
 ## The shop
 
@@ -60,7 +71,7 @@ The glass dome on the beach (40 m across) shows up to 24 of your newest fish swi
 
 ## Saved data
 
-`localStorage` key `fishpocalypse.v1`: coins, which sinker / reel / bait you own, every fish as `[species, size]`, the Fishdex counts, the total caught, the music and sound settings, and the time it was saved. Everything is checked on load (bad values are dropped or clamped). Coins keep coming in while the game is closed, up to one hour's worth, and a "Welcome back!" message shows how many. **Start over** on the title screen wipes the save (with a confirm step).
+Nothing new is saved for the palace: it opens from the Fishdex counts. `localStorage` key `fishpocalypse.v1`: coins, which sinker / reel / bait you own, every fish as `[species, size]`, the Fishdex counts, the total caught, the music and sound settings, and the time it was saved. Everything is checked on load (bad values are dropped or clamped). Coins keep coming in while the game is closed, up to one hour's worth, and a "Welcome back!" message shows how many. **Start over** on the title screen wipes the save (with a confirm step).
 
 ## Testing notes
 
