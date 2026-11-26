@@ -127,7 +127,7 @@ body.kbnav .btn:focus,body.kbnav .item:focus,body.kbnav .hbtn:focus,body.kbnav #
 .zrow{margin-bottom:12px}
 .zrow h3{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
 .zrow h3 small{font-family:var(--body);font-size:14px;color:var(--muted)}
-.tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .tile{background:rgba(0,0,0,.25);border:2px solid var(--edge);border-radius:12px;padding:4px;text-align:center;font-size:12px;line-height:1.2;min-width:0}
 .tile canvas,.tile img{width:100%;aspect-ratio:3/2;display:block}
 .tile.m{border-color:var(--myth)}
@@ -135,7 +135,7 @@ body.kbnav .btn:focus,body.kbnav .item:focus,body.kbnav .hbtn:focus,body.kbnav #
 .tile .k{font-size:11px;color:var(--muted)}
 .tile.m .k{color:var(--myth)}
 .tile.r .k{color:var(--rare)}
-@media (max-width:520px){.tiles{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:520px){.tiles{grid-template-columns:repeat(4,1fr);gap:5px}}
 
 /* catch card */
 #ovCard .panel{max-width:560px;text-align:center;margin-bottom:max(8px,env(safe-area-inset-bottom));background:rgba(22,32,90,.93)}
@@ -227,7 +227,7 @@ body.kbnav .btn:focus,body.kbnav .item:focus,body.kbnav .hbtn:focus,body.kbnav #
   <h2>How to play</h2>
   <p><b>1. Walk</b> to the end of the long pier. <b>2. Cast</b> your line and watch your hook sink through the zones of the ocean. <b>3.</b> When it stops, a fish from that zone bites. <b>Hold</b> to reel it in, and <b>let go</b> when it thrashes so the line doesn't pull too hard.</p>
   <p>Every fish goes into your <b>Aquarium</b> (the giant glass dome), and every fish there makes coins every second, even while you're fishing. Spend coins at the <b>Tackle Shop</b> on heavier sinkers to go deeper, faster reels, and luckier bait.</p>
-  <p>Every zone has three common fish, one <span style="color:var(--rare)">rare</span> one and one <span style="color:var(--myth)">mythical</span> one. Deeper zones have fish worth much more. Press <b>Stop here</b> on the way down to fish a shallower zone.</p>
+  <p>Every zone has eight creatures: four common ones, two <span style="color:var(--rare)">rare</span> ones and two <span style="color:var(--myth)">mythical</span> ones. The deepest zone hides the legendary King Leviathan. Deeper zones have fish worth much more. Press <b>Stop here</b> on the way down to fish a shallower zone.</p><p>Big creatures are life size! They're too heavy to hold up, so you get a picture of them lying on the beach next to you.</p>
   <h3>Controls</h3>
   <p><b>Keyboard:</b> WASD or arrow keys to walk, Q and E (or drag with the mouse) to turn the camera, Space to cast, stop and reel (hold), Esc for the menu.</p>
   <p><b>Mouse or touch:</b> tap the ground to walk there, drag to turn the camera, tap the yellow button to cast, hold anywhere to reel.</p>
@@ -357,59 +357,87 @@ const SPECIES = [
   { name: 'Clownfish', z: 0, r: 'c', kind: 'fish', len: 0.25, o: { c1: '#ff7a1a', h: 0.42, w: 0.24, bands: [0.28, 0.02, -0.24], band: '#ffffff', fin: '#ff7a1a' }, fact: 'Clownfish live safely inside stinging sea anemones.' },
   { name: 'Pufferfish', z: 0, r: 'c', kind: 'puffer', len: 0.35, o: { c1: '#e8c86a', c2: '#fff4d0', spots: '#8a6a2a' }, fact: 'A pufferfish gulps water to puff up into a spiky ball.' },
   { name: 'Seahorse', z: 0, r: 'r', kind: 'seahorse', len: 0.3, o: { c1: '#ffb03a', c2: '#ffd98a' }, fact: 'Seahorse dads carry the eggs in a pouch until the babies hatch.' },
-  { name: 'Sunscale Dragonet', z: 0, r: 'm', kind: 'fish', len: 0.6, o: { c1: '#ffd23f', c2: '#fff3a0', h: 0.3, w: 0.22, fin: '#ff9a1a', wings: '#ffb84a', horns: '#ff9a1a', spots: '#ff9a1a', glow: '#fff08a' }, fact: 'A tiny golden dragon of the sea. Old fishing stories say it only bites on sunny days.' },
+  { name: 'Sunscale Dragonet', z: 0, r: 'm', kind: 'fish', len: 3, o: { c1: '#ffd23f', c2: '#fff3a0', h: 0.3, w: 0.22, fin: '#ff9a1a', wings: '#ffb84a', horns: '#ff9a1a', spots: '#ff9a1a', glow: '#fff08a' }, fact: 'A golden dragon of the sea. Old fishing stories say it only bites on sunny days.' },
   // Kelp Forest
   { name: 'Kelp Bass', z: 1, r: 'c', kind: 'fish', len: 0.6, o: { c1: '#7a7a4a', c2: '#c8c08a', h: 0.28, w: 0.17, fin: '#5a5a32', spots: '#d8d0a0' }, fact: 'Kelp bass hide among the tall kelp and dart out to catch smaller fish.' },
   { name: 'Garibaldi', z: 1, r: 'c', kind: 'fish', len: 0.35, o: { c1: '#ff6a10', h: 0.48, w: 0.2, fin: '#ff5a00' }, fact: 'The bright orange Garibaldi is the official state marine fish of California.' },
   { name: 'Octopus', z: 1, r: 'c', kind: 'octo', len: 0.8, o: { c1: '#d65a4a', c2: '#f08a7a' }, fact: 'An octopus has three hearts and blue blood.' },
   { name: 'Leafy Sea Dragon', z: 1, r: 'r', kind: 'seahorse', len: 0.4, o: { c1: '#c8a040', c2: '#e8d070', leaves: '#7ab84a' }, fact: 'Leafy sea dragons have leaf-shaped fins, so they look just like floating seaweed.' },
-  { name: 'Kelpie', z: 1, r: 'm', kind: 'kelpie', len: 2.2, o: { c1: '#3fa88a', c2: '#8fe0c0', mane: '#2f7a3a', glow: '#9fffd8' }, fact: 'A magic water horse from old Scottish stories, with a mane made of seaweed.' },
+  { name: 'Kelpie', z: 1, r: 'm', kind: 'kelpie', len: 4, o: { c1: '#3fa88a', c2: '#8fe0c0', mane: '#2f7a3a', glow: '#9fffd8' }, fact: 'A magic water horse from old Scottish stories, with a mane made of seaweed.' },
   // Twilight Zone
   { name: 'Lanternfish', z: 2, r: 'c', kind: 'fish', len: 0.25, o: { c1: '#4a5a7a', c2: '#8a9ab8', h: 0.24, w: 0.14, fin: '#3a4a68', dots: '#7ff0ff', eye: 1.4 }, fact: 'Lanternfish have glowing spots on their bodies that make their own light.' },
   { name: 'Hatchetfish', z: 2, r: 'c', kind: 'fish', len: 0.25, o: { c1: '#b8c8d8', c2: '#eef4fa', h: 0.62, w: 0.1, fin: '#8a9ab0', dots: '#7fd0ff', eye: 1.6 }, fact: 'Hatchetfish are thin and silver, shaped like the blade of a tiny axe.' },
   { name: 'Squid', z: 2, r: 'c', kind: 'squid', len: 0.9, o: { c1: '#e89a8a', c2: '#f8c8b8' }, fact: 'Squid squirt clouds of ink to hide and escape.' },
-  { name: 'Swordfish', z: 2, r: 'r', kind: 'fish', len: 2.5, o: { c1: '#3a5a9a', c2: '#d8e2f0', h: 0.2, w: 0.14, fin: '#2a3a6a', bill: true, dorsal: 1.8 }, fact: 'A swordfish swings its long, flat bill to stun the fish it eats.' },
-  { name: 'Moonhorn', z: 2, r: 'm', kind: 'fish', len: 1.4, o: { c1: '#c8d8ff', c2: '#ffffff', h: 0.32, w: 0.2, fin: '#a8b8ff', horn: '#fff6c0', dots: '#ffffff', glow: '#cfe0ff' }, fact: 'A shining fish with a unicorn horn. Sailors say it swims up to look at the moon.' },
+  { name: 'Swordfish', z: 2, r: 'r', kind: 'fish', len: 3, o: { c1: '#3a5a9a', c2: '#d8e2f0', h: 0.2, w: 0.14, fin: '#2a3a6a', bill: true, dorsal: 1.8 }, fact: 'A swordfish swings its long, flat bill to stun the fish it eats.' },
+  { name: 'Moonhorn', z: 2, r: 'm', kind: 'fish', len: 5, o: { c1: '#c8d8ff', c2: '#ffffff', h: 0.32, w: 0.2, fin: '#a8b8ff', horn: '#fff6c0', dots: '#ffffff', glow: '#cfe0ff' }, fact: 'A shining fish with a unicorn horn. Sailors say it swims up to look at the moon.' },
   // Midnight Zone
   { name: 'Anglerfish', z: 3, r: 'c', kind: 'fish', len: 0.6, o: { c1: '#3a2f3a', c2: '#5a4a52', h: 0.55, w: 0.45, fin: '#2a222a', teeth: true, lure: '#b8ffef', eye: 0.8 }, fact: 'An anglerfish waves a glowing lure on its head to attract food.' },
   { name: 'Gulper Eel', z: 3, r: 'c', kind: 'eel', len: 1.5, o: { c1: '#2a2a3a', c2: '#3a3a52', thick: 0.05, gulp: true, tip: '#ff6ad0' }, fact: 'The gulper eel has a giant mouth that opens wide like a net.' },
   { name: 'Vampire Squid', z: 3, r: 'c', kind: 'octo', len: 0.5, o: { c1: '#8a1a2a', c2: '#b83040', web: true, ears: true, eyeC: '#4af0ff' }, fact: 'Despite its spooky name, the vampire squid eats bits of falling "marine snow", not blood.' },
-  { name: 'Giant Squid', z: 3, r: 'r', kind: 'squid', len: 5, o: { c1: '#c8503a', c2: '#e88a6a', big: true }, fact: 'Giant squid have eyes as big as dinner plates, among the biggest eyes of any animal.' },
-  { name: 'Phantom Shark', z: 3, r: 'm', kind: 'shark', len: 3.5, o: { c1: '#bfe8ff', c2: '#ffffff', ghost: true, glow: '#9fe8ff' }, fact: 'A see-through shark that glows in the dark. Nobody has ever seen it twice.' },
+  { name: 'Giant Squid', z: 3, r: 'r', kind: 'squid', len: 12, o: { c1: '#c8503a', c2: '#e88a6a', big: true }, fact: 'Giant squid have eyes as big as dinner plates, among the biggest eyes of any animal.' },
+  { name: 'Phantom Shark', z: 3, r: 'm', kind: 'shark', len: 9, o: { c1: '#bfe8ff', c2: '#ffffff', ghost: true, glow: '#9fe8ff' }, fact: 'A see-through shark that glows in the dark. Nobody has ever seen it twice.' },
   // The Abyss
   { name: 'Dumbo Octopus', z: 4, r: 'c', kind: 'octo', len: 0.5, o: { c1: '#ff9ab0', c2: '#ffc8d4', web: true, ears: true }, fact: 'Dumbo octopuses swim by flapping fins that look like elephant ears.' },
   { name: 'Tripod Fish', z: 4, r: 'c', kind: 'fish', len: 0.8, o: { c1: '#6a6a7a', c2: '#9a9aaa', h: 0.18, w: 0.12, fin: '#4a4a5a', tripod: true, eye: 0.7 }, fact: 'Tripod fish stand on the sea floor on three very long fins, like a camera tripod.' },
   { name: 'Giant Isopod', z: 4, r: 'c', kind: 'bug', len: 0.5, o: { c1: '#c8b8a0', c2: '#a89880' }, fact: 'Giant isopods are cousins of the little pill bugs that live in gardens.' },
   { name: 'Frilled Shark', z: 4, r: 'r', kind: 'eel', len: 2, o: { c1: '#6a5a4a', c2: '#8a7a6a', thick: 0.07, frills: '#a05a4a', teeth: true, sharkFins: true }, fact: 'The frilled shark is long like an eel and has frilly gills around its neck.' },
-  { name: 'Sea Serpent', z: 4, r: 'm', kind: 'eel', len: 7, o: { c1: '#2f8a6a', c2: '#bfe8a0', thick: 0.06, spikes: '#ffd23f', horns: '#ffe8a0', glow: '#7fffc0' }, fact: "A giant sea serpent from old sailors' tales, as long as a ship." },
+  { name: 'Sea Serpent', z: 4, r: 'm', kind: 'eel', len: 25, o: { c1: '#2f8a6a', c2: '#bfe8a0', thick: 0.06, jaws: true, spikes: '#ffd23f', horns: '#ffe8a0', glow: '#7fffc0' }, fact: "A giant sea serpent from old sailors' tales, as long as a ship." },
   // The Trench
   { name: 'Snailfish', z: 5, r: 'c', kind: 'fish', len: 0.4, o: { c1: '#f0c8d0', c2: '#fff0f4', h: 0.26, w: 0.16, fin: '#e0a8b8', tadpole: true, eye: 0.8 }, fact: 'Snailfish have been found living deeper than any other fish, more than 8,000 meters down.' },
   { name: 'Sea Pig', z: 5, r: 'c', kind: 'seapig', len: 0.4, o: { c1: '#f0a8c0', c2: '#ffd0e0' }, fact: 'A sea pig is a kind of sea cucumber that walks along the sea floor on little tube feet.' },
   { name: 'Supergiant Amphipod', z: 5, r: 'c', kind: 'bug', len: 0.3, o: { c1: '#f4f0e8', c2: '#d8d0c0', curl: true }, fact: 'Supergiant amphipods look like big shrimp and scuttle around in the deepest trenches.' },
-  { name: 'Megalodon', z: 5, r: 'r', kind: 'shark', len: 10, o: { c1: '#6a7a8a', c2: '#e0e4e8', teeth: true }, fact: 'Megalodon was a giant shark that lived millions of years ago. Maybe one is still hiding down here!' },
-  { name: 'Kraken', z: 5, r: 'm', kind: 'octo', len: 8, o: { c1: '#6a1a4a', c2: '#9a3a6a', eyeC: '#ffd23f', kraken: true, glow: '#ff6ad0' }, fact: "A giant sea monster from old Norse sailors' stories, big enough to grab a ship." },
+  { name: 'Megalodon', z: 5, r: 'r', kind: 'shark', len: 16, o: { c1: '#6a7a8a', c2: '#e0e4e8', jaws: true }, fact: 'Megalodon was a giant shark that lived millions of years ago. Maybe one is still hiding down here!' },
+  { name: 'Kraken', z: 5, r: 'm', kind: 'octo', len: 22, o: { c1: '#6a1a4a', c2: '#9a3a6a', eyeC: '#ffd23f', kraken: true, glow: '#ff6ad0' }, fact: "A giant sea monster from old Norse sailors' stories, big enough to grab a ship." },
   // The Fishpocalypse Rift
   { name: 'Zombie Cod', z: 6, r: 'c', kind: 'fish', len: 1, o: { c1: '#7a9a6a', c2: '#a8c098', h: 0.26, w: 0.16, fin: '#5a7a4a', stitches: true, xEye: true }, fact: "It has been swimming around for a hundred years, and it still isn't tired." },
   { name: 'Skeleton Fish', z: 6, r: 'c', kind: 'fish', len: 0.9, o: { c1: '#e8e4d8', h: 0.3, w: 0.16, fin: '#c8c4b8', bones: true, eyeC: '#ff4a2a' }, fact: 'Nothing left but bones, but somehow it still swims.' },
-  { name: 'Lava Shark', z: 6, r: 'c', kind: 'shark', len: 4, o: { c1: '#2a1a1a', c2: '#4a2a20', lava: '#ff7a1a', teeth: true, glow: '#ff5a1a' }, fact: 'It swims through the glowing lava cracks at the bottom of the world.' },
-  { name: 'Triclops Grouper', z: 6, r: 'r', kind: 'fish', len: 2, o: { c1: '#8a4ab8', c2: '#c8a0e8', h: 0.38, w: 0.26, fin: '#6a2a98', eyes3: true, teeth: true, spots: '#e8d040' }, fact: 'Three eyes means it can see you three times as well.' },
-  { name: 'Doomfin', z: 6, r: 'm', kind: 'fish', len: 8, o: { c1: '#2a0a14', c2: '#6a1a2a', h: 0.36, w: 0.24, fin: '#b8101a', crown: true, teeth: true, eyeC: '#ff2a1a', lava: '#ff9a2a', dorsal: 1.6, glow: '#ff3a1a' }, fact: 'The King of the Fishpocalypse. He started the whole thing, and now he lives in your aquarium.' },
+  { name: 'Lava Shark', z: 6, r: 'c', kind: 'shark', len: 5, o: { c1: '#2a1a1a', c2: '#4a2a20', lava: '#ff7a1a', teeth: true, glow: '#ff5a1a' }, fact: 'It swims through the glowing lava cracks at the bottom of the world.' },
+  { name: 'Triclops Grouper', z: 6, r: 'r', kind: 'fish', len: 2.5, o: { c1: '#8a4ab8', c2: '#c8a0e8', h: 0.38, w: 0.26, fin: '#6a2a98', eyes3: true, teeth: true, spots: '#e8d040' }, fact: 'Three eyes means it can see you three times as well.' },
+  { name: 'Doomfin', z: 6, r: 'm', kind: 'fish', len: 15, o: { c1: '#2a0a14', c2: '#6a1a2a', h: 0.36, w: 0.24, fin: '#b8101a', crown: true, teeth: true, eyeC: '#ff2a1a', lava: '#ff9a2a', dorsal: 1.6, glow: '#ff3a1a' }, fact: 'The King of the Fishpocalypse. He started the whole thing, and now he lives in your aquarium.' },
+  // ---- added later (kept at the end so old saves still point at the right creatures) ----
+  { name: 'Blue Tang', z: 0, r: 'c', kind: 'fish', len: 0.3, o: { c1: '#2a6ad8', c2: '#4a8af0', h: 0.46, w: 0.14, fin: '#ffd23f', stripe: '#14204a' }, fact: 'A blue tang has a sharp spine by its tail, like a tiny knife, to keep it safe.' },
+  { name: 'Sea Turtle', z: 0, r: 'r', kind: 'turtle', len: 1.2, o: { c1: '#8a9a5a', c2: '#e8e0a8', shell: '#6a5a2a' }, fact: 'Sea turtles can rest underwater for hours without coming up to breathe.' },
+  { name: 'Rainbow Ray', z: 0, r: 'm', kind: 'ray', len: 5, o: { c1: '#ffffff', c2: '#fff4fa', rainbow: true, eyeC: '#ff7ad9', glow: '#ffffff' }, fact: 'A ray with rainbow wings. Sailors say it leaps out of the water and glides over rainbows.' },
+  { name: 'Moon Jelly', z: 1, r: 'c', kind: 'jelly', len: 0.3, o: { c1: '#d8e8ff', c2: '#c8d8f0', rings: '#d88aff' }, fact: 'Moon jellies are see-through, so you can see the four rings inside them.' },
+  { name: 'Wolf Eel', z: 1, r: 'r', kind: 'eel', len: 2, o: { c1: '#7a8a9a', c2: '#b8c0c8', thick: 0.08, teeth: true }, fact: "Wolf eels aren't really eels. They're fish with strong jaws for crunching crabs and sea urchins." },
+  { name: 'Treasure Turtle', z: 1, r: 'm', kind: 'turtle', len: 4, o: { c1: '#e8c86a', c2: '#fff0b0', shell: '#ffd23f', gems: true, glow: '#ffe88a' }, fact: 'A turtle with a shell of gold and gems. Pirates used to hide their treasure on its back.' },
+  { name: 'Barreleye', z: 2, r: 'c', kind: 'fish', len: 0.15, o: { c1: '#4a4a5a', c2: '#8a8a9a', h: 0.26, w: 0.14, fin: '#3a3a48', eye: 1.6, eyeC: '#5aff6a' }, fact: 'The barreleye fish has a see-through head, and its green eyes look up through it.' },
+  { name: 'Manta Ray', z: 2, r: 'r', kind: 'ray', len: 5.5, o: { c1: '#2a2a34', c2: '#f0f0f0', horns: true }, fact: 'A giant manta ray can be about 7 meters wide from wingtip to wingtip, but it eats tiny plankton.' },
+  { name: 'Star Jelly', z: 2, r: 'm', kind: 'jelly', len: 4, o: { c1: '#4a4ac8', c2: '#9a9aff', stars: '#fff6a0', glow: '#cfe0ff' }, fact: 'A jellyfish made of starlight. They say it fell from the night sky and decided to stay.' },
+  { name: 'Viperfish', z: 3, r: 'c', kind: 'fish', len: 0.3, o: { c1: '#2a3a4a', c2: '#4a6a7a', h: 0.2, w: 0.12, fin: '#1a2a3a', teeth: true, dots: '#7fd0ff', eye: 1.2 }, fact: "Viperfish have teeth so long they don't fit inside their mouths." },
+  { name: 'Atolla Jellyfish', z: 3, r: 'r', kind: 'jelly', len: 0.2, o: { c1: '#c0182a', c2: '#901020', lights: '#4ab8ff' }, fact: 'When something attacks it, the Atolla jellyfish flashes a ring of blue lights, like a burglar alarm.' },
+  { name: 'Shadow Ray', z: 3, r: 'm', kind: 'ray', len: 8, o: { c1: '#14141c', c2: '#2a2a34', eyeC: '#d0a0ff', glow: '#9a7aff' }, fact: 'A ray as dark as the night. All you can see are its two glowing eyes.' },
+  { name: 'Black Swallower', z: 4, r: 'c', kind: 'fish', len: 0.25, o: { c1: '#1a1a22', c2: '#2a2a3a', h: 0.24, w: 0.14, fin: '#101018', teeth: true, eye: 0.8 }, fact: 'The black swallower can stretch its stomach to swallow a fish more than twice as long as itself.' },
+  { name: 'Goblin Shark', z: 4, r: 'r', kind: 'shark', len: 3.5, o: { c1: '#e8a0a8', c2: '#f8d0d4', teeth: true, snout: true }, fact: 'A goblin shark can shoot its jaws forward to grab its food.' },
+  { name: 'Ancient Turtle', z: 4, r: 'm', kind: 'turtle', len: 12, o: { c1: '#6a7a5a', c2: '#c8c0a0', shell: '#4a5a3a', island: true, glow: '#c8ffb0' }, fact: 'A turtle so old and so big that a little island with a palm tree grows on its back.' },
+  { name: 'Rattail', z: 5, r: 'c', kind: 'fish', len: 0.8, o: { c1: '#8a8a96', c2: '#b8b8c4', h: 0.22, w: 0.14, fin: '#6a6a76', tadpole: true, eye: 1.3 }, fact: "Rattails, also called grenadiers, have a long skinny tail like a rat's. They live all over the deep sea." },
+  { name: 'Big Red Jellyfish', z: 5, r: 'r', kind: 'jelly', len: 1, o: { c1: '#b8202a', c2: '#901820', arms: true }, fact: 'The big red jellyfish has no stinging tentacles. It catches food with a few thick, fleshy arms instead.' },
+  { name: 'Crystal Dragon', z: 5, r: 'm', kind: 'fish', len: 14, o: { c1: '#9ff0ff', c2: '#e8ffff', h: 0.3, w: 0.2, fin: '#6ad8ff', wings: '#bff8ff', horns: '#ffffff', teeth: true, dots: '#ffffff', dorsal: 1.6, glow: '#bff8ff' }, fact: 'A dragon made of glowing ice crystals. It lives where the water is the coldest.' },
+  { name: 'Fire Jelly', z: 6, r: 'c', kind: 'jelly', len: 0.8, o: { c1: '#ff7a1a', c2: '#ffb84a', glow: '#ff9a3a' }, fact: "Its tentacles are as hot as a campfire. Don't touch!" },
+  { name: 'Magma Turtle', z: 6, r: 'r', kind: 'turtle', len: 3, o: { c1: '#3a2a26', c2: '#5a3a30', shell: '#2a1a18', lava: '#ff7a1a', eyeC: '#ffb03a' }, fact: 'Its shell is made of cooled lava rock, and it takes naps inside volcanoes.' },
+  { name: 'King Leviathan', z: 6, r: 'm', king: true, kind: 'eel', len: 40, o: { c1: '#140a0c', c2: '#c01818', stripes: '#c01818', thick: 0.075, jaws: true, bigHorns: '#3a0808', spikes: '#e01818', frills: '#e01818', eyeC: '#ff2a1a', glow: '#ff3a2a' }, fact: 'The king of all sea monsters, even bigger than the Sea Serpent. The Doomfin bows to him.' },
 ];
-// coins per second: commons 1, 1.3, 1.6 times the zone value; rare 5 times; mythical 25 times
+const RARITY = { c: 'Common', r: 'Rare', m: 'Mythical' };
+// Every zone has 4 commons, 2 rares and 2 mythicals.
+// coins per second: commons 1, 1.3, 1.6, 2 times the zone value; rares 5 and 6 times; mythicals 25 and 30 times (the King Leviathan 50)
 (() => {
   const seen = {};
   SPECIES.forEach((s, i) => {
     s.id = i;
-    const z = ZONES[s.z];
-    if (s.r === 'c') { seen[s.z] = (seen[s.z] || 0) + 1; s.mult = [1, 1.3, 1.6][seen[s.z] - 1]; s.weight = [30, 27, 23][seen[s.z] - 1]; }
-    else if (s.r === 'r') { s.mult = 5; s.weight = 16; }
-    else { s.mult = 25; s.weight = 4; }
+    const z = ZONES[s.z], k = s.z + s.r, n = seen[k] = (seen[k] || 0) + 1;
+    if (s.r === 'c') { s.mult = [1, 1.3, 1.6, 2][n - 1]; s.weight = [24, 21, 19, 16][n - 1]; }
+    else if (s.r === 'r') { s.mult = [5, 6][n - 1]; s.weight = [9, 7][n - 1]; }
+    else { s.mult = [25, 30][n - 1]; s.weight = [2.5, 1.5][n - 1]; }
+    if (s.king) { s.mult = 50; s.weight = 1; }
     s.val = z.val * s.mult;
-    // how big it looks in the game: small fish are drawn a bit bigger so you can see them
-    s.vis = 0.7 + s.len * 0.75;
+    // how big it looks in the game: life size for big creatures (1 unit = 1 meter), small fish a bit bigger so you can see them
+    s.vis = Math.max(0.7 + s.len * 0.75, s.len);
+    s.rname = s.king ? 'Legendary' : RARITY[s.r];
   });
 })();
-const RARITY = { c: 'Common', r: 'Rare', m: 'Mythical' };
+// the Fishdex shows each zone's creatures common first, then rare, then mythical
+const RANK = { c: 0, r: 1, m: 2 };
+function zoneSpecies(z) { return SPECIES.filter(s => s.z === z).sort((a, b) => RANK[a.r] - RANK[b.r] || !!a.king - !!b.king || a.id - b.id); }
 function pickSpecies(z) {
   const b = BAITS[save.bait];
   const list = SPECIES.filter(s => s.z === z);
@@ -494,7 +522,8 @@ void main(){
   vec3 p = aPos; float s = aCol.a;
   if (uWig.x > 0.0 && s > 0.0) {
     if (uWig.w < 0.5) p.z += sin(uWig.z - p.x * uWig.y) * uWig.x * s;          // fish: a wave runs down the body to the tail
-    else { p.x += sin(uWig.z + p.y * uWig.y) * uWig.x * s; p.z += cos(uWig.z * 0.8 + p.y * uWig.y * 0.9) * uWig.x * s; }   // tentacles and kelp
+    else if (uWig.w < 1.5) { p.x += sin(uWig.z + p.y * uWig.y) * uWig.x * s; p.z += cos(uWig.z * 0.8 + p.y * uWig.y * 0.9) * uWig.x * s; }   // tentacles and kelp
+    else p.y += sin(uWig.z - abs(p.z) * uWig.y) * uWig.x * s;                     // rays and turtles flap their wings and flippers
   }
   vec4 w = uModel * vec4(p, 1.0);
   vW = w.xyz; vN = mat3(uModel) * aNor.xyz; vM = aNor.w; vCol = aCol.rgb;
@@ -984,16 +1013,51 @@ function buildShark(g, o) {
   ell(g, 0.36, -0.06, 0, 0.07, 0.018, 0.06, [0.25, 0.08, 0.1], -1, 1);
   if (o.teeth) { teethRow(g, 0.31, 0.42, -0.05, 0.05, 0, 5, true); teethRow(g, 0.31, 0.42, -0.07, -0.05, 0, 5, false); }
   if (o.lava) lavaCracks(g, 0, 0.42, 0.11, 0.11, H(o.lava), rng);
+  if (o.snout) { ell(g, 0.5, 0.02, 0, 0.17, 0.022, 0.055, c1, -1, 1); }
+  if (o.jaws) {
+    // a wide-open mouth with two rows of huge teeth
+    tube(g, [0.26, -0.07, 0], [0.45, -0.16, 0], 0.065, 0.03, 10, shade(c2, 0.9), true);
+    ell(g, 0.37, -0.085, 0, 0.09, 0.04, 0.06, H('#7a1020'), -1, 1);
+    for (let i = 0; i < 6; i++) { const t = i / 5; for (const s of [-1, 1]) {
+      const ux = lerp(0.3, 0.46, t), uz = s * 0.06 * (1 - t * 0.6), lx = lerp(0.3, 0.44, t), ly = lerp(-0.075, -0.135, t), lz = s * 0.05 * (1 - t * 0.6);
+      cone(g, [ux, -0.045, uz], [ux + 0.004, -0.1, uz], 0.016, 4, WHITE); cone(g, [lx, ly, lz], [lx - 0.006, ly + 0.05, lz], 0.015, 4, WHITE); } }
+  }
 }
 function buildEel(g, o) {
   const c1 = H(o.c1), c2 = H(o.c2), th = o.thick || 0.06, N = 16;
-  const col = (nx, ny) => mixc(c1, c2, smooth(clamp((-ny) / 0.5, 0, 1)));
+  const st = o.stripes ? H(o.stripes) : null;
+  const col = st ? (nx, ny, nz, x) => (ny < -0.35 ? c2 : Math.sin(x * 70) > 0.55 ? st : c1)
+    : (nx, ny) => mixc(c1, c2, smooth(clamp((-ny) / 0.5, 0, 1)));
   for (let i = 0; i <= N; i++) {
     const u = i / N, x = 0.44 - u * 0.94, r = th * (1 - u * 0.75);
     ell(g, x, 0, 0, Math.max(r * 1.3, 0.035), r, r * 0.85, col, -1, 1);
   }
   ell(g, 0.47, 0.005, 0, th * 1.7, th * 1.1, th * 0.95, col, -1, 2);
-  for (const s of [-1, 1]) eyeAt(g, 0.52, th * 0.45, s * th * 0.75, Math.max(0.014, th * 0.32), s, o.glow ? H('#ffd23f') : BLACK, !!o.glow);
+  const eyeC = o.eyeC ? H(o.eyeC) : o.glow ? H('#ffd23f') : BLACK;
+  if (o.jaws) {
+    // a huge open mouth full of big teeth, like a megalodon's
+    const jc = shade(c1, 0.9), gum = H('#7a1020'), k = th / 0.06;
+    ell(g, 0.57, th * 0.3, 0, th * 1.7, th * 0.6, th * 0.85, col, -1, 2);           // upper jaw
+    tube(g, [0.43, -th * 0.35, 0], [0.62, -th * 1.6, 0], th * 0.72, th * 0.38, 10, jc, true);   // lower jaw, wide open
+    ell(g, 0.5, -th * 0.45, 0, th * 1.2, th * 0.8, th * 0.62, gum, -1, 1);             // inside of the mouth
+    for (let i = 0; i < 6; i++) {
+      const t = i / 5;
+      for (const s of [-1, 1]) {
+        const ux = lerp(0.48, 0.66, t), uz = s * th * 0.62 * (1 - t * 0.5);
+        cone(g, [ux, th * 0.05, uz], [ux + 0.004, th * 0.05 - 0.05 * k * (1 - t * 0.3), uz], 0.014 * k, 4, WHITE);
+        const lx = lerp(0.46, 0.6, t), ly = lerp(-th * 0.05, -th * 1.15, t), lz = s * th * 0.5 * (1 - t * 0.5);
+        cone(g, [lx, ly, lz], [lx - 0.01, ly + 0.05 * k * (1 - t * 0.3), lz], 0.014 * k, 4, WHITE);
+      }
+    }
+    for (const s of [-1, 1]) eyeAt(g, 0.45, th * 0.85, s * th * 0.72, Math.max(0.014, th * 0.34), s, eyeC, !!(o.glow || o.eyeC));
+  } else for (const s of [-1, 1]) eyeAt(g, 0.52, th * 0.45, s * th * 0.75, Math.max(0.014, th * 0.32), s, eyeC, !!(o.glow || o.eyeC));
+  if (o.bigHorns) {
+    const hc = H(o.bigHorns);
+    for (const s of [-1, 1]) {
+      chain(g, [[0.44, th * 0.9, s * th * 0.5], [0.38, th * 2.6, s * th * 1.4], [0.26, th * 3.9, s * th * 1.8], [0.13, th * 4.3, s * th * 1.5]], th * 0.4, 0.004, 6, hc);
+      chain(g, [[0.4, th * 0.8, s * th * 0.8], [0.32, th * 1.6, s * th * 2.0], [0.24, th * 1.9, s * th * 2.5]], th * 0.25, 0.003, 5, hc);
+    }
+  }
   if (o.gulp) {
     const jc = shade(c1, 0.7);
     for (const s of [-1, 1]) {
@@ -1131,9 +1195,90 @@ function buildKelpie(g, o) {
   flat(g, [-0.46, 0.06, 0], [-0.62, 0.2, 0], [-0.56, 0.05, 0], c2);
   flat(g, [-0.46, 0.06, 0], [-0.56, 0.05, 0], [-0.6, -0.09, 0], c2);
 }
-const BUILDERS = { fish: buildFish, shark: buildShark, eel: buildEel, octo: buildOcto, squid: buildSquid, puffer: buildPuffer, seahorse: buildSeahorse, bug: buildBug, seapig: buildSeapig, kelpie: buildKelpie };
-// how each kind swims: amplitude, wave frequency, speed, mode (0 = side to side, 1 = tentacles)
-const SWIM = { fish: [0.05, 9, 9, 0], shark: [0.05, 6, 5, 0], eel: [0.08, 11, 8, 0], octo: [0.06, 7, 3, 1], squid: [0.04, 10, 6, 0], puffer: [0.06, 8, 10, 0], seahorse: [0.03, 6, 2, 1], bug: [0, 0, 0, 0], seapig: [0, 0, 0, 0], kelpie: [0.05, 7, 6, 0] };
+function buildTurtle(g, o) {
+  const c1 = H(o.c1), c2 = H(o.c2), sh = H(o.shell), rng = mulberry32(17);
+  const shellCol = (nx, ny, nz, x, y, z) => (Math.sin(x * 24 + 0.5) * Math.sin(z * 24) > 0.45 ? shade(sh, 0.72) : sh);
+  ell(g, -0.02, 0.02, 0, 0.36, 0.17, 0.28, shellCol, -1, 2, -0.01);
+  ell(g, -0.02, -0.01, 0, 0.35, 0.05, 0.27, c2, -1, 1);
+  tube(g, [0.26, 0, 0], [0.4, 0.03, 0], 0.075, 0.06, 8, c1, false);
+  ell(g, 0.44, 0.04, 0, 0.095, 0.068, 0.075, c1, -1, 1);
+  ell(g, 0.53, 0.02, 0, 0.02, 0.012, 0.04, shade(c1, 0.6), -1, 0);
+  for (const s of [-1, 1]) {
+    eyeAt(g, 0.48, 0.07, s * 0.055, 0.02, s, o.eyeC ? H(o.eyeC) : BLACK, !!o.eyeC);
+    flat(g, [0.18, -0.01, s * 0.2], [0.06, -0.01, s * 0.22], [-0.02, -0.04, s * 0.56], c1);
+    flat(g, [0.18, -0.01, s * 0.2], [-0.02, -0.04, s * 0.56], [0.14, -0.03, s * 0.44], c1);
+    flat(g, [-0.2, -0.01, s * 0.18], [-0.3, -0.01, s * 0.14], [-0.38, -0.03, s * 0.3], c1);
+  }
+  cone(g, [-0.34, 0, 0], [-0.45, -0.01, 0], 0.035, 5, c1);
+  if (o.gems) {
+    const gc = [H('#ff3a6a'), H('#3ad0ff'), H('#4ee06a'), H('#ffffff')];
+    for (let i = 0; i < 14; i++) { const a = rng() * TAU, d = rng() * 0.8, x = -0.02 + Math.cos(a) * 0.3 * d, z = Math.sin(a) * 0.24 * d, y = 0.02 + 0.17 * Math.sqrt(Math.max(0, 1 - d * d)); ell(g, x, y, z, 0.022, 0.018, 0.022, gc[i % 4], 1, 0); }
+  }
+  if (o.lava) lavaCracks(g, -0.02, 0.36, 0.17, 0.28, H(o.lava), rng);
+  if (o.island) {
+    // a tiny island with a palm tree growing on its back
+    ell(g, -0.04, 0.16, 0, 0.2, 0.06, 0.16, H('#e8d098'), -1, 1);
+    ell(g, 0.06, 0.2, 0.06, 0.06, 0.04, 0.05, H('#3f9a3a'), -1, 1);
+    const pts = [[-0.06, 0.18, 0], [-0.05, 0.3, 0.01], [-0.02, 0.42, 0.02], [0.02, 0.52, 0.02]];
+    chain(g, pts, 0.018, 0.012, 6, H('#9a7a4a'));
+    const top = pts[3];
+    for (let k = 0; k < 6; k++) {
+      const a = k / 6 * TAU, ca = Math.cos(a), sa = Math.sin(a), mid = [top[0] + ca * 0.08, top[1] + 0.03, top[2] + sa * 0.08], tip = [top[0] + ca * 0.17, top[1] - 0.06, top[2] + sa * 0.17];
+      flat(g, top, [mid[0] - sa * 0.03, mid[1], mid[2] + ca * 0.03], tip, H('#3f9a3a'));
+      flat(g, top, tip, [mid[0] + sa * 0.03, mid[1], mid[2] - ca * 0.03], H('#2f7a2a'));
+    }
+  }
+}
+function buildRay(g, o) {
+  const c1 = H(o.c1), c2 = H(o.c2), sp = o.spots ? H(o.spots) : null;
+  const rb = o.rainbow ? [H('#ff5a5a'), H('#ffb84a'), H('#ffe84a'), H('#4ee06a'), H('#4ab8ff'), H('#b86aff')] : null;
+  const top = (z, x) => rb ? rb[clamp(Math.floor(Math.abs(z) * 9), 0, 5)] : sp && hash3(Math.round(x * 20), 0, Math.round(z * 20)) > 0.86 ? sp : c1;
+  // a flat diamond body with wide wings (z is the wingspan)
+  const N = 10, W = 0.62;
+  const outline = []; for (let i = 0; i <= N; i++) { const u = i / N, x = lerp(0.3, -0.3, u); outline.push([x, W * Math.sin(u * Math.PI) * (1 - u * 0.35) * (u < 0.3 ? 0.6 + u * 1.33 : 1)]); }
+  for (let i = 0; i < N; i++) {
+    const [xa, wa] = outline[i], [xb, wb] = outline[i + 1];
+    for (const s of [-1, 1]) for (let k = 0; k < 4; k++) {
+      const za0 = s * wa * k / 4, za1 = s * wa * (k + 1) / 4, zb0 = s * wb * k / 4, zb1 = s * wb * (k + 1) / 4;
+      const ya = (f) => 0.05 * (1 - f * f), fa0 = k / 4, fa1 = (k + 1) / 4;
+      const cA = top(za0, xa), cB = top(za1, xa);
+      // top
+      flat(g, [xa, ya(fa0), za0], [xb, ya(fa0), zb0], [xb, ya(fa1), zb1], cA);
+      flat(g, [xa, ya(fa0), za0], [xb, ya(fa1), zb1], [xa, ya(fa1), za1], cB);
+      // belly
+      flat(g, [xa, -ya(fa0) * 0.4, za0], [xb, -ya(fa1) * 0.4, zb1], [xb, -ya(fa0) * 0.4, zb0], c2);
+      flat(g, [xa, -ya(fa0) * 0.4, za0], [xa, -ya(fa1) * 0.4, za1], [xb, -ya(fa1) * 0.4, zb1], c2);
+    }
+  }
+  ell(g, 0.12, 0.02, 0, 0.2, 0.06, 0.12, top(0, 0.1), -1, 1);
+  for (const s of [-1, 1]) {
+    eyeAt(g, 0.3, 0.03, s * 0.1, 0.022, s, o.eyeC ? H(o.eyeC) : BLACK, !!o.eyeC);
+    if (o.horns) chain(g, [[0.3, 0.0, s * 0.11], [0.4, 0.02, s * 0.12], [0.44, -0.04, s * 0.1]], 0.025, 0.012, 5, shade(c1, 0.85));   // manta "horns" (head fins)
+  }
+  chain(g, [[-0.28, 0, 0], [-0.5, 0.01, 0], [-0.72, 0.02, 0]], 0.015, 0.003, 4, shade(c1, 0.8));
+}
+function buildJelly(g, o) {
+  const c1 = H(o.c1), c2 = H(o.c2), glow = o.glow ? 1 : -1;
+  // the bell, its round side up; the jelly is drawn upright like the octopus
+  ell(g, 0, 0.1, 0, 0.3, 0.24, 0.3, c1, glow > 0 ? 1 : 0, 2, 0.08);
+  ell(g, 0, 0.08, 0, 0.27, 0.03, 0.27, shade(c1, 0.8), glow > 0 ? 1 : -1, 1);
+  if (o.rings) for (let i = 0; i < 4; i++) { const a = i / 4 * TAU + 0.6; ell(g, Math.cos(a) * 0.09, 0.2, Math.sin(a) * 0.09, 0.05, 0.02, 0.05, H(o.rings), 1, 0); }
+  if (o.stars) { const rng = mulberry32(9); for (let i = 0; i < 12; i++) { const a = rng() * TAU, d = 0.1 + rng() * 0.18; ell(g, Math.cos(a) * d, 0.12 + (0.3 - d) * 0.5, Math.sin(a) * d, 0.018, 0.018, 0.018, H(o.stars), 1, 0); } }
+  if (o.lights) for (let i = 0; i < 12; i++) { const a = i / 12 * TAU; ell(g, Math.cos(a) * 0.29, 0.1, Math.sin(a) * 0.29, 0.022, 0.022, 0.022, H(o.lights), 1, 0); }
+  // frilly arms in the middle and long tentacles around the edge
+  const arms = o.arms ? 5 : 4;
+  for (let i = 0; i < arms; i++) {
+    const a = i / arms * TAU, ca = Math.cos(a), sa = Math.sin(a), L = o.arms ? 0.75 : 0.42;
+    chain(g, [[ca * 0.04, 0.08, sa * 0.04], [ca * 0.07, 0.08 - L * 0.4, sa * 0.07], [ca * 0.05, 0.08 - L * 0.75, sa * 0.05], [ca * 0.08, 0.08 - L, sa * 0.08]], o.arms ? 0.05 : 0.03, 0.01, 6, c2, glow > 0 ? 1 : -1);
+  }
+  if (!o.arms) for (let i = 0; i < 14; i++) {
+    const a = i / 14 * TAU, ca = Math.cos(a), sa = Math.sin(a);
+    chain(g, [[ca * 0.27, 0.08, sa * 0.27], [ca * 0.26, -0.2, sa * 0.26], [ca * 0.28, -0.5, sa * 0.28], [ca * 0.25, -0.78, sa * 0.25]], 0.008, 0.004, 4, c2, glow > 0 ? 1 : -1);
+  }
+}
+const BUILDERS = { fish: buildFish, shark: buildShark, eel: buildEel, octo: buildOcto, squid: buildSquid, puffer: buildPuffer, seahorse: buildSeahorse, bug: buildBug, seapig: buildSeapig, kelpie: buildKelpie, turtle: buildTurtle, ray: buildRay, jelly: buildJelly };
+// how each kind swims: amplitude, wave frequency, speed, mode (0 = side to side, 1 = tentacles, 2 = flapping)
+const SWIM = { fish: [0.05, 9, 9, 0], shark: [0.05, 6, 5, 0], eel: [0.08, 11, 8, 0], octo: [0.06, 7, 3, 1], squid: [0.04, 10, 6, 0], puffer: [0.06, 8, 10, 0], seahorse: [0.03, 6, 2, 1], bug: [0, 0, 0, 0], seapig: [0, 0, 0, 0], kelpie: [0.05, 7, 6, 0], turtle: [0.12, 2, 3, 2], ray: [0.16, 3, 3, 2], jelly: [0.05, 6, 2, 1] };
 const speciesMeshes = [];
 function speciesMesh(i) {
   if (speciesMeshes[i]) return speciesMeshes[i];
@@ -1144,7 +1289,14 @@ function speciesMesh(i) {
   else if (sp.kind === 'squid') g.wig(0, x => clamp((-0.2 - x) / 0.4, 0, 1));
   else if (sp.kind === 'puffer') g.wig(0, x => clamp((-0.22 - x) / 0.2, 0, 1));
   else if (sp.kind === 'eel') g.wig(0, x => clamp((0.45 - x) / 0.9, 0, 1) * 1.0);
+  else if (sp.kind === 'turtle') g.wig(0, (x, y, z) => clamp((Math.abs(z) - 0.22) / 0.3, 0, 1));
+  else if (sp.kind === 'ray') g.wig(0, (x, y, z) => clamp((Math.abs(z) - 0.1) / 0.5, 0, 1));
+  else if (sp.kind === 'jelly') g.wig(0, (x, y) => clamp((0.05 - y) / 0.6, 0, 1));
   else if (SWIM[sp.kind][0] > 0) g.wig(0, x => Math.pow(clamp((0.18 - x) / 0.7, 0, 1), 1.3));
+  // the model's bounding box, used to lay big catches on the beach
+  const bb = [1e9, 1e9, 1e9, -1e9, -1e9, -1e9];
+  for (let k = 0; k < g.n; k++) for (let a = 0; a < 3; a++) { const v = g.f[k * 5 + a]; if (v < bb[a]) bb[a] = v; if (v > bb[a + 3]) bb[a + 3] = v; }
+  sp.bb = bb;
   return (speciesMeshes[i] = makeMesh(g));
 }
 
@@ -1193,25 +1345,25 @@ const armMesh = (() => {
    The beach: sand, the Aquarium dome, the Tackle Shop, palm trees and the
    long pier. Ocean to the north (-z).
    ===================================================================== */
-const AQ = { x: -30, z: 0, r: 14, door: [-14.6, 0], base: 0.8, top: 3 };
+const AQ = { x: -36.4, z: 0, r: 20, door: [-14.6, 0], base: 0.8, top: 4 };
 const SHOP = { x: 18, z: 0, door: [14.4, 0] };
 const PIER = { x0: -1.6, x1: 1.6, z0: -15, z1: -66, endX: 4, endZ: -74, deck: 1.3 };
-const BOUNDS = { x0: -58, x1: 44, z0: -78, z1: 40 };
+const BOUNDS = { x0: -64, x1: 44, z0: -78, z1: 40 };
 function shoreZ(x) { return -25 + 2.5 * Math.sin(x * 0.09); }
 function sandH(x, z) {
   let h = 0.55 + 0.18 * Math.sin(x * 0.21 + z * 0.13) * Math.cos(z * 0.17 - x * 0.05);
   const sz = shoreZ(x);
   if (z < sz) h -= (sz - z) * 0.22;
   if (z > 28) h += (z - 28) * 0.14;
-  if (x < -48) h += (-48 - x) * 0.18;
-  if (x > 36) h += (x - 36) * 0.18;
+  if (x < -60) h += (-60 - x) * 0.18;
+  if (x > 50) h += (x - 50) * 0.18;
   return Math.max(h, -5);
 }
 function onPier(x, z) {
   return (x > PIER.x0 && x < PIER.x1 && z < PIER.z0 + 0.5 && z > PIER.z1) || (Math.abs(x) < PIER.endX && z <= PIER.z1 + 0.2 && z > PIER.endZ);
 }
 function groundH(x, z) { return onPier(x, z) ? PIER.deck : sandH(x, z); }
-const PALMS = [[-8, 6], [8, -8], [26, 12], [-16, 22], [30, -14], [-46, 14], [-10, -16], [12, 26], [-44, -18], [40, 6]];
+const PALMS = [[-8, 6], [8, -8], [26, 12], [-16, 22], [30, -9], [-24, 26], [-10, -16], [12, 26], [-28, -23], [40, 6]];
 
 function palm(g, x, z, rng) {
   const y0 = sandH(x, z), lean = rng() * TAU, h = 6 + rng() * 2.5, pts = [];
@@ -1259,6 +1411,7 @@ function buildBeach() {
   for (let i = 0; i < 40; i++) {
     const x = -55 + rng() * 98, z = shoreZ(x) + (rng() - 0.3) * 6;
     if (Math.abs(x) < 6) continue;
+    if (x > -2 && x < 52 && z > shoreZ(x) - 1.5) continue;    // keep the spot for beached-catch pictures clear
     const r = 0.4 + rng() * 1.3;
     blob(g, x, sandH(x, z), z, r * 1.3, r, r, shade(H('#8a8a90'), 0.8 + rng() * 0.3), rng, 0.35, -1);
   }
@@ -1477,8 +1630,10 @@ function buildOcean() {
    fish you have, so there's always room.
    ===================================================================== */
 let tunnelMesh = null, tunnelGlass = null, tunnelLen = 0;
-const TUN_R = 3.2, TANK_FLOOR = -6, TANK_Z = 34, TANK_TOP = 16;
-const tankLength = n => Math.round(40 + Math.min(n, 4000) * 0.7);
+const TUN_R = 3.2, TANK_FLOOR = -6, TANK_Z = 60, TANK_TOP = 40;
+const tankLength = n => Math.round(80 + Math.min(n, 4000) * 1.2);
+// giants are shown life size up to 16 m; past that they still grow, just more slowly, so they fit in the tank
+const tankSize = s => s > 16 ? 16 + (s - 16) * 0.4 : s;
 const BOTTOM_KIND = sp => sp.kind === 'bug' || sp.kind === 'seapig' || !!sp.o.tripod;
 function buildTunnel(L) {
   if (L === tunnelLen && tunnelMesh) return;
@@ -1511,9 +1666,10 @@ function buildTunnel(L) {
   }
   for (const s of [-1, 1]) box(g, L / 2, TANK_FLOOR, s * (TANK_Z + 0.5), L + 12, TANK_TOP - TANK_FLOOR, 1, H('#2a4a8a'));
   // decorations
-  for (let x = X0 + 3; x < X1 - 2; x += 3.2) for (const s of [-1, 1]) {
+  for (let x = X0 + 3; x < X1 - 2; x += 3.2) for (const s of [-1, 1, -1, 1]) {
     const z = s * (5 + rng() * (TANK_Z - 7)), r = rng();
-    if (r < 0.3) for (let k = 0; k < 3; k++) chain(g, [[x + k * 0.3, TANK_FLOOR, z], [x + k * 0.3 + 0.3, TANK_FLOOR + 2, z + 0.2], [x + k * 0.3 - 0.2, TANK_FLOOR + 4 + rng() * 2, z - 0.2]], 0.14, 0.05, 5, shade(H('#3f9a4a'), 0.8 + rng() * 0.4));
+    if (r < 0.06 && Math.abs(z) > 14) { const h = 14 + rng() * 18; for (let k = 0; k < 2; k++) chain(g, [[x + k * 0.4, TANK_FLOOR, z], [x + k * 0.4 + 0.6, TANK_FLOOR + h * 0.35, z + 0.4], [x + k * 0.4 - 0.5, TANK_FLOOR + h * 0.7, z - 0.3], [x + k * 0.4 + 0.3, TANK_FLOOR + h, z]], 0.22, 0.08, 5, shade(H('#3f8a3a'), 0.8 + rng() * 0.4)); }   // giant kelp
+    else if (r < 0.3) for (let k = 0; k < 3; k++) chain(g, [[x + k * 0.3, TANK_FLOOR, z], [x + k * 0.3 + 0.3, TANK_FLOOR + 2, z + 0.2], [x + k * 0.3 - 0.2, TANK_FLOOR + 4 + rng() * 2, z - 0.2]], 0.14, 0.05, 5, shade(H('#3f9a4a'), 0.8 + rng() * 0.4));
     else if (r < 0.5) blob(g, x, TANK_FLOOR, z, 0.8 + rng() * 1.5, 0.6 + rng(), 0.8 + rng() * 1.5, shade(H('#8a8f9a'), 0.8 + rng() * 0.3), rng, 0.4, -1);
     else if (r < 0.7) { const cc = [H('#ff6a8a'), H('#ffb84a'), H('#b86aff'), H('#4ae0c0')][Math.floor(rng() * 4)]; for (let k = 0; k < 4; k++) chain(g, [[x, TANK_FLOOR, z], [x + (rng() - 0.5), TANK_FLOOR + 0.8, z + (rng() - 0.5)], [x + (rng() - 0.5) * 1.6, TANK_FLOOR + 1.6 + rng(), z + (rng() - 0.5) * 1.6]], 0.2, 0.08, 6, cc); }
     else if (r < 0.74) {               // a treasure chest
@@ -1738,7 +1894,7 @@ function updateOcean(dt) {
     o.ambT = rand(0.5, 1.4);
     const zl = SPECIES.filter(s => s.z === z && (s.r === 'c' || Math.random() < 0.15));
     const sp = zl[Math.floor(Math.random() * zl.length)], side = Math.random() < 0.5 ? -1 : 1;
-    o.amb.push({ sp: sp.id, x: side * 24, y: oceanHookY() + rand(-9, 9) - (o.phase === 'sink' ? 10 : 0), z: rand(-16, -3), vx: -side * rand(2.5, 4.5), ph: rand(0, TAU), s: sp.vis * rand(0.8, 1.1) });
+    o.amb.push({ sp: sp.id, x: side * 24, y: oceanHookY() + rand(-9, 9) - (o.phase === 'sink' ? 10 : 0), z: rand(-16, -3), vx: -side * rand(2.5, 4.5), ph: rand(0, TAU), s: Math.min(sp.vis, 7) * rand(0.8, 1.1) });
   }
   for (let i = o.amb.length - 1; i >= 0; i--) { const a = o.amb[i]; a.x += a.vx * dt; a.ph += dt; if (Math.abs(a.x) > 26 || Math.abs(a.y + o.vis) > 30) o.amb.splice(i, 1); }
 }
@@ -1778,27 +1934,69 @@ function finishCatch() {
   const bonus = Math.round(sp.val * size * 20);
   save.coins += bonus;
   recalcRate(); saveGame();
-  catchShow = { sp: sp.id, size, isNew, bonus, depth: visToDepth(o.maxVis < o.v0 ? o.v0 : o.v0), t: 0 };
-  catchShow.depth = visToDepth(o.v0);
+  const S = sp.vis * Math.sqrt(size);
+  // big ones are too heavy to hold up: they get a picture lying on the beach next to you instead
+  catchShow = { sp: sp.id, size, isNew, bonus, depth: visToDepth(o.v0), t: 0, S, beached: S > BEACHED_MIN };
   ocean = null;
   scene = 'catch';
-  player.x = 0; player.z = -70; player.y = PIER.deck; player.yaw = Math.PI / 2; player.arm = 1.1;
+  if (catchShow.beached) { player.x = BEACH_SHOT.x; player.z = BEACH_SHOT.z - 0.7; player.y = sandH(player.x, player.z); player.yaw = Math.PI / 2; player.arm = 1.5; snapBeachedCam(); }
+  else { player.x = 0; player.z = -70; player.y = PIER.deck; player.yaw = Math.PI / 2; player.arm = 1.1; }
   fadeFrom();
   setMusic('beach');
   showCard();
   if (sp.r === 'm') sfx.myth(); else sfx.caught();
 }
 function endCatch(goAquarium) {
+  const beached = catchShow && catchShow.beached;
+  if (beached && !goAquarium) {
+    // walk back out to the end of the pier, ready for the next cast
+    fadeTo(() => { catchShow = null; scene = 'beach'; player.x = 0; player.z = -70; player.y = PIER.deck; player.yaw = Math.PI / 2; player.arm = 0.6; player.path = []; camYaw = Math.PI / 2; fadeFrom(); });
+    return;
+  }
   catchShow = null;
   scene = 'beach'; player.arm = 0.6; camYaw = Math.PI / 2;
   if (goAquarium) enterAquarium();
 }
+/* ---------- the beached picture for big catches ---------- */
+const BEACHED_MIN = 2.6, BEACH_SHOT = { x: 4, z: -17.5 };
+// how high above the sand each kind's middle sits when it's lying down (times its size), and whether it lies on its side
+// everything lies on its belly with its side to the camera, so the picture shows the whole creature (ON_SIDE kinds would flop over instead)
+const ON_SIDE = {};
+// how high its middle sits above the sand (times its size). On its side, wings and fins sink into the sand.
+function beachedLift(sp) { const bb = sp.bb; return ON_SIDE[sp.kind] ? Math.min(bb[5], sp.kind === 'fish' ? Math.max(0.1, (sp.o.w || 0.18) / 2 + 0.02) : 9) : -bb[1] * 0.75; }
+function beachedPose(c) {
+  const sp = SPECIES[c.sp], S = c.S, side = !!ON_SIDE[sp.kind];
+  speciesMesh(sp.id);
+  const bb = sp.bb;
+  // lying along the beach with its nose next to you; long ones stretch away to the east
+  const x = BEACH_SHOT.x + 1.1 + S * bb[3], z = BEACH_SHOT.z - (bb[2] + bb[5]) / 2 * S * (side ? 0 : 1);
+  // turned on its side, the model's z becomes up and down
+  // (lying on its belly, fins and legs sink into the sand a little)
+  const y = sandH(x, z) - 0.1 + S * beachedLift(sp);
+  const wk = side ? 0.3 : 0.6;
+  return { x, y, z, yaw: Math.PI, pitch: 0, roll: side ? Math.PI / 2 : 0, S, wk, head: [BEACH_SHOT.x + 1.1, y, z] };
+}
+function beachedCamera(c) {
+  const sp = SPECIES[c.sp], S = c.S, bb = sp.bb || [-0.5, -0.3, -0.3, 0.5, 0.3, 0.3], side = !!ON_SIDE[sp.kind];
+  const w = S * (bb[3] - bb[0]) + 2.4, cx = BEACH_SHOT.x - 0.8 + w / 2;
+  const lift = sp.bb ? beachedLift(sp) : 0.2;
+  const h = Math.max(2.2, S * (lift + (side ? -bb[2] : bb[4])));     // how tall the picture needs to be
+  const tanV = Math.tan(cam.fovy / 2), tanH = tanV * cam.aspect;
+  // the catch card covers the bottom half of the screen, so the picture goes in the top half
+  const D = Math.max(6, (w / 2) / tanH * 1.1, h / (tanV * 0.85));
+  const gy = sandH(cx, BEACH_SHOT.z);
+  return { eye: [cx + D * 0.2, gy + 1 + D * 0.25, BEACH_SHOT.z - D], look: [cx, gy - 0.4 - (cam.aspect < 0.8 ? D * 0.12 : 0), BEACH_SHOT.z] };
+}
+function snapBeachedCam() { const k = beachedCamera(catchShow); for (let i = 0; i < 3; i++) { camPos[i] = k.eye[i]; camLook[i] = k.look[i]; } }
 
 /* ---------- the aquarium ---------- */
+// small fish stay near the tunnel where you can see them; giants use the whole tank
+const tankZMax = s => Math.min(TANK_Z - 2 - s * 0.3, 16 + s * 3);
+const tankY = (s, u) => { const lo = TANK_FLOOR + 1 + s * 0.4, hi = Math.min(TANK_TOP - 2 - s * 0.4, 9 + s * 2); return lo + u * Math.max(0, hi - lo); };
 function makeTankFish(i) {
   const f = save.fish[i], sp = SPECIES[f[0]], r = mulberry32(i * 7919 + 13), L = tunnelLen;
-  const s = sp.vis * Math.sqrt(f[1]);
-  let x = r() * L, y = TANK_FLOOR + 1 + r() * (TANK_TOP - TANK_FLOOR - 4), z = (r() < 0.5 ? -1 : 1) * (5 + r() * (TANK_Z - 7));
+  const s = tankSize(sp.vis * Math.sqrt(f[1]));
+  let x = r() * L, y = tankY(s, r()), z = (r() < 0.5 ? -1 : 1) * (5 + r() * (tankZMax(s) - 5));
   if (BOTTOM_KIND(sp)) y = TANK_FLOOR + 0.3 * s;
   return { i, sp: f[0], s, x, y, z, yaw: r() * TAU, pitch: 0, tx: x, ty: y, tz: z, ph: r() * TAU, sp0: clamp(0.9 + s * 0.25, 0.8, 3.5) * (BOTTOM_KIND(sp) ? 0.3 : 1), retarget: 0, rng: r };
 }
@@ -1829,9 +2027,9 @@ function updateAquarium(dt) {
     const dx = f.tx - f.x, dy = f.ty - f.y, dz = f.tz - f.z, d = Math.hypot(dx, dy, dz);
     if (d < 1 || f.retarget <= 0) {
       const r = f.rng;
-      f.tx = clamp(f.x + (r() - 0.5) * 30, 0, tunnelLen);
-      f.tz = (f.z < 0 ? -1 : 1) * (5 + r() * (TANK_Z - 7)); if (r() < 0.12) f.tz = -f.tz;
-      f.ty = BOTTOM_KIND(sp) ? TANK_FLOOR + 0.3 * f.s : TANK_FLOOR + 1 + f.s * 0.5 + r() * (TANK_TOP - TANK_FLOOR - 3 - f.s);
+      f.tx = clamp(f.x + (r() - 0.5) * (30 + f.s * 4), 0, tunnelLen);
+      f.tz = (f.z < 0 ? -1 : 1) * (5 + r() * (tankZMax(f.s) - 5)); if (r() < 0.12) f.tz = -f.tz;
+      f.ty = BOTTOM_KIND(sp) ? TANK_FLOOR + 0.3 * f.s : tankY(f.s, r());
       f.retarget = 6 + r() * 10;
       continue;
     }
@@ -1856,7 +2054,7 @@ function updateAquarium(dt) {
 const U = progMain.u;
 const ENV = {
   beach: { sun: norm3(0.4, 0.75, 0.35), sunC: [0.7, 0.64, 0.54], ambTop: [0.42, 0.5, 0.64], ambBot: [0.4, 0.35, 0.27], fog: H('#cfeaf7'), fogD: 230, lamp: 0, top: H('#3d8fe0'), hor: H('#cfeaf7'), bot: H('#cfeaf7'), sunOn: 1 },
-  aquarium: { sun: norm3(0.2, 1, 0.3), sunC: [0.55, 0.7, 0.75], ambTop: [0.5, 0.65, 0.75], ambBot: [0.3, 0.35, 0.4], fog: H('#2a8ac0'), fogD: 40, lamp: 0.25, top: H('#9fe0ff'), hor: H('#2a8ac0'), bot: H('#1a4a80'), sunOn: 0 },
+  aquarium: { sun: norm3(0.2, 1, 0.3), sunC: [0.55, 0.7, 0.75], ambTop: [0.5, 0.65, 0.75], ambBot: [0.3, 0.35, 0.4], fog: H('#2a8ac0'), fogD: 70, lamp: 0.25, top: H('#9fe0ff'), hor: H('#2a8ac0'), bot: H('#1a4a80'), sunOn: 0 },
 };
 function oceanEnv(vis) {
   const i = zoneAtVis(vis), z = ZONES[i], n = ZONES[Math.min(i + 1, ZONES.length - 1)], f = vis / ZONE_H - i;
@@ -1900,12 +2098,17 @@ function drawSky() {
 }
 // one creature. phase drives the swimming wave.
 const _fm = new Float32Array(16), _sm = new Float32Array(16);
-function drawCreature(id, x, y, z, yaw, pitch, roll, S, phase, extra) {
+function drawCreature(id, x, y, z, yaw, pitch, roll, S, phase, extra, wk = 1) {
   const sp = SPECIES[id], sw = SWIM[sp.kind];
   const myth = sp.r === 'm' || sp.o.ghost;
   const emit = (myth ? 0.18 + 0.12 * Math.sin(T * 3 + phase) : 0) + (sp.o.ghost ? 0.35 : 0) + (extra || 0);
-  draw(speciesMesh(id), mTRS(_fm, x, y, z, yaw, pitch, roll, S), { wig: sw[0] ? [sw[0], sw[1], phase, sw[3]] : null, emit });
-  if (sp.r === 'm' && sp.o.glow) draw(sparkleMesh, mTRS(_sm, x, y, z, T * 1.3 + phase, 0, 0, S * 0.75), { tint: H(sp.o.glow) });
+  draw(speciesMesh(id), mTRS(_fm, x, y, z, yaw, pitch, roll, S), { wig: sw[0] ? [sw[0] * wk, sw[1], phase, sw[3]] : null, emit });
+  if (sp.r === 'm' && sp.o.glow) {
+    // sparkles: one cloud for small ones, a row of clouds along the body for giants
+    const n = Math.max(1, Math.min(6, Math.round(S / 5))), ss = Math.min(S * 0.75, 4);
+    const dx = Math.cos(yaw) * Math.cos(pitch), dy = Math.sin(pitch), dz = -Math.sin(yaw) * Math.cos(pitch);
+    for (let k = 0; k < n; k++) { const u = n === 1 ? 0 : (k / (n - 1) - 0.5) * 0.8 * S; draw(sparkleMesh, mTRS(_sm, x + dx * u, y + dy * u, z + dz * u, T * 1.3 + phase + k, 0, 0, ss), { tint: H(sp.o.glow) }); }
+  }
 }
 const UPRIGHT = { octo: 1, seahorse: 1 };
 function drawPlayer(p) {
@@ -1947,12 +2150,12 @@ function refreshDomeFish() {
   domeFishN = save.fish.length;
   domeFish = [];
   const seen = new Set();
-  for (let i = save.fish.length - 1; i >= 0 && domeFish.length < 16; i--) {
+  for (let i = save.fish.length - 1; i >= 0 && domeFish.length < 24; i--) {
     const id = save.fish[i][0];
-    if (seen.has(id) && domeFish.length < 8) continue;
+    if (seen.has(id) && domeFish.length < 12) continue;
     seen.add(id);
     const r = mulberry32(i + 1), sp = SPECIES[id];
-    domeFish.push({ id, a: r() * TAU, rad: 3 + r() * 8, y: AQ.base + 1.5 + r() * 7, v: (0.15 + r() * 0.2) * (r() < 0.5 ? 1 : -1), S: Math.min(sp.vis, 3.2) });
+    domeFish.push({ id, a: r() * TAU, rad: 3 + r() * (AQ.r - 6), y: AQ.base + 2 + r() * AQ.r * 0.55, v: (0.15 + r() * 0.2) * (r() < 0.5 ? 1 : -1), S: Math.min(sp.vis, 6) });
   }
 }
 
@@ -1991,7 +2194,10 @@ function followCam(p, dist, pitch, dt, inTank) {
 }
 function renderBeach(dt) {
   env = ENV.beach;
-  if (scene === 'catch' && catchShow) {
+  if (scene === 'catch' && catchShow && catchShow.beached) {
+    const k = beachedCamera(catchShow);
+    smoothCam(k.eye, k.look, dt, 4);
+  } else if (scene === 'catch' && catchShow) {
     const S = Math.min(SPECIES[catchShow.sp].vis, 3.4), tip = rodTip();
     const fy = tip[1] - 0.5 - S * 0.5;
     smoothCam([5.5 + S * 1.4, 3.4 + S * 0.4, -70.4 + S * 0.2], [0.4, (1.9 + fy) / 2 - 1.3, -71.4], dt, 4);
@@ -2011,7 +2217,11 @@ function renderBeach(dt) {
   }
   drawPlayer(player);
   // the hooked fish being shown off
-  if (scene === 'catch' && catchShow) {
+  if (scene === 'catch' && catchShow && catchShow.beached) {
+    const p = beachedPose(catchShow), tip = rodTip();
+    drawLine(tip, p.head, 0.4, [1, 1, 1, 0.9]);
+    drawCreature(catchShow.sp, p.x, p.y, p.z, p.yaw, p.pitch, p.roll, p.S, T * 2.2, 0.05, p.wk);
+  } else if (scene === 'catch' && catchShow) {
     const sp = SPECIES[catchShow.sp], S = Math.min(sp.vis, 3.4), tip = rodTip();
     const up = UPRIGHT[sp.kind];
     const top = [tip[0], tip[1] - 0.5, tip[2]];
@@ -2049,8 +2259,16 @@ function renderOcean(dt) {
   const fighting = o.phase === 'fight' || o.phase === 'rise';
   const sw = fighting ? (o.thrash ? Math.sin(T * 15) * 0.7 : Math.sin(T * 2.5) * 0.15) : Math.sin(T * 1.3) * 0.05;
   const hx = sw * Math.min(S, 3) * 0.4;
-  const look = [hx * 0.5, hy - (fighting ? 0.4 + S * 0.5 : 0.5), 0];
-  const back = fighting ? 3.8 + S * 1.7 : o.phase === 'approach' ? 6.5 + S : 6;
+  const sp = o.sp >= 0 ? SPECIES[o.sp] : null;
+  // giants hang sideways on the line, so the whole monster fits on the screen
+  const horiz = !!(sp && S > 8 && !UPRIGHT[sp.kind]);
+  if (horiz) speciesMesh(sp.id);
+  const hcx = horiz ? hx + HOOK_MOUTH[0] - (sp.bb[3] - (sp.bb[0] + sp.bb[3]) / 2) * S : 0;
+  const look = horiz && fighting ? [hcx, hy - 0.6 - S * 0.06, 0] : [hx * 0.5, hy - (fighting ? 0.4 + S * 0.5 : 0.5), 0];
+  const back = fighting ? (horiz ? 5 + S * 0.78 : 3.8 + Math.min(S, 8) * 1.7 + Math.max(0, S - 8) * 1.25) : o.phase === 'approach' ? 6.5 + S : 6;
+  // life-size monsters are far from the camera, so push the fog back to keep them in sight
+  if (o.phase !== 'sink') env.fogD = Math.max(env.fogD, back * 1.4);
+  const bigGlow = S > 4 ? clamp((S - 4) / 10, 0, 1) * 0.35 : 0;
   smoothCam([look[0] + 2.2, look[1] + 1 + (o.phase === 'sink' ? 1.5 : 0), back], look, dt, o.phase === 'rise' || o.phase === 'sink' ? 30 : 5);
   drawSky();
   useMain();
@@ -2065,13 +2283,15 @@ function renderOcean(dt) {
   draw(hookMesh, mTRS(_fm, hookPos[0], hookPos[1], hookPos[2], fighting ? 0 : T * 0.5, 0, sw * 0.3, 1));
   drawLine([hx * 0.2, hy + 40, 0], hookPos, 0, [1, 1, 1, 0.7]);
   // the fish that bites
-  const sp = o.sp >= 0 ? SPECIES[o.sp] : null;
   if (o.phase === 'approach' && o.biter) {
     const b = o.biter;
-    drawCreature(sp.id, b.x, b.y, b.z, b.yaw, 0, 0, S, T * 9);
+    drawCreature(sp.id, b.x, b.y, b.z, b.yaw, 0, 0, S, T * 9, bigGlow);
+  } else if (fighting && horiz) {
+    const my = hy + HOOK_MOUTH[1], cx = hx + HOOK_MOUTH[0] - sp.bb[3] * S;
+    drawCreature(sp.id, cx, my - S * 0.02, 0, sw * 0.12, sw * 0.08, 0, S, T * (o.thrash ? 16 : 6), bigGlow);
   } else if (fighting) {
     const up = UPRIGHT[sp.kind], mx = hx + HOOK_MOUTH[0], my = hy + HOOK_MOUTH[1];
-    drawCreature(sp.id, mx, my - (up ? 0.48 : 0.45) * S, 0, Math.PI / 2 + sw * 0.8, up ? 0 : Math.PI / 2, sw * 0.4, S, T * (o.thrash ? 20 : 8));
+    drawCreature(sp.id, mx, my - (up ? 0.48 : 0.45) * S, 0, Math.PI / 2 + sw * 0.8, up ? 0 : Math.PI / 2, sw * 0.4, S, T * (o.thrash ? 20 : 8), bigGlow);
   }
   // the bright surface above
   if (camPos[1] > -75) {
@@ -2149,7 +2369,7 @@ function thumb(id, sil) {
   useMain();
   if (sil) gl.uniform4f(U.uFlat, 0.2, 0.25, 0.55, 1);
   const sp = SPECIES[id];
-  draw(speciesMesh(id), mTRS(_fm, sp.kind === 'eel' ? -0.08 : 0, 0, 0, -0.35, 0, 0, sp.kind === 'eel' ? 0.9 : 1), { wig: null, emit: sp.r === 'm' ? 0.2 : 0 });
+  draw(speciesMesh(id), mTRS(_fm, sp.kind === 'eel' ? -0.08 : sp.kind === 'ray' ? 0.08 : 0, 0, 0, -0.35, 0, sp.kind === 'ray' ? 0.9 : 0, sp.kind === 'eel' ? 0.9 : sp.kind === 'ray' ? 0.85 : 1), { wig: null, emit: sp.r === 'm' ? 0.2 : 0 });
   gl.uniform4f(U.uFlat, 0, 0, 0, 0);
   const px = new Uint8Array(TW * THh * 4);
   gl.readPixels(0, 0, TW, THh, gl.RGBA, gl.UNSIGNED_BYTE, px);
@@ -2506,9 +2726,9 @@ function renderDex() {
   ZONES.forEach((z, zi) => {
     const reach = zi <= save.hook;
     h += `<div class="zrow"><h3>${esc(z.name)} <small>${fmt(z.top)}–${fmt(z.bottom)} m${reach ? '' : ` · needs the ${esc(HOOKS[zi].name)}`}</small></h3><div class="tiles">`;
-    for (const sp of SPECIES.filter(s => s.z === zi)) {
+    for (const sp of zoneSpecies(zi)) {
       const n = save.dex[sp.id] || 0;
-      h += `<div class="tile ${sp.r === 'c' ? '' : sp.r}"><img alt="" src="${thumb(sp.id, !n)}"><div>${n ? esc(sp.name) : '???'}</div><div class="k">${RARITY[sp.r]}${n ? ` · ×${fmt(n)}` : ''}</div></div>`;
+      h += `<div class="tile ${sp.r === 'c' ? '' : sp.r}"><img alt="" src="${thumb(sp.id, !n)}"><div>${n ? esc(sp.name) : '???'}</div><div class="k">${sp.rname}${n ? ` · ×${fmt(n)}` : ''}</div></div>`;
     }
     h += '</div></div>';
   });
@@ -2520,7 +2740,7 @@ function renderDex() {
 /* ---------- the catch card ---------- */
 function showCard() {
   const c = catchShow, sp = SPECIES[c.sp], v = sp.val * c.size;
-  const badges = (c.isNew ? '<span class="badge new">NEW!</span>' : '') + `<span class="badge ${sp.r === 'c' ? '' : sp.r}">${sp.r === 'm' ? 'MYTHICAL!' : RARITY[sp.r]}</span>` + (c.size >= 1.15 ? '<span class="badge">Big one!</span>' : '');
+  const badges = (c.isNew ? '<span class="badge new">NEW!</span>' : '') + `<span class="badge ${sp.r === 'c' ? '' : sp.r}">${sp.r === 'm' ? sp.rname.toUpperCase() + '!' : sp.rname}</span>` + (c.size >= 1.15 ? '<span class="badge">Big one!</span>' : '');
   $('cardPanel').className = 'panel ' + (sp.r === 'c' ? '' : sp.r);
   $('cardPanel').innerHTML = `<div>${badges}</div><h2>${sp.r === 'm' ? '✨ ' : ''}${esc(sp.name)}${sp.r === 'm' ? ' ✨' : ''}</h2>
     <p>From ${esc(ZONES[sp.z].name)}, ${fmt(c.depth)} m down</p>

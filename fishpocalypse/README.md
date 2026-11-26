@@ -18,25 +18,31 @@ Plain WebGL 2 in one file, like Wildwood. It reuses Wildwood's `Geo` vertex buil
 2. **Sink** (`updateOcean`, phase `sink`): the hook falls straight down a 3D ocean column. Each zone is 60 units tall, so every zone takes about the same time (about 2.5 s) no matter how many meters it covers. Inside a zone the meters grow on a log scale (`depthToVis` / `visToDepth`). A banner shows each new zone, and a gauge on the right shows all seven zones, where your hook is, and your sinker's limit. Press **Stop here** to fish a shallower zone. Otherwise the hook stops just inside the deepest zone your sinker reaches.
 3. **Bite:** after 1–2 s a fish from that zone (`pickSpecies`) swims in from the side and grabs the hook.
 4. **Reel** (`updateFight`): hold to fill the "Reel it in" bar. Every few seconds the fish thrashes ("LET GO! It's pulling hard!"). If you keep holding while it thrashes, the "Line pull" bar fills, and when it's full the fish swims back down a bit (the reel bar drops by 20%). The fish never gets away. Deeper, rare and mythical fish reel slower and thrash more often. Faster reels help.
-5. **Up and caught:** the fish rides up through the zones to the pier, and the kid holds it up while a card shows its name, rarity, "NEW!" the first time, "Big one!" for big ones, its coins per second, the catch bonus (20 seconds' worth) and a fact.
+5. **Up and caught:** the fish rides up through the zones to the pier, and the kid holds it up while a card shows its name, rarity, "NEW!" the first time, "Big one!" for big ones, its coins per second, the catch bonus (20 seconds' worth) and a fact. Creatures longer than 2.6 m are too heavy to hold up. Instead you get a picture of the kid standing on the beach next to the creature, life size, lying on the sand with the line still in its mouth (`beachedPose` / `beachedCamera`). The camera backs up to fit the whole thing above the card, and "Keep fishing" takes you back to the end of the pier.
+
+Giants longer than 8 m hang sideways on the line during the fight so the whole monster fits on the screen, and the fog moves back so you can see them.
 
 ## Zones and creatures
 
-Every zone has three common creatures, one rare one and one mythical one (35 in all). Bites are weighted 30 / 27 / 23 (commons), 16 (rare) and 4 (mythical). Bait multiplies the rare and mythical weights.
+Every zone has eight creatures: four common, two rare and two mythical (56 in all). Bites are weighted 24 / 21 / 19 / 16 for the commons, 9 / 7 for the rares and 2.5 / 1.5 for the mythicals. The King Leviathan is the Rift's second mythical. It shows as **Legendary** and has a weight of 1. Bait multiplies the rare and mythical weights. The Fishdex lists each zone common first, then rare, then mythical.
 
 | Zone | Depth | Coins/s (base) | Common | Rare | Mythical |
 |---|---|---|---|---|---|
-| Sunlit Shallows | 0–20 m | 1 | Sardine, Clownfish, Pufferfish | Seahorse | Sunscale Dragonet |
-| Kelp Forest | 20–80 m | 5 | Kelp Bass, Garibaldi, Octopus | Leafy Sea Dragon | Kelpie |
-| Twilight Zone | 80–300 m | 25 | Lanternfish, Hatchetfish, Squid | Swordfish | Moonhorn |
-| Midnight Zone | 300–1,500 m | 125 | Anglerfish, Gulper Eel, Vampire Squid | Giant Squid | Phantom Shark |
-| The Abyss | 1,500–5,000 m | 625 | Dumbo Octopus, Tripod Fish, Giant Isopod | Frilled Shark | Sea Serpent |
-| The Trench | 5,000–11,000 m | 3,000 | Snailfish, Sea Pig, Supergiant Amphipod | Megalodon | Kraken |
-| The Fishpocalypse Rift | 11,000–20,000 m | 15,000 | Zombie Cod, Skeleton Fish, Lava Shark | Triclops Grouper | Doomfin |
+| Sunlit Shallows | 0–20 m | 1 | Sardine, Clownfish, Pufferfish, Blue Tang | Seahorse, Sea Turtle | Sunscale Dragonet, Rainbow Ray |
+| Kelp Forest | 20–80 m | 5 | Kelp Bass, Garibaldi, Octopus, Moon Jelly | Leafy Sea Dragon, Wolf Eel | Kelpie, Treasure Turtle |
+| Twilight Zone | 80–300 m | 25 | Lanternfish, Hatchetfish, Squid, Barreleye | Swordfish, Manta Ray | Moonhorn, Star Jelly |
+| Midnight Zone | 300–1,500 m | 125 | Anglerfish, Gulper Eel, Vampire Squid, Viperfish | Giant Squid, Atolla Jellyfish | Phantom Shark, Shadow Ray |
+| The Abyss | 1,500–5,000 m | 625 | Dumbo Octopus, Tripod Fish, Giant Isopod, Black Swallower | Frilled Shark, Goblin Shark | Sea Serpent, Ancient Turtle |
+| The Trench | 5,000–11,000 m | 3,000 | Snailfish, Sea Pig, Supergiant Amphipod, Rattail | Megalodon, Big Red Jellyfish | Kraken, Crystal Dragon |
+| The Fishpocalypse Rift | 11,000–20,000 m | 15,000 | Zombie Cod, Skeleton Fish, Lava Shark, Fire Jelly | Triclops Grouper, Magma Turtle | Doomfin, **King Leviathan** (legendary) |
 
-A creature's coins per second = zone base × (1, 1.3 or 1.6 for the three commons, 5 for rare, 25 for mythical) × its size (0.8–1.05 usually, 1.15–1.5 for a "Big one", 15% of the time). Facts about real animals are written to be true. Mythical ones glow, sparkle and have a bigger fanfare.
+The newer creatures are at the end of `SPECIES`, so old saves (which store each fish by its number) still point at the right ones.
 
-The models are built from shapes in code (`BUILDERS`: fish, shark, eel, octopus, squid, puffer, seahorse, bug, sea pig, kelpie), each about 1 unit long facing +x, then scaled by `vis = 0.7 + length × 0.75`. Swimming is a wave in the vertex shader (`uWig`). Each vertex stores how much it wiggles (head 0, tail 1).
+A creature's coins per second = zone base × (1, 1.3, 1.6 or 2 for the four commons, 5 or 6 for the rares, 25 or 30 for the mythicals, 50 for the King Leviathan) × its size (0.8–1.05 usually, 1.15–1.5 for a "Big one", 15% of the time). Facts about real animals are written to be true. Mythical ones glow, sparkle and have a bigger fanfare.
+
+The Sea Serpent and the Megalodon have huge open jaws full of teeth. The King Leviathan is like the Sea Serpent but bigger (40 m). He is black with red stripes, and has big curved horns, red spikes and frills, glowing red eyes and the same giant jaws.
+
+The models are built from shapes in code (`BUILDERS`: fish, shark, eel, octopus, squid, puffer, seahorse, bug, sea pig, kelpie, turtle, ray, jelly), each about 1 unit long facing +x, then scaled by `vis = max(0.7 + length × 0.75, length)`. One unit is one meter, so big creatures are **life size**: Megalodon 16 m, Kraken 22 m, Sea Serpent 25 m, King Leviathan 40 m. Small fish are drawn a bit bigger so you can see them. Mythical creatures are made big on purpose too. Swimming is a wave in the vertex shader (`uWig`). Mode 0 swings side to side (fish), mode 1 sways tentacles, and mode 2 flaps (ray wings, turtle flippers). `speciesMesh` also stores each model's bounding box (`sp.bb`), which the beach picture and the sideways fight pose use. Each vertex stores how much it wiggles (head 0, tail 1).
 
 ## The shop
 
@@ -46,11 +52,11 @@ Buy each item after the one before it.
 - **Reels** (reel speed): Old 1× · Fast 400 (1.4×) · Turbo 15,000 (1.9×) · Mega 2 million (2.6×) · Rocket 100 million (3.4×).
 - **Bait** (rare × / mythical ×): Worm · Shiny Lure 1,000 (1.5 / 2) · Glow Lure 150,000 (2 / 3.5) · Mythic Bait 20 million (2.5 / 6).
 
-Pacing check (a script that casts over and over and buys the next sinker as soon as it can): the Iron Sinker after about 1–1.5 minutes, Steel about 4, Gold about 8, Diamond about 13, Titan about 24, and the Doom Anchor after about 50–60 minutes.
+Pacing check (a script that casts over and over and buys the next sinker as soon as it can): the Iron Sinker after about 1–1.5 minutes, Steel about 4, Gold about 8, Diamond about 13, Titan about 24, and the Doom Anchor after about 50–60 minutes. With 8 creatures per zone, the average catch is worth about 9% more than it was with 5, so the game is now a little faster.
 
 ## The Aquarium
 
-The glass dome on the beach shows up to 16 of your newest fish swimming around inside. Walk in the door to visit the real Aquarium: a glass tunnel through a huge tank, with sand, plants, coral, rocks, treasure chests and little castles. The tunnel gets longer as you catch more fish (`tankLength`: 40 m + 0.7 m per fish, counting up to 4,000 fish), so there's always room. Every fish you've caught swims in it. Bottom crawlers (isopods, sea pigs, amphipods, tripod fish) stay on the sand. The closest fish shows a name tag with its coins per second, and tapping a fish shows its tag too. Gold coins pop up from fish now and then (just for show: coins are counted all the time, everywhere).
+The glass dome on the beach (40 m across) shows up to 24 of your newest fish swimming around inside. Walk in the door to visit the real Aquarium: a glass tunnel through a huge tank (46 m tall and 120 m wide), with sand, plants, giant kelp, coral, rocks, treasure chests and little castles. The tunnel gets longer as you catch more fish (`tankLength`: 80 m + 1.2 m per fish, counting up to 4,000 fish), so there's always room. Small fish stay near the tunnel where you can see them (`tankY`, `tankZMax`), and giants use the whole tank. Giants are life size up to 16 m. Past that they still grow, but more slowly, so they fit (`tankSize`): the King Leviathan is about 26 m in the tank. Every fish you've caught swims in it. Bottom crawlers (isopods, sea pigs, amphipods, tripod fish) stay on the sand. The closest fish shows a name tag with its coins per second, and tapping a fish shows its tag too. Gold coins pop up from fish now and then (just for show: coins are counted all the time, everywhere).
 
 ## Saved data
 
