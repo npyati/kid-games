@@ -225,6 +225,29 @@ const GAMES = [
       <path d="M40 92 H70 M34 102 H64 M42 112 H66" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".8"/>
     </svg>`,
   },
+  {
+    folder: 'feed-freddy',
+    title: 'Feed Freddy',
+    blurb: 'Freddy the monster is hungry! Pick from lots of foods, mix, bake, fry or blend them, and feed him. The more he likes it, the more coins you get. Find his secret favorites, buy hats, and invent your own foods.',
+    tags: ['Cooking', 'Silly', 'Mouse + touch'],
+    accent: '#ffa94d', artBg: '#2b2470',
+    art: `<svg viewBox="0 0 320 180" aria-hidden="true">
+      <rect width="320" height="180" fill="#2b2470"/>
+      <rect y="140" width="320" height="40" fill="#433db0"/>
+      <g transform="translate(96 22) scale(.47)" stroke="#2a1d40" stroke-width="6" stroke-linejoin="round">
+        <ellipse cx="106" cy="306" rx="34" ry="17" fill="#4f9a35"/><ellipse cx="194" cy="306" rx="34" ry="17" fill="#4f9a35"/>
+        <path d="M88 92 C78 70 80 50 92 36 C96 56 104 70 116 80Z M212 92 C222 70 220 50 208 36 C204 56 196 70 184 80Z" fill="#fff3d6"/>
+        <path d="M150 64 C232 64 264 126 264 204 C264 276 216 312 150 312 C84 312 36 276 36 204 C36 126 68 64 150 64Z" fill="#7bd65a"/>
+        <ellipse cx="150" cy="250" rx="70" ry="50" fill="#d8f5b8" stroke="none"/>
+        <path d="M114 146 C84 126 90 102 104 102 C110 102 114 108 114 112 C114 108 118 102 124 102 C138 102 144 126 114 146Z M186 146 C156 126 162 102 176 102 C182 102 186 108 186 112 C186 108 190 102 196 102 C210 102 216 126 186 146Z" fill="#ff3d7a"/>
+        <path d="M96 178 Q150 172 204 178 Q200 250 150 250 Q100 250 96 178Z" fill="#5a1838"/>
+        <ellipse cx="150" cy="232" rx="30" ry="13" fill="#ff7aa8" stroke="none"/>
+        <path d="M112 178 L120 194 L128 177Z M172 177 L180 194 L188 178Z" fill="#fff" stroke="none"/>
+      </g>
+      <g transform="translate(36 112)"><path d="M0 0 H56 Q52 30 28 30 Q4 30 0 0Z" fill="#ffa94d" stroke="#2a1d40" stroke-width="3"/><text x="28" y="-2" text-anchor="middle" font-size="26">🍓🍫</text></g>
+      ${[[248,52],[268,74],[240,92],[262,112],[284,48]].map(([x,y]) => `<circle cx="${x}" cy="${y}" r="11" fill="#ffd23f" stroke="#b8860b" stroke-width="3"/>`).join('')}
+    </svg>`,
+  },
 ];
 
 const esc = s => String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));

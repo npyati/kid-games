@@ -1,0 +1,1321 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Feed Freddy</title>
+<meta name="description" content="Cook silly dishes from lots of ingredients and feed them to Freddy the monster. The more he likes it, the more coins you get.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@700;800;900&display=swap">
+<style>
+:root{
+  --night:#15123f;
+  --shelf:#201c5c;
+  --shelf2:#2a2575;
+  --edge:#433db0;
+  --cream:#fff5dc;
+  --muted:#aaa5e6;
+  --sun:#ffd23f;
+  --berry:#d6407f;
+  --orange:#ffa94d;
+  --leaf:#8fe36b;
+  --ink:#151233;
+  --bad:#ff7a7a;
+  --display:"Lilita One","Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif;
+  --body:"Nunito","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --emoji:"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background-color:var(--night);color:var(--cream);font-family:var(--body);font-weight:800;
+  background-image:radial-gradient(rgba(255,255,255,.06) 1px,transparent 1.6px);background-size:22px 22px;
+  overflow:hidden;-webkit-tap-highlight-color:transparent;
+}
+button{font:inherit;color:inherit;cursor:pointer}
+button:disabled{cursor:default}
+.hidden{display:none!important}
+.emo{font-family:var(--emoji);font-weight:400;line-height:1}
+.screen{position:fixed;inset:0;overflow-y:auto}
+
+/* ---------- Buttons ---------- */
+.btn{
+  font-family:var(--display);font-size:22px;letter-spacing:.02em;
+  background:var(--shelf2);border:4px solid var(--edge);border-radius:16px;padding:10px 20px;
+  color:var(--cream);transition:transform .1s ease,border-color .1s ease;
+}
+.btn:hover:not(:disabled){transform:translateY(-2px);border-color:var(--sun)}
+.btn:active:not(:disabled){transform:translateY(1px)}
+.btn:focus-visible{outline:4px solid var(--sun);outline-offset:3px}
+.btn.primary{background:var(--sun);border-color:#b8860b;color:var(--ink)}
+.btn.go{background:var(--leaf);border-color:#4f9a35;color:var(--ink)}
+.btn.small{font-size:17px;padding:6px 12px;border-width:3px;border-radius:12px}
+.btn:disabled{opacity:.45}
+
+/* ---------- Menu ---------- */
+#menu .wrap{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px 16px 32px;text-align:center}
+#menu h1{font-family:var(--display);font-weight:400;font-size:clamp(52px,11vw,92px);line-height:.95;margin:0;color:var(--sun);text-shadow:0 6px 0 var(--berry)}
+#menu .lede{margin:0;color:var(--muted);font-size:19px;max-width:30ch}
+#menuFreddy{width:min(260px,52vw);height:auto}
+.menu-btns{display:flex;flex-direction:column;gap:10px;width:min(320px,100%)}
+.menu-btns .btn{width:100%}
+.toggles{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.allgames{color:var(--muted);font-size:17px}
+.allgames:hover{color:var(--cream)}
+.menu-coins{font-size:20px;color:var(--sun)}
+
+/* ---------- Game layout ---------- */
+#game{display:grid;grid-template-rows:auto 1fr;height:100%;overflow:hidden}
+.bar{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  padding:10px max(16px,env(safe-area-inset-left,0px));
+  background:rgba(10,8,40,.55);border-bottom:3px solid var(--edge);
+}
+.bar .title{font-family:var(--display);font-size:26px;color:var(--sun);margin-right:auto;white-space:nowrap}
+.coinbox{font-family:var(--display);font-size:24px;background:var(--ink);border:3px solid #b8860b;border-radius:999px;padding:4px 14px;color:var(--sun);white-space:nowrap}
+.coinbox.bump{animation:bump .25s ease}
+@keyframes bump{50%{transform:scale(1.18)}}
+.stage{display:grid;grid-template-columns:minmax(300px,40%) 1fr;gap:18px;padding:14px 16px 16px;min-height:0}
+.freddy-side{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;min-height:0;position:relative}
+#gameFreddyBox{width:100%;display:flex;justify-content:center;flex:0 1 auto;min-height:0}
+#fgame{width:100%;max-width:380px;height:auto;max-height:52vh;flex:0 1 auto;cursor:pointer;touch-action:manipulation}
+.kitchen{display:flex;flex-direction:column;gap:10px;min-height:0}
+
+/* Thought / speech bubble */
+.bubble{
+  position:relative;width:100%;max-width:440px;background:var(--cream);color:var(--ink);
+  border-radius:24px;padding:14px 18px 16px;text-align:center;margin-bottom:14px;
+  box-shadow:0 6px 0 rgba(0,0,0,.25);
+}
+.bubble.think::after,.bubble.think::before{content:"";position:absolute;background:var(--cream);border-radius:50%}
+.bubble.think::after{width:22px;height:22px;bottom:-16px;left:50%;margin-left:-30px}
+.bubble.think::before{width:12px;height:12px;bottom:-30px;left:50%;margin-left:-44px}
+.bubble.speak::after{content:"";position:absolute;bottom:-18px;left:50%;margin-left:-14px;border:14px solid transparent;border-top:18px solid var(--cream);border-bottom:0}
+.bubble .small{font-size:16px;color:#5a5490}
+.bubble .want{font-family:var(--display);font-size:clamp(22px,2.6vw,28px);line-height:1.25;margin-top:2px}
+.bubble .reroll{margin-top:8px;background:none;border:0;color:#5a5490;font-size:15px;text-decoration:underline}
+.chip{
+  display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:2px 12px 3px;
+  font-family:var(--display);color:var(--ink);border:3px solid rgba(0,0,0,.25);vertical-align:middle;white-space:nowrap;
+}
+button.chip{cursor:pointer}
+.chip .emo{font-size:.9em}
+.tier{font-family:var(--display);font-size:clamp(28px,3.4vw,38px);line-height:1.05}
+.tier.yuck{color:#7a4a9a}.tier.meh{color:#8a7a40}.tier.like{color:#2f8f3a}.tier.love{color:#d6407f}.tier.best{color:#e07b00}
+.dishname{font-size:17px;color:#5a5490;margin:4px 0 6px}
+.reasons{list-style:none;margin:6px 0 4px;padding:0;text-align:left;font-size:16px;display:flex;flex-direction:column;gap:3px}
+.reasons li{padding:3px 10px;border-radius:10px;background:#efe6cc}
+.reasons li.good{background:#d8f5c8}
+.reasons li.bad{background:#ffd9d4}
+.reasons li.hint{background:#e4e2ff}
+.reasons .new{font-family:var(--display);font-size:13px;background:var(--berry);color:#fff;border-radius:6px;padding:1px 6px;margin-left:6px}
+.coinsgot{font-family:var(--display);font-size:30px;color:#b8860b;margin:6px 0}
+.coinsgot.zero{color:#8a849f;font-size:20px}
+
+/* Counter: bowl, methods, feed */
+.counter{background:var(--shelf);border:4px solid var(--edge);border-radius:22px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.bowl-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.bowl{display:flex;gap:8px;flex-wrap:wrap}
+.slot{
+  width:64px;height:64px;border-radius:16px;border:3px dashed var(--edge);background:var(--night);
+  display:grid;place-items:center;font-size:38px;padding:0;position:relative;
+}
+.slot.full{border-style:solid;border-color:var(--orange);background:#2e2760}
+.slot.full:hover::after{content:"✕";position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--bad);color:var(--ink);font-size:13px;display:grid;place-items:center;font-family:var(--body);font-weight:900}
+.dishpreview{flex:1;min-width:160px;font-size:17px;color:var(--muted)}
+.dishpreview b{display:block;color:var(--cream);font-family:var(--display);font-weight:400;font-size:22px;line-height:1.1}
+.methods{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.methods .lbl{color:var(--muted);font-size:16px;margin-right:2px}
+.method{
+  display:flex;align-items:center;gap:6px;font-family:var(--display);font-size:19px;
+  background:var(--night);border:3px solid var(--edge);border-radius:14px;padding:6px 12px;
+}
+.method .emo{font-size:22px}
+.method.on{background:var(--orange);border-color:#b86a12;color:var(--ink)}
+.feed-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+#feedBtn{flex:1;font-size:26px;padding:12px 20px;min-width:220px}
+#clearBtn{flex:0 0 auto}
+.cook-mix .bowl{animation:stir .3s linear 3}
+.cook-bake .bowl{animation:glow .9s ease}
+.cook-fry .bowl{animation:sizzle .1s linear 9}
+.cook-blend .bowl{animation:whirl .45s linear 2}
+@keyframes stir{25%{transform:rotate(-4deg)}75%{transform:rotate(4deg)}}
+@keyframes glow{50%{filter:drop-shadow(0 0 18px #ff8a2a) brightness(1.3)}}
+@keyframes sizzle{25%{transform:translate(-3px,1px)}75%{transform:translate(3px,-1px)}}
+@keyframes whirl{50%{transform:scale(.9) rotate(8deg)}}
+
+/* Ingredient shelf */
+.shelf-head{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.shelf-head .lbl{font-family:var(--display);font-size:20px;margin-right:4px}
+.fchip{font-size:15px;padding:3px 10px;border-radius:999px;border:3px solid var(--edge);background:var(--night);color:var(--muted);display:inline-flex;gap:4px;align-items:center}
+.fchip.on{background:var(--cream);color:var(--ink);border-color:var(--cream)}
+.shelf{flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;align-content:start;padding:2px 4px 8px 2px}
+.ing{
+  position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;
+  background:var(--shelf);border:3px solid var(--edge);border-radius:16px;padding:8px 4px 6px;text-align:center;
+  transition:transform .1s ease,border-color .1s ease;
+}
+.ing:hover:not(:disabled){transform:translateY(-2px);border-color:var(--sun)}
+.ing:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+.ing .big{font-size:40px}
+.ing .nm{font-size:14px;line-height:1.1}
+.ing .tg{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;font-size:13px}
+.ing.sel{border-color:var(--orange);background:#3b2e6e}
+.ing.sel::before{content:"✓";position:absolute;top:4px;left:6px;color:var(--orange);font-weight:900;font-size:18px}
+.ing .badge{position:absolute;top:4px;right:5px;font-size:15px}
+.tagdot{display:inline-block;padding:0 5px;border-radius:7px;color:var(--ink);font-size:11px;line-height:16px}
+
+/* Flying things */
+.flyer{position:fixed;left:0;top:0;pointer-events:none;z-index:50;font-family:var(--emoji);line-height:1}
+.confetti{position:fixed;top:-20px;width:10px;height:14px;z-index:49;pointer-events:none;border-radius:2px}
+
+/* Freddy animations */
+.freddy-svg .fr-all{transform-box:fill-box;transform-origin:50% 100%}
+.freddy-svg.idle .fr-all{animation:breathe 2.6s ease-in-out infinite}
+.freddy-svg.jump .fr-all{animation:jump .5s ease 3}
+.freddy-svg.hop .fr-all{animation:hop .45s ease 2}
+.freddy-svg.wiggle .fr-all{animation:wiggle .35s ease 3}
+.freddy-svg.shake .fr-all{animation:shake .12s linear 6}
+.freddy-svg.chomp .fr-all{animation:chomp .3s ease 3}
+.freddy-svg.wave .fr-arm-l{animation:waveL .4s ease 4}
+.freddy-svg.wave .fr-arm-r{animation:waveR .4s ease 4}
+.fr-arm-l,.fr-arm-r{transform-box:fill-box}
+.fr-arm-l{transform-origin:100% 0}
+.fr-arm-r{transform-origin:0 0}
+.fr-eyes-n{transform-box:fill-box;transform-origin:50% 50%;transition:transform .08s}
+.fr-eyes-n.blink{transform:scaleY(.1)}
+.spin{transform-box:fill-box;transform-origin:50% 50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes breathe{50%{transform:scale(1.015,.985)}}
+@keyframes jump{0%,100%{transform:translateY(0)}40%{transform:translateY(-28px) scale(1.03,.98)}70%{transform:translateY(0) scale(1.05,.94)}}
+@keyframes hop{50%{transform:translateY(-14px)}}
+@keyframes wiggle{25%{transform:rotate(-5deg)}75%{transform:rotate(5deg)}}
+@keyframes shake{25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+@keyframes chomp{50%{transform:scale(1.04,.95)}}
+@keyframes waveL{50%{transform:rotate(35deg)}}
+@keyframes waveR{50%{transform:rotate(-35deg)}}
+
+/* ---------- Modal ---------- */
+.modal{position:fixed;inset:0;background:rgba(8,6,30,.75);z-index:40;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 16px}
+.panel{width:min(860px,100%);background:var(--shelf);border:4px solid var(--edge);border-radius:24px;padding:18px 20px 22px;position:relative}
+.panel h2{font-family:var(--display);font-weight:400;font-size:36px;margin:0 0 6px;color:var(--sun)}
+.panel h3{font-family:var(--display);font-weight:400;font-size:24px;margin:16px 0 8px}
+.panel p{margin:6px 0;font-size:17px;line-height:1.45}
+.panel .close{position:absolute;top:12px;right:12px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}
+.tab{font-family:var(--display);font-size:19px;padding:6px 14px;border-radius:12px;border:3px solid var(--edge);background:var(--night)}
+.tab.on{background:var(--sun);color:var(--ink);border-color:#b8860b}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.card{background:var(--night);border:3px solid var(--edge);border-radius:16px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.card .big{font-size:44px}
+.card .nm{font-size:17px}
+.card .price{font-family:var(--display);color:var(--sun);font-size:19px}
+.card.owned{border-color:#4f9a35}
+.card svg{width:110px;height:90px}
+.swatch{width:64px;height:64px;border-radius:50%;border:4px solid var(--cream)}
+.note-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.note{background:var(--night);border:3px solid var(--edge);border-radius:14px;padding:8px;text-align:center;font-size:15px}
+.note .big{font-size:34px}
+.note.unknown{color:var(--muted);border-style:dashed}
+.howto li{margin:6px 0;font-size:17px;line-height:1.4}
+.picker{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:6px}
+.picker button{font-size:30px;padding:6px 0;border-radius:12px;border:3px solid var(--edge);background:var(--night)}
+.picker button.on{border-color:var(--sun);background:#3b2e6e}
+.inv-row{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+.inv-row > div{flex:1;min-width:240px}
+input.name{font:inherit;font-size:20px;width:100%;padding:8px 12px;border-radius:12px;border:3px solid var(--edge);background:var(--night);color:var(--cream)}
+input.name:focus{outline:3px solid var(--sun)}
+.stats{display:flex;gap:10px;flex-wrap:wrap}
+.stat{background:var(--night);border:3px solid var(--edge);border-radius:14px;padding:8px 14px;font-size:16px}
+.stat b{font-family:var(--display);font-weight:400;font-size:26px;color:var(--sun);display:block}
+
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);border:3px solid var(--sun);border-radius:14px;padding:10px 18px;z-index:60;font-size:18px;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90vw;text-align:center}
+#toast.show{opacity:1}
+
+/* ---------- Narrow screens: stack everything and let the page scroll ---------- */
+@media (max-width:820px){
+  #game{height:auto;min-height:100%;overflow:visible}
+  .screen#game{overflow-y:auto}
+  .stage{grid-template-columns:1fr}
+  .freddy-side{flex-direction:row;align-items:flex-end;gap:8px}
+  #gameFreddyBox{width:42%;max-width:220px;flex:0 0 auto}
+  #fgame{max-height:none}
+  .bubble{flex:1;margin-bottom:24px}
+  .bubble.think::after{left:-6px;bottom:24px;margin:0}
+  .bubble.think::before{left:-22px;bottom:14px;margin:0}
+  .bubble.speak::after{left:-20px;bottom:30px;margin:0;border:12px solid transparent;border-right:20px solid var(--cream);border-left:0}
+  .shelf{overflow:visible}
+  .bar .title{font-size:22px}
+}
+@media (prefers-reduced-motion:reduce){
+  .freddy-svg .fr-all,.spin{animation:none!important}
+}
+</style>
+</head>
+<body>
+
+<!-- ===================== Menu ===================== -->
+<section id="menu" class="screen">
+  <div class="wrap">
+    <div id="menuFreddyBox"></div>
+    <h1>Feed Freddy</h1>
+    <p class="lede">Freddy the monster is hungry! Cook him something yummy and earn coins.</p>
+    <div class="menu-coins" id="menuCoins"></div>
+    <div class="menu-btns">
+      <button class="btn primary" id="playBtn">Play</button>
+      <button class="btn" id="howBtn">How to play</button>
+    </div>
+    <div class="toggles">
+      <button class="btn small" id="musicBtn"></button>
+      <button class="btn small" id="sfxBtn"></button>
+      <button class="btn small" id="resetBtn">Start over</button>
+    </div>
+    <a class="allgames" href="../">← All games</a>
+  </div>
+</section>
+
+<!-- ===================== Game ===================== -->
+<section id="game" class="screen hidden">
+  <header class="bar">
+    <button class="btn small" id="menuBtn">☰ Menu</button>
+    <span class="title">Feed Freddy</span>
+    <button class="btn small" id="shopBtn"><span class="emo">🛒</span> Shop</button>
+    <button class="btn small" id="inventBtn"><span class="emo">🧪</span> Invent</button>
+    <button class="btn small" id="bookBtn"><span class="emo">📓</span> Notebook</button>
+    <span class="coinbox" id="coinBox"><span class="emo">🪙</span> 0</span>
+  </header>
+  <div class="stage">
+    <div class="freddy-side">
+      <div class="bubble think" id="bubble"></div>
+      <div id="gameFreddyBox"></div>
+    </div>
+    <div class="kitchen">
+      <div class="counter" id="counter">
+        <div class="bowl-row">
+          <div class="bowl" id="bowl"></div>
+          <div class="dishpreview" id="dishPreview"></div>
+        </div>
+        <div class="methods" id="methods"></div>
+        <div class="feed-row">
+          <button class="btn go" id="feedBtn">Feed Freddy!</button>
+          <button class="btn small" id="clearBtn">Empty bowl</button>
+        </div>
+      </div>
+      <div class="shelf-head" id="shelfHead"></div>
+      <div class="shelf" id="shelf"></div>
+    </div>
+  </div>
+</section>
+
+<div class="modal hidden" id="modal"><div class="panel" id="panel"></div></div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+/* =========================================================
+   LOGIC-BEGIN  (pure game rules: no DOM, so a Node script can test them)
+   ========================================================= */
+const TAGS = {
+  sweet:   { label:'Sweet',   icon:'🍬', color:'#ff9fcf' },
+  salty:   { label:'Salty',   icon:'🧂', color:'#cfd8e8' },
+  sour:    { label:'Sour',    icon:'🍋', color:'#f4ef6a' },
+  spicy:   { label:'Spicy',   icon:'🔥', color:'#ff8a5c' },
+  cheesy:  { label:'Cheesy',  icon:'🧀', color:'#ffd23f' },
+  crunchy: { label:'Crunchy', icon:'💥', color:'#e8b874' },
+  fruity:  { label:'Fruity',  icon:'🍒', color:'#ff7a8a' },
+  veggie:  { label:'Veggie',  icon:'🌱', color:'#8fe36b' },
+  meaty:   { label:'Meaty',   icon:'🍖', color:'#d99a7a' },
+  creamy:  { label:'Creamy',  icon:'🥛', color:'#f3ecff' },
+};
+const TAG_IDS = Object.keys(TAGS);
+
+const METHODS = {
+  mix:   { label:'Mix',   icon:'🥣', adj:'mixed' },
+  bake:  { label:'Bake',  icon:'🥧', adj:'baked' },
+  fry:   { label:'Fry',   icon:'🍳', adj:'fried' },
+  blend: { label:'Blend', icon:'🌀', adj:'blended' },
+};
+const METHOD_IDS = Object.keys(METHODS);
+
+// price 0 = you start with it. Don't rename ids: saves keep them.
+const INGREDIENTS = [
+  { id:'strawberry', emoji:'🍓', name:'Strawberry', tags:['sweet','fruity'], price:0 },
+  { id:'banana',     emoji:'🍌', name:'Banana',     tags:['sweet','fruity'], price:0 },
+  { id:'apple',      emoji:'🍎', name:'Apple',      tags:['fruity','crunchy'], price:0 },
+  { id:'lemon',      emoji:'🍋', name:'Lemon',      tags:['sour','fruity'], price:0 },
+  { id:'carrot',     emoji:'🥕', name:'Carrot',     tags:['veggie','crunchy'], price:0 },
+  { id:'tomato',     emoji:'🍅', name:'Tomato',     tags:['veggie','sour'], price:0 },
+  { id:'potato',     emoji:'🥔', name:'Potato',     tags:['veggie','salty'], price:0 },
+  { id:'chili',      emoji:'🌶️', name:'Chili Pepper', tags:['spicy','veggie'], price:0 },
+  { id:'cheese',     emoji:'🧀', name:'Cheese',     tags:['cheesy','salty'], price:0 },
+  { id:'bread',      emoji:'🍞', name:'Bread',      tags:['crunchy'], price:0 },
+  { id:'egg',        emoji:'🥚', name:'Egg',        tags:['creamy'], price:0 },
+  { id:'milk',       emoji:'🥛', name:'Milk',       tags:['creamy'], price:0 },
+  { id:'chocolate',  emoji:'🍫', name:'Chocolate',  tags:['sweet','creamy'], price:0 },
+  { id:'chicken',    emoji:'🍗', name:'Chicken',    tags:['meaty','salty'], price:0 },
+
+  { id:'honey',      emoji:'🍯', name:'Honey',      tags:['sweet'], price:15 },
+  { id:'grapes',     emoji:'🍇', name:'Grapes',     tags:['sweet','fruity'], price:15 },
+  { id:'cucumber',   emoji:'🥒', name:'Cucumber',   tags:['veggie','crunchy'], price:15 },
+  { id:'peanuts',    emoji:'🥜', name:'Peanuts',    tags:['salty','crunchy'], price:15 },
+  { id:'butter',     emoji:'🧈', name:'Butter',     tags:['creamy','salty'], price:20 },
+  { id:'corn',       emoji:'🌽', name:'Corn',       tags:['veggie','sweet','crunchy'], price:20 },
+  { id:'broccoli',   emoji:'🥦', name:'Broccoli',   tags:['veggie','crunchy'], price:20 },
+  { id:'watermelon', emoji:'🍉', name:'Watermelon', tags:['sweet','fruity'], price:20 },
+  { id:'kiwi',       emoji:'🥝', name:'Kiwi',       tags:['fruity','sour'], price:20 },
+  { id:'onion',      emoji:'🧅', name:'Onion',      tags:['veggie','spicy'], price:20 },
+  { id:'bellpepper', emoji:'🫑', name:'Bell Pepper', tags:['veggie','crunchy'], price:20 },
+  { id:'cherries',   emoji:'🍒', name:'Cherries',   tags:['sweet','fruity','sour'], price:25 },
+  { id:'pineapple',  emoji:'🍍', name:'Pineapple',  tags:['sweet','fruity','sour'], price:25 },
+  { id:'blueberries',emoji:'🫐', name:'Blueberries', tags:['sweet','fruity','sour'], price:25 },
+  { id:'garlic',     emoji:'🧄', name:'Garlic',     tags:['veggie','spicy'], price:25 },
+  { id:'mushroom',   emoji:'🍄', name:'Mushroom',   tags:['veggie','salty'], price:25 },
+  { id:'popcorn',    emoji:'🍿', name:'Popcorn',    tags:['salty','crunchy'], price:25 },
+  { id:'pretzel',    emoji:'🥨', name:'Pretzel',    tags:['salty','crunchy'], price:25 },
+  { id:'olives',     emoji:'🫒', name:'Olives',     tags:['salty','sour'], price:25 },
+  { id:'lollipop',   emoji:'🍭', name:'Lollipop',   tags:['sweet'], price:25 },
+  { id:'avocado',    emoji:'🥑', name:'Avocado',    tags:['veggie','creamy'], price:30 },
+  { id:'cookie',     emoji:'🍪', name:'Cookie',     tags:['sweet','crunchy'], price:30 },
+  { id:'donut',      emoji:'🍩', name:'Donut',      tags:['sweet'], price:30 },
+  { id:'pancake',    emoji:'🥞', name:'Pancakes',   tags:['sweet'], price:30 },
+  { id:'mango',      emoji:'🥭', name:'Mango',      tags:['sweet','fruity'], price:30 },
+  { id:'sourcandy',  emoji:'🍬', name:'Sour Candy', tags:['sweet','sour'], price:30 },
+  { id:'icecream',   emoji:'🍨', name:'Ice Cream',  tags:['sweet','creamy'], price:35 },
+  { id:'coconut',    emoji:'🥥', name:'Coconut',    tags:['sweet','fruity','creamy'], price:35 },
+  { id:'hotdog',     emoji:'🌭', name:'Hot Dog',    tags:['meaty','salty'], price:35 },
+  { id:'fish',       emoji:'🐟', name:'Fish',       tags:['meaty','salty'], price:35 },
+  { id:'bacon',      emoji:'🥓', name:'Bacon',      tags:['meaty','salty','crunchy'], price:40 },
+  { id:'shrimp',     emoji:'🍤', name:'Shrimp',     tags:['meaty','crunchy'], price:40 },
+  { id:'cheesesauce',emoji:'🥫', name:'Cheese Sauce', tags:['cheesy','creamy'], price:40 },
+  { id:'gummyworms', emoji:'🪱', name:'Gummy Worms', tags:['sweet','sour'], price:40 },
+  { id:'steak',      emoji:'🥩', name:'Steak',      tags:['meaty'], price:45 },
+  { id:'moonchee',   emoji:'🌕', name:'Moon Cheese', tags:['cheesy','creamy','salty'], price:80 },
+  { id:'lavasauce',  emoji:'🌋', name:'Lava Sauce', tags:['spicy','salty'], price:80 },
+  { id:'fireflakes', emoji:'🔥', name:'Fire Flakes', tags:['spicy','crunchy'], price:90 },
+  { id:'cloudcandy', emoji:'☁️', name:'Cloud Candy', tags:['sweet','creamy'], price:90 },
+  { id:'rainbowjelly',emoji:'🌈', name:'Rainbow Jelly', tags:['sweet','fruity','sour'], price:100 },
+  { id:'stardust',   emoji:'✨', name:'Star Sprinkles', tags:['sweet','crunchy'], price:100 },
+];
+const ING_BY_ID = new Map(INGREDIENTS.map(i => [i.id, i]));
+const STARTERS = INGREDIENTS.filter(i => i.price === 0).map(i => i.id);
+
+// Yum combos: pairs that taste great together.
+const COMBOS = [
+  ['strawberry','chocolate'], ['banana','chocolate'], ['strawberry','banana'], ['strawberry','milk'],
+  ['chocolate','milk'], ['banana','milk'], ['cheese','bread'], ['cheese','tomato'], ['potato','cheese'],
+  ['chicken','potato'], ['chicken','lemon'], ['chili','cheese'], ['chili','chicken'], ['egg','bread'],
+  ['egg','cheese'], ['carrot','apple'], ['tomato','bread'],
+  ['banana','peanuts'], ['peanuts','chocolate'], ['apple','honey'], ['lemon','honey'], ['bacon','egg'],
+  ['hotdog','bread'], ['fish','lemon'], ['fish','potato'], ['steak','potato'], ['steak','mushroom'],
+  ['broccoli','cheese'], ['broccoli','cheesesauce'], ['corn','butter'], ['popcorn','butter'],
+  ['pretzel','cheesesauce'], ['avocado','tomato'], ['avocado','bread'], ['olives','tomato'],
+  ['grapes','cheese'], ['cookie','milk'], ['icecream','cherries'], ['pineapple','coconut'],
+  ['mango','coconut'], ['pancake','honey'], ['pancake','butter'], ['watermelon','lemon'],
+  ['garlic','bread'], ['onion','potato'], ['shrimp','garlic'], ['cucumber','tomato'],
+  ['blueberries','pancake'], ['icecream','cookie'], ['moonchee','bread'], ['cloudcandy','stardust'],
+];
+const comboKey = (a, b) => [a, b].sort().join('+');
+const COMBO_KEYS = new Set(COMBOS.map(([a, b]) => comboKey(a, b)));
+
+const TIERS = [
+  { id:'yuck', min:-Infinity, coins:0,  says:["Bleh! No thanks.", "Blech! Not for me.", "Yuck-a-doodle!"] },
+  { id:'meh',  min:2,         coins:3,  says:["It's... okay.", "Hmm. It's fine, I guess."] },
+  { id:'like', min:4,         coins:8,  says:["Yum! I like it!", "Pretty tasty!"] },
+  { id:'love', min:7,         coins:20, says:["I LOVE IT!", "Mmm, DELICIOUS!"] },
+  { id:'best', min:9,         coins:35, says:["BEST FOOD EVER!!", "WOW! AMAZING!!"] },
+];
+function tierFor(score){ let t = TIERS[0]; for (const x of TIERS) if (score >= x.min) t = x; return t; }
+
+const MAX_IN_BOWL = 5;
+const hasTag = (ing, t) => ing.tags.includes(t);
+function listNames(ings){
+  const n = ings.map(i => i.name);
+  if (n.length <= 1) return n.join('');
+  return n.slice(0, -1).join(', ') + ' and ' + n[n.length - 1];
+}
+
+/* Rate a dish. ings: ingredient objects (no repeats), method: METHOD id, cr: craving,
+   tastes: { fav:Set, yuck:Set }. Returns { score, tier, reasons, combos, favs, yucks }.
+   Reasons: { kind:'good'|'bad'|'hint', text, pts }. */
+function rateDish(ings, method, cr, tastes){
+  const reasons = [];
+  let score = 0;
+  const add = (kind, text, pts) => { reasons.push({ kind, text, pts }); score += pts; };
+  const flavorLabel = t => TAGS[t].label.toLowerCase();
+
+  if (cr.type === 'flavor' || cr.type === 'two' || cr.type === 'flavmeth') {
+    const tags = cr.tags;
+    const what = tags.map(flavorLabel).join(' or ');
+    const methodOk = cr.type !== 'flavmeth' || method === cr.method;
+    if (cr.type === 'flavmeth') {
+      if (methodOk) add('good', `It's ${METHODS[cr.method].adj}!`, 3);
+      else add('bad', `I wanted it ${METHODS[cr.method].adj}, not ${METHODS[method].adj}`, 0);
+    }
+    let allHit = true;
+    for (const t of tags) {
+      const n = ings.filter(i => hasTag(i, t)).length;
+      const table = cr.type === 'flavor' ? [0, 3, 5, 6] : [0, 2, 3];
+      const pts = table[Math.min(n, table.length - 1)];
+      if (n > 0) add('good', `${n} ${flavorLabel(t)} thing${n > 1 ? 's' : ''}`, pts);
+      else add('bad', `Nothing ${flavorLabel(t)}`, 0);
+      if (n < table.length - 1) allHit = false;
+    }
+    const off = ings.filter(i => !tags.some(t => hasTag(i, t)));
+    if (off.length) add('bad', `${listNames(off)} ${off.length > 1 ? "aren't" : "isn't"} ${what}`, -off.length);
+    else if (allHit && methodOk) add('good', `Everything is ${what}!`, 1);
+    else if (ings.length && !allHit) add('hint', `Add more ${tags.length > 1 ? tags.map(flavorLabel).join(' and ') : flavorLabel(tags[0])} things for more coins`, 0);
+  } else if (cr.type === 'method') {
+    if (method === cr.method) {
+      add('good', `It's ${METHODS[cr.method].adj}!`, 5);
+      if (ings.length >= 3) add('good', 'Big and filling!', 2);
+      else add('hint', 'Put in 3 or more things for more coins', 0);
+    } else add('bad', `I wanted it ${METHODS[cr.method].adj}, not ${METHODS[method].adj}`, 0);
+  } else if (cr.type === 'specific') {
+    const want = ings.find(i => i.id === cr.ing);
+    if (want) {
+      add('good', `It has ${want.name}!`, 5);
+      if (ings.length >= 3) add('good', 'Big and filling!', 2);
+      else add('hint', 'Put in 3 or more things for more coins', 0);
+    } else add('bad', `No ${cr.name || 'of what I wanted'}`, 0);
+  }
+
+  // Yum combos (the first two count for points; all of them get found)
+  const combos = [];
+  for (let a = 0; a < ings.length; a++) for (let b = a + 1; b < ings.length; b++) {
+    const k = comboKey(ings[a].id, ings[b].id);
+    if (COMBO_KEYS.has(k)) combos.push({ key:k, a:ings[a], b:ings[b] });
+  }
+  combos.forEach((c, i) => add('good', `Yum combo: ${c.a.name} + ${c.b.name}!`, i < 2 ? 2 : 0));
+
+  const favs = ings.filter(i => tastes.fav.has(i.id));
+  const yucks = ings.filter(i => tastes.yuck.has(i.id));
+  for (const f of favs) add('good', `I LOVE ${f.name}!`, 2);
+  for (const y of yucks) add('bad', `${y.name} is yucky to me!`, -4);
+
+  return { score, tier: tierFor(score), reasons, combos, favs, yucks };
+}
+
+/* What will Freddy ask for? pool: ingredient objects you own. Only asks for things you can
+   make into a "LOVE" dish without using one of his yucky foods. */
+function cravingOptions(pool, tastes){
+  const ok = pool.filter(i => !tastes.yuck.has(i.id));
+  const count = t => ok.filter(i => hasTag(i, t)).length;
+  const opts = { flavor:[], two:[], method:[], flavmeth:[], specific:[] };
+  for (const t of TAG_IDS) {
+    if (count(t) >= 3) opts.flavor.push({ type:'flavor', tags:[t] });
+    if (count(t) >= 2) for (const m of METHOD_IDS) opts.flavmeth.push({ type:'flavmeth', tags:[t], method:m });
+  }
+  for (let a = 0; a < TAG_IDS.length; a++) for (let b = a + 1; b < TAG_IDS.length; b++) {
+    const t = TAG_IDS[a], u = TAG_IDS[b];
+    if (count(t) >= 2 && count(u) >= 2) opts.two.push({ type:'two', tags:[t, u] });
+  }
+  if (ok.length >= 3) for (const m of METHOD_IDS) {
+    opts.method.push({ type:'method', method:m });
+    for (const i of ok) opts.specific.push({ type:'specific', ing:i.id, name:i.name, emoji:i.emoji });
+  }
+  return opts;
+}
+const CRAVING_WEIGHTS = { flavor:30, two:20, method:12, flavmeth:22, specific:16 };
+const cravingKey = c => [c.type, (c.tags || []).join(','), c.method || '', c.ing || ''].join('|');
+function makeCraving(pool, tastes, rand, lastKey){
+  const opts = cravingOptions(pool, tastes);
+  // de-duplicate specific cravings (they were pushed once per method)
+  const seen = new Set();
+  opts.specific = opts.specific.filter(c => !seen.has(c.ing) && seen.add(c.ing));
+  for (let tries = 0; tries < 20; tries++) {
+    const types = Object.keys(opts).filter(k => opts[k].length);
+    if (!types.length) return { type:'method', method:'mix' };
+    let total = types.reduce((s, k) => s + CRAVING_WEIGHTS[k], 0), r = rand() * total, type = types[0];
+    for (const k of types) { r -= CRAVING_WEIGHTS[k]; if (r < 0) { type = k; break; } }
+    const list = opts[type];
+    const c = list[Math.floor(rand() * list.length)];
+    if (cravingKey(c) !== lastKey || tries === 19) return c;
+  }
+}
+
+/* Name the dish, like "Strawberry & Chocolate Cake". Returns { name, emoji }. */
+function dishKind(ings, method){
+  const n = t => ings.filter(i => hasTag(i, t)).length;
+  const has = id => ings.some(i => i.id === id);
+  const half = ings.length / 2;
+  const savory = n('veggie') + n('meaty') + n('salty') + n('cheesy');
+  if (method === 'mix') {
+    if (has('bread')) return ['Sandwich', '🥪'];
+    if (n('sweet') > half && n('creamy')) return ['Sundae', '🍨'];
+    if (n('fruity') >= half && n('fruity')) return ['Fruit Salad', '🥗'];
+    if (n('veggie') || n('meaty')) return ['Salad', '🥗'];
+    return ['Snack Bowl', '🥣'];
+  }
+  if (method === 'bake') {
+    if ((n('cheesy')) && (has('tomato') || has('bread'))) return ['Pizza', '🍕'];
+    if (n('sweet') > half) return n('creamy') ? ['Cake', '🍰'] : ['Pie', '🥧'];
+    if (has('bread')) return ['Toast', '🍞'];
+    if (n('meaty')) return ['Pot Pie', '🥧'];
+    if (n('sweet')) return ['Muffins', '🧁'];
+    return ['Casserole', '🥘'];
+  }
+  if (method === 'fry') {
+    if (has('potato')) return ['Fries', '🍟'];
+    if (has('egg')) return ['Omelet', '🍳'];
+    if (n('meaty')) return ['Nuggets', '🍗'];
+    if (n('sweet') > half) return ['Donuts', '🍩'];
+    return ['Fritters', '🧆'];
+  }
+  // blend
+  if (savory > n('sweet') + n('fruity')) return ['Soup', '🍲'];
+  if (n('creamy')) return ['Milkshake', '🥤'];
+  return ['Smoothie', '🍹'];
+}
+function dishName(ings, method){
+  if (!ings.length) return { name:'', emoji:'🥣' };
+  const [noun, emoji] = dishKind(ings, method);
+  const lead = ings.slice(0, 2).map(i => i.name);
+  const pre = ings.length >= 5 ? 'Mega ' : ings.length >= 3 ? 'Super ' : '';
+  return { name: pre + lead.join(' & ') + ' ' + noun, emoji };
+}
+/* LOGIC-END */
+
+/* =========================================================
+   Looks: Freddy, hats, colors
+   ========================================================= */
+const OL = '#2a1d40';
+function flower(x, y, c){
+  return `<g transform="translate(${x} ${y})">${[0,72,144,216,288].map(a => `<circle cx="${(Math.cos(a*Math.PI/180)*7).toFixed(1)}" cy="${(Math.sin(a*Math.PI/180)*7).toFixed(1)}" r="6" fill="${c}" stroke="${OL}" stroke-width="1.5"/>`).join('')}<circle r="4.5" fill="#ffd23f"/></g>`;
+}
+// Hats are drawn with (0,0) at the top middle of Freddy's head.
+const HATS = [
+  { id:'chef', name:'Chef Hat', price:30, svg:`<circle cx="-28" cy="-36" r="22" fill="#fff" stroke="${OL}" stroke-width="4"/><circle cx="28" cy="-36" r="22" fill="#fff" stroke="${OL}" stroke-width="4"/><circle cx="0" cy="-50" r="26" fill="#fff" stroke="${OL}" stroke-width="4"/><path d="M-38 10 V-24 H38 V10Z" fill="#fff" stroke="${OL}" stroke-width="4" stroke-linejoin="round"/>` },
+  { id:'party', name:'Party Hat', price:40, svg:`<path d="M-34 6 L0 -88 L34 6Z" fill="#ff5fa2" stroke="${OL}" stroke-width="4" stroke-linejoin="round"/><path d="M-22 -26 H22 M-12 -54 H12" stroke="#ffd23f" stroke-width="8"/><circle cx="0" cy="-90" r="11" fill="#5fd1ff" stroke="${OL}" stroke-width="3"/>` },
+  { id:'bow', name:'Big Bow', price:40, svg:`<g transform="translate(48 14) rotate(18)"><path d="M0 0 L-32 -20 L-32 20Z" fill="#ff5fa2" stroke="${OL}" stroke-width="4" stroke-linejoin="round"/><path d="M0 0 L32 -20 L32 20Z" fill="#ff5fa2" stroke="${OL}" stroke-width="4" stroke-linejoin="round"/><circle r="10" fill="#ff8fc0" stroke="${OL}" stroke-width="4"/></g>` },
+  { id:'flowers', name:'Flower Crown', price:60, svg:`<path d="M-64 14 Q0 -16 64 14" stroke="#3f9a3a" stroke-width="6" fill="none"/>${flower(-56,8,'#ff8fc8')}${flower(-30,-2,'#fff')}${flower(0,-6,'#b78cff')}${flower(30,-2,'#fff')}${flower(56,8,'#ff8fc8')}` },
+  { id:'cowboy', name:'Cowboy Hat', price:80, svg:`<path d="M-38 -2 C-40 -52 -20 -58 0 -46 C20 -58 40 -52 38 -2Z" fill="#a0622d" stroke="${OL}" stroke-width="4" stroke-linejoin="round"/><path d="M-38 -16 H38" stroke="#5a3418" stroke-width="8"/><ellipse cx="0" cy="0" rx="84" ry="14" fill="#b8743a" stroke="${OL}" stroke-width="4"/>` },
+  { id:'propeller', name:'Propeller Cap', price:100, svg:`<path d="M-46 10 A46 44 0 0 1 46 10Z" fill="#3d7bff" stroke="${OL}" stroke-width="4" stroke-linejoin="round"/><path d="M-15 -30 A46 44 0 0 1 15 -30 L10 10 H-10Z" fill="#ff5a4a"/><path d="M-46 10 A46 44 0 0 1 46 10Z" fill="none" stroke="${OL}" stroke-width="4"/><rect x="-3" y="-50" width="6" height="16" fill="${OL}"/><g transform="translate(0 -52)"><g class="spin"><ellipse rx="34" ry="7" fill="#ffd23f" stroke="${OL}" stroke-width="3"/></g></g>` },
+  { id:'pirate', name:'Pirate Hat', price:120, svg:`<path d="M-72 6 C-52 -30 -30 -62 0 -64 C30 -62 52 -30 72 6 C40 -6 -40 -6 -72 6Z" fill="#2a2a38" stroke="${OL}" stroke-width="4" stroke-linejoin="round"/><path d="M-62 -4 C-30 -14 30 -14 62 -4" stroke="#ffd23f" stroke-width="4" fill="none"/><circle cx="0" cy="-34" r="11" fill="#fff"/><circle cx="-4" cy="-35" r="2.5" fill="#2a2a38"/><circle cx="4" cy="-35" r="2.5" fill="#2a2a38"/><path d="M-16 -18 L16 -8 M16 -18 L-16 -8" stroke="#fff" stroke-width="4" stroke-linecap="round"/>` },
+  { id:'tophat', name:'Top Hat', price:150, svg:`<rect x="-34" y="-82" width="68" height="84" rx="4" fill="#25233a" stroke="${OL}" stroke-width="4"/><rect x="-34" y="-24" width="68" height="13" fill="#e0405a"/><ellipse cx="0" cy="2" rx="56" ry="11" fill="#25233a" stroke="${OL}" stroke-width="4"/>` },
+  { id:'viking', name:'Viking Helmet', price:200, svg:`<path d="M-44 -6 C-74 -10 -88 -44 -76 -74 C-70 -48 -58 -36 -40 -30Z" fill="#f3e6c8" stroke="${OL}" stroke-width="4" stroke-linejoin="round"/><path d="M44 -6 C74 -10 88 -44 76 -74 C70 -48 58 -36 40 -30Z" fill="#f3e6c8" stroke="${OL}" stroke-width="4" stroke-linejoin="round"/><path d="M-50 10 A50 48 0 0 1 50 10Z" fill="#b9c0cc" stroke="${OL}" stroke-width="4" stroke-linejoin="round"/><rect x="-52" y="0" width="104" height="13" rx="4" fill="#8a5a2e" stroke="${OL}" stroke-width="3"/>` },
+  { id:'wizard', name:'Wizard Hat', price:250, svg:`<path d="M-46 4 L10 -112 L46 4Z" fill="#3d4fd6" stroke="${OL}" stroke-width="4" stroke-linejoin="round"/><path d="M0 -60 l3 7 7 1 -5 5 1 7 -6 -3 -6 3 1 -7 -5 -5 7 -1Z" fill="#ffd23f"/><circle cx="-14" cy="-22" r="4" fill="#ffd23f"/><circle cx="18" cy="-30" r="3" fill="#ffd23f"/><ellipse cx="0" cy="4" rx="68" ry="11" fill="#3443b8" stroke="${OL}" stroke-width="4"/>` },
+  { id:'crown', name:'Golden Crown', price:300, svg:`<path d="M-46 8 L-46 -36 L-24 -14 L0 -50 L24 -14 L46 -36 L46 8Z" fill="#ffd23f" stroke="${OL}" stroke-width="4" stroke-linejoin="round"/><circle cx="0" cy="-10" r="7" fill="#e0405a" stroke="${OL}" stroke-width="2"/><circle cx="-26" cy="-4" r="5" fill="#3d7bff" stroke="${OL}" stroke-width="2"/><circle cx="26" cy="-4" r="5" fill="#3fbf5a" stroke="${OL}" stroke-width="2"/>` },
+];
+const HAT_BY_ID = new Map(HATS.map(h => [h.id, h]));
+
+const COLORS = [
+  { id:'green',    name:'Leafy Green',   price:0,   fur:'#7bd65a', dark:'#4f9a35', belly:'#d8f5b8' },
+  { id:'blue',     name:'Sky Blue',      price:50,  fur:'#5fb7ff', dark:'#3477c4', belly:'#d6ecff' },
+  { id:'pink',     name:'Bubblegum',     price:50,  fur:'#ff8fc8', dark:'#cc4f8f', belly:'#ffe0ef' },
+  { id:'purple',   name:'Grape Purple',  price:60,  fur:'#a77bff', dark:'#6b45c4', belly:'#e7dcff' },
+  { id:'orange',   name:'Tangerine',     price:60,  fur:'#ffa040', dark:'#c46a14', belly:'#ffe6c4' },
+  { id:'mint',     name:'Minty',         price:70,  fur:'#5fe0c0', dark:'#2f9f86', belly:'#d8fff4' },
+  { id:'midnight', name:'Midnight',      price:100, fur:'#4a4fa8', dark:'#2b2e6e', belly:'#b8bcff' },
+  { id:'gold',     name:'Shiny Gold',    price:250, fur:'#ffd23f', dark:'#c49a0c', belly:'#fff3c4' },
+  { id:'rainbow',  name:'Rainbow',       price:400, fur:'RAINBOW', dark:'#7a4fd6', belly:'#fff3c4' },
+];
+const COLOR_BY_ID = new Map(COLORS.map(c => [c.id, c]));
+
+function freddySVG(uid){
+  const fur = `class="fur" stroke="${OL}" stroke-width="5" stroke-linejoin="round"`;
+  return `<svg viewBox="0 0 300 340" class="freddy-svg idle" id="${uid}" role="img" aria-label="Freddy the monster">
+  <defs><linearGradient id="${uid}rb" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#ff6b6b"/><stop offset=".2" stop-color="#ffa94d"/><stop offset=".4" stop-color="#ffd23f"/>
+    <stop offset=".6" stop-color="#7bd65a"/><stop offset=".8" stop-color="#5fb7ff"/><stop offset="1" stop-color="#a77bff"/></linearGradient></defs>
+  <ellipse cx="150" cy="326" rx="104" ry="11" fill="rgba(0,0,0,.28)"/>
+  <g class="fr-all">
+    <ellipse class="furd" cx="106" cy="306" rx="34" ry="17" stroke="${OL}" stroke-width="5"/>
+    <ellipse class="furd" cx="194" cy="306" rx="34" ry="17" stroke="${OL}" stroke-width="5"/>
+    <path d="M88 92 C78 70 80 50 92 36 C96 56 104 70 116 80Z" fill="#fff3d6" stroke="${OL}" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M212 92 C222 70 220 50 208 36 C204 56 196 70 184 80Z" fill="#fff3d6" stroke="${OL}" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M118 74 L128 50 L140 70 L150 44 L160 70 L172 50 L182 74Z" ${fur}/>
+    <g class="fr-arm-l"><path d="M56 190 C26 196 14 228 22 250 C28 264 46 262 50 248 C54 232 60 220 72 214Z" ${fur}/></g>
+    <g class="fr-arm-r"><path d="M244 190 C274 196 286 228 278 250 C272 264 254 262 250 248 C246 232 240 220 228 214Z" ${fur}/></g>
+    <path d="M150 64 C232 64 264 126 264 204 C264 276 216 312 150 312 C84 312 36 276 36 204 C36 126 68 64 150 64Z" ${fur}/>
+    <ellipse class="belly" cx="150" cy="250" rx="70" ry="50"/>
+    <circle cx="84" cy="184" r="13" fill="#ff4f8f" opacity=".5"/><circle cx="216" cy="184" r="13" fill="#ff4f8f" opacity=".5"/>
+    <g data-e="normal" class="fr-eyes-n">
+      <circle cx="114" cy="128" r="27" fill="#fff" stroke="${OL}" stroke-width="5"/>
+      <circle cx="186" cy="128" r="27" fill="#fff" stroke="${OL}" stroke-width="5"/>
+      <g class="fr-pupils"><circle cx="114" cy="131" r="12" fill="${OL}"/><circle cx="186" cy="131" r="12" fill="${OL}"/>
+        <circle cx="118" cy="126" r="4" fill="#fff"/><circle cx="190" cy="126" r="4" fill="#fff"/></g>
+    </g>
+    <g data-e="happy" style="display:none"><path d="M90 136 Q114 104 138 136 M162 136 Q186 104 210 136" stroke="${OL}" stroke-width="8" fill="none" stroke-linecap="round"/></g>
+    <g data-e="love" style="display:none">${[114,186].map(x => `<path transform="translate(${x} 128)" d="M0 18 C-30 -2 -24 -26 -10 -26 C-4 -26 0 -20 0 -16 C0 -20 4 -26 10 -26 C24 -26 30 -2 0 18Z" fill="#ff3d7a" stroke="${OL}" stroke-width="4" stroke-linejoin="round"/>`).join('')}</g>
+    <g data-e="best" style="display:none">${[114,186].map(x => `<path transform="translate(${x} 128)" d="M0 -28 L8 -9 L28 -9 L12 4 L18 24 L0 12 L-18 24 L-12 4 L-28 -9 L-8 -9Z" fill="#ffd23f" stroke="${OL}" stroke-width="4" stroke-linejoin="round"/>`).join('')}</g>
+    <g data-e="meh" style="display:none">
+      <circle cx="114" cy="128" r="27" fill="#fff" stroke="${OL}" stroke-width="5"/><circle cx="186" cy="128" r="27" fill="#fff" stroke="${OL}" stroke-width="5"/>
+      <circle cx="114" cy="138" r="11" fill="${OL}"/><circle cx="186" cy="138" r="11" fill="${OL}"/>
+      <path d="M87 128 A27 27 0 0 1 141 128Z M159 128 A27 27 0 0 1 213 128Z" class="fur" stroke="${OL}" stroke-width="5" stroke-linejoin="round"/>
+    </g>
+    <g data-e="yuck" style="display:none"><path d="M96 112 L130 128 L96 144 M204 112 L170 128 L204 144" stroke="${OL}" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+    <g data-m="smile"><path d="M108 182 Q150 232 192 182 Q150 204 108 182Z" fill="#5a1838" stroke="${OL}" stroke-width="5" stroke-linejoin="round"/><path d="M128 192 L134 204 L140 194Z" fill="#fff"/></g>
+    <g data-m="open" style="display:none"><ellipse cx="150" cy="200" rx="46" ry="38" fill="#5a1838" stroke="${OL}" stroke-width="5"/><ellipse cx="150" cy="222" rx="26" ry="12" fill="#ff7aa8"/><path d="M122 168 L130 182 L138 166Z M162 166 L170 182 L178 168Z" fill="#fff"/></g>
+    <g data-m="chew" style="display:none"><path d="M112 196 q10 -9 19 0 t19 0 t19 0 t19 0" stroke="${OL}" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="92" cy="196" r="17" class="fur" stroke="${OL}" stroke-width="4"/><circle cx="208" cy="196" r="17" class="fur" stroke="${OL}" stroke-width="4"/></g>
+    <g data-m="meh" style="display:none"><path d="M120 198 Q135 192 150 198 T180 198" stroke="${OL}" stroke-width="7" fill="none" stroke-linecap="round"/></g>
+    <g data-m="yuck" style="display:none"><ellipse cx="160" cy="214" rx="15" ry="16" fill="#ff7aa8" stroke="${OL}" stroke-width="4"/><path d="M110 202 q10 -10 20 0 t20 0 t20 0 t20 0" stroke="${OL}" stroke-width="7" fill="none" stroke-linecap="round"/></g>
+    <g data-m="grin" style="display:none"><path d="M96 178 Q150 172 204 178 Q200 250 150 250 Q100 250 96 178Z" fill="#5a1838" stroke="${OL}" stroke-width="5" stroke-linejoin="round"/><ellipse cx="150" cy="232" rx="30" ry="13" fill="#ff7aa8"/><path d="M112 178 L120 194 L128 177Z M172 177 L180 194 L188 178Z" fill="#fff"/></g>
+    <g class="fr-hat" transform="translate(150 70)"></g>
+  </g>
+</svg>`;
+}
+function applyLook(svg){
+  if (!svg) return;
+  const c = COLOR_BY_ID.get(save.color) || COLORS[0];
+  svg.style.setProperty('--fur', c.fur === 'RAINBOW' ? `url(#${svg.id}rb)` : c.fur);
+  svg.querySelectorAll('.fur').forEach(el => el.style.fill = 'var(--fur)');
+  svg.querySelectorAll('.furd').forEach(el => el.style.fill = c.dark);
+  svg.querySelectorAll('.belly').forEach(el => el.style.fill = c.belly);
+  const h = HAT_BY_ID.get(save.hat);
+  svg.querySelector('.fr-hat').innerHTML = h ? h.svg : '';
+}
+function setFace(svg, eyes, mouth){
+  if (!svg) return;
+  svg.querySelectorAll('[data-e]').forEach(g => g.style.display = g.dataset.e === eyes ? '' : 'none');
+  svg.querySelectorAll('[data-m]').forEach(g => g.style.display = g.dataset.m === mouth ? '' : 'none');
+}
+function setAnim(svg, cls){
+  if (!svg) return;
+  svg.classList.remove('idle', 'jump', 'hop', 'wiggle', 'shake', 'chomp', 'wave');
+  void svg.getBoundingClientRect();
+  for (const c of (cls || 'idle').split(' ')) svg.classList.add(c);
+}
+
+/* =========================================================
+   Save data
+   ========================================================= */
+const SAVE_KEY = 'feedfreddy.v1';
+const MAX_CUSTOM = 12;
+const INVENT_PRICE = 25;
+const INVENT_EMOJI = ['🦄','🌟','💎','🍄','🌸','🌻','🍀','🍁','🌰','🎃','🐙','🦑','🐸','🦖','🐝','👽','🧁','🍮','🍡','🍧','🥟','🥠','🧃','🍥','🫧','🌵','🔮','🪐','❄️','🧊','💚','💜','🍫','🥐','🥯','🧇','🍙','🥜','🍑','🍐','🫛','🥬','🍠','🧋','🍵','🌮','🍝','🎂'];
+function randomTastes(){
+  const ids = INGREDIENTS.map(i => i.id);
+  const pick = () => ids.splice(Math.floor(Math.random() * ids.length), 1)[0];
+  return { fav:[pick(), pick(), pick()], yuck:[pick(), pick()] };
+}
+function defaultSave(){
+  const t = randomTastes();
+  return { coins:0, owned:[...STARTERS], custom:[], nextCustom:1, freeInvent:true,
+    hats:[], hat:'', colors:['green'], color:'green',
+    fav:t.fav, yuck:t.yuck, knownFav:[], knownYuck:[], combos:[],
+    stats:{ dishes:0, loves:0, bests:0, earned:0 }, music:true, sfx:true };
+}
+const num = (v, max) => Number.isFinite(v) && v >= 0 ? Math.min(max, Math.floor(v)) : 0;
+const strArr = v => Array.isArray(v) ? v.filter(x => typeof x === 'string') : [];
+function loadSave(){
+  const d = defaultSave();
+  let raw = null;
+  try { raw = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); }
+  catch (e) { raw = null; try { localStorage.removeItem(SAVE_KEY); } catch (e2) {} }
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return d;
+  d.coins = num(raw.coins, 9999999);
+  d.owned = [...new Set([...STARTERS, ...strArr(raw.owned).filter(id => ING_BY_ID.has(id))])];
+  if (Array.isArray(raw.custom)) {
+    const ids = new Set();
+    for (const c of raw.custom) {
+      if (d.custom.length >= MAX_CUSTOM) break;
+      if (!c || typeof c !== 'object') continue;
+      if (typeof c.id !== 'string' || !/^c\d{1,6}$/.test(c.id) || ids.has(c.id)) continue;
+      const name = typeof c.name === 'string' ? c.name.replace(/\s+/g, ' ').trim().slice(0, 16) : '';
+      if (!name || !INVENT_EMOJI.includes(c.emoji)) continue;
+      const tags = [...new Set(strArr(c.tags).filter(t => TAGS[t]))].slice(0, 2);
+      if (!tags.length) continue;
+      ids.add(c.id);
+      d.custom.push({ id:c.id, name, emoji:c.emoji, tags, custom:true });
+    }
+  }
+  d.nextCustom = Math.max(num(raw.nextCustom, 999999), 1, ...d.custom.map(c => +c.id.slice(1) + 1));
+  if (typeof raw.freeInvent === 'boolean') d.freeInvent = raw.freeInvent;
+  d.hats = [...new Set(strArr(raw.hats).filter(id => HAT_BY_ID.has(id)))];
+  d.hat = typeof raw.hat === 'string' && d.hats.includes(raw.hat) ? raw.hat : '';
+  d.colors = [...new Set(['green', ...strArr(raw.colors).filter(id => COLOR_BY_ID.has(id))])];
+  d.color = typeof raw.color === 'string' && d.colors.includes(raw.color) ? raw.color : 'green';
+  const fav = [...new Set(strArr(raw.fav).filter(id => ING_BY_ID.has(id)))];
+  const yuck = [...new Set(strArr(raw.yuck).filter(id => ING_BY_ID.has(id) && !fav.includes(id)))];
+  if (fav.length === 3 && yuck.length === 2) { d.fav = fav; d.yuck = yuck; }
+  d.knownFav = [...new Set(strArr(raw.knownFav).filter(id => d.fav.includes(id)))];
+  d.knownYuck = [...new Set(strArr(raw.knownYuck).filter(id => d.yuck.includes(id)))];
+  d.combos = [...new Set(strArr(raw.combos).filter(k => COMBO_KEYS.has(k)))];
+  if (raw.stats && typeof raw.stats === 'object') for (const k of Object.keys(d.stats)) d.stats[k] = num(raw.stats[k], 99999999);
+  if (typeof raw.music === 'boolean') d.music = raw.music;
+  if (typeof raw.sfx === 'boolean') d.sfx = raw.sfx;
+  return d;
+}
+let save = loadSave();
+function persist(){ try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
+persist();
+const tastes = () => ({ fav:new Set(save.fav), yuck:new Set(save.yuck) });
+function getIng(id){ return ING_BY_ID.get(id) || save.custom.find(c => c.id === id) || null; }
+function ownedIngs(){ return [...save.owned.map(id => ING_BY_ID.get(id)), ...save.custom].filter(Boolean); }
+
+/* =========================================================
+   Sound (Web Audio, started only after a click or key)
+   ========================================================= */
+let actx = null, musicGain = null, sfxGain = null, noiseBuf = null, musicTimer = 0, nextNote = 0, step = 0;
+function audioInit(){
+  if (actx) { if (actx.state === 'suspended') actx.resume().catch(() => {}); return; }
+  try {
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+    const master = actx.createGain(); master.gain.value = 0.8; master.connect(actx.destination);
+    musicGain = actx.createGain(); musicGain.gain.value = save.music ? 0.22 : 0; musicGain.connect(master);
+    sfxGain = actx.createGain(); sfxGain.gain.value = save.sfx ? 0.7 : 0; sfxGain.connect(master);
+    noiseBuf = actx.createBuffer(1, actx.sampleRate * 0.6, actx.sampleRate);
+    const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    nextNote = actx.currentTime + 0.1;
+    musicTimer = setInterval(musicTick, 25);
+  } catch (e) { actx = null; }
+}
+addEventListener('pointerdown', audioInit, true);
+addEventListener('keydown', audioInit, true);
+const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+function tone(freq, dur, type = 'sine', vol = 0.2, slideTo = null, when = 0, dest = null){
+  if (!actx) return;
+  const t0 = actx.currentTime + when;
+  const o = actx.createOscillator(), g = actx.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t0);
+  if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t0 + dur);
+  g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g); g.connect(dest || sfxGain); o.start(t0); o.stop(t0 + dur + 0.05);
+}
+function noise(dur, vol = 0.2, freq = 1200, when = 0, q = 1, type = 'bandpass'){
+  if (!actx) return;
+  const t0 = actx.currentTime + when;
+  const s = actx.createBufferSource(); s.buffer = noiseBuf; s.loop = true;
+  const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+  const g = actx.createGain(); g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  s.connect(f); f.connect(g); g.connect(sfxGain); s.start(t0); s.stop(t0 + dur + 0.05);
+}
+const sfx = {
+  pick(){ tone(520, 0.09, 'sine', 0.25, 880); },
+  drop(){ tone(500, 0.12, 'sine', 0.2, 260); },
+  click(){ tone(700, 0.05, 'triangle', 0.15); },
+  cook(m){
+    if (m === 'mix') for (let i = 0; i < 6; i++) tone(300 + (i % 2) * 80, 0.07, 'triangle', 0.15, null, i * 0.14);
+    else if (m === 'bake') { noise(0.8, 0.06, 400, 0, 0.5, 'lowpass'); tone(1568, 0.6, 'sine', 0.2, null, 0.75); tone(2093, 0.5, 'sine', 0.12, null, 0.75); }
+    else if (m === 'fry') noise(0.9, 0.16, 5000, 0, 0.6, 'highpass');
+    else { tone(120, 0.9, 'sawtooth', 0.07, 260); noise(0.9, 0.05, 900, 0, 2); }
+  },
+  whoosh(){ noise(0.35, 0.12, 1800, 0, 1.5); },
+  chomp(when = 0){ noise(0.09, 0.35, 700, when, 1.2); tone(110, 0.1, 'sine', 0.3, 60, when); },
+  coin(when = 0){ tone(1976, 0.07, 'square', 0.06, null, when); tone(2637, 0.18, 'square', 0.06, null, when + 0.06); },
+  buy(){ [0, 0.08, 0.16].forEach((w, i) => tone([1047, 1319, 1568][i], 0.14, 'square', 0.07, null, w)); },
+  no(){ tone(220, 0.15, 'square', 0.08, 180); },
+  burp(){ if (!actx) return; const t0 = actx.currentTime;
+    const o = actx.createOscillator(), g = actx.createGain(), lfo = actx.createOscillator(), lg = actx.createGain();
+    o.type = 'sawtooth'; o.frequency.setValueAtTime(95, t0); o.frequency.linearRampToValueAtTime(70, t0 + 0.5);
+    lfo.frequency.value = 28; lg.gain.value = 18; lfo.connect(lg); lg.connect(o.frequency);
+    const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 600;
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.35, t0 + 0.04); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.55);
+    o.connect(f); f.connect(g); g.connect(sfxGain); o.start(t0); lfo.start(t0); o.stop(t0 + 0.6); lfo.stop(t0 + 0.6); },
+  giggle(){ for (let i = 0; i < 4; i++) tone(700 + i * 60, 0.08, 'sine', 0.15, 900 + i * 60, i * 0.09); },
+  tier(id){
+    const seq = {
+      yuck:[[392,0,.25,'sawtooth',330],[330,.28,.25,'sawtooth',262],[262,.56,.5,'sawtooth',196]],
+      meh:[[440,0,.18,'triangle'],[440,.22,.3,'triangle']],
+      like:[[523,0,.12,'triangle'],[659,.12,.12,'triangle'],[784,.24,.3,'triangle']],
+      love:[[523,0,.1,'square'],[659,.1,.1,'square'],[784,.2,.1,'square'],[1047,.3,.4,'square']],
+      best:[[523,0,.1,'square'],[659,.1,.1,'square'],[784,.2,.1,'square'],[1047,.3,.15,'square'],[784,.45,.1,'square'],[1047,.55,.6,'square']],
+    }[id] || [];
+    for (const [f, w, d, ty, sl] of seq) tone(f, d, ty, ty === 'square' ? 0.07 : 0.14, sl || null, w);
+  },
+};
+// Gentle bouncy kitchen music: 4 chords, 16 steps each.
+const CHORDS = [[48,52,55],[45,48,52],[41,45,48],[43,47,50]];
+const MELODY = [72,null,76,null,79,null,76,74, 72,null,69,null,72,null,null,null,
+                69,null,72,null,76,null,74,72, 69,null,67,null,69,null,null,null,
+                65,null,69,null,72,null,74,72, 69,null,65,null,69,null,72,null,
+                67,null,71,null,74,null,72,71, 67,null,74,null,71,null,null,null];
+function musicTick(){
+  if (!actx || !save.music || actx.state !== 'running') { if (actx) nextNote = actx.currentTime + 0.1; return; }
+  const spb = 60 / 104 / 2;
+  while (nextNote < actx.currentTime + 0.12) {
+    const bar = Math.floor(step / 16) % 4, s = step % 16, w = nextNote - actx.currentTime;
+    const ch = CHORDS[bar];
+    if (s % 4 === 0) tone(mtof(ch[0] - 12), spb * 1.6, 'triangle', 0.35, null, w, musicGain);
+    if (s % 4 === 2) for (const n of ch) tone(mtof(n + 12), spb * 0.6, 'sine', 0.07, null, w, musicGain);
+    const m = MELODY[(step % 64)];
+    if (m && (Math.floor(step / 64) % 2 === 0 || s < 8)) tone(mtof(m), spb * 1.4, 'square', 0.05, null, w, musicGain);
+    nextNote += spb; step++;
+  }
+}
+function setMusic(on){ save.music = on; persist(); if (musicGain) musicGain.gain.value = on ? 0.22 : 0; }
+function setSfx(on){ save.sfx = on; persist(); if (sfxGain) sfxGain.gain.value = on ? 0.7 : 0; }
+
+/* =========================================================
+   Game state
+   ========================================================= */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const pickOne = a => a[Math.floor(Math.random() * a.length)];
+let bowl = [];            // ingredient ids
+let method = 'mix';
+let craving = null;
+let phase = 'cook';       // 'cook' | 'busy' | 'result'
+let filter = 'all';
+let lastResult = null;
+let gameFreddy = null, menuFreddy = null;
+
+function tagChip(t, clickable = true){
+  const T = TAGS[t];
+  return `<${clickable ? 'button' : 'span'} class="chip" ${clickable ? `data-filter="${t}"` : ''} style="background:${T.color}"><span class="emo">${T.icon}</span>${T.label.toUpperCase()}</${clickable ? 'button' : 'span'}>`;
+}
+function methodChip(m){ return `<span class="chip" style="background:var(--orange)"><span class="emo">${METHODS[m].icon}</span>${METHODS[m].adj.toUpperCase()}</span>`; }
+function tagDots(ing){ return ing.tags.map(t => `<span class="tagdot" style="background:${TAGS[t].color}" title="${TAGS[t].label}">${TAGS[t].label}</span>`).join(''); }
+
+const HUNGRY = ["My tummy is rumbling!", "I'm sooo hungry!", "Feed me, please!", "Yum yum time!", "What's cooking?", "Grumble grumble..."];
+function newCraving(){
+  craving = makeCraving(ownedIngs(), tastes(), Math.random, craving ? cravingKey(craving) : '');
+  craving.hello = pickOne(HUNGRY);
+}
+function renderBubble(){
+  const b = $('bubble');
+  if (phase === 'result' && lastResult) {
+    const r = lastResult;
+    b.className = 'bubble speak';
+    b.innerHTML = `<div class="tier ${r.tier.id}">${esc(r.says)}</div>
+      <div class="dishname"><span class="emo">${r.dish.emoji}</span> ${esc(r.dish.name)}</div>
+      <ul class="reasons">${r.reasons.map(x => `<li class="${x.kind}">${x.kind === 'good' ? '✔' : x.kind === 'bad' ? '✘' : '💡'} ${esc(x.text)}${x.isNew ? '<span class="new">NEW!</span>' : ''}</li>`).join('')}</ul>
+      <div class="coinsgot ${r.tier.coins ? '' : 'zero'}">${r.tier.coins ? `+${r.tier.coins} <span class="emo">🪙</span>` : 'No coins this time'}</div>
+      <button class="btn go" id="nextBtn">Next dish ➜</button>`;
+    $('nextBtn').onclick = nextDish;
+    return;
+  }
+  b.className = 'bubble think';
+  if (!craving) { b.innerHTML = ''; return; }
+  const c = craving;
+  let want = '';
+  if (c.type === 'flavor') want = `Something ${tagChip(c.tags[0])}`;
+  else if (c.type === 'two') want = `Something ${tagChip(c.tags[0])} and ${tagChip(c.tags[1])}`;
+  else if (c.type === 'method') want = `Something ${methodChip(c.method)}`;
+  else if (c.type === 'flavmeth') want = `Something ${tagChip(c.tags[0])} and ${methodChip(c.method)}`;
+  else if (c.type === 'specific') { const i = getIng(c.ing); want = `Anything with <button class="chip" data-find="${esc(c.ing)}" style="background:#fff"><span class="emo">${i ? i.emoji : c.emoji}</span>${esc((i ? i.name : c.name).toUpperCase())}</button>`; }
+  b.innerHTML = `<div class="small">${esc(c.hello)} I want...</div><div class="want">${want}!</div>
+    <button class="reroll" id="rerollBtn">Ask for something else</button>`;
+  $('rerollBtn').onclick = () => { if (phase !== 'cook') return; sfx.click(); newCraving(); renderBubble(); };
+}
+document.addEventListener('click', e => {
+  const f = e.target.closest('[data-filter]');
+  if (f && f.closest('#bubble')) { filter = f.dataset.filter; renderShelf(); sfx.click(); return; }
+  const fi = e.target.closest('[data-find]');
+  if (fi) { filter = 'all'; renderShelf(); const el = document.querySelector(`.ing[data-id="${CSS.escape(fi.dataset.find)}"]`); if (el) { el.scrollIntoView({ block:'nearest', behavior:'smooth' }); el.animate([{ transform:'scale(1)' }, { transform:'scale(1.15)' }, { transform:'scale(1)' }], { duration:500, iterations:2 }); } }
+});
+
+function renderBowl(){
+  const ings = bowl.map(getIng).filter(Boolean);
+  let html = '';
+  for (let i = 0; i < MAX_IN_BOWL; i++) {
+    const g = ings[i];
+    html += g ? `<button class="slot full emo" data-slot="${i}" title="Take out ${esc(g.name)}">${g.emoji}</button>` : `<div class="slot"></div>`;
+  }
+  $('bowl').innerHTML = html;
+  const d = dishName(ings, method);
+  $('dishPreview').innerHTML = ings.length
+    ? `You're making:<b><span class="emo">${d.emoji}</span> ${esc(d.name)}</b>`
+    : `Tap foods below to put them in the bowl (up to ${MAX_IN_BOWL}).`;
+  const fb = $('feedBtn');
+  fb.disabled = phase !== 'cook' || !ings.length;
+  fb.textContent = ings.length ? 'Feed Freddy! 😋' : 'Pick some food first';
+  $('clearBtn').disabled = phase !== 'cook' || !ings.length;
+}
+$('bowl').addEventListener('click', e => {
+  const s = e.target.closest('[data-slot]');
+  if (!s || phase !== 'cook') return;
+  bowl.splice(+s.dataset.slot, 1); sfx.drop(); renderBowl(); renderShelf();
+});
+function renderMethods(){
+  $('methods').innerHTML = `<span class="lbl">Cook it:</span>` + METHOD_IDS.map(m =>
+    `<button class="method ${m === method ? 'on' : ''}" data-m="${m}"><span class="emo">${METHODS[m].icon}</span>${METHODS[m].label}</button>`).join('');
+}
+$('methods').addEventListener('click', e => {
+  const b = e.target.closest('[data-m]');
+  if (!b || phase !== 'cook') return;
+  method = b.dataset.m; sfx.click(); renderMethods(); renderBowl();
+});
+function renderShelf(){
+  const owned = ownedIngs();
+  const present = TAG_IDS.filter(t => owned.some(i => hasTag(i, t)));
+  if (filter !== 'all' && !present.includes(filter)) filter = 'all';
+  $('shelfHead').innerHTML = `<span class="lbl">Your food</span>` +
+    `<button class="fchip ${filter === 'all' ? 'on' : ''}" data-f="all">All</button>` +
+    present.map(t => `<button class="fchip ${filter === t ? 'on' : ''}" data-f="${t}"><span class="emo">${TAGS[t].icon}</span>${TAGS[t].label}</button>`).join('');
+  const list = filter === 'all' ? owned : owned.filter(i => hasTag(i, filter));
+  $('shelf').innerHTML = list.map(i => {
+    const sel = bowl.includes(i.id);
+    const badge = save.knownFav.includes(i.id) ? '❤️' : save.knownYuck.includes(i.id) ? '🤢' : i.custom ? '🧪' : '';
+    return `<button class="ing ${sel ? 'sel' : ''}" data-id="${esc(i.id)}" title="${esc(i.name)}: ${i.tags.map(t => TAGS[t].label).join(', ')}">
+      ${badge ? `<span class="badge emo">${badge}</span>` : ''}<span class="big emo">${i.emoji}</span><span class="nm">${esc(i.name)}</span><span class="tg">${tagDots(i)}</span></button>`;
+  }).join('');
+}
+$('shelfHead').addEventListener('click', e => {
+  const b = e.target.closest('[data-f]');
+  if (!b) return;
+  filter = b.dataset.f; sfx.click(); renderShelf();
+});
+$('shelf').addEventListener('click', e => {
+  const b = e.target.closest('.ing');
+  if (!b || phase !== 'cook') return;
+  const id = b.dataset.id, at = bowl.indexOf(id);
+  if (at >= 0) { bowl.splice(at, 1); sfx.drop(); }
+  else if (bowl.length >= MAX_IN_BOWL) { sfx.no(); toast(`The bowl is full! Tap a food in the bowl to take it out.`); return; }
+  else { bowl.push(id); sfx.pick(); }
+  renderBowl(); renderShelf();
+});
+$('clearBtn').onclick = () => { if (phase !== 'cook') return; bowl = []; sfx.drop(); renderBowl(); renderShelf(); };
+
+function updateCoins(bump){
+  $('coinBox').innerHTML = `<span class="emo">🪙</span> ${save.coins}`;
+  if (bump) { $('coinBox').classList.remove('bump'); void $('coinBox').offsetWidth; $('coinBox').classList.add('bump'); }
+}
+let toastTimer = 0;
+function toast(msg){
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+/* ---------- Feeding ---------- */
+function mouthPoint(){
+  const r = gameFreddy.getBoundingClientRect();
+  return { x: r.left + r.width * 150 / 300, y: r.top + r.height * 200 / 340 };
+}
+async function fly(html, from, to, ms, size, scaleTo = 0.4){
+  const el = document.createElement('div');
+  el.className = 'flyer'; el.innerHTML = html; el.style.fontSize = size + 'px';
+  document.body.appendChild(el);
+  const half = size / 2;
+  const a = el.animate([
+    { transform:`translate(${from.x - half}px, ${from.y - half}px) scale(1)` },
+    { transform:`translate(${(from.x + to.x) / 2 - half}px, ${Math.min(from.y, to.y) - 80 - half}px) scale(${(1 + scaleTo) / 2 + 0.2})`, offset:0.5 },
+    { transform:`translate(${to.x - half}px, ${to.y - half}px) scale(${scaleTo})` },
+  ], { duration:ms, easing:'ease-in-out', fill:'forwards' });
+  try { await a.finished; } catch (e) {}
+  el.remove();
+}
+function confetti(){
+  const colors = ['#ffd23f', '#ff5fa2', '#5fb7ff', '#8fe36b', '#ffa94d', '#a77bff'];
+  for (let i = 0; i < 70; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.background = pickOne(colors);
+    document.body.appendChild(c);
+    const a = c.animate([{ transform:`translateY(0) rotate(0deg)` }, { transform:`translateY(${innerHeight + 40}px) translateX(${(Math.random() - .5) * 200}px) rotate(${Math.random() * 720}deg)` }],
+      { duration:1800 + Math.random() * 1600, delay:Math.random() * 500, easing:'ease-in' });
+    a.onfinish = () => c.remove();
+  }
+}
+async function feed(){
+  if (phase !== 'cook' || !bowl.length) return;
+  const ings = bowl.map(getIng).filter(Boolean);
+  if (!ings.length) return;
+  phase = 'busy'; renderBowl();
+  const dish = dishName(ings, method);
+  // 1. Cook
+  const counter = $('counter');
+  counter.classList.add('cook-' + method); sfx.cook(method);
+  await sleep(950);
+  counter.classList.remove('cook-' + method);
+  // 2. Dish appears and flies to Freddy
+  const br = $('bowl').getBoundingClientRect();
+  const from = { x: br.left + Math.min(br.width, 200) / 2, y: br.top + br.height / 2 };
+  bowl = []; renderBowl(); renderShelf();
+  setFace(gameFreddy, 'normal', 'open'); setAnim(gameFreddy, 'hop');
+  sfx.whoosh();
+  await fly(`<span>${dish.emoji}</span>`, from, mouthPoint(), 750, 90, 0.35);
+  // 3. Chew
+  setAnim(gameFreddy, 'chomp');
+  for (let i = 0; i < 3; i++) {
+    setFace(gameFreddy, 'happy', i % 2 ? 'smile' : 'chew'); sfx.chomp();
+    await sleep(300);
+  }
+  setFace(gameFreddy, 'normal', 'chew');
+  await sleep(350);
+  // 4. Rate it
+  const r = rateDish(ings, method, craving, tastes());
+  for (const c of r.combos) { if (!save.combos.includes(c.key)) { save.combos.push(c.key); markNew(r, `Yum combo: ${c.a.name} + ${c.b.name}!`); } }
+  for (const f of r.favs) { if (!save.knownFav.includes(f.id)) { save.knownFav.push(f.id); markNew(r, `I LOVE ${f.name}!`); } }
+  for (const y of r.yucks) { if (!save.knownYuck.includes(y.id)) { save.knownYuck.push(y.id); markNew(r, `${y.name} is yucky to me!`); } }
+  save.coins = Math.min(9999999, save.coins + r.tier.coins);
+  save.stats.dishes++; save.stats.earned += r.tier.coins;
+  if (r.tier.id === 'love' || r.tier.id === 'best') save.stats.loves++;
+  if (r.tier.id === 'best') save.stats.bests++;
+  persist();
+  lastResult = { tier:r.tier, says:pickOne(r.tier.says), dish, reasons:r.reasons };
+  const face = { yuck:['yuck','yuck','shake'], meh:['meh','meh','idle'], like:['happy','smile','hop'], love:['love','grin','jump wave'], best:['best','grin','jump wave'] }[r.tier.id];
+  setFace(gameFreddy, face[0], face[1]); setAnim(gameFreddy, face[2]);
+  sfx.tier(r.tier.id);
+  phase = 'result'; renderBubble(); renderShelf();
+  if (r.tier.id === 'best') confetti();
+  // 5. Coins fly to the coin box
+  if (r.tier.coins) {
+    const n = Math.min(14, Math.ceil(r.tier.coins / 3));
+    const cb = $('coinBox').getBoundingClientRect(), to = { x: cb.left + 20, y: cb.top + cb.height / 2 };
+    const m = mouthPoint();
+    const shown = save.coins - r.tier.coins;
+    for (let i = 0; i < n; i++) {
+      setTimeout(() => {
+        fly('🪙', { x: m.x + (Math.random() - .5) * 60, y: m.y }, to, 700, 34, 0.8).then(() => {
+          sfx.coin();
+          const val = i === n - 1 ? save.coins : Math.min(save.coins, shown + Math.round(r.tier.coins * (i + 1) / n));
+          $('coinBox').innerHTML = `<span class="emo">🪙</span> ${val}`;
+          $('coinBox').classList.remove('bump'); void $('coinBox').offsetWidth; $('coinBox').classList.add('bump');
+        });
+      }, 300 + i * 90);
+    }
+  }
+  if ((r.tier.id === 'love' || r.tier.id === 'best') && Math.random() < 0.3) {
+    setTimeout(() => { if (phase === 'result') { sfx.burp(); toast('*BURP!* Oops, excuse me!'); } }, 2200);
+  }
+}
+function markNew(r, text){ const x = r.reasons.find(z => z.text === text); if (x) x.isNew = true; }
+function nextDish(){
+  if (phase !== 'result') return;
+  sfx.click();
+  phase = 'cook'; lastResult = null;
+  newCraving();
+  setFace(gameFreddy, 'normal', 'smile'); setAnim(gameFreddy, 'idle');
+  updateCoins(false); renderBubble(); renderBowl(); renderShelf();
+}
+$('feedBtn').onclick = feed;
+
+/* Freddy is ticklish */
+const TICKLE = ["Hehe! That tickles!", "Hi there!", "Is it dinner time yet?", "I'm Freddy!", "Boop!"];
+function tickle(){
+  if (phase === 'busy') return;
+  sfx.giggle(); toast(pickOne(TICKLE));
+  setAnim(gameFreddy, 'wiggle');
+  setTimeout(() => { if (phase === 'cook') setAnim(gameFreddy, 'idle'); }, 1100);
+}
+
+/* Eyes follow the pointer, and blink now and then */
+addEventListener('pointermove', e => {
+  for (const svg of [gameFreddy, menuFreddy]) {
+    if (!svg || !svg.isConnected) continue;
+    const r = svg.getBoundingClientRect();
+    if (!r.width) continue;
+    const cx = r.left + r.width / 2, cy = r.top + r.height * 128 / 340;
+    const dx = e.clientX - cx, dy = e.clientY - cy, d = Math.hypot(dx, dy) || 1;
+    const k = Math.min(1, d / 200) * 8;
+    svg.querySelector('.fr-pupils').setAttribute('transform', `translate(${(dx / d * k).toFixed(1)} ${(dy / d * k).toFixed(1)})`);
+  }
+});
+setInterval(() => {
+  for (const svg of [gameFreddy, menuFreddy]) {
+    const g = svg && svg.querySelector('.fr-eyes-n');
+    if (!g) continue;
+    g.classList.add('blink'); setTimeout(() => g.classList.remove('blink'), 140);
+  }
+}, 3400);
+
+/* =========================================================
+   Screens and panels
+   ========================================================= */
+function showMenu(){
+  closeModal();
+  $('game').classList.add('hidden'); $('menu').classList.remove('hidden');
+  applyLook(menuFreddy);
+  $('menuCoins').innerHTML = save.stats.dishes ? `<span class="emo">🪙</span> ${save.coins} coins · ${save.stats.dishes} dishes fed` : '';
+  $('musicBtn').textContent = `Music: ${save.music ? 'on' : 'off'}`;
+  $('sfxBtn').textContent = `Sounds: ${save.sfx ? 'on' : 'off'}`;
+  $('resetBtn').textContent = 'Start over';
+  resetArmed = false;
+}
+function startPlay(){
+  $('menu').classList.add('hidden'); $('game').classList.remove('hidden');
+  applyLook(gameFreddy);
+  if (phase === 'busy') phase = 'cook';
+  if (!craving) newCraving();
+  if (phase === 'cook') { setFace(gameFreddy, 'normal', 'smile'); setAnim(gameFreddy, 'idle'); }
+  bowl = bowl.filter(id => getIng(id));
+  updateCoins(false); renderBubble(); renderMethods(); renderBowl(); renderShelf();
+}
+let resetArmed = false;
+$('playBtn').onclick = () => { sfx.click(); startPlay(); };
+$('menuBtn').onclick = () => { if (phase === 'busy') return; sfx.click(); showMenu(); };
+$('musicBtn').onclick = () => { setMusic(!save.music); showMenu(); };
+$('sfxBtn').onclick = () => { setSfx(!save.sfx); sfx.click(); showMenu(); };
+$('resetBtn').onclick = () => {
+  if (!resetArmed) { resetArmed = true; $('resetBtn').textContent = 'Really? Tap again to erase everything'; return; }
+  const music = save.music, sf = save.sfx;
+  save = defaultSave(); save.music = music; save.sfx = sf; persist();
+  bowl = []; craving = null; phase = 'cook'; lastResult = null; filter = 'all'; method = 'mix';
+  showMenu(); toast('Fresh start! Freddy has new secret tastes.');
+};
+
+function openModal(html){ $('panel').innerHTML = `<button class="btn small close" data-close>✕ Close</button>` + html; $('modal').classList.remove('hidden'); $('modal').scrollTop = 0; }
+function closeModal(){ $('modal').classList.add('hidden'); $('panel').innerHTML = ''; }
+$('modal').addEventListener('click', e => { if (e.target === $('modal') || e.target.closest('[data-close]')) { sfx.click(); closeModal(); if (!$('game').classList.contains('hidden')) { applyLook(gameFreddy); updateCoins(false); renderBubble(); renderBowl(); renderShelf(); } } });
+addEventListener('keydown', e => { if (e.key === 'Escape' && !$('modal').classList.contains('hidden')) { closeModal(); if (!$('game').classList.contains('hidden')) { applyLook(gameFreddy); renderShelf(); } } });
+
+/* How to play */
+function showHow(){
+  openModal(`<h2>How to play</h2>
+  <ol class="howto">
+    <li>Look at Freddy's thought bubble to see what he wants, like <b>something sweet</b> or <b>something fried</b>.</li>
+    <li>Tap foods to put them in the bowl (up to 5). Each food says what it tastes like, for example <span class="tagdot" style="background:${TAGS.sweet.color}">Sweet</span> <span class="tagdot" style="background:${TAGS.crunchy.color}">Crunchy</span>.</li>
+    <li>Pick how to cook it: <b>Mix, Bake, Fry or Blend</b>.</li>
+    <li>Press <b>Feed Freddy!</b> The more he likes it, the more coins you get:
+      <br>😝 Bleh: no coins · 😐 Okay: 3 · 🙂 Like it: 8 · 😍 LOVE it: 20 · 🤩 Best food ever: 35</li>
+    <li>To make him <b>love</b> it, give him 3 things he wants and nothing else. For <b>best food ever</b>, add a <b>yum combo</b> (two foods that go great together, like strawberry and chocolate) or one of his <b>secret favorites</b>.</li>
+    <li>Freddy has secret favorite foods and secret yucky foods. Find them all! They go in your <b>Notebook</b>.</li>
+    <li>Spend coins in the <b>Shop</b> on new foods, hats and colors for Freddy, or <b>Invent</b> your own food!</li>
+  </ol>
+  <button class="btn primary" data-close>Got it!</button>`);
+}
+$('howBtn').onclick = () => { sfx.click(); showHow(); };
+
+/* Shop */
+let shopTab = 'food';
+function showShop(){
+  const tabs = [['food', '🍓 Food'], ['hats', '🎩 Hats'], ['colors', '🎨 Colors']];
+  let body = '';
+  if (shopTab === 'food') {
+    const items = INGREDIENTS.filter(i => i.price > 0).sort((a, b) => a.price - b.price);
+    body = `<p>New foods make new cravings and new yum combos. ${save.owned.length - STARTERS.length} of ${items.length} bought.</p><div class="grid">` + items.map(i => {
+      const own = save.owned.includes(i.id);
+      return `<div class="card ${own ? 'owned' : ''}"><span class="big emo">${i.emoji}</span><span class="nm">${esc(i.name)}</span><span class="tg">${tagDots(i)}</span>
+        ${own ? '<span>✔ In your kitchen</span>' : `<button class="btn small primary" data-buy="food:${i.id}" ${save.coins < i.price ? 'disabled' : ''}><span class="emo">🪙</span> ${i.price}</button>`}</div>`;
+    }).join('') + '</div>';
+  } else if (shopTab === 'hats') {
+    body = `<div class="grid">` + `<div class="card ${save.hat === '' ? 'owned' : ''}"><svg viewBox="-90 -120 180 140"><text x="0" y="-30" text-anchor="middle" font-size="40">🚫</text></svg><span class="nm">No hat</span>${save.hat === '' ? '<span>✔ Wearing</span>' : '<button class="btn small" data-wear="">Take off hat</button>'}</div>` +
+      HATS.map(h => {
+        const own = save.hats.includes(h.id), on = save.hat === h.id;
+        return `<div class="card ${own ? 'owned' : ''}"><svg viewBox="-90 -120 180 140"><path d="M-80 20 Q0 -10 80 20 V20Z" fill="#7bd65a"/>${h.svg}</svg><span class="nm">${h.name}</span>
+          ${on ? '<span>✔ Wearing</span>' : own ? `<button class="btn small go" data-wear="${h.id}">Wear it</button>` : `<button class="btn small primary" data-buy="hat:${h.id}" ${save.coins < h.price ? 'disabled' : ''}><span class="emo">🪙</span> ${h.price}</button>`}</div>`;
+      }).join('') + '</div>';
+  } else {
+    body = `<div class="grid">` + COLORS.map(c => {
+      const own = save.colors.includes(c.id), on = save.color === c.id;
+      const bg = c.fur === 'RAINBOW' ? 'linear-gradient(135deg,#ff6b6b,#ffa94d,#ffd23f,#7bd65a,#5fb7ff,#a77bff)' : c.fur;
+      return `<div class="card ${own ? 'owned' : ''}"><div class="swatch" style="background:${bg}"></div><span class="nm">${c.name}</span>
+        ${on ? '<span>✔ Using</span>' : own ? `<button class="btn small go" data-color="${c.id}">Use it</button>` : `<button class="btn small primary" data-buy="color:${c.id}" ${save.coins < c.price ? 'disabled' : ''}><span class="emo">🪙</span> ${c.price}</button>`}</div>`;
+    }).join('') + '</div>';
+  }
+  openModal(`<h2>Shop</h2><div class="coinbox" style="display:inline-block"><span class="emo">🪙</span> ${save.coins}</div>
+    <div class="tabs">${tabs.map(([k, l]) => `<button class="tab ${shopTab === k ? 'on' : ''}" data-tab="${k}">${l}</button>`).join('')}</div>${body}`);
+}
+$('panel').addEventListener('click', e => {
+  const t = e.target.closest('[data-tab]');
+  if (t) { shopTab = t.dataset.tab; sfx.click(); showShop(); return; }
+  const b = e.target.closest('[data-buy]');
+  if (b) {
+    const [kind, id] = b.dataset.buy.split(':');
+    const item = kind === 'food' ? ING_BY_ID.get(id) : kind === 'hat' ? HAT_BY_ID.get(id) : COLOR_BY_ID.get(id);
+    if (!item || save.coins < item.price) { sfx.no(); return; }
+    save.coins -= item.price;
+    if (kind === 'food' && !save.owned.includes(id)) save.owned.push(id);
+    if (kind === 'hat' && !save.hats.includes(id)) { save.hats.push(id); save.hat = id; }
+    if (kind === 'color' && !save.colors.includes(id)) { save.colors.push(id); save.color = id; }
+    persist(); sfx.buy(); updateCoins(true);
+    toast(kind === 'food' ? `${item.name} is in your kitchen now!` : kind === 'hat' ? `Freddy is wearing the ${item.name}!` : `Freddy is ${item.name} now!`);
+    showShop(); return;
+  }
+  const w = e.target.closest('[data-wear]');
+  if (w) { save.hat = w.dataset.wear; persist(); sfx.click(); showShop(); return; }
+  const c = e.target.closest('[data-color]');
+  if (c) { save.color = c.dataset.color; persist(); sfx.click(); showShop(); return; }
+});
+$('shopBtn').onclick = () => { if (phase === 'busy') return; sfx.click(); showShop(); };
+
+/* Notebook */
+function showBook(){
+  const favCards = save.fav.map(id => {
+    const k = save.knownFav.includes(id), i = ING_BY_ID.get(id);
+    return k ? `<div class="note"><div class="big emo">${i.emoji}</div>${esc(i.name)}</div>` : `<div class="note unknown"><div class="big">?</div>Not found yet</div>`;
+  }).join('');
+  const yuckCards = save.yuck.map(id => {
+    const k = save.knownYuck.includes(id), i = ING_BY_ID.get(id);
+    return k ? `<div class="note"><div class="big emo">${i.emoji}</div>${esc(i.name)}</div>` : `<div class="note unknown"><div class="big">?</div>Not found yet</div>`;
+  }).join('');
+  const comboCards = COMBOS.map(([a, b]) => {
+    const k = save.combos.includes(comboKey(a, b)), A = ING_BY_ID.get(a), B = ING_BY_ID.get(b);
+    return k ? `<div class="note"><div class="big emo">${A.emoji}${B.emoji}</div>${esc(A.name)} + ${esc(B.name)}</div>` : `<div class="note unknown"><div class="big">?</div>&nbsp;</div>`;
+  }).join('');
+  const s = save.stats;
+  openModal(`<h2>Freddy's Notebook</h2>
+    <div class="stats"><div class="stat"><b>${s.dishes}</b>dishes fed</div><div class="stat"><b>${s.loves}</b>he loved</div><div class="stat"><b>${s.bests}</b>best food ever</div><div class="stat"><b>${s.earned}</b>coins earned</div></div>
+    <h3>❤️ Secret favorites (${save.knownFav.length} of 3)</h3>
+    <p>Put one of these in any dish for extra coins.</p><div class="note-grid">${favCards}</div>
+    <h3>🤢 Secret yucky foods (${save.knownYuck.length} of 2)</h3>
+    <p>Freddy never asks for these, so keep them out of his food!</p><div class="note-grid">${yuckCards}</div>
+    <h3>🤝 Yum combos (${save.combos.length} of ${COMBOS.length})</h3>
+    <p>Two foods that go great together. Some need foods from the shop.</p><div class="note-grid">${comboCards}</div>`);
+}
+$('bookBtn').onclick = () => { if (phase === 'busy') return; sfx.click(); showBook(); };
+
+/* Invent your own food */
+let inv = { emoji:INVENT_EMOJI[0], name:'', tags:[] };
+function showInvent(){
+  const price = save.freeInvent ? 0 : INVENT_PRICE;
+  const full = save.custom.length >= MAX_CUSTOM;
+  const canMake = !full && inv.name.trim() && inv.tags.length && save.coins >= price;
+  const preview = { name: inv.name.trim() || 'Your food', emoji: inv.emoji, tags: inv.tags };
+  openModal(`<h2>Invent a food</h2>
+    <p>Make up your own food! Pick a picture, give it a name and choose how it tastes (1 or 2).
+      ${save.freeInvent ? '<b>Your first one is free!</b>' : `Each new food costs <b><span class="emo">🪙</span> ${INVENT_PRICE}</b>.`}</p>
+    <div class="inv-row">
+      <div><h3>Picture</h3><div class="picker">${INVENT_EMOJI.map(e => `<button class="emo ${e === inv.emoji ? 'on' : ''}" data-pic="${e}">${e}</button>`).join('')}</div></div>
+      <div>
+        <h3>Name</h3><input class="name" id="invName" maxlength="16" placeholder="Rainbow Goo" value="${esc(inv.name)}" autocomplete="off">
+        <h3>Tastes like</h3><div class="shelf-head">${TAG_IDS.map(t => `<button class="fchip ${inv.tags.includes(t) ? 'on' : ''}" data-itag="${t}"><span class="emo">${TAGS[t].icon}</span>${TAGS[t].label}</button>`).join('')}</div>
+        <h3>Looks like</h3>
+        <div class="card" style="width:150px" id="invPreview"><span class="big emo">${preview.emoji}</span><span class="nm">${esc(preview.name)}</span><span class="tg">${tagDots(preview)}</span></div>
+        <p></p>
+        <button class="btn primary" id="invMake" ${canMake ? '' : 'disabled'}>${full ? 'Your kitchen is full' : `Make it! ${price ? `(<span class="emo">🪙</span> ${price})` : '(free)'}`}</button>
+      </div>
+    </div>
+    ${save.custom.length ? `<h3>Your inventions (${save.custom.length} of ${MAX_CUSTOM})</h3><div class="grid">${save.custom.map(c => `<div class="card"><span class="big emo">${c.emoji}</span><span class="nm">${esc(c.name)}</span><span class="tg">${tagDots(c)}</span><button class="btn small" data-del="${c.id}">Throw away</button></div>`).join('')}</div>` : ''}`);
+  const nm = $('invName');
+  nm.addEventListener('input', () => {
+    inv.name = nm.value.slice(0, 16);
+    const mk = $('invMake');
+    mk.disabled = !(save.custom.length < MAX_CUSTOM && inv.name.trim() && inv.tags.length && save.coins >= price);
+    $('invPreview').querySelector('.nm').textContent = inv.name.trim() || 'Your food';
+  });
+  $('invMake').onclick = makeInvention;
+}
+function makeInvention(){
+  const price = save.freeInvent ? 0 : INVENT_PRICE;
+  const name = inv.name.replace(/\s+/g, ' ').trim().slice(0, 16);
+  if (!name || !inv.tags.length || save.custom.length >= MAX_CUSTOM || save.coins < price) { sfx.no(); return; }
+  const c = { id:'c' + save.nextCustom++, name, emoji:inv.emoji, tags:[...inv.tags], custom:true };
+  save.custom.push(c); save.coins -= price; save.freeInvent = false;
+  persist(); sfx.buy(); updateCoins(true);
+  toast(`You invented ${name}! It's on your food shelf.`);
+  inv = { emoji:pickOne(INVENT_EMOJI), name:'', tags:[] };
+  showInvent();
+}
+let delArmed = '';
+$('panel').addEventListener('click', e => {
+  const p = e.target.closest('[data-pic]');
+  if (p) { inv.emoji = p.dataset.pic; sfx.click(); showInvent(); return; }
+  const t = e.target.closest('[data-itag]');
+  if (t) {
+    const k = t.dataset.itag;
+    if (inv.tags.includes(k)) inv.tags = inv.tags.filter(x => x !== k);
+    else if (inv.tags.length < 2) inv.tags.push(k);
+    else { inv.tags.shift(); inv.tags.push(k); }
+    sfx.click(); showInvent(); return;
+  }
+  const d = e.target.closest('[data-del]');
+  if (d) {
+    const id = d.dataset.del;
+    if (delArmed !== id) { delArmed = id; d.textContent = 'Sure? Tap again'; return; }
+    delArmed = '';
+    save.custom = save.custom.filter(c => c.id !== id);
+    bowl = bowl.filter(x => x !== id);
+    if (craving && craving.ing === id) craving = null;
+    persist(); sfx.drop(); showInvent();
+    if (!craving && phase === 'cook') newCraving();
+  }
+});
+$('inventBtn').onclick = () => { if (phase === 'busy') return; sfx.click(); showInvent(); };
+
+/* ---------- Boot ---------- */
+$('menuFreddyBox').innerHTML = freddySVG('fmenu');
+$('gameFreddyBox').innerHTML = freddySVG('fgame');
+menuFreddy = $('fmenu'); menuFreddy.id = 'fmenu'; menuFreddy.style.width = 'min(260px,52vw)'; menuFreddy.style.height = 'auto';
+gameFreddy = $('fgame'); gameFreddy.addEventListener('click', tickle);
+gameFreddy.id = 'fgame'; gameFreddy.classList.add('gf');
+showMenu();
+</script>
+</body>
+</html>
