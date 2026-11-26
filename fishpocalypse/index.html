@@ -1015,12 +1015,36 @@ function buildShark(g, o) {
   if (o.lava) lavaCracks(g, 0, 0.42, 0.11, 0.11, H(o.lava), rng);
   if (o.snout) { ell(g, 0.5, 0.02, 0, 0.17, 0.022, 0.055, c1, -1, 1); }
   if (o.jaws) {
-    // a wide-open mouth with two rows of huge teeth
-    tube(g, [0.26, -0.07, 0], [0.45, -0.16, 0], 0.065, 0.03, 10, shade(c2, 0.9), true);
-    ell(g, 0.37, -0.085, 0, 0.09, 0.04, 0.06, H('#7a1020'), -1, 1);
-    for (let i = 0; i < 6; i++) { const t = i / 5; for (const s of [-1, 1]) {
-      const ux = lerp(0.3, 0.46, t), uz = s * 0.06 * (1 - t * 0.6), lx = lerp(0.3, 0.44, t), ly = lerp(-0.075, -0.135, t), lz = s * 0.05 * (1 - t * 0.6);
-      cone(g, [ux, -0.045, uz], [ux + 0.004, -0.1, uz], 0.016, 4, WHITE); cone(g, [lx, ly, lz], [lx - 0.006, ly + 0.05, lz], 0.015, 4, WHITE); } }
+    // a wide-open mouth: the lower jaw swings down from a hinge under the cheeks, with rows of big triangle teeth
+    const H0 = [0.2, -0.085], T0 = [0.42, -0.2], jx = T0[0] - H0[0], jy = T0[1] - H0[1], jl = Math.hypot(jx, jy);
+    const ux = jx / jl, uy = jy / jl, gum = H('#8a1a28'), dark = H('#4a0a14'), jawC = mixc(c1, c2, 0.55);
+    // inside of the mouth, and the cheeks closing its sides
+    ell(g, 0.31, -0.115, 0, 0.11, 0.04, 0.058, dark, -1, 1);
+    for (const s of [-1, 1]) flat(g, [H0[0], H0[1], s * 0.06], [0.45, -0.062, s * 0.035], [T0[0], T0[1] + 0.01, s * 0.035], gum);
+    // the lower jaw: one smooth flat plate, tilted open, that joins the throat
+    const ang = Math.atan2(jy, jx), ca = Math.cos(ang), sa = Math.sin(ang), mx = H0[0] + jx * 0.5, my = H0[1] + jy * 0.5;
+    const jaw = (lx, ly) => [mx + lx * ca - ly * sa, my + lx * sa + ly * ca];
+    const st = g.n;
+    ell(g, 0, 0, 0, jl * 0.62, 0.028, 0.072, jawC, -1, 2);
+    for (let k = st; k < g.n; k++) {
+      const o = k * 5, x = g.f[o], y = g.f[o + 1], b = k * 20, nx = g.i8[b + 12] / 127, ny = g.i8[b + 13] / 127;
+      g.f[o] = mx + x * ca - y * sa; g.f[o + 1] = my + x * sa + y * ca;
+      g.i8[b + 12] = Math.round((nx * ca - ny * sa) * 127); g.i8[b + 13] = Math.round((nx * sa + ny * ca) * 127);
+    }
+    ell(g, 0.17, -0.075, 0, 0.09, 0.035, 0.085, col, -1, 2);     // throat
+    // upper teeth hang from the edge of the snout
+    const upY = x => -0.005 - 0.075 * Math.sqrt(Math.max(0, 1 - ((x - 0.3) / 0.17) ** 2)) + 0.01;
+    const upZ = x => 0.085 * Math.sqrt(Math.max(0, 1 - ((x - 0.3) / 0.17) ** 2)) * 0.82;
+    for (let i = 0; i < 7; i++) {
+      const x = lerp(0.25, 0.44, i / 6), y = upY(x);
+      for (const s of [-1, 1]) cone(g, [x, y, s * upZ(x)], [x + 0.004, y - 0.038, s * upZ(x)], 0.011, 4, WHITE);
+    }
+    // lower teeth stand up along the top of the jaw
+    for (let i = 0; i < 7; i++) {
+      const lx = lerp(-0.05, 0.11, i / 6), k = Math.sqrt(Math.max(0, 1 - (lx / (jl * 0.62)) ** 2));
+      const base = jaw(lx, 0.022 * k), tip = jaw(lx - 0.004, 0.022 * k + 0.036), z = 0.072 * k * 0.72;
+      for (const s of [-1, 1]) cone(g, [base[0], base[1], s * z], [tip[0], tip[1], s * z], 0.01, 4, WHITE);
+    }
   }
 }
 function buildEel(g, o) {
