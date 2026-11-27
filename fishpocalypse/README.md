@@ -35,7 +35,7 @@ Every zone has eight creatures: six common, one rare and one mythical. The Rift 
 | The Abyss | 1,500–5,000 m | 625 | Dumbo Octopus, Tripod Fish, Giant Isopod, Black Swallower, Goblin Shark, Ancient Turtle | Frilled Shark | Sea Serpent |
 | The Trench | 5,000–11,000 m | 3,000 | Snailfish, Sea Pig, Supergiant Amphipod, Rattail, Big Red Jellyfish, Crystal Dragon | Megalodon | Kraken |
 | The Fishpocalypse Rift | 11,000–20,000 m | 15,000 | Zombie Cod, Skeleton Fish, Lava Shark, Fire Jelly, Magma Turtle | Triclops Grouper | Doomfin, and **King Leviathan** (legendary) |
-| The Underwater Palace (secret) | 20,000–30,000 m | 75,000 | Pearl Angelfish, Golden Jelly, Gem Turtle, Sapphire Ray, Marble Eel | Armored Seahorse | Thunderjaw (lightning shark), and **Celestial Leviathan** (secret) |
+| The Underwater Palace (secret) | 20,000–30,000 m | 75,000 | Pearl Angelfish, Golden Jelly, Gem Turtle, Sapphire Ray, Marble Eel | Armored Seahorse | Thunderjaw (25 m lightning shark), and **Celestial Leviathan** (secret) |
 
 The newer creatures are at the end of `SPECIES`, so old saves (which store each fish by its number) still point at the right ones.
 
@@ -43,7 +43,7 @@ A creature's coins per second = zone base × (1, 1.2, 1.4, 1.6, 1.8 or 2 for the
 
 The Sea Serpent has huge open jaws full of teeth, and the Megalodon has a giant toothy grin along both sides of its head. The King Leviathan is like the Sea Serpent but bigger (50 m). He is black with red stripes, and has big curved horns, red spikes and frills, glowing red eyes and the same giant jaws.
 
-The models are built from shapes in code (`BUILDERS`: fish, shark, eel, octopus, squid, puffer, seahorse, bug, sea pig, kelpie, turtle, ray, jelly), each about 1 unit long facing +x, then scaled by `vis = max(0.7 + length × 0.75, length)`. One unit is one meter, so big creatures are **life size**: Megalodon 16 m, Kraken 22 m, Sea Serpent 32 m, King Leviathan 50 m. Small fish are drawn a bit bigger so you can see them. Mythical creatures are made big on purpose too. Swimming is a wave in the vertex shader (`uWig`). Mode 0 swings side to side (fish), mode 1 sways tentacles, and mode 2 flaps (ray wings, turtle flippers). `speciesMesh` also stores each model's bounding box (`sp.bb`), which the beach picture and the sideways fight pose use. Each vertex stores how much it wiggles (head 0, tail 1).
+The models are built from shapes in code (`BUILDERS`: fish, shark, eel, octopus, squid, puffer, seahorse, bug, sea pig, kelpie, turtle, ray, jelly), each about 1 unit long facing +x, then scaled by `vis = max(0.7 + length × 0.75, length)`. One unit is one meter, so big creatures are **life size**: Megalodon 16 m, Kraken 22 m, Thunderjaw 25 m, Sea Serpent 32 m, King Leviathan 50 m. Small fish are drawn a bit bigger so you can see them. Mythical creatures are made big on purpose too. Swimming is a wave in the vertex shader (`uWig`). Mode 0 swings side to side (fish), mode 1 sways tentacles, and mode 2 flaps (ray wings, turtle flippers). `speciesMesh` also stores each model's bounding box (`sp.bb`), which the beach picture and the sideways fight pose use. Each vertex stores how much it wiggles (head 0, tail 1).
 
 ## The Underwater Palace (secret zone, spoilers!)
 
