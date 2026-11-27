@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Fishpocalypse</title>
-<meta name="description" content="Cast your line from the pier, sink through seven ocean zones, and fill a gigantic aquarium.">
+<meta name="description" content="Cast your line from the pier, sink through the zones of the ocean, and fill a gigantic aquarium.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@700;800;900&display=swap">
@@ -202,7 +202,7 @@ body.kbnav .btn:focus,body.kbnav .item:focus,body.kbnav .hbtn:focus,body.kbnav #
 <!-- Title -->
 <div class="ov" id="ovTitle"><div class="panel">
   <h1 class="logo">Fishpocalypse</h1>
-  <p class="tagl">Cast your line off the pier, sink through seven ocean zones, catch rare and mythical fish, and fill a gigantic aquarium.</p>
+  <p class="tagl">Cast your line off the pier, sink through the zones of the ocean, catch rare and mythical fish, and fill a gigantic aquarium.</p>
   <div class="col">
     <button class="btn go" id="tPlay">Play</button>
     <button class="btn" id="tHow">How to play</button>
@@ -232,7 +232,7 @@ body.kbnav .btn:focus,body.kbnav .item:focus,body.kbnav .hbtn:focus,body.kbnav #
   <h2>How to play</h2>
   <p><b>1. Walk</b> to the end of the long pier. <b>2. Cast</b> your line and watch your hook sink through the zones of the ocean. <b>3.</b> When it stops, a fish from that zone bites. <b>Hold</b> to reel it in, and <b>let go</b> when it thrashes so the line doesn't pull too hard.</p>
   <p>Every fish goes into your <b>Aquarium</b> (the giant glass dome), and every fish there makes coins every second, even while you're fishing. Spend coins at the <b>Tackle Shop</b> on heavier sinkers to go deeper, faster reels, and luckier bait.</p>
-  <p>Every zone has eight creatures: six common ones, one <span style="color:var(--rare)">rare</span> one and one <span style="color:var(--myth)">mythical</span> one. The deepest zone hides the legendary King Leviathan. Save up 175 billion coins to buy <b>the Kaiju Depths</b> in the Tackle Shop: a trench of giant monsters where nothing is common. Deeper zones have fish worth much more. Press <b>Stop here</b> on the way down to fish a shallower zone.</p><p>Big creatures are life size! They're too heavy to hold up, so you get a picture of them lying on the beach next to you.</p>
+  <p>Every zone has eight creatures: six common ones, one <span style="color:var(--rare)">rare</span> one and one <span style="color:var(--myth)">mythical</span> one. The deepest zone hides the legendary King Leviathan. Just above it is <b>the Kaiju Depths</b>, a cavern of giant monsters where nothing is common. Your hook sinks right through it, but you can only fish there after you buy it in the Tackle Shop (175 billion coins). Its monsters fight back hard! Deeper zones have fish worth much more. Press <b>Stop here</b> on the way down to fish a shallower zone.</p><p>Big creatures are life size! They're too heavy to hold up, so you get a picture of them lying on the beach next to you.</p>
   <h3>Controls</h3>
   <p><b>Keyboard:</b> WASD or arrow keys to walk, Q and E (or drag with the mouse) to turn the camera, Space to cast, stop and reel (hold), Esc for the menu.</p>
   <p><b>Mouse or touch:</b> tap the ground to walk there, drag to turn the camera, tap the yellow button to cast, hold anywhere to reel.</p>
@@ -246,12 +246,6 @@ body.kbnav .btn:focus,body.kbnav .item:focus,body.kbnav .hbtn:focus,body.kbnav #
 <div class="ov" id="ovDex"><div class="panel" id="dexPanel"></div></div>
 <!-- Catch card -->
 <div class="ov clear" id="ovCard"><div class="panel" id="cardPanel"></div></div>
-<!-- Where to fish (after you buy the Kaiju Depths) -->
-<div class="ov" id="ovWhere"><div class="panel" style="max-width:520px;text-align:center">
-  <h2>Where do you want to fish?</h2>
-  <div class="row2"><button class="btn go" id="wOcean" data-first="1">🌊 The Ocean</button><button class="btn" id="wKaiju">🦖 The Kaiju Depths</button></div>
-  <div class="row2"><button class="btn" id="wBack">Back</button></div>
-</div></div>
 <!-- Welcome back -->
 <div class="ov" id="ovAway"><div class="panel" style="max-width:460px;text-align:center">
   <h2>Welcome back!</h2>
@@ -309,15 +303,17 @@ const ZONES = [
   { name: 'Midnight Zone', short: 'Midnight', top: 300, bottom: 1500, val: 125, fog: ['#10204e', '#0a1232'], light: 0.2, lamp: 0.9, fogD: 20, dots: '#9fe8ff' },
   { name: 'The Abyss', short: 'Abyss', top: 1500, bottom: 5000, val: 625, fog: ['#0a0f2a', '#070a1c'], light: 0.12, lamp: 1.0, fogD: 18, dots: '#c8b0ff' },
   { name: 'The Trench', short: 'Trench', top: 5000, bottom: 11000, val: 3000, fog: ['#1a1636', '#1e1428'], light: 0.22, lamp: 1.3, fogD: 22, dots: '#e0e0ff' },
-  { name: 'The Fishpocalypse Rift', short: 'The Rift', top: 11000, bottom: 20000, val: 15000, fog: ['#2a0a0c', '#4a1206'], light: 0.25, lamp: 0.8, fogD: 22, dots: '#ff9a3a' },
+  { name: 'Shipwreck Graveyard', short: 'Shipwrecks', top: 11000, bottom: 13000, val: 6000, fog: ['#2a3a3a', '#1e2a2a'], light: 0.3, lamp: 1.1, fogD: 26, dots: '#ffe0a0' },
+  { name: 'The Glow Caves', short: 'Glow Caves', top: 13000, bottom: 15000, val: 9000, fog: ['#1a1a4a', '#241a50'], light: 0.3, lamp: 1.2, fogD: 26, dots: '#7ff0ff' },
+  // you can only fish here after you buy it in the Tackle Shop. Until then your hook just sinks through it.
+  { name: 'The Kaiju Depths', short: 'Kaiju', top: 15000, bottom: 17000, val: 375000, fog: ['#163a26', '#0c2016'], light: 0.4, lamp: 1.0, fogD: 85, dots: '#9aff6a', kaiju: true },
+  { name: 'The Fishpocalypse Rift', short: 'The Rift', top: 17000, bottom: 20000, val: 15000, fog: ['#2a0a0c', '#4a1206'], light: 0.25, lamp: 0.8, fogD: 22, dots: '#ff9a3a' },
   // the secret zone under the Rift: the lava floor only opens after you catch the Doomfin and the King Leviathan
   { name: 'The Underwater Palace', short: 'Palace', top: 20000, bottom: 30000, val: 75000, fog: ['#3a4ab8', '#4a3aa0'], light: 0.95, lamp: 0.7, fogD: 75, dots: '#ffe8a0', secret: true },
-  // a place you buy in the Tackle Shop: a dark trench full of giant monsters. Cast from the pier and pick it.
-  { name: 'The Kaiju Depths', short: 'Kaiju', top: 30000, bottom: 50000, val: 375000, fog: ['#163a26', '#0c2016'], light: 0.4, lamp: 1.0, fogD: 85, dots: '#9aff6a', kaiju: true },
 ];
 ZONES.forEach(z => { z.fogA = H(z.fog[0]); z.fogB = H(z.fog[1]); z.dotC = H(z.dots); });
-const NORMAL_ZONES = 7, PALACE_Z = 7, KAIJU_Z = 8;
-const OCEAN_BOTTOM = NORMAL_ZONES * ZONE_H;       // 420 units: the lava floor of the Rift. The palace is under it (420 to 480).
+const KAIJU_Z = 8, RIFT_Z = 9, PALACE_Z = 10, NORMAL_ZONES = 10;
+const OCEAN_BOTTOM = NORMAL_ZONES * ZONE_H;       // 600 units: the lava floor of the Rift. The palace is under it (600 to 660).
 // depth in meters <-> how far down the 3D column (units). Inside a zone the meters grow like a log scale.
 function depthToVis(d) {
   for (let i = ZONES.length - 1; i >= 0; i--) {
@@ -340,15 +336,18 @@ const zoneAtVis = v => clamp(Math.floor(v / ZONE_H), 0, ZONES.length - 1);
    The shop
    ===================================================================== */
 const HOOKS = [
-  { name: 'Tin Hook', depth: 20, cost: 0, col: '#b8c0c8' },
-  { name: 'Iron Sinker', depth: 80, cost: 150, col: '#6d6f78' },
-  { name: 'Steel Sinker', depth: 300, cost: 3000, col: '#a9c4d8' },
-  { name: 'Gold Sinker', depth: 1500, cost: 60000, col: '#ffd23f' },
-  { name: 'Diamond Sinker', depth: 5000, cost: 1500000, col: '#8ff0ff' },
-  { name: 'Titan Sinker', depth: 11000, cost: 30000000, col: '#c18cff' },
-  { name: 'Doom Anchor', depth: 20000, cost: 600000000, col: '#ff5a3a' },
+  { name: 'Tin Hook', depth: 20, cost: 0, col: '#b8c0c8', zone: 0 },
+  { name: 'Iron Sinker', depth: 80, cost: 150, col: '#6d6f78', zone: 1 },
+  { name: 'Steel Sinker', depth: 300, cost: 3000, col: '#a9c4d8', zone: 2 },
+  { name: 'Gold Sinker', depth: 1500, cost: 60000, col: '#ffd23f', zone: 3 },
+  { name: 'Diamond Sinker', depth: 5000, cost: 1500000, col: '#8ff0ff', zone: 4 },
+  { name: 'Titan Sinker', depth: 11000, cost: 30000000, col: '#c18cff', zone: 5 },
+  { name: 'Anchor of the Wrecks', depth: 13000, cost: 80000000, col: '#8a6a3a', zone: 6 },
+  { name: 'Glowstone Sinker', depth: 15000, cost: 220000000, col: '#7ff0ff', zone: 7 },
+  // (the Doom Anchor sinks right through the Kaiju Depths, down to the Rift)
+  { name: 'Doom Anchor', depth: 20000, cost: 600000000, col: '#ff5a3a', zone: 9 },
   // palace things show up in the shop only after the Underwater Palace opens
-  { name: 'Crown Anchor', depth: 26000, cost: 2000000000, col: '#b8a8ff', palace: true, fast: 2.5 },
+  { name: 'Crown Anchor', depth: 26000, cost: 2000000000, col: '#b8a8ff', palace: true, fast: 2.5, zone: 10 },
 ];
 const REELS = [
   { name: 'Old Reel', speed: 1, cost: 0 },
@@ -368,6 +367,7 @@ const BAITS = [
 // new places to fish (save.kaiju: 0 = not yet, 1 = bought the Kaiju Depths)
 // TEMPORARY (set to false to go back to normal): the Kaiju Depths costs 100 coins, the Colossaurus bites every time and reels in fast
 const EASY_KAIJU = false;
+const DOOM_HOOK = HOOKS.findIndex(h => h.name === 'Doom Anchor');
 const PLACES = [
   { name: 'The Pier', cost: 0, skip: true },
   { name: 'The Kaiju Depths', cost: EASY_KAIJU ? 100 : 175000000000, col: '#5aff7a' },
@@ -416,11 +416,11 @@ const SPECIES = [
   { name: 'Megalodon', z: 5, r: 'r', kind: 'shark', len: 16, o: { c1: '#6a7a8a', c2: '#e0e4e8', jaws: true }, fact: 'Megalodon was a giant shark that lived millions of years ago. Maybe one is still hiding down here!' },
   { name: 'Kraken', z: 5, r: 'm', kind: 'octo', len: 22, o: { c1: '#6a1a4a', c2: '#9a3a6a', eyeC: '#ffd23f', kraken: true, glow: '#ff6ad0' }, fact: "A giant sea monster from old Norse sailors' stories, big enough to grab a ship." },
   // The Fishpocalypse Rift
-  { name: 'Zombie Cod', z: 6, r: 'c', kind: 'fish', len: 1, o: { c1: '#7a9a6a', c2: '#a8c098', h: 0.26, w: 0.16, fin: '#5a7a4a', stitches: true, xEye: true }, fact: "It has been swimming around for a hundred years, and it still isn't tired." },
-  { name: 'Skeleton Fish', z: 6, r: 'c', kind: 'fish', len: 0.9, o: { c1: '#e8e4d8', h: 0.3, w: 0.16, fin: '#c8c4b8', bones: true, eyeC: '#ff4a2a' }, fact: 'Nothing left but bones, but somehow it still swims.' },
-  { name: 'Lava Shark', z: 6, r: 'c', kind: 'shark', len: 5, o: { c1: '#2a1a1a', c2: '#4a2a20', lava: '#ff7a1a', teeth: true, glow: '#ff5a1a' }, fact: 'It swims through the glowing lava cracks at the bottom of the world.' },
-  { name: 'Triclops Grouper', z: 6, r: 'r', kind: 'fish', len: 2.5, o: { c1: '#8a4ab8', c2: '#c8a0e8', h: 0.38, w: 0.26, fin: '#6a2a98', eyes3: true, teeth: true, spots: '#e8d040' }, fact: 'Three eyes means it can see you three times as well.' },
-  { name: 'Doomfin', z: 6, r: 'm', kind: 'fish', len: 15, o: { c1: '#2a0a14', c2: '#6a1a2a', h: 0.36, w: 0.24, fin: '#b8101a', crown: true, teeth: true, eyeC: '#ff2a1a', lava: '#ff9a2a', dorsal: 1.6, glow: '#ff3a1a' }, fact: 'The King of the Fishpocalypse. He started the whole thing, and now he lives in your aquarium.' },
+  { name: 'Zombie Cod', z: 9, r: 'c', kind: 'fish', len: 1, o: { c1: '#7a9a6a', c2: '#a8c098', h: 0.26, w: 0.16, fin: '#5a7a4a', stitches: true, xEye: true }, fact: "It has been swimming around for a hundred years, and it still isn't tired." },
+  { name: 'Skeleton Fish', z: 9, r: 'c', kind: 'fish', len: 0.9, o: { c1: '#e8e4d8', h: 0.3, w: 0.16, fin: '#c8c4b8', bones: true, eyeC: '#ff4a2a' }, fact: 'Nothing left but bones, but somehow it still swims.' },
+  { name: 'Lava Shark', z: 9, r: 'c', kind: 'shark', len: 5, o: { c1: '#2a1a1a', c2: '#4a2a20', lava: '#ff7a1a', teeth: true, glow: '#ff5a1a' }, fact: 'It swims through the glowing lava cracks at the bottom of the world.' },
+  { name: 'Triclops Grouper', z: 9, r: 'r', kind: 'fish', len: 2.5, o: { c1: '#8a4ab8', c2: '#c8a0e8', h: 0.38, w: 0.26, fin: '#6a2a98', eyes3: true, teeth: true, spots: '#e8d040' }, fact: 'Three eyes means it can see you three times as well.' },
+  { name: 'Doomfin', z: 9, r: 'm', kind: 'fish', len: 15, o: { c1: '#2a0a14', c2: '#6a1a2a', h: 0.36, w: 0.24, fin: '#b8101a', crown: true, teeth: true, eyeC: '#ff2a1a', lava: '#ff9a2a', dorsal: 1.6, glow: '#ff3a1a' }, fact: 'The King of the Fishpocalypse. He started the whole thing, and now he lives in your aquarium.' },
   // ---- added later (kept at the end so old saves still point at the right creatures) ----
   { name: 'Blue Tang', z: 0, r: 'c', kind: 'fish', len: 0.3, o: { c1: '#2a6ad8', c2: '#4a8af0', h: 0.46, w: 0.14, fin: '#ffd23f', stripe: '#14204a' }, fact: 'A blue tang has a sharp spine by its tail, like a tiny knife, to keep it safe.' },
   { name: 'Sea Turtle', z: 0, r: 'c', kind: 'turtle', len: 1.2, o: { c1: '#8a9a5a', c2: '#e8e0a8', shell: '#6a5a2a' }, fact: 'Sea turtles can rest underwater for hours without coming up to breathe.' },
@@ -440,18 +440,18 @@ const SPECIES = [
   { name: 'Rattail', z: 5, r: 'c', kind: 'fish', len: 0.8, o: { c1: '#8a8a96', c2: '#b8b8c4', h: 0.22, w: 0.14, fin: '#6a6a76', tadpole: true, eye: 1.3 }, fact: "Rattails, also called grenadiers, have a long skinny tail like a rat's. They live all over the deep sea." },
   { name: 'Big Red Jellyfish', z: 5, r: 'c', kind: 'jelly', len: 1, o: { c1: '#b8202a', c2: '#901820', arms: true }, fact: 'The big red jellyfish has no stinging tentacles. It catches food with a few thick, fleshy arms instead.' },
   { name: 'Crystal Dragon', z: 5, r: 'c', kind: 'fish', len: 14, o: { c1: '#9ff0ff', c2: '#e8ffff', h: 0.3, w: 0.2, fin: '#6ad8ff', wings: '#bff8ff', horns: '#ffffff', teeth: true, dots: '#ffffff', dorsal: 1.6, glow: '#bff8ff' }, fact: 'A dragon made of glowing ice crystals. It lives where the water is the coldest.' },
-  { name: 'Fire Jelly', z: 6, r: 'c', kind: 'jelly', len: 0.8, o: { c1: '#ff7a1a', c2: '#ffb84a', glow: '#ff9a3a' }, fact: "Its tentacles are as hot as a campfire. Don't touch!" },
-  { name: 'Magma Turtle', z: 6, r: 'c', kind: 'turtle', len: 3, o: { c1: '#3a2a26', c2: '#5a3a30', shell: '#2a1a18', lava: '#ff7a1a', eyeC: '#ffb03a' }, fact: 'Its shell is made of cooled lava rock, and it takes naps inside volcanoes.' },
-  { name: 'King Leviathan', z: 6, r: 'm', king: true, kind: 'eel', len: 50, o: { c1: '#140a0c', c2: '#c01818', stripes: '#c01818', thick: 0.075, jaws: true, bigHorns: '#3a0808', spikes: '#e01818', frills: '#e01818', eyeC: '#ff2a1a', glow: '#ff3a2a' }, fact: 'The king of all sea monsters, even bigger than the Sea Serpent. The Doomfin bows to him.' },
+  { name: 'Fire Jelly', z: 9, r: 'c', kind: 'jelly', len: 0.8, o: { c1: '#ff7a1a', c2: '#ffb84a', glow: '#ff9a3a' }, fact: "Its tentacles are as hot as a campfire. Don't touch!" },
+  { name: 'Magma Turtle', z: 9, r: 'c', kind: 'turtle', len: 3, o: { c1: '#3a2a26', c2: '#5a3a30', shell: '#2a1a18', lava: '#ff7a1a', eyeC: '#ffb03a' }, fact: 'Its shell is made of cooled lava rock, and it takes naps inside volcanoes.' },
+  { name: 'King Leviathan', z: 9, r: 'm', king: true, kind: 'eel', len: 50, o: { c1: '#140a0c', c2: '#c01818', stripes: '#c01818', thick: 0.075, jaws: true, bigHorns: '#3a0808', spikes: '#e01818', frills: '#e01818', eyeC: '#ff2a1a', glow: '#ff3a2a' }, fact: 'The king of all sea monsters, even bigger than the Sea Serpent. The Doomfin bows to him.' },
   // ---- the Underwater Palace (secret zone) ----
-  { name: 'Pearl Angelfish', z: 7, r: 'c', kind: 'fish', len: 0.5, o: { c1: '#f8e8f0', c2: '#ffffff', h: 0.7, w: 0.12, fin: '#f0b8d8', spots: '#ffc8e0' }, fact: 'Its scales shine like pearls. It hides among the white columns, where it is hard to spot.' },
-  { name: 'Golden Jelly', z: 7, r: 'c', kind: 'jelly', len: 0.6, o: { c1: '#ffc83f', c2: '#ffe88a', stars: '#ffffff', glow: '#fff0a0' }, fact: 'A little jellyfish that glows gold. Swarms of them drift past the windows at night like lanterns.' },
-  { name: 'Gem Turtle', z: 7, r: 'c', kind: 'turtle', len: 1.5, o: { c1: '#7ab8e8', c2: '#e8f0ff', shell: '#3a5ab8', gems: true }, fact: 'Sparkly gems grow on its shell the way barnacles grow on a rock.' },
-  { name: 'Sapphire Ray', z: 7, r: 'c', kind: 'ray', len: 2, o: { c1: '#2a5ae8', c2: '#e0e8ff', spots: '#bfe0ff' }, fact: 'Its wings sparkle like the blue tiles on the palace floor.' },
-  { name: 'Marble Eel', z: 7, r: 'c', kind: 'eel', len: 1.5, o: { c1: '#1a1a22', c2: '#f4f4f4', thick: 0.06 }, fact: 'It is black and white, so it can lie on the checkered floor and almost disappear.' },
-  { name: 'Armored Seahorse', z: 7, r: 'r', kind: 'seahorse', len: 0.6, o: { c1: '#c8d0e0', c2: '#8a9ab8' }, fact: 'Real seahorses have hard bony plates instead of scales. This one is extra shiny, like silver armor.' },
-  { name: 'Thunderjaw', z: 7, r: 'm', kind: 'shark', len: 25, o: { c1: '#16245a', c2: '#7aa0e0', jaws: true, lava: '#ffe83a', eyeC: '#fff04a', glow: '#ffe85a' }, fact: 'A deep blue shark crackling with lightning. When it zaps, the whole palace lights up.' },
-  { name: 'Celestial Leviathan', z: 7, r: 'm', secret: true, kind: 'eel', len: 70, o: { c1: '#6a2ae8', c2: '#c8b8ff', grad: ['#9a3aff', '#2a7aff'], thick: 0.075, jaws: true, bigHorns: '#f0e8ff', mane: ['#e8e0ff', '#b07aff', '#7ad8ff', '#ffffff'], limbs: '#4a3ac8', longTail: true, tailGlow: '#7ff0ff', stars: '#ffffff', eyeC: '#7ff0ff', glow: '#b8d0ff' }, fact: 'A 100-meter dragon made of starlight, with a mane of horns, six legs and a long glowing tail. Almost nobody has ever seen one.' },
+  { name: 'Pearl Angelfish', z: 10, r: 'c', kind: 'fish', len: 0.5, o: { c1: '#f8e8f0', c2: '#ffffff', h: 0.7, w: 0.12, fin: '#f0b8d8', spots: '#ffc8e0' }, fact: 'Its scales shine like pearls. It hides among the white columns, where it is hard to spot.' },
+  { name: 'Golden Jelly', z: 10, r: 'c', kind: 'jelly', len: 0.6, o: { c1: '#ffc83f', c2: '#ffe88a', stars: '#ffffff', glow: '#fff0a0' }, fact: 'A little jellyfish that glows gold. Swarms of them drift past the windows at night like lanterns.' },
+  { name: 'Gem Turtle', z: 10, r: 'c', kind: 'turtle', len: 1.5, o: { c1: '#7ab8e8', c2: '#e8f0ff', shell: '#3a5ab8', gems: true }, fact: 'Sparkly gems grow on its shell the way barnacles grow on a rock.' },
+  { name: 'Sapphire Ray', z: 10, r: 'c', kind: 'ray', len: 2, o: { c1: '#2a5ae8', c2: '#e0e8ff', spots: '#bfe0ff' }, fact: 'Its wings sparkle like the blue tiles on the palace floor.' },
+  { name: 'Marble Eel', z: 10, r: 'c', kind: 'eel', len: 1.5, o: { c1: '#1a1a22', c2: '#f4f4f4', thick: 0.06 }, fact: 'It is black and white, so it can lie on the checkered floor and almost disappear.' },
+  { name: 'Armored Seahorse', z: 10, r: 'r', kind: 'seahorse', len: 0.6, o: { c1: '#c8d0e0', c2: '#8a9ab8' }, fact: 'Real seahorses have hard bony plates instead of scales. This one is extra shiny, like silver armor.' },
+  { name: 'Thunderjaw', z: 10, r: 'm', kind: 'shark', len: 25, o: { c1: '#16245a', c2: '#7aa0e0', jaws: true, lava: '#ffe83a', eyeC: '#fff04a', glow: '#ffe85a' }, fact: 'A deep blue shark crackling with lightning. When it zaps, the whole palace lights up.' },
+  { name: 'Celestial Leviathan', z: 10, r: 'm', secret: true, kind: 'eel', len: 70, o: { c1: '#6a2ae8', c2: '#c8b8ff', grad: ['#9a3aff', '#2a7aff'], thick: 0.075, jaws: true, bigHorns: '#f0e8ff', mane: ['#e8e0ff', '#b07aff', '#7ad8ff', '#ffffff'], limbs: '#4a3ac8', longTail: true, tailGlow: '#7ff0ff', stars: '#ffffff', eyeC: '#7ff0ff', glow: '#b8d0ff' }, fact: 'A 100-meter dragon made of starlight, with a mane of horns, six legs and a long glowing tail. Almost nobody has ever seen one.' },
   // the Kaiju Depths: no commons at all. 2 rares, 4 mythicals, a legendary, and the secret Colossaurus (1 bite in 100)
   { name: 'Boulderback Turtle', z: 8, r: 'r', kind: 'turtle', len: 14, o: { c1: '#4a5a48', c2: '#a8b098', shell: '#34383a', lava: '#7aff5a', eyeC: '#9aff6a' }, fact: 'Its shell is a pile of mossy boulders. Little monsters sometimes climb on it, thinking it is a hill.' },
   { name: 'Titan Isopod', z: 8, r: 'r', kind: 'bug', len: 6, o: { c1: '#8a9aa8', c2: '#5a6a78' }, fact: 'Real giant isopods grow up to about half a meter long. This one is longer than a car.' },
@@ -461,6 +461,25 @@ const SPECIES = [
   { name: 'Abyss Wyrm', z: 8, r: 'm', kind: 'eel', len: 45, o: { c1: '#0e2a1e', c2: '#7aff5a', thick: 0.07, jaws: true, bigHorns: '#c8d8a0', spikes: '#7aff5a', stripes: '#2a6a3a', eyeC: '#9aff6a', glow: '#7aff5a' }, fact: 'A giant sea dragon with glowing green spikes. It sleeps curled around underwater mountains.' },
   { name: 'Mecha Megashark', z: 8, r: 'm', king: true, kind: 'shark', len: 48, o: { c1: '#5a6470', c2: '#c8d0d8', jaws: true, lava: '#4ae8ff', eyeC: '#ff2a2a', glow: '#7ff0ff' }, fact: 'A giant robot shark. Nobody knows who built it. Its glowing blue lines are its power cables.' },
   { name: 'Colossaurus', z: 8, r: 'm', secret: true, kaiju: true, pct: EASY_KAIJU ? 1 : 0.01, fixed: 1000000000, kind: 'kaiju', len: 150, o: { glow: '#ffb040' }, fact: 'The king of all kaiju: a 150-meter sea monster with glowing crystal spikes down its back. When it roars, the whole ocean shakes.' },
+  // Shipwreck Graveyard
+  { name: 'Barnacle Bass', z: 6, r: 'c', kind: 'fish', len: 0.8, o: { c1: '#7a8a6a', c2: '#c8c8a0', h: 0.45, w: 0.16, fin: '#5a6a4a', spots: '#e8e0c8' }, fact: 'Barnacles grow on its scales, the same way they grow on old ships.' },
+  { name: 'Anchor Eel', z: 6, r: 'c', kind: 'eel', len: 2, o: { c1: '#4a4a52', c2: '#9a9aa8', thick: 0.05 }, fact: 'It wraps its tail around sunken anchors so the current cannot sweep it away.' },
+  { name: 'Rusty Puffer', z: 6, r: 'c', kind: 'puffer', len: 0.6, o: { c1: '#b8642a', c2: '#e8a060', spots: '#6a3a1a' }, fact: 'Its spots look just like rust. It likes to hide inside old cannons.' },
+  { name: 'Doubloon Jelly', z: 6, r: 'c', kind: 'jelly', len: 0.5, o: { c1: '#d8a82a', c2: '#ffe07a', glow: '#ffe88a' }, fact: 'A round golden jellyfish that looks like a lost pirate coin.' },
+  { name: 'Cannonball Turtle', z: 6, r: 'c', kind: 'turtle', len: 1.4, o: { c1: '#5a5a5a', c2: '#a8a8a0', shell: '#2a2a2e' }, fact: 'Its shell is round, black and heavy, like a cannonball.' },
+  { name: 'Sail Ray', z: 6, r: 'c', kind: 'ray', len: 2.5, o: { c1: '#d8cfb0', c2: '#f4ecd8', spots: '#a89a7a' }, fact: 'Its pale wings ripple like an old torn sail.' },
+  { name: 'Ghostlight Octopus', z: 6, r: 'r', kind: 'octo', len: 2, o: { c1: '#a8c8d8', c2: '#e0f0f8', eyeC: '#7ff0ff' }, fact: 'It glows a spooky blue and makes its home inside sunken ships.' },
+  { name: 'Wreck Serpent', z: 6, r: 'm', kind: 'eel', len: 20, o: { c1: '#3a2a1a', c2: '#a8885a', thick: 0.06, jaws: true, spikes: '#d8c8a0', horns: '#e8dcb8', eyeC: '#ffd23f', glow: '#ffd88a' }, fact: 'A giant sea serpent covered in barnacles. Old sailors blamed it whenever a ship went missing.' },
+  // The Glow Caves
+  { name: 'Glowworm Eel', z: 7, r: 'c', kind: 'eel', len: 1.2, o: { c1: '#1a2a3a', c2: '#7ff0ff', thick: 0.04, stars: '#7ff0ff' }, fact: 'Tiny glowing dots run down its back, like the glowworms that light up some real caves.' },
+  { name: 'Lantern Puffer', z: 7, r: 'c', kind: 'puffer', len: 0.5, o: { c1: '#2a3a6a', c2: '#9fd8ff', spots: '#ffe87a' }, fact: 'When it puffs up, its spots glow like a paper lantern.' },
+  { name: 'Cave Ray', z: 7, r: 'c', kind: 'ray', len: 2, o: { c1: '#2a2a4a', c2: '#8a8ac8', spots: '#9fe8ff' }, fact: 'It glides through the dark caves, feeling its way with the tips of its wings.' },
+  { name: 'Neon Jelly', z: 7, r: 'c', kind: 'jelly', len: 0.7, o: { c1: '#ff4ad9', c2: '#ff9ae8', glow: '#ff7ae0' }, fact: 'It flashes pink and purple to scare away hungry fish.' },
+  { name: 'Crystal Bass', z: 7, r: 'c', kind: 'fish', len: 0.9, o: { c1: '#8ad8e8', c2: '#e8fcff', h: 0.42, w: 0.15, fin: '#5ab8d8', dots: '#ffffff' }, fact: 'Its scales are clear like glass, so you can see the cave through its fins.' },
+  { name: 'Cave Isopod', z: 7, r: 'c', kind: 'bug', len: 0.6, o: { c1: '#c8d8f0', c2: '#8aa8c8' }, fact: 'It crawls along the cave floor, feeling its way with its long antennae.' },
+  { name: 'Shimmer Seahorse', z: 7, r: 'r', kind: 'seahorse', len: 0.5, o: { c1: '#9a7aff', c2: '#d8c8ff' }, fact: 'Its body shimmers with every color, like the inside of a seashell.' },
+  { name: 'Aurora Dragonfish', z: 7, r: 'm', kind: 'fish', len: 6, o: { c1: '#2a4aa8', c2: '#9fe8ff', h: 0.3, w: 0.2, fin: '#7ff0c0', wings: '#9fd8ff', horns: '#d8f8ff', dots: '#ffffff', glow: '#9fffe0' }, fact: 'Its wings ripple with green and blue light, like the northern lights.' },
+  { name: 'Glowtooth Titan', z: 7, r: 'm', king: true, kind: 'shark', len: 35, o: { c1: '#1a2a4a', c2: '#6a8ac8', jaws: true, lava: '#7ff0ff', eyeC: '#7ff0ff', glow: '#9ff8ff' }, fact: 'A giant shark with glowing teeth. You can see the light from its mouth from far across the dark caves.' },
 ];
 const RARITY = { c: 'Common', r: 'Rare', m: 'Mythical' };
 // Every zone has 6 commons, 1 rare and 1 mythical (the Rift also has the legendary King Leviathan).
@@ -505,7 +524,7 @@ const fishValue = f => SPECIES[f[0]].fixed || SPECIES[f[0]].val * f[1];
    Saved game. Key: fishpocalypse.v1. Every value is checked when it loads.
    ===================================================================== */
 const SAVE_KEY = 'fishpocalypse.v1';
-function defaultSave() { return { v: 1, coins: 0, hook: 0, reel: 0, bait: 0, kaiju: 0, fish: [], dex: {}, total: 0, music: true, sfx: true, t: Date.now() }; }
+function defaultSave() { return { v: 1, zv: 2, coins: 0, hook: 0, reel: 0, bait: 0, kaiju: 0, fish: [], dex: {}, total: 0, music: true, sfx: true, t: Date.now() }; }
 function loadSave() {
   const s = defaultSave();
   let raw = null;
@@ -518,6 +537,8 @@ function loadSave() {
   const int = (v, lo, hi) => Math.floor(num(v, lo, hi, lo));
   s.coins = num(d.coins, 0, 1e15, 0);
   s.hook = int(d.hook, 0, HOOKS.length - 1);
+  // saves from before the Shipwreck Graveyard and the Glow Caves: the Doom Anchor and the Crown Anchor moved 2 places down the list
+  if (d.zv !== 2 && s.hook >= 6) s.hook = Math.min(s.hook + 2, HOOKS.length - 1);
   s.reel = int(d.reel, 0, REELS.length - 1);
   s.bait = int(d.bait, 0, BAITS.length - 1);
   s.kaiju = int(d.kaiju, 0, PLACES.length - 1);
@@ -1794,7 +1815,7 @@ function buildHookMesh() {
   const g = new Geo(2048), hc = H(HOOKS[save.hook].col), steel = H('#c8d0d8');
   const big = 0.12 + save.hook * 0.025;
   ell(g, 0, -0.1 - big, 0, big * 0.8, big * 1.2, big * 0.8, hc, save.hook >= 4 ? 1 : -1, 1);
-  if (save.hook >= 6) for (const s of [-1, 1]) cone(g, [0, -0.1 - big * 2, 0], [s * 0.3, -0.1 - big * 2 + 0.25, 0], 0.06, 5, hc, 1);
+  if (save.hook >= DOOM_HOOK) for (const s of [-1, 1]) cone(g, [0, -0.1 - big * 2, 0], [s * 0.3, -0.1 - big * 2 + 0.25, 0], 0.06, 5, hc, 1);
   const top = -0.12 - big * 2.3;
   const hp = [[0, top, 0], [0, top - 0.35, 0]];
   for (let i = 1; i <= 7; i++) { const a = Math.PI + i / 7 * Math.PI * 1.1; hp.push([0.12 + Math.cos(a) * 0.12, top - 0.35 + Math.sin(a) * 0.12, 0]); }
@@ -1846,34 +1867,62 @@ function buildOcean() {
     for (let k = 0; k < 8; k++) { const a = k / 8 * TAU; chain(g, [[x + Math.cos(a) * r * 0.8, y, z - 8 + Math.sin(a) * r * 0.8], [x + Math.cos(a) * r, y - r * 2, z - 8 + Math.sin(a) * r], [x + Math.cos(a) * r * 0.7, y - r * 4, z - 8 + Math.sin(a) * r * 0.7]], 0.08, 0.03, 4, shade(jc, 0.35), 1); }
   }
   // The Trench and the Rift: rock walls on both sides and behind
-  for (let y = -296; y > -424; y -= 2.6) {
-    const rift = y < -360;
-    const rc = rift ? H('#3a1a16') : H('#5a5470');
+  // (the Kaiju Depths has no walls close by: it opens into a huge cavern, see buildKaijuDepths)
+  const bottom = -OCEAN_BOTTOM - 4;
+  for (let y = -296; y > bottom; y -= 2.6) {
+    const zi = zoneAtVis(-y);
+    if (zi === KAIJU_Z) continue;
+    const rift = zi === RIFT_Z, wreck = zi === 6, cave = zi === 7;
+    const rc = H(rift ? '#3a1a16' : wreck ? '#4a4038' : cave ? '#2a2c50' : '#5a5470');
     for (const s of [-1, 1]) {
       const x = s * (8 + rng() * 3 + (rift ? 1.5 : 0));
       blob(g, x, y, -4 - rng() * 6, 3 + rng() * 2, 2.4, 4 + rng() * 2, shade(rc, 0.8 + rng() * 0.4), rng, 0.5, -1);
-      if (rng() < (rift ? 0.7 : 0.25)) {
-        const cc = rift ? H('#ff7a1a') : H('#bfe8ff'), px = x - s * 2.6, pz = -3 - rng() * 5;
-        if (rift) chain(g, [[px, y + 1, pz], [px - s * 0.3, y, pz - 0.6], [px, y - 1.2, pz - 0.2], [px - s * 0.2, y - 2.2, pz - 0.7]], 0.12, 0.08, 4, cc, 1);
-        else for (let k = 0; k < 3; k++) cone(g, [px, y, pz], [px - s * (0.5 + rng()), y + 0.6 + rng(), pz + (rng() - 0.5)], 0.18, 5, cc, 1);
-      }
+      const px = x - s * 2.6, pz = -3 - rng() * 5;
+      if (rift) { if (rng() < 0.7) chain(g, [[px, y + 1, pz], [px - s * 0.3, y, pz - 0.6], [px, y - 1.2, pz - 0.2], [px - s * 0.2, y - 2.2, pz - 0.7]], 0.12, 0.08, 4, H('#ff7a1a'), 1); }
+      else if (cave) {
+        // glowing mushrooms and crystals growing out of the cave walls
+        const r = rng(), gc = [H('#7ff0ff'), H('#c88aff'), H('#7fffb0')][Math.floor(rng() * 3)];
+        if (r < 0.45) { const h = 0.6 + rng() * 0.8; tube(g, [px, y, pz], [px - s * 0.3, y + h, pz], 0.08, 0.06, 5, H('#d8d8e8')); ell(g, px - s * 0.3, y + h, pz, 0.7 + rng() * 0.4, 0.3, 0.7, gc, 1, 1, y + h - 0.05); }
+        else if (r < 0.7) for (let k = 0; k < 3; k++) cone(g, [px, y, pz], [px - s * (0.6 + rng()), y + 0.5 + rng() * 1.4, pz + (rng() - 0.5)], 0.2, 5, gc, 1);
+      } else if (wreck) {
+        // broken planks and old barrels stuck in the rocks
+        const r = rng();
+        if (r < 0.2) box(g, px, y, pz, 2.4 + rng() * 2, 0.25, 0.5, shade(H('#6a4a2a'), 0.7 + rng() * 0.4));
+        else if (r < 0.28) { tube(g, [px, y, pz], [px, y + 1, pz], 0.4, 0.4, 8, H('#7a5430'), true); tube(g, [px, y + 0.3, pz], [px, y + 0.38, pz], 0.42, 0.42, 8, H('#3a3a3a')); }
+      } else if (rng() < 0.25) for (let k = 0; k < 3; k++) cone(g, [px, y, pz], [px - s * (0.5 + rng()), y + 0.6 + rng(), pz + (rng() - 0.5)], 0.18, 5, H('#bfe8ff'), 1);
     }
-    blob(g, (rng() - 0.5) * 16, y, -18 - rng() * 4, 5, 3, 3, shade(rc, 0.7 + rng() * 0.3), rng, 0.4, -1);
+    if (!wreck) blob(g, (rng() - 0.5) * 16, y, -18 - rng() * 4, 5, 3, 3, shade(rc, 0.7 + rng() * 0.3), rng, 0.4, -1);
+    else if (rng() < 0.4) blob(g, (rng() - 0.5) * 30, y, -26 - rng() * 4, 6, 3, 4, shade(rc, 0.6 + rng() * 0.3), rng, 0.4, -1);
+    // glowing crystals on the back wall of the Glow Caves
+    if (cave && rng() < 0.5) { const cx = (rng() - 0.5) * 14, gc = [H('#7ff0ff'), H('#c88aff'), H('#7fffb0')][Math.floor(rng() * 3)]; for (let k = 0; k < 4; k++) cone(g, [cx, y, -15], [cx + (rng() - 0.5) * 2, y + 1 + rng() * 2.5, -13 + rng() * 1.5], 0.35, 5, gc, 1); }
+  }
+  // sunken ships, broken and tipped over, in the Shipwreck Graveyard
+  const wood = H('#6a4a2a'), wood2 = H('#4a3420'), sail = H('#cfc4a0');
+  for (const [x, y, z, sd] of [[-3, -376, -12, 1], [4, -397, -13, -1], [-2, -415, -12, 1]]) {
+    box(g, x, y, z, 11, 2.6, 3.4, wood); box(g, x, y + 2.6, z, 10.6, 0.3, 3.2, wood2);
+    cone(g, [x + sd * 5.5, y + 1.3, z], [x + sd * 8.5, y + 1.8, z], 1.7, 6, wood);
+    for (let k = 0; k < 6; k++) box(g, x - 4.5 + k * 1.8, y + 2.9, z + 1.6, 0.15, 0.6, 0.15, wood2);
+    const mt = [x - sd * 1, y + 9, z - 1.5];
+    tube(g, [x - sd * 1, y + 2.6, z], mt, 0.22, 0.16, 6, wood2, true);
+    flat(g, [mt[0], mt[1] - 0.6, mt[2]], [mt[0] + sd * 3, mt[1] - 2.5, mt[2] + 0.4], [mt[0] + sd * 0.4, mt[1] - 5.5, mt[2] + 0.2], sail);
+    flat(g, [mt[0] + sd * 0.4, mt[1] - 5.5, mt[2] + 0.2], [mt[0] + sd * 3, mt[1] - 2.5, mt[2] + 0.4], [mt[0] + sd * 2.6, mt[1] - 5, mt[2] + 0.5], shade(sail, 0.85));
+    blob(g, x, y - 1.5, z, 7, 2, 3, shade(H('#4a4038'), 0.8), rng, 0.4, -1);
   }
   // the bottom of the world: lava with dark rocks
   // (with a hole in the middle that leads down to the Underwater Palace; plugMesh covers it until it opens)
   const lava = H('#ff5a1a');
-  box(g, -23.5, -426, -10, 33, 2, 60, lava, 1); box(g, 23.5, -426, -10, 33, 2, 60, lava, 1);
-  box(g, 0, -426, -25, 14, 2, 30, lava, 1); box(g, 0, -426, 12, 14, 2, 16, lava, 1);
+  const LY = -OCEAN_BOTTOM - 6;
+  box(g, -23.5, LY, -10, 33, 2, 60, lava, 1); box(g, 23.5, LY, -10, 33, 2, 60, lava, 1);
+  box(g, 0, LY, -25, 14, 2, 30, lava, 1); box(g, 0, LY, 12, 14, 2, 16, lava, 1);
   for (let i = 0; i < 26; i++) {
     const x = (rng() - 0.5) * 40, z = -2 - rng() * 30, a = 1.5 + rng() * 3, b = 1 + rng(), c = 1.5 + rng() * 3;
     if (Math.abs(x) < 10 && z > -14) continue;
-    blob(g, x, -424.5, z, a, b, c, H('#2a1210'), rng, 0.5, -1);
+    blob(g, x, LY + 1.5, z, a, b, c, H('#2a1210'), rng, 0.5, -1);
   }
   oceanMesh = makeMesh(g);
   const pg = new Geo(2048), pr = mulberry32(5);
-  box(pg, 0, -426, -3, 14, 2, 14, H('#ff5a1a'), 1);
-  for (let i = 0; i < 5; i++) blob(pg, (pr() - 0.5) * 10, -424.5, -3 + (pr() - 0.5) * 10, 1.5 + pr() * 2, 1 + pr(), 1.5 + pr() * 2, H('#2a1210'), pr, 0.5, -1);
+  box(pg, 0, LY, -3, 14, 2, 14, H('#ff5a1a'), 1);
+  for (let i = 0; i < 5; i++) blob(pg, (pr() - 0.5) * 10, LY + 1.5, -3 + (pr() - 0.5) * 10, 1.5 + pr() * 2, 1 + pr(), 1.5 + pr() * 2, H('#2a1210'), pr, 0.5, -1);
   plugMesh = makeMesh(pg);
 
   // the Kelp Forest (its own mesh so it can sway)
@@ -1906,12 +1955,12 @@ function buildOcean() {
 
 /* =====================================================================
    The Underwater Palace: the secret zone under the Rift's lava floor
-   (y -426 down to -490). Marble floor, columns, gold domes, towers and
+   (y -606 down to -670). Marble floor, columns, gold domes, towers and
    glowing lanterns. The hook stops in the great hall in front of it.
    ===================================================================== */
 let palaceMesh = null;
 function buildPalace() {
-  const g = new Geo(300000), rng = mulberry32(777), Y = -490;
+  const g = new Geo(300000), rng = mulberry32(777), Y = -OCEAN_BOTTOM - 70;
   const m1 = H('#eef0fc'), m2 = H('#b8c4f0'), gold = H('#ffd23f'), wall = H('#dfe2fa'), wall2 = H('#c8ccf4'), roof = H('#7a4ae8'), roof2 = H('#3a6ae8'), glow = H('#9fe8ff'), win = H('#ffe8a0');
   // checkered marble floor
   for (let x = -150; x < 150; x += 6) for (let z = -130; z < 70; z += 6) {
@@ -1978,20 +2027,22 @@ function buildPalace() {
 
 /* ---------- the Kaiju Depths: a dark trench with a giant skeleton, glowing crystals, vents and huge footprints ---------- */
 let kaijuMesh = null;
-const KAIJU_FLOOR = -560;
+const KAIJU_FLOOR = -532;
 function buildKaijuDepths() {
   if (kaijuMesh) return;
   const g = new Geo(400000), rng = mulberry32(4242), Y = KAIJU_FLOOR;
   const rock = H('#1e2a22'), moss = H('#2a4a2e'), bone = H('#d8ceb4'), gc = H('#6aff4a'), gc2 = H('#d8ffb0'), oc = H('#ff7a1a'), oc2 = H('#ffe07a');
   const fh = (x, z) => Y + 3 * Math.sin(x * 0.04 + z * 0.03) + 2 * Math.sin(z * 0.07 - x * 0.05) + (Math.abs(x) > 140 ? (Math.abs(x) - 140) * 1.5 : 0) + (z < -150 ? (-150 - z) * 1.5 : 0);
   const S = 8;
-  for (let x = -240; x < 240; x += S) for (let z = -240; z < 120; z += S) {
+  // the shelf's front edge drops away into the dark, so your hook can keep sinking past it
+  for (let x = -240; x <= 240; x += 12) for (let y = Y - 46; y <= Y; y += 9) blob(g, x + (rng() - 0.5) * 6, y, -52 + (rng() - 0.5) * 6, 9 + rng() * 4, 7, 6 + rng() * 3, shade(rock, 0.7 + rng() * 0.4), rng, 0.4, -1);
+  for (let x = -240; x < 240; x += S) for (let z = -240; z < -50; z += S) {
     const a = [x, fh(x, z), z], b = [x + S, fh(x + S, z), z], c = [x + S, fh(x + S, z + S), z + S], d = [x, fh(x, z + S), z + S];
     const c1 = shade(mixc(rock, moss, hash3(x, z, 1) * 0.7), 0.8 + hash3(x, z, 2) * 0.3), c2 = shade(c1, 0.94);
     tri(g, a, d, c, faceN(a, d, c), -1, c1, c1, c1, 0, 0, 0); tri(g, a, c, b, faceN(a, c, b), -1, c2, c2, c2, 0, 0, 0);
   }
   // the walls of the trench
-  for (let y = Y - 10; y < Y + 330; y += 22) {
+  for (let y = Y - 60; y < Y + 80; y += 22) {
     for (let x = -240; x <= 240; x += 32) blob(g, x + (rng() - 0.5) * 14, y, -200 + (rng() - 0.5) * 30, 24 + rng() * 12, 16 + rng() * 8, 18 + rng() * 10, shade(rock, 0.7 + rng() * 0.4), rng, 0.4, -1);
     for (const sd of [-1, 1]) for (let z = -200; z <= 100; z += 32) blob(g, sd * (190 + (rng() - 0.5) * 30), y, z + (rng() - 0.5) * 14, 18 + rng() * 10, 16 + rng() * 8, 24 + rng() * 12, shade(rock, 0.7 + rng() * 0.4), rng, 0.4, -1);
   }
@@ -2008,7 +2059,7 @@ function buildKaijuDepths() {
   for (let k = 0; k < 7; k++) { cone(g, [14 + k * 3.2, Y + 9, SZ + 7], [15 + k * 3.2, Y + 4, SZ + 7.5], 0.8, 5, WHITE); cone(g, [14 + k * 3.2, Y + 9, SZ - 7], [15 + k * 3.2, Y + 4, SZ - 7.5], 0.8, 5, WHITE); }
   // glowing crystals, green and orange
   for (let i = 0; i < 36; i++) {
-    let x, z; do { x = (rng() * 2 - 1) * 170; z = -190 + rng() * 210; } while (Math.abs(x) < 30 && z > -70);
+    const x = (rng() * 2 - 1) * 170, z = -190 + rng() * 132;
     const green = rng() < 0.6, n = 4 + Math.floor(rng() * 4), big = 4 + rng() * 12;
     for (let k = 0; k < n; k++) {
       const bx = x + (rng() - 0.5) * big * 0.6, bz = z + (rng() - 0.5) * big * 0.6, h = big * (0.4 + rng() * 0.8), by = fh(bx, bz) - 1;
@@ -2023,7 +2074,7 @@ function buildKaijuDepths() {
   }
   // giant three-toed footprints across the floor: something huge walked here
   for (let k = 0; k < 9; k++) {
-    const x = -150 + k * 36, z = -40 + (k % 2 ? 9 : -9), y = fh(x, z) + 0.15, c = H('#0c140e'), ang = 0;
+    const x = -150 + k * 36, z = -64 + (k % 2 ? 4 : -4), y = fh(x, z) + 0.15, c = H('#0c140e');
     const disc = (cx, cz, rx, rz) => { for (let i = 0; i < 14; i++) { const a0 = i / 14 * TAU, a1 = (i + 1) / 14 * TAU; flat(g, [cx, y, cz], [cx + Math.cos(a0) * rx, y, cz + Math.sin(a0) * rz], [cx + Math.cos(a1) * rx, y, cz + Math.sin(a1) * rz], c, -1); } };
     disc(x, z, 6, 4.5);
     for (let t = -1; t <= 1; t++) disc(x + 8.5, z + t * 4.5, 3.4, 1.6);
@@ -2136,7 +2187,7 @@ function spotHere() {
 function doSpot(s) {
   if (s === 'aquarium') enterAquarium();
   else if (s === 'shop') openShop();
-  else if (s === 'cast') { if (save.kaiju) openOv('ovWhere'); else startCast(false); }
+  else if (s === 'cast') startCast();
 }
 function moveInput() {
   let mx = 0, my = 0;
@@ -2200,11 +2251,11 @@ function beachTap(sx, sy) {
 }
 
 /* ---------- casting ---------- */
-function startCast(kaiju) {
+function startCast() {
   player.path = []; player.pending = null;
   player.x = clamp(player.x, -3, 3); player.z = Math.min(player.z, PIER.z1 - 2);
   player.yaw = Math.PI / 2;
-  castAnim = { t: 0, from: null, land: [player.x + rand(-1.5, 1.5), 0, player.z - 15], splashed: false, bob: null, kaiju: !!kaiju };
+  castAnim = { t: 0, from: null, land: [player.x + rand(-1.5, 1.5), 0, player.z - 15], splashed: false, bob: null };
   sfx.cast();
 }
 function armAngle(t) { return t < 0.35 ? lerp(0.6, 2.3, smooth(t / 0.35)) : t < 0.5 ? lerp(2.3, 0.15, (t - 0.35) / 0.15) : 0.15; }
@@ -2222,7 +2273,7 @@ function updateCast(dt) {
       c.bob = [c.land[0], -Math.min(0.6, (c.t - 1.35) * 0.5), c.land[2]];
     }
   }
-  if (c.t > 1.9 && !fadeDir) fadeTo(() => { castAnim = null; beginOcean(c.kaiju); });
+  if (c.t > 1.9 && !fadeDir) fadeTo(() => { castAnim = null; beginOcean(); });
 }
 function rodTip() { return xform(armMatrix(player), ROD_TIP); }
 const _m = new Float32Array(16), _m2 = new Float32Array(16);
@@ -2241,17 +2292,19 @@ const dropMesh = (() => { const g = new Geo(256); ell(g, 0, 0, 0, 1, 1, 1, [0.85
 /* =====================================================================
    Sinking, the bite, reeling in, and coming back up
    ===================================================================== */
-function beginOcean(kaiju) {
+function beginOcean() {
   scene = 'ocean';
   buildHookMesh();
-  if (kaiju) buildKaijuDepths();
   // once the palace is open, the Doom Anchor (and the Crown Anchor) sink through the hole in the lava, down to the palace's great hall
-  // the Kaiju Depths has its own way down: the hook starts at the top of it and sinks to the bottom of the trench
-  const top = kaiju ? KAIJU_Z * ZONE_H : 0, open = !kaiju && palaceOpen() && save.hook >= 6;
-  const maxVis = kaiju ? KAIJU_Z * ZONE_H + ZONE_H * 0.5 : open ? PALACE_Z * ZONE_H + ZONE_H * 0.66 : depthToVis(HOOKS[Math.min(save.hook, 6)].depth) - 0.04 * ZONE_H;
+  const top = 0, open = palaceOpen() && save.hook >= DOOM_HOOK;
+  let maxVis = open ? PALACE_Z * ZONE_H + ZONE_H * 0.66 : depthToVis(HOOKS[Math.min(save.hook, DOOM_HOOK)].depth) - 0.04 * ZONE_H;
+  // with the Kaiju Depths bought, the Glowstone Sinker can go down into it too
+  if (save.kaiju && save.hook >= DOOM_HOOK - 1) maxVis = Math.max(maxVis, KAIJU_Z * ZONE_H + ZONE_H * 0.5);
+  if (maxVis > KAIJU_Z * ZONE_H - 40) buildKaijuDepths();
   // very rarely, the Celestial Leviathan swims past the palace, or the Colossaurus past you in the Kaiju Depths
-  const flyby = (open && Math.random() < 0.12) || (kaiju && Math.random() < 0.08) ? { t: rand(3, 8), done: false } : null;
-  ocean = { phase: 'sink', vis: top, top, kaiju: !!kaiju, flyby, maxVis, t: 0, zone: -1, amb: [], ambT: 0.3, sp: -1, size: 1, biter: null, p: 0, tension: 0, thrash: false, thrashT: 0, slip: 0, riseT: 0, v0: 0, wait: 0, tick: 0, camY: 0, S: 1 };
+  const flyby = open && Math.random() < 0.12 ? { t: rand(3, 8), done: false } : null;
+  const kflyby = save.kaiju && Math.random() < 0.08 ? { t: rand(3, 8), done: false } : null;
+  ocean = { phase: 'sink', vis: top, top, flyby, kflyby, maxVis, t: 0, zone: -1, amb: [], ambT: 0.3, sp: -1, size: 1, biter: null, p: 0, tension: 0, thrash: false, thrashT: 0, slip: 0, riseT: 0, v0: 0, wait: 0, tick: 0, camY: 0, S: 1 };
   buildGauge();
   camPos[0] = 2.5; camPos[1] = 1 - top; camPos[2] = 8;
   fadeFrom();
@@ -2260,6 +2313,8 @@ function beginOcean(kaiju) {
 function stopHere() {
   const o = ocean;
   if (!o || o.phase !== 'sink') return;
+  // you can't fish in the Kaiju Depths until you buy it: the hook keeps sinking
+  if (ZONES[zoneAtVis(o.vis)].kaiju && !save.kaiju) { sfx.no(); toast('Buy the Kaiju Depths in the Tackle Shop to fish here!', 3); return; }
   o.phase = 'wait'; o.wait = rand(0.9, 2.0);
   o.sp = pickSpecies(zoneAtVis(o.vis)); o.size = rollSize();
   o.S = SPECIES[o.sp].vis * Math.sqrt(o.size);
@@ -2269,7 +2324,7 @@ function oceanHookY() { return -ocean.vis; }
 function updateOcean(dt) {
   const o = ocean; o.t += dt;
   if (o.phase === 'sink') {
-    o.vis += (o.kaiju ? 6 : Math.min(24, 5 + o.vis * 1.2) * (HOOKS[save.hook].fast || 1)) * dt;
+    o.vis += Math.min(o.vis > 360 ? 32 : 24, 5 + o.vis * 1.2) * (HOOKS[save.hook].fast || 1) * dt;   // a bit faster in the deep part, which got longer
     if (o.vis >= o.maxVis) { o.vis = o.maxVis; stopHere(); }
   } else if (o.phase === 'wait') {
     o.wait -= dt;
@@ -2290,7 +2345,7 @@ function updateOcean(dt) {
   } else if (o.phase === 'rise') {
     o.riseT += dt;
     // the Celestial Leviathan is so heavy it comes up slowly
-    const u = clamp(o.riseT / (SPECIES[o.sp].kaiju ? 6 : SPECIES[o.sp].secret ? 5 : 2.4), 0, 1);
+    const u = clamp(o.riseT / (SPECIES[o.sp].kaiju ? 6 : SPECIES[o.sp].secret || ZONES[SPECIES[o.sp].z].kaiju ? 5 : 2.4), 0, 1);
     o.vis = lerp(o.v0, o.top, smooth(u));
     if (u >= 1 && !fadeDir) { sfx.splash(); fadeTo(finishCatch); }
   }
@@ -2320,24 +2375,24 @@ function updateOcean(dt) {
     }
   }
   // the Colossaurus, full size, swimming past along the bottom of the trench
-  if (o.flyby && !o.flyby.done && o.kaiju) {
-    o.flyby.t -= dt;
-    if (o.flyby.t <= 0) {
-      o.flyby.done = true;
+  if (o.kflyby && !o.kflyby.done && z === KAIJU_Z && o.phase !== 'sink') {
+    o.kflyby.t -= dt;
+    if (o.kflyby.t <= 0) {
+      o.kflyby.done = true;
       const sp = SPECIES.find(s => s.kaiju), side = Math.random() < 0.5 ? -1 : 1;
-      o.amb.push({ sp: sp.id, x: side * 210, y: KAIJU_FLOOR + 22, fixedY: true, z: -75, vx: -side * 12, ph: 0, s: sp.vis, lim: 220, glow: 0.15 });
+      o.amb.push({ sp: sp.id, x: side * 210, y: KAIJU_FLOOR + 22, fixedY: true, z: -75, vx: -side * 12, ph: 0, s: sp.vis, lim: 220, glow: 0.15, big: true });
       sfx.roar(); shakeT = 1.2; rumble(0.8, 0.8, 900);
     }
   }
   for (let i = o.amb.length - 1; i >= 0; i--) { const a = o.amb[i]; a.x += a.vx * dt; a.ph += dt; if (Math.abs(a.x) > (a.lim || a.lim0 || 26) || (!a.fixedY && Math.abs(a.y + o.vis) > 30)) o.amb.splice(i, 1); }
 }
-function thrashGap() { const r = SPECIES[ocean.sp].r; if (SPECIES[ocean.sp].kaiju) return rand(0.75, 1.3); if (SPECIES[ocean.sp].secret) return rand(0.9, 1.6); return r === 'm' ? rand(1.1, 2.1) : r === 'r' ? rand(1.5, 2.8) : rand(2.0, 3.6); }
+function thrashGap() { const r = SPECIES[ocean.sp].r; if (SPECIES[ocean.sp].kaiju) return rand(0.75, 1.3); if (SPECIES[ocean.sp].secret || ZONES[SPECIES[ocean.sp].z].kaiju) return rand(0.9, 1.6); return r === 'm' ? rand(1.1, 2.1) : r === 'r' ? rand(1.5, 2.8) : rand(2.0, 3.6); }
 function reelHeld() { return !!(keys.Space || keys.Enter || keys.KeyE || pad.a || pad.rt || pointerHeld); }
 function updateFight(dt) {
   const o = ocean, sp = SPECIES[o.sp];
   const rf = sp.r === 'm' ? 0.6 : sp.r === 'r' ? 0.8 : 1;
   // the Celestial Leviathan is much, much harder to reel in, and the Colossaurus is harder still
-  const base = 0.30 / (1 + Math.min(sp.z, 6) * 0.12) * rf * REELS[save.reel].speed * (sp.kaiju ? (EASY_KAIJU ? 4 : 0.2) : sp.secret ? 0.3 : 1);
+  const base = 0.30 / (1 + Math.min(sp.z, 6) * 0.12) * rf * REELS[save.reel].speed * (sp.kaiju ? (EASY_KAIJU ? 4 : 0.2) : sp.secret ? 0.3 : ZONES[sp.z].kaiju ? 0.32 : 1);
   o.thrashT -= dt;
   if (o.thrash) { if (o.thrashT <= 0) { o.thrash = false; o.thrashT = thrashGap(); } }
   else if (o.thrashT <= 0) { o.thrash = true; o.thrashT = rand(0.8, 1.3); sfx.thrash(); rumble(0.3, 0.6, 200); }
@@ -2347,7 +2402,7 @@ function updateFight(dt) {
     o.tension += (o.thrash ? 0.95 : -0.35) * dt;
     o.tick -= dt; if (o.tick <= 0) { o.tick = 0.08; sfx.reel(); }
   } else {
-    o.p -= (o.thrash ? (sp.kaiju ? 0.012 : sp.secret ? 0.01 : 0.05) : 0.015) * dt;   // the Celestial Leviathan pulls back less, so even the Old Reel can land it (slowly)
+    o.p -= (o.thrash ? (sp.kaiju ? 0.012 : sp.secret || ZONES[sp.z].kaiju ? 0.01 : 0.05) : 0.015) * dt;   // the Celestial Leviathan pulls back less, so even the Old Reel can land it (slowly)
     o.tension -= 0.7 * dt;
   }
   o.tension = clamp(o.tension, 0, 1);
@@ -2559,7 +2614,7 @@ const ENV = {
 function oceanEnv(vis) {
   const i = zoneAtVis(vis), z = ZONES[i], f = vis / ZONE_H - i;
   // (the Rift only blends into the palace colors once the palace is open)
-  const n = (i + 1 === PALACE_Z && !palaceOpen()) || i + 1 === KAIJU_Z ? z : ZONES[Math.min(i + 1, ZONES.length - 1)];
+  const n = i + 1 === PALACE_Z && !palaceOpen() ? z : ZONES[Math.min(i + 1, ZONES.length - 1)];
   const k = smooth(clamp((f - 0.75) / 0.25, 0, 1));
   const fog = mixc(mixc(z.fogA, z.fogB, f), n.fogA, k);
   const light = lerp(z.light, n.light, k), lamp = lerp(z.lamp, n.lamp, k);
@@ -2791,21 +2846,20 @@ function renderOcean(dt) {
   // life-size monsters are far from the camera, so push the fog back to keep them in sight
   if (o.phase !== 'sink') env.fogD = Math.max(env.fogD, back * 1.4);
   // while the Celestial Leviathan swims by, the camera backs up and looks up so you can see all of it
-  const fb = o.amb.find(a => a.lim && Math.abs(a.x) < (o.kaiju ? 150 : 110));
+  const fb = o.amb.find(a => a.lim && Math.abs(a.x) < (a.big ? 150 : 110)), big = !!(fb && fb.big);
   if (fb && !fighting) { o.fbCam = Math.min(1, (o.fbCam || 0) + 1 / 60); } else o.fbCam = Math.max(0, (o.fbCam || 0) - 1 / 60);
-  if (o.fbCam) { look[1] += (o.kaiju ? -4 : 16) * smooth(o.fbCam); back += (o.kaiju ? 95 : 55) * smooth(o.fbCam); env.fogD = Math.max(env.fogD, o.kaiju ? 200 : 140); }
+  if (fb) o.fbBig = big;
+  if (o.fbCam) { look[1] += (o.fbBig ? -4 : 16) * smooth(o.fbCam); back += (o.fbBig ? 95 : 55) * smooth(o.fbCam); env.fogD = Math.max(env.fogD, o.fbBig ? 200 : 140); }
   const bigGlow = S > 4 ? clamp((S - 4) / 10, 0, 1) * 0.35 : 0;
   smoothCam([look[0] + 2.2, look[1] + 1 + (o.phase === 'sink' ? 1.5 : 0), back], look, dt, o.phase === 'rise' || o.phase === 'sink' ? 30 : 5);
   drawSky();
   useMain();
-  if (o.kaiju) draw(kaijuMesh);
-  else {
-    draw(oceanMesh);
-    draw(kelpMesh, null, { wig: [0.5, 0.25, T * 0.8, 1] });
-    // before the palace opens, the hole in the lava floor is plugged, and there's nothing under it
-    if (palaceOpen()) { if (camPos[1] < -360) draw(palaceMesh); }
-    else if (camPos[1] < -330) draw(plugMesh);
-  }
+  draw(oceanMesh);
+  draw(kelpMesh, null, { wig: [0.5, 0.25, T * 0.8, 1] });
+  if (kaijuMesh && camPos[1] < -KAIJU_Z * ZONE_H + 70 && camPos[1] > -(KAIJU_Z + 1) * ZONE_H - 70) draw(kaijuMesh);
+  // before the palace opens, the hole in the lava floor is plugged, and there's nothing under it
+  if (palaceOpen()) { if (camPos[1] < -OCEAN_BOTTOM + 60) draw(palaceMesh); }
+  else if (camPos[1] < -OCEAN_BOTTOM + 90) draw(plugMesh);
   const base = Math.floor(-camPos[1] / 30) * 30;
   for (let k = -1; k <= 1; k++) draw(dotsMesh, mTRS(_fm, 0, -(base + k * 30), 0, 0, 0, 0, 1), { tint: ZONES[zoneAtVis(o.vis)].dotC });
   // fish swimming by
@@ -3214,9 +3268,6 @@ $('pTitle').onclick = () => {
   $('hud').classList.add('hide'); syncToggles(); openOv('ovTitle');
 };
 $('awayOk').onclick = () => closeOv();
-$('wOcean').onclick = () => { closeOv(); startCast(false); };
-$('wKaiju').onclick = () => { closeOv(); startCast(true); };
-$('wBack').onclick = () => closeOv();
 $('menuBtn').onclick = () => { initAudio(); openPause(); };
 $('dexBtn').onclick = () => { initAudio(); openDex(); };
 $('act').onclick = () => { initAudio(); pressAction(); };
@@ -3230,10 +3281,10 @@ addEventListener('pointerup', () => { if (!ptr.down) pointerHeld = false; });
 
 /* ---------- the Tackle Shop ---------- */
 const SHOP_ROWS = [
-  { key: 'hook', title: 'Sinkers: go deeper', list: HOOKS, desc: (it, i) => it.fast ? `Sinks ${it.fast}× as fast, all the way down to the Underwater Palace` : i === 6 && palaceOpen() ? 'Reaches 20,000 m: The Fishpocalypse Rift, and the Underwater Palace under it' : `Reaches ${fmt(it.depth)} m: ${ZONES[i].name}`, sw: it => it.col },
+  { key: 'hook', title: 'Sinkers: go deeper', list: HOOKS, desc: (it, i) => it.fast ? `Sinks ${it.fast}× as fast, all the way down to the Underwater Palace` : i === DOOM_HOOK && palaceOpen() ? 'Reaches 20,000 m: The Fishpocalypse Rift, and the Underwater Palace under it' : i === DOOM_HOOK ? 'Reaches 20,000 m: sinks through the Kaiju Depths, down to The Fishpocalypse Rift' : `Reaches ${fmt(it.depth)} m: ${ZONES[it.zone].name}`, sw: it => it.col },
   { key: 'reel', title: 'Reels: reel in faster', list: REELS, desc: it => it.speed === 1 ? 'The reel you started with' : `Reels in ${it.speed}× as fast`, sw: () => '#c8d0d8' },
   { key: 'bait', title: 'Bait: rare and mythical fish bite more', list: BAITS, desc: it => it.rare === 1 ? 'A wiggly worm' : `Rare fish ×${it.rare}, mythical fish ×${it.myth}`, sw: it => it.col },
-  { key: 'kaiju', title: 'New places to fish', list: PLACES, desc: () => 'A deep, dark trench full of giant monsters. Nothing there is common! Cast from the pier and pick it.', sw: it => it.col },
+  { key: 'kaiju', title: 'New places to fish', list: PLACES, desc: () => 'A huge cavern of giant monsters, between the Glow Caves and the Rift. Nothing there is common! Buy it so you can fish there.', sw: it => it.col },
 ];
 function renderShop(keepFocus) {
   const fk = keepFocus && focused() && focused().dataset.k ? [focused().dataset.k, focused().dataset.i] : null;
@@ -3265,7 +3316,7 @@ function buy(key, i) {
   if (i > owned + 1) { sfx.no(); toast(`Buy the ${row.list[owned + 1].name} first`); return; }
   if (save.coins < it.cost) { sfx.no(); toast(`You need ${fmt(it.cost - save.coins)} more coins`); return; }
   save.coins -= it.cost; save[key] = i; saveGame(); sfx.buy();
-  toast(key === 'kaiju' ? 'You got the Kaiju Depths! Cast from the end of the pier and pick it.' : key === 'hook' && !it.fast ? `You got the ${it.name}! Now you can reach ${ZONES[i].name}.` : `You got the ${it.name}!`, key === 'kaiju' ? 5 : 3);
+  toast(key === 'kaiju' ? 'You got the Kaiju Depths! Press Stop here when your hook sinks into it.' : key === 'hook' && !it.fast ? `You got the ${it.name}! Now you can reach ${ZONES[it.zone].name}.` : `You got the ${it.name}!`, key === 'kaiju' ? 5 : 3);
   if (key === 'kaiju') sfx.roar();
   renderShop(true);
 }
@@ -3277,8 +3328,8 @@ function renderDex() {
   let h = `<h2>Fishdex</h2><p>You've found <b style="color:var(--sun)">${found} of ${total}</b> creatures and caught <b>${fmt(save.total)}</b> fish in all.</p>`;
   ZONES.forEach((z, zi) => {
     if (z.secret && !palaceOpen()) return;
-    const reach = z.kaiju ? save.kaiju > 0 : z.secret || zi <= save.hook;
-    h += `<div class="zrow"><h3>${esc(z.name)} <small>${z.secret ? 'secret zone · under the Fishpocalypse Rift' : `${fmt(z.top)}–${fmt(z.bottom)} m`}${reach ? '' : z.kaiju ? ' · buy it in the Tackle Shop' : ` · needs the ${esc(HOOKS[zi].name)}`}</small></h3><div class="tiles">`;
+    const reach = z.kaiju ? save.kaiju > 0 : z.secret || zi <= HOOKS[save.hook].zone;
+    h += `<div class="zrow"><h3>${esc(z.name)} <small>${z.secret ? 'secret zone · under the Fishpocalypse Rift' : `${fmt(z.top)}–${fmt(z.bottom)} m`}${reach ? '' : z.kaiju ? ' · buy it in the Tackle Shop' : ` · needs the ${esc((HOOKS.find(h => h.zone >= zi) || HOOKS[0]).name)}`}</small></h3><div class="tiles">`;
     for (const sp of zoneSpecies(zi)) {
       const n = save.dex[sp.id] || 0;
       h += `<div class="tile ${sp.r === 'c' ? '' : sp.r}${sp.secret ? ' s' : ''}"><img alt="" src="${thumb(sp.id, !n)}"><div>${n ? esc(sp.name) : '???'}</div><div class="k">${sp.rname}${n ? ` · ×${fmt(n)}` : ''}</div></div>`;
@@ -3307,17 +3358,16 @@ function showCard() {
 
 /* ---------- the ocean HUD ---------- */
 const gaugeZones = () => palaceOpen() ? PALACE_Z + 1 : NORMAL_ZONES;
-// in the Kaiju Depths the gauge shows just that one zone
-function gaugeY(v) { return ocean && ocean.kaiju ? (v - ocean.top) / ZONE_H * 100 : v / (gaugeZones() * ZONE_H) * 100; }
+function gaugeY(v) { return v / (gaugeZones() * ZONE_H) * 100; }
 function buildGauge() {
   let h = '';
-  const kj = ocean.kaiju, n = kj ? 1 : gaugeZones();
-  (kj ? [ZONES[KAIJU_Z]] : ZONES.slice(0, n)).forEach((z, i) => {
-    const k = i, lock = !kj && i > Math.max(save.hook, palaceOpen() && save.hook >= 6 ? PALACE_Z : 0) ? ' locked' : '';
+  const n = gaugeZones(), reachZ = Math.max(HOOKS[save.hook].zone, palaceOpen() && save.hook >= DOOM_HOOK ? PALACE_Z : 0, save.kaiju && save.hook >= DOOM_HOOK - 1 ? KAIJU_Z : 0);
+  ZONES.slice(0, n).forEach((z, i) => {
+    const k = i, lock = i > reachZ || (z.kaiju && !save.kaiju) ? ' locked' : '';
     h += `<div class="seg${lock}" style="top:${k / n * 100}%;height:${100 / n}%;background:${z.fog[1]}"></div>`;
     h += `<div class="nm${lock}" style="top:${(k + 0.5) / n * 100}%">${esc(z.short)}</div>`;
   });
-  h += (kj ? '' : `<div class="limit" style="top:${gaugeY(ocean.maxVis)}%"><span>Hook limit</span></div>`) + '<div class="mark" id="gMark"></div>';
+  h += `<div class="limit" style="top:${gaugeY(ocean.maxVis)}%"><span>Hook limit</span></div><div class="mark" id="gMark"></div>`;
   $('gauge').innerHTML = h;
 }
 let bannerT = 0;
@@ -3349,7 +3399,7 @@ function updateUI(dt) {
     const m = $('gMark'); if (m) m.style.top = gaugeY(o.vis) + '%';
     const fighting = o.phase === 'fight';
     show('fight', fighting);
-    txt('otext', o.phase === 'sink' ? (o.kaiju ? 'Sinking into the Kaiju Depths…' : o.vis < o.maxVis - 1 ? `Sinking… your ${HOOKS[save.hook].name} stops at ${fmt(Math.round(visToDepth(o.maxVis) / 100) * 100)} m` : '') : o.phase === 'wait' ? 'Waiting for a bite…' : o.phase === 'approach' ? 'Something is coming!' : o.phase === 'rise' ? `Reeling up a ${SPECIES[o.sp].name}!` : '');
+    txt('otext', o.phase === 'sink' ? (ZONES[zoneAtVis(o.vis)].kaiju && !save.kaiju ? 'The Kaiju Depths! Buy it in the shop to fish here.' : o.vis < o.maxVis - 1 ? `Sinking… your ${HOOKS[save.hook].name} stops at ${fmt(Math.round(visToDepth(o.maxVis) / 100) * 100)} m` : '') : o.phase === 'wait' ? 'Waiting for a bite…' : o.phase === 'approach' ? 'Something is coming!' : o.phase === 'rise' ? `Reeling up a ${SPECIES[o.sp].name}!` : '');
     if (fighting) {
       $('pBar').style.width = (o.p * 100).toFixed(1) + '%';
       $('tBar').style.width = (o.tension * 100).toFixed(1) + '%';
