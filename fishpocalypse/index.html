@@ -366,9 +366,11 @@ const BAITS = [
   { name: 'Starlight Bait', rare: 3, myth: 10, cost: 1000000000, col: '#9fd8ff', palace: true },
 ];
 // new places to fish (save.kaiju: 0 = not yet, 1 = bought the Kaiju Depths)
+// TEMPORARY (set to false to go back to normal): the Kaiju Depths costs 100 coins, the Colossaurus bites every time and reels in fast
+const EASY_KAIJU = true;
 const PLACES = [
   { name: 'The Pier', cost: 0, skip: true },
-  { name: 'The Kaiju Depths', cost: 175000000000, col: '#5aff7a' },
+  { name: 'The Kaiju Depths', cost: EASY_KAIJU ? 100 : 175000000000, col: '#5aff7a' },
 ];
 
 /* =====================================================================
@@ -458,7 +460,7 @@ const SPECIES = [
   { name: 'Magmaw', z: 8, r: 'm', kind: 'fish', len: 26, o: { c1: '#2a1a14', c2: '#4a2a1a', h: 0.38, w: 0.24, fin: '#ff5a1a', teeth: true, lava: '#ff8a2a', horns: '#3a2a20', eyeC: '#ffb03a', dorsal: 1.5, glow: '#ff7a2a' }, fact: 'Its mouth is big enough to swallow a whale, and its belly glows like a furnace.' },
   { name: 'Abyss Wyrm', z: 8, r: 'm', kind: 'eel', len: 45, o: { c1: '#0e2a1e', c2: '#7aff5a', thick: 0.07, jaws: true, bigHorns: '#c8d8a0', spikes: '#7aff5a', stripes: '#2a6a3a', eyeC: '#9aff6a', glow: '#7aff5a' }, fact: 'A giant sea dragon with glowing green spikes. It sleeps curled around underwater mountains.' },
   { name: 'Mecha Megashark', z: 8, r: 'm', king: true, kind: 'shark', len: 48, o: { c1: '#5a6470', c2: '#c8d0d8', jaws: true, lava: '#4ae8ff', eyeC: '#ff2a2a', glow: '#7ff0ff' }, fact: 'A giant robot shark. Nobody knows who built it. Its glowing blue lines are its power cables.' },
-  { name: 'Colossaurus', z: 8, r: 'm', secret: true, kaiju: true, pct: 0.01, fixed: 1000000000, kind: 'kaiju', len: 150, o: { glow: '#ffb040' }, fact: 'The king of all kaiju: a 150-meter sea monster with glowing crystal spikes down its back. When it roars, the whole ocean shakes.' },
+  { name: 'Colossaurus', z: 8, r: 'm', secret: true, kaiju: true, pct: EASY_KAIJU ? 1 : 0.01, fixed: 1000000000, kind: 'kaiju', len: 150, o: { glow: '#ffb040' }, fact: 'The king of all kaiju: a 150-meter sea monster with glowing crystal spikes down its back. When it roars, the whole ocean shakes.' },
 ];
 const RARITY = { c: 'Common', r: 'Rare', m: 'Mythical' };
 // Every zone has 6 commons, 1 rare and 1 mythical (the Rift also has the legendary King Leviathan).
@@ -2325,7 +2327,7 @@ function updateFight(dt) {
   const o = ocean, sp = SPECIES[o.sp];
   const rf = sp.r === 'm' ? 0.6 : sp.r === 'r' ? 0.8 : 1;
   // the Celestial Leviathan is much, much harder to reel in, and the Colossaurus is harder still
-  const base = 0.30 / (1 + Math.min(sp.z, 6) * 0.12) * rf * REELS[save.reel].speed * (sp.kaiju ? 0.2 : sp.secret ? 0.3 : 1);
+  const base = 0.30 / (1 + Math.min(sp.z, 6) * 0.12) * rf * REELS[save.reel].speed * (sp.kaiju ? (EASY_KAIJU ? 4 : 0.2) : sp.secret ? 0.3 : 1);
   o.thrashT -= dt;
   if (o.thrash) { if (o.thrashT <= 0) { o.thrash = false; o.thrashT = thrashGap(); } }
   else if (o.thrashT <= 0) { o.thrash = true; o.thrashT = rand(0.8, 1.3); sfx.thrash(); rumble(0.3, 0.6, 200); }
