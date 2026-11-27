@@ -212,7 +212,7 @@ body.kbnav .btn:focus,body.kbnav .item:focus,body.kbnav .hbtn:focus,body.kbnav #
     <a class="btn ghost" href="../">All games</a>
     <button class="btn ghost small" id="tReset">Start over</button>
   </div>
-  <p style="text-align:center;font-size:13px;opacity:.6;margin-top:12px">Version: Nov 27 · Kaiju gear · new turtles · palace ceiling</p>
+  <p style="text-align:center;font-size:13px;opacity:.6;margin-top:12px">Version: Nov 27 · Colossaurus makes a trillion a second</p>
 </div></div>
 
 <!-- Pause -->
@@ -295,7 +295,7 @@ function mulberry32(a) {
 function fmt(n) {
   n = Math.floor(n);
   if (n < 1e6) return n.toLocaleString('en-US');
-  const u = n < 1e9 ? [1e6, 'million'] : n < 1e12 ? [1e9, 'billion'] : [1e12, 'trillion'];
+  const u = n < 1e9 ? [1e6, 'million'] : n < 1e12 ? [1e9, 'billion'] : n < 1e15 ? [1e12, 'trillion'] : n < 1e18 ? [1e15, 'quadrillion'] : [1e18, 'quintillion'];
   const v = n / u[0];
   let s = v < 10 ? v.toFixed(2) : v < 100 ? v.toFixed(1) : v.toFixed(0);
   if (s.indexOf('.') >= 0) s = s.replace(/0+$/, '').replace(/\.$/, '');
@@ -322,7 +322,7 @@ const ZONES = [
   // the secret zone under the Rift: the lava floor only opens after you catch the Doomfin and the King Leviathan
   { name: 'The Underwater Palace', short: 'Palace', top: 20000, bottom: 30000, val: 75000, fog: ['#3a4ab8', '#4a3aa0'], light: 0.95, lamp: 0.7, fogD: 75, dots: '#ffe8a0', secret: true },
   // under the palace's floor. It shows up in the Tackle Shop once the palace is open; buy it and a hole opens in the palace floor.
-  { name: 'The Kaiju Depths', short: 'Kaiju', top: 30000, bottom: 50000, val: 375000, fog: ['#163a26', '#0c2016'], light: 0.4, lamp: 1.0, fogD: 85, dots: '#9aff6a', kaiju: true },
+  { name: 'The Kaiju Depths', short: 'Kaiju', top: 30000, bottom: 50000, val: 375000000, fog: ['#163a26', '#0c2016'], light: 0.4, lamp: 1.0, fogD: 85, dots: '#9aff6a', kaiju: true },
 ];
 ZONES.forEach(z => { z.fogA = H(z.fog[0]); z.fogB = H(z.fog[1]); z.dotC = H(z.dots); });
 const RIFT_Z = 8, PALACE_Z = 9, KAIJU_Z = 10, NORMAL_ZONES = 9;
@@ -478,7 +478,7 @@ const SPECIES = [
   { name: 'Magmaw', z: 10, r: 'm', kind: 'fish', len: 26, o: { c1: '#2a1a14', c2: '#4a2a1a', h: 0.38, w: 0.24, fin: '#ff5a1a', teeth: true, lava: '#ff8a2a', horns: '#3a2a20', eyeC: '#ffb03a', dorsal: 1.5, glow: '#ff7a2a' }, fact: 'Its mouth is big enough to swallow a whale, and its belly glows like a furnace.' },
   { name: 'Abyss Wyrm', z: 10, r: 'm', kind: 'eel', len: 45, o: { c1: '#0e2a1e', c2: '#7aff5a', thick: 0.07, jaws: true, bigHorns: '#c8d8a0', spikes: '#7aff5a', stripes: '#2a6a3a', eyeC: '#9aff6a', glow: '#7aff5a' }, fact: 'A giant sea dragon with glowing green spikes. It sleeps curled around underwater mountains.' },
   { name: 'Mecha Megashark', z: 10, r: 'm', king: true, kind: 'shark', len: 48, o: { c1: '#5a6470', c2: '#c8d0d8', jaws: true, lava: '#4ae8ff', eyeC: '#ff2a2a', glow: '#7ff0ff' }, fact: 'A giant robot shark. Nobody knows who built it. Its glowing blue lines are its power cables.' },
-  { name: 'Colossaurus', z: 10, r: 'm', secret: true, kaiju: true, pct: EASY_KAIJU ? 1 : 0.01, fixed: 1000000000, kind: 'kaiju', len: 150, o: { glow: '#ffb040' }, fact: 'The king of all kaiju: a 150-meter sea monster with glowing crystal spikes down its back. When it roars, the whole ocean shakes.' },
+  { name: 'Colossaurus', z: 10, r: 'm', secret: true, kaiju: true, pct: EASY_KAIJU ? 1 : 0.01, fixed: 1000000000000, kind: 'kaiju', len: 150, o: { glow: '#ffb040' }, fact: 'The king of all kaiju: a 150-meter sea monster with glowing crystal spikes down its back. When it roars, the whole ocean shakes.' },
   // Shipwreck Graveyard
   { name: 'Barnacle Bass', z: 6, r: 'c', kind: 'fish', len: 0.8, o: { c1: '#7a8a6a', c2: '#c8c8a0', h: 0.45, w: 0.16, fin: '#5a6a4a', spots: '#e8e0c8' }, fact: 'Barnacles grow on its scales, the same way they grow on old ships.' },
   { name: 'Anchor Eel', z: 6, r: 'c', kind: 'eel', len: 2, o: { c1: '#4a4a52', c2: '#9a9aa8', thick: 0.05 }, fact: 'It wraps its tail around sunken anchors so the current cannot sweep it away.' },
@@ -512,7 +512,7 @@ const RARITY = { c: 'Common', r: 'Rare', m: 'Mythical' };
     else { s.mult = 25; s.weight = 3; }
     if (s.king) { s.mult = 50; s.weight = 1; }
     if (s.secret) { s.mult = 100; s.weight = 1; }
-    s.val = s.fixed || z.val * s.mult;     // the Colossaurus always makes exactly 1 billion a second
+    s.val = s.fixed || z.val * s.mult;     // the Colossaurus always makes exactly 1 trillion a second
     // how big it looks in the game: life size for big creatures (1 unit = 1 meter), small fish a bit bigger so you can see them
     s.vis = Math.max(0.7 + s.len * 0.75, s.len);
     s.rname = s.secret ? 'Secret' : s.king ? 'Legendary' : RARITY[s.r];
@@ -560,7 +560,7 @@ function loadSave(slot = curSlot) {
   s.name = cleanName(d.name, slot);
   const num = (v, lo, hi, def) => (typeof v === 'number' && isFinite(v)) ? clamp(v, lo, hi) : def;
   const int = (v, lo, hi) => Math.floor(num(v, lo, hi, lo));
-  s.coins = num(d.coins, 0, 1e15, 0);
+  s.coins = num(d.coins, 0, 1e21, 0);     // (the Colossaurus makes a trillion a second, so this can get very big)
   s.hook = int(d.hook, 0, HOOKS.length - 1);
   // saves from before the Shipwreck Graveyard and the Glow Caves: the Doom Anchor and the Crown Anchor moved 2 places down the list
   if (d.zv !== 2 && s.hook >= 6) s.hook = Math.min(s.hook + 2, HOOKS.length - 1);
