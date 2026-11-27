@@ -40,9 +40,9 @@ Every regular zone has eight creatures: six common, one rare and one mythical. T
 | The Trench | 5,000–11,000 m | 3,000 | Snailfish, Sea Pig, Supergiant Amphipod, Rattail, Big Red Jellyfish, Crystal Dragon | Megalodon | Kraken |
 | Shipwreck Graveyard | 11,000–13,000 m | 6,000 | Barnacle Bass, Anchor Eel, Rusty Puffer, Doubloon Jelly, Cannonball Turtle, Sail Ray | Ghostlight Octopus | Wreck Serpent |
 | The Glow Caves | 13,000–15,000 m | 9,000 | Glowworm Eel, Lantern Puffer, Cave Ray, Neon Jelly, Crystal Bass, Cave Isopod | Shimmer Seahorse | Aurora Dragonfish, and **Glowtooth Titan** (legendary) |
-| The Kaiju Depths (bought) | 15,000–17,000 m | 375,000 | (none) | Boulderback Turtle, Titan Isopod | Thunder Squid, Razorwing Ray, Magmaw, Abyss Wyrm, **Mecha Megashark** (legendary), and **Colossaurus** (secret) |
-| The Fishpocalypse Rift | 17,000–20,000 m | 15,000 | Zombie Cod, Skeleton Fish, Lava Shark, Fire Jelly, Magma Turtle | Triclops Grouper | Doomfin, and **King Leviathan** (legendary) |
+| The Fishpocalypse Rift | 15,000–20,000 m | 15,000 | Zombie Cod, Skeleton Fish, Lava Shark, Fire Jelly, Magma Turtle | Triclops Grouper | Doomfin, and **King Leviathan** (legendary) |
 | The Underwater Palace (secret) | 20,000–30,000 m | 75,000 | Pearl Angelfish, Golden Jelly, Gem Turtle, Sapphire Ray, Marble Eel | Armored Seahorse | Thunderjaw (25 m lightning shark), and **Celestial Leviathan** (secret) |
+| The Kaiju Depths (bought) | 30,000–50,000 m | 375,000 | (none) | Boulderback Turtle, Titan Isopod | Thunder Squid, Razorwing Ray, Magmaw, Abyss Wyrm, **Mecha Megashark** (legendary), and **Colossaurus** (secret) |
 
 The newer creatures are at the end of `SPECIES`, so old saves (which store each fish by its number) still point at the right ones.
 
@@ -54,7 +54,7 @@ The models are built from shapes in code (`BUILDERS`: kaiju, fish, shark, eel, o
 
 ## The Underwater Palace (secret zone, spoilers!)
 
-It's the last zone (`PALACE_Z`, 600–660 units down the column, 20,000–30,000 m), right under the Fishpocalypse Rift's lava floor. Until you've caught both the **Doomfin** and the **King Leviathan** (`palaceOpen()`, worked out from the Fishdex), there's no sign of it anywhere. The lava floor is solid (`plugMesh` covers the hole), the Rift's water doesn't fade toward palace colors, the gauge stops at the Rift, the Fishdex has no palace row (and doesn't count its creatures), and the shop doesn't show the palace items. The picker blurb and the main README don't mention it either.
+It's the last zone (`PALACE_Z`, 540–600 units down the column, 20,000–30,000 m), right under the Fishpocalypse Rift's lava floor. Until you've caught both the **Doomfin** and the **King Leviathan** (`palaceOpen()`, worked out from the Fishdex), there's no sign of it anywhere. The lava floor is solid (`plugMesh` covers the hole), the Rift's water doesn't fade toward palace colors, the gauge stops at the Rift, the Fishdex has no palace row (and doesn't count its creatures), and the shop doesn't show the palace items. The picker blurb and the main README don't mention it either.
 
 When the catch that completes the pair comes in, the catch card says "🔓 You have unlocked the secret area! It is called the Underwater Palace. It is under the Fishpocalypse Rift: let your anchor sink all the way down." A toast repeats it. From then on the lava floor has a hole in the middle, and the Doom Anchor sinks through it into the palace and stops in front of the great hall (about 26,000 m). The gauge shows 8 zones.
 
@@ -73,7 +73,7 @@ The beach was made longer to the east (the dunes start at x 120 instead of 50) s
 
 ## The Kaiju Depths
 
-One zone of the regular ocean (`KAIJU_Z`, 15,000–17,000 m), between the Glow Caves and the Rift. The Doom Anchor always sinks right through it on the way to the Rift, so you see its monsters, but you can only fish there after you buy it in the Tackle Shop ("New places to fish", 175 billion coins, `save.kaiju`). Until then, pressing **Stop here** in it just shows "Buy the Kaiju Depths in the Tackle Shop to fish here!" and the gauge shows it dimmed. Once it's bought, press Stop here while your hook is in it (or, with only the Glowstone Sinker, the hook stops there by itself).
+A place at the very bottom that you buy in the Tackle Shop ("New places to fish", 175 billion coins, `save.kaiju`). After that, casting from the pier asks **The Ocean** or **The Kaiju Depths** (`ovWhere`). The Kaiju Depths is the last zone (`KAIJU_Z`, 30,000–50,000 m); the hook starts at its top, sinks slowly for about 5 seconds and stops in the cavern. You don't need any sinker for it. The gauge shows just this one zone.
 
 **Its monsters fight back** like the Celestial Leviathan: reel speed ×0.32, they thrash every 0.9–1.6 s, slip back less, and rise in 5 s. With the Royal Reel they took 8–12 s in a test (before: about 3 s).
 
@@ -85,7 +85,7 @@ It's a huge cavern with no walls close by (`buildKaijuDepths`). At the back is a
 - It bites exactly **1 time in 100** in the Kaiju Depths (`pct: 0.01`, checked before the bait, so bait doesn't change it).
 - It always makes exactly **1 billion coins a second** (`fixed`, whatever its size), plus 20 billion right away.
 - It's **harder to reel in than the Celestial Leviathan** (×0.2 reel speed, thrashes every 0.75–1.3 s, rises in 6 s). A script that holds when it's not thrashing needed about 22 s with the Royal Reel (Celestial Leviathan: 12 s) and about 3.7 minutes with the Old Reel (Celestial Leviathan: 74 s).
-- On about 1 dive in 12 (8%, only after you buy the Kaiju Depths), when you stop in the Kaiju Depths it swims past full size above the shelf with a roar, and the camera backs up to show it.
+- About 1 Kaiju Depths trip in 12 (8%), it swims past full size above the shelf with a roar, and the camera backs up to show it.
 - It gets **its own aquarium, the Kaiju Tank** (`buildKaijuTank`, `KT`): a 60 m glass tunnel in a gigantic tank (400 m long, 380 m wide, 130 m tall) with crystals, boulders, giant kelp and old bones. Up to 3 Colossauruses swim a huge figure eight (`kaijuPath`) that goes around the tunnel and right over it. Get there with the "Kaiju Tank" button in the Aquarium (X on a controller, K on a keyboard), or "See it in the Kaiju Tank" on the catch card. It's not in the main aquarium tank.
 
 The beach was made longer again (the dunes start at x 165) so the 150 m beach picture fits.
@@ -94,7 +94,7 @@ The beach was made longer again (the dunes start at x 165) so the 150 m beach pi
 
 Buy each item after the one before it.
 
-- **Sinkers** (deepest zone): Tin Hook (free, 20 m) · Iron 150 (80 m) · Steel 3,000 (300 m) · Gold 60,000 (1,500 m) · Diamond 1.5 million (5,000 m) · Titan 30 million (11,000 m) · Anchor of the Wrecks 80 million (13,000 m) · Glowstone Sinker 220 million (15,000 m) · Doom Anchor 600 million (20,000 m, through the Kaiju Depths to the Rift).
+- **Sinkers** (deepest zone): Tin Hook (free, 20 m) · Iron 150 (80 m) · Steel 3,000 (300 m) · Gold 60,000 (1,500 m) · Diamond 1.5 million (5,000 m) · Titan 30 million (11,000 m) · Anchor of the Wrecks 80 million (13,000 m) · Glowstone Sinker 220 million (15,000 m) · Doom Anchor 600 million (20,000 m).
 - **Reels** (reel speed): Old 1× · Fast 400 (1.4×) · Turbo 15,000 (1.9×) · Mega 2 million (2.6×) · Rocket 100 million (3.4×).
 - **Bait** (rare × / mythical ×): Worm · Shiny Lure 1,000 (1.5 / 2) · Glow Lure 150,000 (2 / 3.5) · Mythic Bait 20 million (2.5 / 6).
 - **New places to fish:** The Kaiju Depths, 175 billion.
