@@ -12,9 +12,9 @@ You play as a kid who is Indian and Black, with warm brown skin and short black 
 
 ## Controls
 
-- **Keyboard:** WASD or arrow keys to walk, Q / E to turn the camera, Space (or Enter) to cast, stop and reel (hold), F for the Fishdex, Esc for the menu.
-- **Mouse or touch:** tap the ground to walk there. Tap the Aquarium or the Tackle Shop to walk in, or tap the water past the pier to walk to the end and cast. Drag to turn the camera, tap the yellow button to cast or stop, and hold anywhere on the screen (or the yellow button) to reel.
-- **Xbox controller:** left stick to walk, right stick to turn the camera, A to cast, stop and reel (hold A or RT), B to go back (leave the Aquarium), Y for the Fishdex, Start for the menu. Menus work with the d-pad or stick plus A and B. The controller rumbles on a bite. If it unplugs, the game pauses. Browsers only allow sound after a mouse click or key press, so a "Click once to turn on sound" hint shows when you're on a controller and the sound is off.
+- **Keyboard:** WASD or arrow keys to walk, Q / E to turn the camera, R / V to look up and down, Space (or Enter) to cast, stop and reel (hold), F for the Fishdex, Esc for the menu.
+- **Mouse or touch:** tap the ground to walk there. Tap the Aquarium or the Tackle Shop to walk in, or tap the water past the pier to walk to the end and cast. Drag to turn the camera (sideways) and look up or down (up and down), tap the yellow button to cast or stop, and hold anywhere on the screen (or the yellow button) to reel.
+- **Xbox controller:** left stick to walk, right stick to turn the camera and look up or down, A to cast, stop and reel (hold A or RT), B to go back (leave the Aquarium), Y for the Fishdex, Start for the menu. Menus work with the d-pad or stick plus A and B. The controller rumbles on a bite. If it unplugs, the game pauses. Browsers only allow sound after a mouse click or key press, so a "Click once to turn on sound" hint shows when you're on a controller and the sound is off.
 
 ## How a cast works
 
@@ -28,21 +28,21 @@ Giants longer than 8 m hang sideways on the line during the fight so the whole m
 
 ## Zones and creatures
 
-Every regular zone has eight creatures: six common, one rare and one mythical. The Glow Caves also have the Glowtooth Titan and the Rift the King Leviathan, which show as **Legendary**. The Kaiju Depths has no commons at all. Bites are weighted 17 / 16 / 15 / 13 / 12 / 12 for the commons, 12 for the rare, 3 for the mythical and 1 for the King Leviathan. Bait multiplies the rare and mythical weights. The Fishdex lists each zone common first, then rare, then mythical.
+Every zone has **ten creatures**. Most zones have seven commons, two rares and one mythical. The Glow Caves and the Rift swap a common for a **Legendary** (Glowtooth Titan, King Leviathan), the palace swaps one for the secret Celestial Leviathan, and the Kaiju Depths has no commons at all (three rares, five mythicals, a legendary and a secret). The newest ten-per-zone creatures are added at the end of `SPECIES` so old saves still point at the right ones. Bites are weighted 17 / 16 / 15 / 13 / 12 / 12 / 11 for the commons (coins ×1 to ×2.2), 12 for each rare, 3 for the mythical and 1 for the King Leviathan. Bait multiplies the rare and mythical weights. The Fishdex lists each zone common first, then rare, then mythical.
 
 | Zone | Depth | Coins/s (base) | Common | Rare | Mythical |
 |---|---|---|---|---|---|
-| Sunlit Shallows | 0–20 m | 1 | Sardine, Clownfish, Pufferfish, Blue Tang, Sea Turtle, Rainbow Ray | Seahorse | Sunscale Dragonet |
-| Kelp Forest | 20–80 m | 5 | Kelp Bass, Garibaldi, Octopus, Moon Jelly, Wolf Eel, Treasure Turtle | Leafy Sea Dragon | Kelpie |
-| Twilight Zone | 80–300 m | 25 | Lanternfish, Hatchetfish, Squid, Barreleye, Manta Ray, Star Jelly | Swordfish | Moonhorn |
-| Midnight Zone | 300–1,500 m | 125 | Anglerfish, Gulper Eel, Vampire Squid, Viperfish, Atolla Jellyfish, Shadow Ray | Giant Squid | Phantom Shark |
-| The Abyss | 1,500–5,000 m | 625 | Dumbo Octopus, Tripod Fish, Giant Isopod, Black Swallower, Goblin Shark, Ancient Turtle | Frilled Shark | Sea Serpent |
-| The Trench | 5,000–11,000 m | 3,000 | Snailfish, Sea Pig, Supergiant Amphipod, Rattail, Big Red Jellyfish, Crystal Dragon | Megalodon | Kraken |
-| Shipwreck Graveyard | 11,000–13,000 m | 6,000 | Barnacle Bass, Anchor Eel, Rusty Puffer, Doubloon Jelly, Cannonball Turtle, Sail Ray | Ghostlight Octopus | Wreck Serpent |
-| The Glow Caves | 13,000–15,000 m | 9,000 | Glowworm Eel, Lantern Puffer, Cave Ray, Neon Jelly, Crystal Bass, Cave Isopod | Shimmer Seahorse | Aurora Dragonfish, and **Glowtooth Titan** (legendary) |
-| The Fishpocalypse Rift | 15,000–20,000 m | 15,000 | Zombie Cod, Skeleton Fish, Lava Shark, Fire Jelly, Magma Turtle | Triclops Grouper | Doomfin, and **King Leviathan** (legendary) |
-| The Underwater Palace (secret) | 20,000–30,000 m | 75,000 | Pearl Angelfish, Golden Jelly, Gem Turtle, Sapphire Ray, Marble Eel | Armored Seahorse | Thunderjaw (25 m lightning shark), and **Celestial Leviathan** (secret) |
-| The Kaiju Depths (bought) | 30,000–50,000 m | 375 million | (none) | Boulderback Turtle, Titan Isopod | Thunder Squid, Razorwing Ray, Magmaw, Abyss Wyrm, **Mecha Megashark** (legendary), and **Colossaurus** (secret) |
+| Sunlit Shallows | 0–20 m | 1 | Sardine, Clownfish, Pufferfish, Blue Tang, Sea Turtle, Rainbow Ray, Parrotfish | Seahorse, Lionfish | Sunscale Dragonet |
+| Kelp Forest | 20–80 m | 5 | Kelp Bass, Garibaldi, Octopus, Moon Jelly, Wolf Eel, Treasure Turtle, Sheephead | Leafy Sea Dragon, Giant Sea Bass | Kelpie |
+| Twilight Zone | 80–300 m | 25 | Lanternfish, Hatchetfish, Squid, Barreleye, Manta Ray, Star Jelly, Bristlemouth | Swordfish, Oarfish | Moonhorn |
+| Midnight Zone | 300–1,500 m | 125 | Anglerfish, Gulper Eel, Vampire Squid, Viperfish, Atolla Jellyfish, Shadow Ray, Fangtooth | Giant Squid, Sixgill Shark | Phantom Shark |
+| The Abyss | 1,500–5,000 m | 625 | Dumbo Octopus, Tripod Fish, Giant Isopod, Black Swallower, Goblin Shark, Ancient Turtle, Coffinfish | Frilled Shark, Greenland Shark | Sea Serpent |
+| The Trench | 5,000–11,000 m | 3,000 | Snailfish, Sea Pig, Supergiant Amphipod, Rattail, Big Red Jellyfish, Crystal Dragon, Cusk Eel | Megalodon, Ironclad Grouper | Kraken |
+| Shipwreck Graveyard | 11,000–13,000 m | 6,000 | Barnacle Bass, Anchor Eel, Rusty Puffer, Doubloon Jelly, Cannonball Turtle, Sail Ray, Bottle Jelly | Ghostlight Octopus, Pirate Pike | Wreck Serpent |
+| The Glow Caves | 13,000–15,000 m | 9,000 | Glowworm Eel, Lantern Puffer, Cave Ray, Neon Jelly, Crystal Bass, Cave Isopod | Shimmer Seahorse, Glowstone Octopus | Aurora Dragonfish, and **Glowtooth Titan** (legendary) |
+| The Fishpocalypse Rift | 15,000–20,000 m | 15,000 | Zombie Cod, Skeleton Fish, Lava Shark, Fire Jelly, Magma Turtle, Cinder Ray | Triclops Grouper, Bone Serpent | Doomfin, and **King Leviathan** (legendary) |
+| The Underwater Palace (secret) | 20,000–30,000 m | 75,000 | Pearl Angelfish, Golden Jelly, Gem Turtle, Sapphire Ray, Marble Eel, Crown Puffer | Armored Seahorse, Royal Guardfish | Thunderjaw (25 m lightning shark), and **Celestial Leviathan** (secret) |
+| The Kaiju Depths (bought) | 30,000–50,000 m | 375 million | (none) | Boulderback Turtle, Titan Isopod, Gorgon Puffer | Thunder Squid, Razorwing Ray, Crystal Kaiju Ray, Magmaw, Abyss Wyrm, **Mecha Megashark** (legendary), and **Colossaurus** (secret) |
 
 The newer creatures are at the end of `SPECIES`, so old saves (which store each fish by its number) still point at the right ones.
 
@@ -91,6 +91,10 @@ It's a huge cavern with no walls close by (`buildKaijuDepths`). At the back is a
 - It gets **its own aquarium, the Kaiju Tank** (`buildKaijuTank`, `KT`): a 60 m glass tunnel in a gigantic tank (400 m long, 380 m wide, 130 m tall) with crystals, boulders, giant kelp and old bones. Up to 3 Colossauruses swim a huge figure eight (`kaijuPath`) that goes around the tunnel and right over it. Get there with the "Kaiju Tank" button in the Aquarium (X on a controller, K on a keyboard), or "See it in the Kaiju Tank" on the catch card. It's not in the main aquarium tank.
 
 The beach was made longer again (the dunes start at x 165) so the 150 m beach picture fits.
+
+## The camera
+
+The camera turns all the way around you and tilts from looking down on you to looking almost straight up (`camPitch` on the beach, `aqPitch` in the Aquarium, both between `PITCH_MIN` and `PITCH_MAX`). That way you can see the creatures swimming over the tunnel. Use the right stick, R / V, or drag up and down. When the camera reaches the ground or the tunnel floor it stays there but keeps looking the same way, so it can still look up.
 
 ## The shop
 
