@@ -1712,7 +1712,8 @@ function speciesGeo(sp, low) {
   const g = new Geo(4096), parts = [];
   // the Colossaurus is already built in high detail; everything else gets the high-detail shapes (or the simple ones, far away)
   HIRES = !low && sp.kind !== 'kaiju'; LOD_LOW = !!low;
-  try { BUILDERS[sp.kind](g, sp.o, low ? null : parts); } finally { HIRES = false; LOD_LOW = false; }
+  // (moving pieces like a shark's lower jaw are always kept separate, even in the far-away copy, so there's only ever one jaw: the one that bites)
+  try { BUILDERS[sp.kind](g, sp.o, parts); } finally { HIRES = false; LOD_LOW = false; }
   if (!low && sp.kind !== 'kaiju') skinTexture(g);
   wiggle(sp, g, parts);
   return { g, parts };
@@ -2844,7 +2845,7 @@ function drawCreature(id, x, y, z, yaw, pitch, roll, S, phase, extra, wk = 1) {
   const opts = { wig: sw[0] ? [sw[0] * wk, sw[1], phase, sw[3]] : null, emit };
   // far away (looks small on screen) -> the simple copy; close up -> the detailed one
   const dist = Math.hypot(x - cam.eye[0], y - cam.eye[1], z - cam.eye[2]);
-  const mesh = sp.kind !== 'kaiju' && S / Math.max(dist, 0.01) < 0.3 ? speciesMeshLow(id) : speciesMesh(id);
+  const hi = speciesMesh(id), mesh = sp.kind !== 'kaiju' && S / Math.max(dist, 0.01) < 0.3 ? speciesMeshLow(id) : hi;
   draw(mesh, mTRS(_fm, x, y, z, yaw, pitch, roll, S), opts);
   if (sp.parts) drawParts(sp, _fm, opts, 1, x * 0.013 + z * 0.007);
   if (sp.r === 'm' && sp.o.glow) {
