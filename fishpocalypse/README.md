@@ -41,8 +41,8 @@ Every regular zone has eight creatures: six common, one rare and one mythical. T
 | Shipwreck Graveyard | 11,000–13,000 m | 6,000 | Barnacle Bass, Anchor Eel, Rusty Puffer, Doubloon Jelly, Cannonball Turtle, Sail Ray | Ghostlight Octopus | Wreck Serpent |
 | The Glow Caves | 13,000–15,000 m | 9,000 | Glowworm Eel, Lantern Puffer, Cave Ray, Neon Jelly, Crystal Bass, Cave Isopod | Shimmer Seahorse | Aurora Dragonfish, and **Glowtooth Titan** (legendary) |
 | The Fishpocalypse Rift | 15,000–20,000 m | 15,000 | Zombie Cod, Skeleton Fish, Lava Shark, Fire Jelly, Magma Turtle | Triclops Grouper | Doomfin, and **King Leviathan** (legendary) |
-| The Kaiju Depths (bought) | 20,000–25,000 m | 375,000 | (none) | Boulderback Turtle, Titan Isopod | Thunder Squid, Razorwing Ray, Magmaw, Abyss Wyrm, **Mecha Megashark** (legendary), and **Colossaurus** (secret) |
-| The Underwater Palace (secret) | 25,000–35,000 m | 75,000 | Pearl Angelfish, Golden Jelly, Gem Turtle, Sapphire Ray, Marble Eel | Armored Seahorse | Thunderjaw (25 m lightning shark), and **Celestial Leviathan** (secret) |
+| The Underwater Palace (secret) | 20,000–30,000 m | 75,000 | Pearl Angelfish, Golden Jelly, Gem Turtle, Sapphire Ray, Marble Eel | Armored Seahorse | Thunderjaw (25 m lightning shark), and **Celestial Leviathan** (secret) |
+| The Kaiju Depths (bought) | 30,000–50,000 m | 375,000 | (none) | Boulderback Turtle, Titan Isopod | Thunder Squid, Razorwing Ray, Magmaw, Abyss Wyrm, **Mecha Megashark** (legendary), and **Colossaurus** (secret) |
 
 The newer creatures are at the end of `SPECIES`, so old saves (which store each fish by its number) still point at the right ones.
 
@@ -54,7 +54,7 @@ The models are built from shapes in code (`BUILDERS`: kaiju, fish, shark, eel, o
 
 ## The Underwater Palace (secret zone, spoilers!)
 
-It's the last zone (`PALACE_Z`, 600–660 units down the column, 25,000–35,000 m), under the Fishpocalypse Rift's lava floor and the Kaiju Depths. Until you've caught both the **Doomfin** and the **King Leviathan** (`palaceOpen()`, worked out from the Fishdex), there's no sign of it anywhere. The lava floor is solid (`plugMesh` covers the hole), the Rift's water doesn't fade toward palace colors, the gauge stops at the Rift, the Fishdex has no palace row (and doesn't count its creatures), and the shop doesn't show the palace items. The picker blurb and the main README don't mention it either.
+It's the last zone (`PALACE_Z`, 540–600 units down the column, 20,000–30,000 m), right under the Fishpocalypse Rift's lava floor. Until you've caught both the **Doomfin** and the **King Leviathan** (`palaceOpen()`, worked out from the Fishdex), there's no sign of it anywhere. The lava floor is solid (`plugMesh` covers the hole), the Rift's water doesn't fade toward palace colors, the gauge stops at the Rift, the Fishdex has no palace row (and doesn't count its creatures), and the shop doesn't show the palace items. The picker blurb and the main README don't mention it either.
 
 When the catch that completes the pair comes in, the catch card says "🔓 You have unlocked the secret area! It is called the Underwater Palace. It is under the Fishpocalypse Rift: let your anchor sink all the way down." A toast repeats it. From then on the lava floor has a hole in the middle, and the Doom Anchor sinks through it into the palace and stops in front of the great hall (about 26,000 m). The gauge shows 8 zones.
 
@@ -73,7 +73,7 @@ The beach was made longer to the east (the dunes start at x 120 instead of 50) s
 
 ## The Kaiju Depths
 
-The bottom zone of the regular ocean (`KAIJU_Z`, 20,000–25,000 m), right under the Fishpocalypse Rift's lava floor. Buy it in the Tackle Shop ("New places to fish", 175 billion coins, `save.kaiju`) and the hole in the lava floor opens (no more `plugMesh`), so the Doom Anchor sinks through into it and stops there. Until then the gauge shows it dimmed. Once the palace is open too, the anchor keeps going down to the palace (press Stop here in the Kaiju Depths to fish there instead); if you haven't bought it, pressing Stop here in it says "Buy the Kaiju Depths in the Tackle Shop to fish here!".
+The bottom zone of the ocean (`KAIJU_Z`, 600–660 units down, 30,000–50,000 m), under the Underwater Palace. Because it's below the secret palace, it only shows up in the Tackle Shop ("New places to fish", **200 billion** coins, `save.kaiju`) after the palace opens; the palace unlock card hints "the Tackle Shop has something new", and before that the Fishdex row just says "somewhere very, very deep". Buying it opens a hole in the middle of the palace's marble floor (with a gold rim; `palacePlugMesh` covers it until then), and the anchor sinks through the palace and stops in the Kaiju Depths. Press **Stop here** in the palace to fish there instead. The gauge shows the Kaiju Depths dimmed until you buy it.
 
 **Its monsters fight back** like the Celestial Leviathan: reel speed ×0.32, they thrash every 0.9–1.6 s, slip back less, and rise in 5 s. With the Royal Reel they took 8–12 s in a test (before: about 3 s).
 
@@ -94,10 +94,10 @@ The beach was made longer again (the dunes start at x 165) so the 150 m beach pi
 
 Buy each item after the one before it.
 
-- **Sinkers** (deepest zone): Tin Hook (free, 20 m) · Iron 150 (80 m) · Steel 3,000 (300 m) · Gold 60,000 (1,500 m) · Diamond 1.5 million (5,000 m) · Titan 30 million (11,000 m) · Anchor of the Wrecks 80 million (13,000 m) · Glowstone Sinker 220 million (15,000 m) · Doom Anchor 600 million (20,000 m, and into the Kaiju Depths once you buy it).
+- **Sinkers** (deepest zone): Tin Hook (free, 20 m) · Iron 150 (80 m) · Steel 3,000 (300 m) · Gold 60,000 (1,500 m) · Diamond 1.5 million (5,000 m) · Titan 30 million (11,000 m) · Anchor of the Wrecks 80 million (13,000 m) · Glowstone Sinker 220 million (15,000 m) · Doom Anchor 600 million (20,000 m).
 - **Reels** (reel speed): Old 1× · Fast 400 (1.4×) · Turbo 15,000 (1.9×) · Mega 2 million (2.6×) · Rocket 100 million (3.4×).
 - **Bait** (rare × / mythical ×): Worm · Shiny Lure 1,000 (1.5 / 2) · Glow Lure 150,000 (2 / 3.5) · Mythic Bait 20 million (2.5 / 6).
-- **New places to fish:** The Kaiju Depths, 175 billion.
+- **New places to fish:** The Kaiju Depths, 200 billion (only after the palace opens).
 
 Pacing check (a script that casts over and over and buys the next sinker as soon as it can): the Iron Sinker after about 1–1.5 minutes, Steel about 4, Gold about 8, Diamond about 13, Titan about 24, and the Doom Anchor after about 50–60 minutes. With 8 creatures per zone (only one of them rare and one mythical), the average catch is worth about 8% less than it was with 5, so the game is now a little slower.
 
@@ -106,6 +106,8 @@ Pacing check (a script that casts over and over and buys the next sinker as soon
 The glass dome on the beach (40 m across) shows up to 24 of your newest fish swimming around inside. Walk in the door to visit the real Aquarium: a glass tunnel through a huge tank (46 m tall and 120 m wide), with sand, plants, giant kelp, coral, rocks, treasure chests and little castles. The tunnel gets longer as you catch more fish (`tankLength`: 80 m + 1.2 m per fish, counting up to 4,000 fish), so there's always room. Small fish stay near the tunnel where you can see them (`tankY`, `tankZMax`), and giants use the whole tank. Giants are life size up to 16 m. Past that they still grow, but more slowly, so they fit (`tankSize`): the Sea Serpent is about 22 m in the tank and the King Leviathan about 30 m. Every fish you've caught swims in it. Bottom crawlers (isopods, sea pigs, amphipods, tripod fish) stay on the sand. The closest fish shows a name tag with its coins per second, and tapping a fish shows its tag too. Gold coins pop up from fish now and then (just for show: coins are counted all the time, everywhere).
 
 ## Saved data
+
+**Save slots:** there are 3 (`SAVE_SLOTS`). The title screen has a "Player: …" button that opens **Who's playing?**, which lists each save with its name, coins and fish (or "New game"). Pick one to switch to it, and type a new name (up to 16 letters) for the current one. Slot 1 uses the original key `fishpocalypse.v1` (so older saves are there), slots 2 and 3 use `fishpocalypse.v1.slot2` and `.slot3`, and `fishpocalypse.slot` remembers which one you're on. **Start over** only wipes the current slot. Anyone can switch slots (there's no password).
 
 Nothing new is saved for the palace: it opens from the Fishdex counts. `localStorage` key `fishpocalypse.v1`: coins, which sinker / reel / bait you own, whether you bought the Kaiju Depths (`kaiju`, 0 or 1), `zv: 2` (saves without it are from before the two new zones, so their Doom Anchor or Crown Anchor moves 2 places down the sinker list), every fish as `[species, size]`, the Fishdex counts, the total caught, the music and sound settings, and the time it was saved. Everything is checked on load (bad values are dropped or clamped). Coins keep coming in while the game is closed, up to one hour's worth, and a "Welcome back!" message shows how many. **Start over** on the title screen wipes the save (with a confirm step).
 
