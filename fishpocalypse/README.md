@@ -35,6 +35,7 @@ Every zone has eight creatures: six common, one rare and one mythical. The Rift 
 | The Abyss | 1,500–5,000 m | 625 | Dumbo Octopus, Tripod Fish, Giant Isopod, Black Swallower, Goblin Shark, Ancient Turtle | Frilled Shark | Sea Serpent |
 | The Trench | 5,000–11,000 m | 3,000 | Snailfish, Sea Pig, Supergiant Amphipod, Rattail, Big Red Jellyfish, Crystal Dragon | Megalodon | Kraken |
 | The Fishpocalypse Rift | 11,000–20,000 m | 15,000 | Zombie Cod, Skeleton Fish, Lava Shark, Fire Jelly, Magma Turtle | Triclops Grouper | Doomfin, and **King Leviathan** (legendary) |
+| The Kaiju Depths (bought) | 30,000–50,000 m | 375,000 | (none) | Boulderback Turtle, Titan Isopod | Thunder Squid, Razorwing Ray, Magmaw, Abyss Wyrm, **Mecha Megashark** (legendary), and **Colossaurus** (secret) |
 | The Underwater Palace (secret) | 20,000–30,000 m | 75,000 | Pearl Angelfish, Golden Jelly, Gem Turtle, Sapphire Ray, Marble Eel | Armored Seahorse | Thunderjaw (25 m lightning shark), and **Celestial Leviathan** (secret) |
 
 The newer creatures are at the end of `SPECIES`, so old saves (which store each fish by its number) still point at the right ones.
@@ -43,7 +44,7 @@ A creature's coins per second = zone base × (1, 1.2, 1.4, 1.6, 1.8 or 2 for the
 
 The Sea Serpent has huge open jaws full of teeth, and the Megalodon has a giant toothy grin along both sides of its head. The King Leviathan is like the Sea Serpent but bigger (50 m). He is black with red stripes, and has big curved horns, red spikes and frills, glowing red eyes and the same giant jaws.
 
-The models are built from shapes in code (`BUILDERS`: fish, shark, eel, octopus, squid, puffer, seahorse, bug, sea pig, kelpie, turtle, ray, jelly), each about 1 unit long facing +x, then scaled by `vis = max(0.7 + length × 0.75, length)`. One unit is one meter, so big creatures are **life size**: Megalodon 16 m, Kraken 22 m, Thunderjaw 25 m, Sea Serpent 32 m, King Leviathan 50 m. Small fish are drawn a bit bigger so you can see them. Mythical creatures are made big on purpose too. Swimming is a wave in the vertex shader (`uWig`). Mode 0 swings side to side (fish), mode 1 sways tentacles, and mode 2 flaps (ray wings, turtle flippers). `speciesMesh` also stores each model's bounding box (`sp.bb`), which the beach picture and the sideways fight pose use. Each vertex stores how much it wiggles (head 0, tail 1).
+The models are built from shapes in code (`BUILDERS`: kaiju, fish, shark, eel, octopus, squid, puffer, seahorse, bug, sea pig, kelpie, turtle, ray, jelly), each about 1 unit long facing +x, then scaled by `vis = max(0.7 + length × 0.75, length)`. One unit is one meter, so big creatures are **life size**: Megalodon 16 m, Kraken 22 m, Thunderjaw 25 m, Sea Serpent 32 m, King Leviathan 50 m, Mecha Megashark 48 m, Colossaurus 150 m. Small fish are drawn a bit bigger so you can see them. Mythical creatures are made big on purpose too. Swimming is a wave in the vertex shader (`uWig`). Mode 0 swings side to side (fish), mode 1 sways tentacles, and mode 2 flaps (ray wings, turtle flippers). `speciesMesh` also stores each model's bounding box (`sp.bb`), which the beach picture and the sideways fight pose use. Each vertex stores how much it wiggles (head 0, tail 1).
 
 ## The Underwater Palace (secret zone, spoilers!)
 
@@ -64,6 +65,23 @@ The palace (`buildPalace`, drawn when you're deep enough) has a checkered marble
 
 The beach was made longer to the east (the dunes start at x 120 instead of 50) so a 110 m picture fits on the sand, and the lighthouse moved to the west side so it doesn't block the camera.
 
+## The Kaiju Depths
+
+A place you buy in the Tackle Shop ("New places to fish", 175 billion coins, `save.kaiju`). After that, casting from the pier asks **The Ocean** or **The Kaiju Depths** (`ovWhere`). The Kaiju Depths is zone 8 (`KAIJU_Z`); the hook starts at its top (30,000 m), sinks slowly for about 5 seconds and stops near the bottom of the trench. You don't need any sinker for it. The gauge shows just this one zone.
+
+The trench (`buildKaijuDepths`, floor at `KAIJU_FLOOR`) has rocky walls, the skeleton of a giant monster (spine, ribs, horned skull with teeth), green and orange glowing crystals, hot vents and a trail of giant three-toed footprints.
+
+**Nothing there is common:** 2 rares (×5), 4 mythicals (×25), the legendary Mecha Megashark (×50) and the secret Colossaurus. The zone's base is 375,000 coins a second. Since there are no commons, the monsters themselves swim by in the background (bigger and farther away than in other zones).
+
+**Colossaurus** (Secret tier, `kind: 'kaiju'`, `buildKaiju`): our own original 150 m sea kaiju (the kids asked for "Godzilla", which belongs to a movie company, so it's a new monster instead). It's built in much more detail than the other creatures (about 107,000 vertices): a smooth lofted body (`loft`, 180 rings × 40 sides) with scales and a plated belly, armored bumps along the back, three rows of glowing orange crystal spikes, glowing spots down its sides, an open jaw with two rows of teeth, glowing eyes under a heavy brow, two great swept-back horns and smaller ones under them, glowing gill frills, a crest on its skull, four clawed legs held out like a swimming crocodile, and a finned tail. It roars (`sfx.roar`) when it bites, when you catch it and when you visit it.
+- It bites exactly **1 time in 100** in the Kaiju Depths (`pct: 0.01`, checked before the bait, so bait doesn't change it).
+- It always makes exactly **1 billion coins a second** (`fixed`, whatever its size), plus 20 billion right away.
+- It's **harder to reel in than the Celestial Leviathan** (×0.2 reel speed, thrashes every 0.75–1.3 s, rises in 6 s). A script that holds when it's not thrashing needed about 22 s with the Royal Reel (Celestial Leviathan: 12 s) and about 3.7 minutes with the Old Reel (Celestial Leviathan: 74 s).
+- About 1 Kaiju Depths trip in 12 (8%), it swims past full size along the bottom of the trench with a roar, and the camera backs up to show it.
+- It gets **its own aquarium, the Kaiju Tank** (`buildKaijuTank`, `KT`): a 60 m glass tunnel in a gigantic tank (400 m long, 380 m wide, 130 m tall) with crystals, boulders, giant kelp and old bones. Up to 3 Colossauruses swim a huge figure eight (`kaijuPath`) that goes around the tunnel and right over it. Get there with the "Kaiju Tank" button in the Aquarium (X on a controller, K on a keyboard), or "See it in the Kaiju Tank" on the catch card. It's not in the main aquarium tank.
+
+The beach was made longer again (the dunes start at x 165) so the 150 m beach picture fits.
+
 ## The shop
 
 Buy each item after the one before it.
@@ -71,6 +89,7 @@ Buy each item after the one before it.
 - **Sinkers** (deepest zone): Tin Hook (free, 20 m) · Iron 150 (80 m) · Steel 3,000 (300 m) · Gold 60,000 (1,500 m) · Diamond 1.5 million (5,000 m) · Titan 30 million (11,000 m) · Doom Anchor 600 million (20,000 m).
 - **Reels** (reel speed): Old 1× · Fast 400 (1.4×) · Turbo 15,000 (1.9×) · Mega 2 million (2.6×) · Rocket 100 million (3.4×).
 - **Bait** (rare × / mythical ×): Worm · Shiny Lure 1,000 (1.5 / 2) · Glow Lure 150,000 (2 / 3.5) · Mythic Bait 20 million (2.5 / 6).
+- **New places to fish:** The Kaiju Depths, 175 billion.
 
 Pacing check (a script that casts over and over and buys the next sinker as soon as it can): the Iron Sinker after about 1–1.5 minutes, Steel about 4, Gold about 8, Diamond about 13, Titan about 24, and the Doom Anchor after about 50–60 minutes. With 8 creatures per zone (only one of them rare and one mythical), the average catch is worth about 8% less than it was with 5, so the game is now a little slower.
 
@@ -80,7 +99,7 @@ The glass dome on the beach (40 m across) shows up to 24 of your newest fish swi
 
 ## Saved data
 
-Nothing new is saved for the palace: it opens from the Fishdex counts. `localStorage` key `fishpocalypse.v1`: coins, which sinker / reel / bait you own, every fish as `[species, size]`, the Fishdex counts, the total caught, the music and sound settings, and the time it was saved. Everything is checked on load (bad values are dropped or clamped). Coins keep coming in while the game is closed, up to one hour's worth, and a "Welcome back!" message shows how many. **Start over** on the title screen wipes the save (with a confirm step).
+Nothing new is saved for the palace: it opens from the Fishdex counts. `localStorage` key `fishpocalypse.v1`: coins, which sinker / reel / bait you own, whether you bought the Kaiju Depths (`kaiju`, 0 or 1), every fish as `[species, size]`, the Fishdex counts, the total caught, the music and sound settings, and the time it was saved. Everything is checked on load (bad values are dropped or clamped). Coins keep coming in while the game is closed, up to one hour's worth, and a "Welcome back!" message shows how many. **Start over** on the title screen wipes the save (with a confirm step).
 
 ## Testing notes
 
