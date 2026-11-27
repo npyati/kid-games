@@ -6,6 +6,10 @@ A 3D fishing and collecting game. You start on a beach with a rod and a Tin Hook
 
 Plain WebGL 2 in one file, like Wildwood. It reuses Wildwood's `Geo` vertex builder, the `blob`/`tube`/`cone` shapes and the matrix helpers.
 
+## The player
+
+You play as a kid who is Indian and Black, with warm brown skin and short black curly hair under a straw hat (`playerMesh`).
+
 ## Controls
 
 - **Keyboard:** WASD or arrow keys to walk, Q / E to turn the camera, Space (or Enter) to cast, stop and reel (hold), F for the Fishdex, Esc for the menu.
@@ -73,7 +77,7 @@ The trench (`buildKaijuDepths`, floor at `KAIJU_FLOOR`) has rocky walls, the ske
 
 **Nothing there is common:** 2 rares (×5), 4 mythicals (×25), the legendary Mecha Megashark (×50) and the secret Colossaurus. The zone's base is 375,000 coins a second. Since there are no commons, the monsters themselves swim by in the background (bigger and farther away than in other zones).
 
-**Colossaurus** (Secret tier, `kind: 'kaiju'`, `buildKaiju`): our own original 150 m sea kaiju (the kids asked for "Godzilla", which belongs to a movie company, so it's a new monster instead). It's built in much more detail than the other creatures (about 107,000 vertices): a smooth lofted body (`loft`, 180 rings × 40 sides) with scales and a plated belly, armored bumps along the back, three rows of glowing orange crystal spikes, glowing spots down its sides, an open jaw with two rows of teeth, glowing eyes under a heavy brow, two great swept-back horns and smaller ones under them, glowing gill frills, a crest on its skull, four clawed legs held out like a swimming crocodile, and a finned tail. It roars (`sfx.roar`) when it bites, when you catch it and when you visit it.
+**Colossaurus** (Secret tier, `kind: 'kaiju'`, `buildKaiju`): our own original 150 m sea kaiju (the kids asked for "Godzilla", which belongs to a movie company, so it's a new monster instead). It's built in much more detail than the other creatures (about 107,000 vertices): a smooth lofted body (`loft`, 180 rings × 40 sides) with scales and a plated belly, armored bumps along the back, three rows of glowing orange crystal spikes, glowing spots down its sides, an open jaw with two rows of teeth, glowing eyes under a heavy brow, two great swept-back horns and smaller ones under them, glowing gill frills, a crest on its skull, four clawed legs held out like a swimming crocodile, and a finned tail. It is always moving: its legs and arms paddle forward and back, its tail sways side to side, and every few seconds it snaps its jaws shut in a big bite (the legs and lower jaw are separate pieces, `sp.parts`, turned at their hips, shoulders and jaw hinge by `drawParts`). It roars (`sfx.roar`) when it bites, when you catch it and when you visit it.
 - It bites exactly **1 time in 100** in the Kaiju Depths (`pct: 0.01`, checked before the bait, so bait doesn't change it).
 - It always makes exactly **1 billion coins a second** (`fixed`, whatever its size), plus 20 billion right away.
 - It's **harder to reel in than the Celestial Leviathan** (×0.2 reel speed, thrashes every 0.75–1.3 s, rises in 6 s). A script that holds when it's not thrashing needed about 22 s with the Royal Reel (Celestial Leviathan: 12 s) and about 3.7 minutes with the Old Reel (Celestial Leviathan: 74 s).

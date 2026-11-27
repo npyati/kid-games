@@ -367,7 +367,7 @@ const BAITS = [
 ];
 // new places to fish (save.kaiju: 0 = not yet, 1 = bought the Kaiju Depths)
 // TEMPORARY (set to false to go back to normal): the Kaiju Depths costs 100 coins, the Colossaurus bites every time and reels in fast
-const EASY_KAIJU = true;
+const EASY_KAIJU = false;
 const PLACES = [
   { name: 'The Pier', cost: 0, skip: true },
   { name: 'The Kaiju Depths', cost: EASY_KAIJU ? 100 : 175000000000, col: '#5aff7a' },
@@ -1437,7 +1437,9 @@ function keyLerp(K, x) {
   for (let i = 0; i < K.length - 1; i++) if (x <= K[i + 1][0]) { const t = smooth((x - K[i][0]) / (K[i + 1][0] - K[i][0])); return K[i].slice(1).map((v, k) => lerp(v, K[i + 1][k + 1], t)); }
   return K[K.length - 1].slice(1);
 }
-function buildKaiju(g, o) {
+// parts: if given, the legs and the lower jaw are built as separate pieces so they can move (see drawParts)
+function buildKaiju(g, o, parts) {
+  const part = (pivot, kind, sd) => { if (!parts) return g; const pg = new Geo(16384); parts.push({ g: pg, pivot, kind, sd }); return pg; };
   const back = H('#18342a'), side = H('#2a4a38'), belly = H('#8a8a64'), dark = H('#0e1e18'), bone = H('#e0d4b0'), claw = H('#efe6cc');
   const hot = H('#ff4a12'), hot2 = H('#ffd23f'), eyeC = H('#ffb020'), gum = H('#5a0a14'), tooth = H('#f6f0dc'), teal = H('#1c5a52');
   // body, from the tip of the tail (x -0.5) to the neck (x 0.36): [x, y, up, down, width]
@@ -1480,12 +1482,14 @@ function buildKaiju(g, o) {
   // legs and arms, held out to the sides like a swimming crocodile, with white claws
   for (const sd of [-1, 1]) {
     ell(g, -0.06, -0.01, sd * 0.07, 0.06, 0.05, 0.035, side, -1, 2);
-    chain(g, [[-0.06, -0.03, sd * 0.08], [-0.03, -0.055, sd * 0.13], [-0.09, -0.07, sd * 0.155], [-0.12, -0.076, sd * 0.165]], 0.034, 0.018, 12, side, -1, shade(side, 0.8));
-    ell(g, -0.03, -0.055, sd * 0.13, 0.026, 0.024, 0.024, shade(side, 0.9), -1, 1);
-    for (let k = -1; k <= 1; k++) cone(g, [-0.125, -0.078, sd * (0.165 + k * 0.012)], [-0.165, -0.085, sd * (0.172 + k * 0.022)], 0.0075, 6, claw);
+    const lg = part([-0.06, -0.03, sd * 0.075], 'leg', sd);
+    chain(lg, [[-0.06, -0.03, sd * 0.08], [-0.03, -0.055, sd * 0.13], [-0.09, -0.07, sd * 0.155], [-0.12, -0.076, sd * 0.165]], 0.034, 0.018, 12, side, -1, shade(side, 0.8));
+    ell(lg, -0.03, -0.055, sd * 0.13, 0.026, 0.024, 0.024, shade(side, 0.9), -1, 1);
+    for (let k = -1; k <= 1; k++) cone(lg, [-0.125, -0.078, sd * (0.165 + k * 0.012)], [-0.165, -0.085, sd * (0.172 + k * 0.022)], 0.0075, 6, claw);
     ell(g, 0.2, 0.0, sd * 0.06, 0.05, 0.04, 0.03, shade(side, 0.85), -1, 2);       // shoulder armor
-    chain(g, [[0.2, -0.03, sd * 0.07], [0.235, -0.058, sd * 0.11], [0.215, -0.072, sd * 0.13], [0.235, -0.078, sd * 0.142]], 0.024, 0.013, 12, side, -1, shade(side, 0.8));
-    for (let k = -1; k <= 1; k++) cone(g, [0.24, -0.079, sd * (0.142 + k * 0.009)], [0.268, -0.086, sd * (0.146 + k * 0.016)], 0.0055, 6, claw);
+    const ag = part([0.2, -0.03, sd * 0.07], 'arm', sd);
+    chain(ag, [[0.2, -0.03, sd * 0.07], [0.235, -0.058, sd * 0.11], [0.215, -0.072, sd * 0.13], [0.235, -0.078, sd * 0.142]], 0.024, 0.013, 12, side, -1, shade(side, 0.8));
+    for (let k = -1; k <= 1; k++) cone(ag, [0.24, -0.079, sd * (0.142 + k * 0.009)], [0.268, -0.086, sd * (0.146 + k * 0.016)], 0.0055, 6, claw);
   }
   // the head: a heavy upper skull and an open lower jaw
   const HEAD = [[0.33, 0.055, 0.046, 0.026, 0.043], [0.37, 0.059, 0.043, 0.02, 0.045], [0.41, 0.057, 0.033, 0.016, 0.037], [0.45, 0.053, 0.024, 0.013, 0.028], [0.49, 0.048, 0.015, 0.01, 0.02], [0.506, 0.046, 0.004, 0.004, 0.005]];
@@ -1497,10 +1501,11 @@ function buildKaiju(g, o) {
   const th = 0.36, HX = 0.345, HY = 0.032, cs = Math.cos(th), sn = Math.sin(th);
   const rot = q => { const dx = q[0] - HX, dy = q[1] - HY; return [HX + dx * cs + dy * sn, HY - dx * sn + dy * cs, q[2]]; };
   const jawCol = (i, j, a) => { const ca = Math.cos(a); return shade(ca > 0.5 ? gum : ca > -0.3 ? side : belly, 0.88 + hash3(i, j, 6) * 0.2); };
-  loft(g, 48, 28, t => jat(lerp(0.34, 0.497, t)), jawCol, null, rot);
+  const jg = part([HX, HY, 0], 'jaw', 0);
+  loft(jg, 48, 28, t => jat(lerp(0.34, 0.497, t)), jawCol, null, rot);
   // inside the mouth
   ell(g, 0.365, 0.03, 0, 0.035, 0.026, 0.034, H('#2a0508'), -1, 1);
-  { const a = rot([0.4, 0.04, 0]); ell(g, a[0], a[1], 0, 0.055, 0.01, 0.022, H('#b8404a'), -1, 1); }
+  { const a = rot([0.4, 0.04, 0]); ell(jg, a[0], a[1], 0, 0.055, 0.01, 0.022, H('#b8404a'), -1, 1); }
   // teeth: a row along the top jaw pointing down, and along the bottom jaw pointing up
   for (const sd of [-1, 1]) {
     for (let k = 0; k < 10; k++) {
@@ -1511,7 +1516,7 @@ function buildKaiju(g, o) {
     for (let k = 0; k < 9; k++) {
       const x = lerp(0.37, 0.486, k / 8), p = jat(x), big = k === 7 ? 1.5 : 1, len = (0.007 + 0.005 * Math.sin(k / 8 * Math.PI)) * big;
       const b = rot([x, p.y + p.up * 0.85, sd * p.w * 0.78]), tp = rot([x - 0.002, p.y + p.up * 0.85 + len, sd * p.w * 0.74]);
-      cone(g, b, tp, 0.003 * big, 5, tooth);
+      cone(jg, b, tp, 0.003 * big, 5, tooth);
     }
   }
   // glowing eyes under a heavy brow, and nostrils
@@ -1535,12 +1540,12 @@ function buildKaiju(g, o) {
 }
 const BUILDERS = { kaiju: buildKaiju, fish: buildFish, shark: buildShark, eel: buildEel, octo: buildOcto, squid: buildSquid, puffer: buildPuffer, seahorse: buildSeahorse, bug: buildBug, seapig: buildSeapig, kelpie: buildKelpie, turtle: buildTurtle, ray: buildRay, jelly: buildJelly };
 // how each kind swims: amplitude, wave frequency, speed, mode (0 = side to side, 1 = tentacles, 2 = flapping)
-const SWIM = { kaiju: [0.05, 4, 2.5, 0], fish: [0.05, 9, 9, 0], shark: [0.05, 6, 5, 0], eel: [0.08, 11, 8, 0], octo: [0.06, 7, 3, 1], squid: [0.04, 10, 6, 0], puffer: [0.06, 8, 10, 0], seahorse: [0.03, 6, 2, 1], bug: [0, 0, 0, 0], seapig: [0, 0, 0, 0], kelpie: [0.05, 7, 6, 0], turtle: [0.12, 2, 3, 2], ray: [0.16, 3, 3, 2], jelly: [0.05, 6, 2, 1] };
+const SWIM = { kaiju: [0.08, 3.5, 2.5, 0], fish: [0.05, 9, 9, 0], shark: [0.05, 6, 5, 0], eel: [0.08, 11, 8, 0], octo: [0.06, 7, 3, 1], squid: [0.04, 10, 6, 0], puffer: [0.06, 8, 10, 0], seahorse: [0.03, 6, 2, 1], bug: [0, 0, 0, 0], seapig: [0, 0, 0, 0], kelpie: [0.05, 7, 6, 0], turtle: [0.12, 2, 3, 2], ray: [0.16, 3, 3, 2], jelly: [0.05, 6, 2, 1] };
 const speciesMeshes = [];
 function speciesMesh(i) {
   if (speciesMeshes[i]) return speciesMeshes[i];
-  const sp = SPECIES[i], g = new Geo(4096);
-  BUILDERS[sp.kind](g, sp.o);
+  const sp = SPECIES[i], g = new Geo(4096), parts = [];
+  BUILDERS[sp.kind](g, sp.o, parts);
   if (sp.kind === 'octo') g.wig(0, (x, y) => clamp(-y / 0.45, 0, 1));
   else if (sp.kind === 'seahorse') g.wig(0, (x, y) => clamp(-(y + 0.1) / 0.3, 0, 1));
   else if (sp.kind === 'squid') g.wig(0, x => clamp((-0.2 - x) / 0.4, 0, 1));
@@ -1549,12 +1554,14 @@ function speciesMesh(i) {
   else if (sp.kind === 'turtle') g.wig(0, (x, y, z) => clamp((Math.abs(z) - 0.22) / 0.3, 0, 1));
   else if (sp.kind === 'ray') g.wig(0, (x, y, z) => clamp((Math.abs(z) - 0.1) / 0.5, 0, 1));
   else if (sp.kind === 'jelly') g.wig(0, (x, y) => clamp((0.05 - y) / 0.6, 0, 1));
-  else if (sp.kind === 'kaiju') g.wig(0, x => Math.pow(clamp((0.1 - x) / 0.6, 0, 1), 1.3));
+  else if (sp.kind === 'kaiju') { const f = x => Math.pow(clamp((0.1 - x) / 0.6, 0, 1), 1.3); g.wig(0, f); for (const p of parts) p.g.wig(0, f); }
   else if (SWIM[sp.kind][0] > 0) g.wig(0, x => Math.pow(clamp((0.18 - x) / 0.7, 0, 1), 1.3));
   // the model's bounding box, used to lay big catches on the beach
   const bb = [1e9, 1e9, 1e9, -1e9, -1e9, -1e9];
-  for (let k = 0; k < g.n; k++) for (let a = 0; a < 3; a++) { const v = g.f[k * 5 + a]; if (v < bb[a]) bb[a] = v; if (v > bb[a + 3]) bb[a + 3] = v; }
+  for (const gg of [g, ...parts.map(p => p.g)]) for (let k = 0; k < gg.n; k++) for (let a = 0; a < 3; a++) { const v = gg.f[k * 5 + a]; if (v < bb[a]) bb[a] = v; if (v > bb[a + 3]) bb[a + 3] = v; }
   sp.bb = bb;
+  // moving pieces (the Colossaurus's legs and jaw)
+  if (parts.length) sp.parts = parts.map(p => ({ mesh: makeMesh(p.g), pivot: p.pivot, kind: p.kind, sd: p.sd }));
   return (speciesMeshes[i] = makeMesh(g));
 }
 
@@ -1566,14 +1573,17 @@ const shadowMesh = (() => { const g = new Geo(256); for (let i = 0; i < 24; i++)
    The player: a kid in a straw hat. Separate parts so the legs and the
    rod arm can move. Faces +x.
    ===================================================================== */
-const SKIN = H('#f5c89a'), SHIRT = H('#e8433a'), SHORTS = H('#2a4a9a'), HAT = H('#f0d070');
+// the kid you play as: Indian and Black, with warm brown skin and short black curly hair
+const SKIN = H('#8d5a3b'), HAIR = H('#1c1412'), SHIRT = H('#e8433a'), SHORTS = H('#2a4a9a'), HAT = H('#f0d070');
 const playerMesh = (() => {
   const g = new Geo(4096);
   ell(g, 0, 1.02, 0, 0.2, 0.33, 0.27, SHIRT);
   ell(g, 0, 0.74, 0, 0.19, 0.12, 0.25, SHORTS);
   ell(g, 0, 1.55, 0, 0.25, 0.26, 0.25, SKIN);
-  for (const s of [-1, 1]) { ell(g, 0.21, 1.6, s * 0.09, 0.035, 0.045, 0.03, BLACK, -1, 1); ell(g, 0.17, 1.5, s * 0.15, 0.04, 0.025, 0.03, H('#ff9a8a'), -1, 1); }
-  tube(g, [0.235, 1.47, -0.06], [0.245, 1.46, 0.06], 0.012, 0.012, 4, H('#8a3a2a'), true);
+  for (const s of [-1, 1]) { ell(g, 0.21, 1.6, s * 0.09, 0.035, 0.045, 0.03, BLACK, -1, 1); ell(g, 0.17, 1.5, s * 0.15, 0.04, 0.025, 0.03, H('#a8584a'), -1, 1); }
+  tube(g, [0.235, 1.47, -0.06], [0.245, 1.46, 0.06], 0.012, 0.012, 4, H('#4a1610'), true);
+  // curly hair peeking out under the hat, around the sides and back of the head
+  for (let k = 0; k < 15; k++) { const a = lerp(1.0, TAU - 1.0, k / 14); for (const y of Math.abs(a - Math.PI) < 1.3 ? [1.5, 1.59, 1.68] : [1.6, 1.68]) ell(g, Math.cos(a) * 0.25, y + (k % 2) * 0.02, Math.sin(a) * 0.25, 0.072, 0.072, 0.072, shade(HAIR, 0.9 + (k % 3) * 0.1), -1, 1); }
   ell(g, 0, 1.73, 0, 0.48, 0.035, 0.48, HAT);
   ell(g, 0, 1.8, 0, 0.24, 0.13, 0.24, HAT, -1, 2, 1.74);
   tube(g, [0, 1.76, 0], [0, 1.82, 0], 0.245, 0.245, 16, H('#d6407f'), false);
@@ -2590,11 +2600,31 @@ function drawSky() {
 }
 // one creature. phase drives the swimming wave.
 const _fm = new Float32Array(16), _sm = new Float32Array(16);
+// the Colossaurus's moving pieces: legs paddle forward and back (each one turns at its hip or shoulder),
+// and every few seconds the lower jaw snaps shut in a big bite. anim 0 = holding still (the Fishdex picture).
+const _pm = new Float32Array(16), _pl = new Float32Array(16);
+function drawParts(sp, M, opts, anim, seed) {
+  const t = T * 2.2, u = ((T * 0.8 + seed) % 4.5 + 4.5) % 4.5;
+  const bite = u < 0.18 ? u / 0.18 : u < 0.4 ? 1 : u < 0.9 ? 1 - (u - 0.4) / 0.5 : 0;
+  for (const p of sp.parts) {
+    let yw = 0, pt = 0;
+    if (p.kind === 'leg') yw = 0.45 * Math.sin(t + (p.sd > 0 ? 0 : Math.PI)) * anim;
+    else if (p.kind === 'arm') yw = 0.5 * Math.sin(t + (p.sd > 0 ? Math.PI : 0)) * anim;
+    else pt = 0.3 * smooth(bite) * anim;
+    mTRS(_pl, 0, 0, 0, yw, pt, 0, 1);
+    const q = p.pivot, r = xform(_pl, q);
+    _pl[12] = q[0] - r[0]; _pl[13] = q[1] - r[1]; _pl[14] = q[2] - r[2];
+    mul4(_pm, M, _pl);
+    draw(p.mesh, _pm, opts);
+  }
+}
 function drawCreature(id, x, y, z, yaw, pitch, roll, S, phase, extra, wk = 1) {
   const sp = SPECIES[id], sw = SWIM[sp.kind];
   const myth = sp.r === 'm' || sp.o.ghost;
   const emit = (myth ? 0.18 + 0.12 * Math.sin(T * 3 + phase) : 0) + (sp.o.ghost ? 0.35 : 0) + (extra || 0);
-  draw(speciesMesh(id), mTRS(_fm, x, y, z, yaw, pitch, roll, S), { wig: sw[0] ? [sw[0] * wk, sw[1], phase, sw[3]] : null, emit });
+  const opts = { wig: sw[0] ? [sw[0] * wk, sw[1], phase, sw[3]] : null, emit };
+  draw(speciesMesh(id), mTRS(_fm, x, y, z, yaw, pitch, roll, S), opts);
+  if (sp.parts) drawParts(sp, _fm, opts, 1, x * 0.013 + z * 0.007);
   if (sp.r === 'm' && sp.o.glow) {
     // sparkles: one cloud for small ones, a row of clouds along the body for giants
     const n = Math.max(1, Math.min(6, Math.round(S / 5))), ss = Math.min(S * 0.75, 4);
@@ -2874,7 +2904,9 @@ function thumb(id, sil) {
   if (sil) gl.uniform4f(U.uFlat, 0.2, 0.25, 0.55, 1);
   const sp = SPECIES[id];
   const tm = speciesMesh(id), tl = sp.bb[3] - sp.bb[0], long = tl > 1.25, ts = long ? 1.15 / tl : 1;
-  draw(tm, mTRS(_fm, long ? -(sp.bb[0] + sp.bb[3]) / 2 * ts : sp.kind === 'eel' ? -0.08 : sp.kind === 'ray' ? 0.08 : 0, long ? -(sp.bb[1] + sp.bb[4]) / 2 * ts : 0, 0, -0.35, 0, sp.kind === 'ray' ? 0.9 : 0, long ? ts : sp.kind === 'eel' ? 0.9 : sp.kind === 'ray' ? 0.85 : 1), { wig: null, emit: sp.r === 'm' ? 0.2 : 0 });
+  const topt = { wig: null, emit: sp.r === 'm' ? 0.2 : 0 };
+  draw(tm, mTRS(_fm, long ? -(sp.bb[0] + sp.bb[3]) / 2 * ts : sp.kind === 'eel' ? -0.08 : sp.kind === 'ray' ? 0.08 : 0, long ? -(sp.bb[1] + sp.bb[4]) / 2 * ts : 0, 0, -0.35, 0, sp.kind === 'ray' ? 0.9 : 0, long ? ts : sp.kind === 'eel' ? 0.9 : sp.kind === 'ray' ? 0.85 : 1), topt);
+  if (sp.parts) drawParts(sp, _fm, topt, 0, 0);
   gl.uniform4f(U.uFlat, 0, 0, 0, 0);
   const px = new Uint8Array(TW * THh * 4);
   gl.readPixels(0, 0, TW, THh, gl.RGBA, gl.UNSIGNED_BYTE, px);
