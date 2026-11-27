@@ -212,7 +212,7 @@ body.kbnav .btn:focus,body.kbnav .item:focus,body.kbnav .hbtn:focus,body.kbnav #
     <a class="btn ghost" href="../">All games</a>
     <button class="btn ghost small" id="tReset">Start over</button>
   </div>
-  <p style="text-align:center;font-size:13px;opacity:.6;margin-top:12px">Version: Nov 27 · 10 creatures per zone · look up · Blue Shark</p>
+  <p style="text-align:center;font-size:13px;opacity:.6;margin-top:12px">Version: Nov 27 · Blue Shark · Saltwater Crocodile</p>
 </div></div>
 
 <!-- Pause -->
@@ -500,7 +500,7 @@ const SPECIES = [
   { name: 'Glowtooth Titan', z: 7, r: 'm', king: true, kind: 'shark', len: 35, o: { c1: '#1a2a4a', c2: '#6a8ac8', jaws: true, lava: '#7ff0ff', eyeC: '#7ff0ff', glow: '#9ff8ff' }, fact: 'A giant shark with glowing teeth. You can see the light from its mouth from far across the dark caves.' },
   // ---- 10 creatures in every zone (added at the end so old saves still point at the right creatures) ----
   { name: 'Parrotfish', z: 0, r: 'c', kind: 'fish', len: 0.5, o: { c1: '#3ad0a0', c2: '#7ae8ff', h: 0.36, w: 0.18, fin: '#ff6ad0', spots: '#ffd23f' }, fact: 'Parrotfish crunch on coral with their beak-like teeth, and the bits come out the other end as white sand.' },
-  { name: 'Lionfish', z: 0, r: 'r', kind: 'fish', len: 0.35, o: { c1: '#c84a2a', c2: '#f0c8b0', h: 0.4, w: 0.18, bands: [0.25, 0.1, -0.05, -0.2], band: '#fff0e0', fin: '#e88a6a', dorsal: 1.8 }, fact: 'A lionfish has long striped spines with venom in them, so most hunters leave it alone.' },
+  { name: 'Saltwater Crocodile', z: 0, r: 'r', kind: 'croc', len: 5, o: { c1: '#5a6a3a', c2: '#d8d0a0', eyeC: '#e8c84a' }, fact: 'Saltwater crocodiles are the biggest reptiles alive, and they can swim far out into the open sea.' },
   { name: 'Sheephead', z: 1, r: 'c', kind: 'fish', len: 0.9, o: { c1: '#e0506a', c2: '#f0a0a8', h: 0.36, w: 0.2, bands: [0.3, -0.28], band: '#1a1a1a', fin: '#1a1a1a', teeth: true }, fact: 'California sheephead all start life as females, and the biggest ones later turn into males.' },
   { name: 'Giant Sea Bass', z: 1, r: 'r', kind: 'fish', len: 2.2, o: { c1: '#4a4a52', c2: '#8a8a92', h: 0.3, w: 0.2, fin: '#3a3a42', spots: '#2a2a30' }, fact: 'Giant sea bass can grow longer than 2 meters and live for more than 70 years.' },
   { name: 'Blue Shark', z: 2, r: 'c', kind: 'shark', len: 3, o: { c1: '#2a5ac8', c2: '#f0f4fa', teeth: true }, fact: 'Blue sharks travel huge distances. Some swim all the way across an ocean.' },
@@ -1785,9 +1785,59 @@ function buildKaiju(g, o, parts) {
   // a crest of small spikes on top of the skull
   for (let k = 0; k < 5; k++) { const x = 0.44 - k * 0.018, p = hat(x); tube(g, [x, p.y + p.up * 0.9, 0], [x - 0.008, p.y + p.up + 0.01 + k * 0.002, 0], 0.004, 0.0005, 5, hot, false, 1, hot2); }
 }
-const BUILDERS = { kaiju: buildKaiju, fish: buildFish, shark: buildShark, eel: buildEel, octo: buildOcto, squid: buildSquid, puffer: buildPuffer, seahorse: buildSeahorse, bug: buildBug, seapig: buildSeapig, kelpie: buildKelpie, turtle: buildTurtle, ray: buildRay, jelly: buildJelly };
+/* ---------- a crocodile: a long, flat lofted body, a toothy snout, bumpy back ridges, a crested tail and four paddling legs ---------- */
+function buildCroc(g, o, parts) {
+  const part = (pivot, kind, sd) => { if (!parts) return g; const pg = new Geo(8192); parts.push({ g: pg, pivot, kind, sd }); return pg; };
+  const c1 = H(o.c1), c2 = H(o.c2), dk = shade(c1, 0.6), tooth = H('#f4eedc'), eyeC = H(o.eyeC || '#e8c84a');
+  // [x, middle height, half-height above, below, half-width], from the tail tip to the snout tip
+  const BODY = [[-0.5, 0.0, 0.004, 0.004, 0.003], [-0.38, 0.0, 0.022, 0.02, 0.014], [-0.24, 0.0, 0.036, 0.034, 0.03], [-0.1, 0.0, 0.05, 0.046, 0.066],
+    [0.04, 0.002, 0.058, 0.05, 0.085], [0.15, 0.004, 0.054, 0.046, 0.078], [0.22, 0.006, 0.044, 0.038, 0.058], [0.28, 0.008, 0.044, 0.032, 0.062],
+    [0.34, 0.006, 0.03, 0.026, 0.046], [0.42, 0.002, 0.022, 0.02, 0.034], [0.48, 0.0, 0.017, 0.015, 0.03], [0.505, 0.0, 0.006, 0.005, 0.012]];
+  const at = x => { const [y, up, dn, w] = keyLerp(BODY, x); return { x, y, up, dn, w }; };
+  const skin = (i, j, a) => {
+    const ca = Math.cos(a), h = hash3(Math.floor(i / 2), Math.floor(j / 2), 4);
+    let c = ca > 0.2 ? c1 : ca > -0.3 ? mixc(c1, c2, (0.2 - ca) / 0.5) : c2;
+    if (ca > 0.2 && hash3(i, j, 8) > 0.86) c = dk;                 // dark blotches on the back
+    if (ca < -0.4 && i % 3 === 0) c = shade(c, 0.88);               // the belly's scale rows
+    return shade(c, 0.88 + h * 0.2);
+  };
+  loft(g, 160, 32, t => at(lerp(-0.5, 0.505, t)), skin, (i, j, a) => 1 + 0.02 * (hash3(i, j, 3) - 0.5) + (Math.cos(a) > 0.3 ? 0.015 * Math.sin(i * 1.6) * Math.sin(j * 2.3) : 0));
+  // rows of bony bumps down the back, and two rows of crest plates on the tail that join into one
+  for (let x = 0.2; x > -0.46; x -= 0.022) {
+    const p = at(x), top = p.y + p.up * 0.9;
+    if (x > -0.12) for (const sd of [-1, 1]) for (const k of [0.22, 0.5]) ell(g, x, top - p.up * k * 0.4, sd * p.w * k, 0.009, 0.007, 0.007, dk, -1, 1);
+    else { const h = 0.012 + p.up * 0.35, off = x > -0.3 ? p.w * 0.35 : 0; for (const sd of (off ? [-1, 1] : [0])) flat(g, [x + 0.011, top, sd * off], [x - 0.011, top, sd * off], [x - 0.004, top + h, sd * off], dk); }
+  }
+  // the head: eyes in bumps on top, nostrils on the tip, a dark mouth line and rows of teeth
+  for (const sd of [-1, 1]) {
+    ell(g, 0.29, 0.05, sd * 0.03, 0.016, 0.011, 0.013, shade(c1, 0.9), -1, 1);
+    ell(g, 0.298, 0.056, sd * 0.032, 0.007, 0.006, 0.005, eyeC, -1, 1);
+    ell(g, 0.301, 0.056, sd * 0.034, 0.002, 0.005, 0.0015, BLACK, -1, 0);
+    ell(g, 0.494, 0.016, sd * 0.008, 0.0025, 0.002, 0.002, BLACK, -1, 0);
+    // the long mouth line
+    { const pts = []; for (let k = 0; k <= 10; k++) { const x = lerp(0.25, 0.5, k / 10), p = at(x); pts.push([x, p.y - p.dn * 0.15 + 0.001, sd * p.w * 0.97]); } chain(g, pts, 0.0028, 0.0018, 5, H('#2a1a14')); }
+    for (let k = 0; k < 12; k++) {
+      const x = lerp(0.27, 0.495, k / 11), p = at(x), z = sd * p.w * 0.93, y = p.y - p.dn * 0.15, big = k === 3 || k === 9 ? 1.6 : 1;
+      cone(g, [x, y + 0.003, z], [x + 0.001, y - 0.007 * big, z * 1.04], 0.0026 * big, 5, tooth);
+      if (k % 2) cone(g, [x + 0.008, y - 0.003, z], [x + 0.008, y + 0.006 * big, z * 1.04], 0.0022 * big, 5, tooth);
+    }
+  }
+  // four legs, sticking out to the sides, with webbed feet and claws; they paddle while it swims
+  for (const [lx, kind, len] of [[0.16, 'arm', 0.85], [-0.06, 'leg', 1]]) for (const sd of [-1, 1]) {
+    const p = at(lx), lg = part([lx, p.y - p.dn * 0.3, sd * p.w * 0.85], kind, sd), L = 0.07 * len;
+    const a = [lx, p.y - p.dn * 0.3, sd * p.w * 0.8], b = [lx + 0.01, p.y - p.dn - 0.005, sd * (p.w + L * 0.6)], c = [lx - 0.02, p.y - p.dn - 0.02, sd * (p.w + L)];
+    chain(lg, [a, b, c], 0.018 * len, 0.011 * len, 10, c1, -1, shade(c1, 0.85));
+    for (let k = -1; k <= 1; k++) {
+      const tip = [c[0] + 0.03 * len + k * 0.004, c[1] - 0.006, c[2] + sd * (0.012 + k * 0.012) * len];
+      cone(lg, c, tip, 0.006 * len, 6, shade(c1, 0.8));
+      cone(lg, tip, [tip[0] + 0.01, tip[1] - 0.002, tip[2]], 0.0025, 4, tooth);
+    }
+    flat(lg, c, [c[0] + 0.03 * len, c[1] - 0.006, c[2] - sd * 0.012 * len], [c[0] + 0.03 * len, c[1] - 0.006, c[2] + sd * 0.012 * len], shade(c1, 0.7));
+  }
+}
+const BUILDERS = { croc: buildCroc, kaiju: buildKaiju, fish: buildFish, shark: buildShark, eel: buildEel, octo: buildOcto, squid: buildSquid, puffer: buildPuffer, seahorse: buildSeahorse, bug: buildBug, seapig: buildSeapig, kelpie: buildKelpie, turtle: buildTurtle, ray: buildRay, jelly: buildJelly };
 // how each kind swims: amplitude, wave frequency, speed, mode (0 = side to side, 1 = tentacles, 2 = flapping)
-const SWIM = { kaiju: [0.08, 3.5, 2.5, 0], fish: [0.05, 9, 9, 0], shark: [0.05, 6, 5, 0], eel: [0.08, 11, 8, 0], octo: [0.06, 7, 3, 1], squid: [0.04, 10, 6, 0], puffer: [0.06, 8, 10, 0], seahorse: [0.03, 6, 2, 1], bug: [0, 0, 0, 0], seapig: [0, 0, 0, 0], kelpie: [0.05, 7, 6, 0], turtle: [0.12, 2, 3, 2], ray: [0.16, 3, 3, 2], jelly: [0.05, 6, 2, 1] };
+const SWIM = { croc: [0.06, 4, 3, 0], kaiju: [0.08, 3.5, 2.5, 0], fish: [0.05, 9, 9, 0], shark: [0.05, 6, 5, 0], eel: [0.08, 11, 8, 0], octo: [0.06, 7, 3, 1], squid: [0.04, 10, 6, 0], puffer: [0.06, 8, 10, 0], seahorse: [0.03, 6, 2, 1], bug: [0, 0, 0, 0], seapig: [0, 0, 0, 0], kelpie: [0.05, 7, 6, 0], turtle: [0.12, 2, 3, 2], ray: [0.16, 3, 3, 2], jelly: [0.05, 6, 2, 1] };
 const speciesMeshes = [];
 // a fine pattern of scales on the skin: each little patch a slightly different shade (glowing parts are left alone)
 function skinTexture(g) {
