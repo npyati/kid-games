@@ -34,7 +34,7 @@ Every zone has **ten creatures**. Most zones have seven commons, two rares and o
 |---|---|---|---|---|---|
 | Sunlit Shallows | 0–20 m | 1 | Sardine, Clownfish, Pufferfish, Blue Tang, Sea Turtle, Rainbow Ray, Parrotfish | Seahorse, Lionfish | Sunscale Dragonet |
 | Kelp Forest | 20–80 m | 5 | Kelp Bass, Garibaldi, Octopus, Moon Jelly, Wolf Eel, Treasure Turtle, Sheephead | Leafy Sea Dragon, Giant Sea Bass | Kelpie |
-| Twilight Zone | 80–300 m | 25 | Lanternfish, Hatchetfish, Squid, Barreleye, Manta Ray, Star Jelly, Bristlemouth | Swordfish, Oarfish | Moonhorn |
+| Twilight Zone | 80–300 m | 25 | Lanternfish, Hatchetfish, Squid, Barreleye, Manta Ray, Star Jelly, Blue Shark | Swordfish, Oarfish | Moonhorn |
 | Midnight Zone | 300–1,500 m | 125 | Anglerfish, Gulper Eel, Vampire Squid, Viperfish, Atolla Jellyfish, Shadow Ray, Fangtooth | Giant Squid, Sixgill Shark | Phantom Shark |
 | The Abyss | 1,500–5,000 m | 625 | Dumbo Octopus, Tripod Fish, Giant Isopod, Black Swallower, Goblin Shark, Ancient Turtle, Coffinfish | Frilled Shark, Greenland Shark | Sea Serpent |
 | The Trench | 5,000–11,000 m | 3,000 | Snailfish, Sea Pig, Supergiant Amphipod, Rattail, Big Red Jellyfish, Crystal Dragon, Cusk Eel | Megalodon, Ironclad Grouper | Kraken |
