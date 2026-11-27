@@ -212,7 +212,7 @@ body.kbnav .btn:focus,body.kbnav .item:focus,body.kbnav .hbtn:focus,body.kbnav #
     <a class="btn ghost" href="../">All games</a>
     <button class="btn ghost small" id="tReset">Start over</button>
   </div>
-  <p style="text-align:center;font-size:13px;opacity:.6;margin-top:12px">Version: Nov 26 · save slots · high-detail creatures</p>
+  <p style="text-align:center;font-size:13px;opacity:.6;margin-top:12px">Version: Nov 27 · Kaiju gear · new turtles · palace ceiling</p>
 </div></div>
 
 <!-- Pause -->
@@ -235,7 +235,7 @@ body.kbnav .btn:focus,body.kbnav .item:focus,body.kbnav .hbtn:focus,body.kbnav #
   <h2>How to play</h2>
   <p><b>1. Walk</b> to the end of the long pier. <b>2. Cast</b> your line and watch your hook sink through the zones of the ocean. <b>3.</b> When it stops, a fish from that zone bites. <b>Hold</b> to reel it in, and <b>let go</b> when it thrashes so the line doesn't pull too hard.</p>
   <p>Every fish goes into your <b>Aquarium</b> (the giant glass dome), and every fish there makes coins every second, even while you're fishing. Spend coins at the <b>Tackle Shop</b> on heavier sinkers to go deeper, faster reels, and luckier bait.</p>
-  <p>Every zone has eight creatures: six common ones, one <span style="color:var(--rare)">rare</span> one and one <span style="color:var(--myth)">mythical</span> one. The deepest zone hides the legendary King Leviathan. Somewhere far below it is <b>the Kaiju Depths</b>, a cavern of giant monsters where nothing is common, and its monsters fight back hard. Find the way down and it shows up in the Tackle Shop (200 billion coins). Deeper zones have fish worth much more. Press <b>Stop here</b> on the way down to fish a shallower zone.</p><p>Big creatures are life size! They're too heavy to hold up, so you get a picture of them lying on the beach next to you.</p>
+  <p>Every zone has eight creatures: six common ones, one <span style="color:var(--rare)">rare</span> one and one <span style="color:var(--myth)">mythical</span> one. The deepest zone hides the legendary King Leviathan. Somewhere far below it is <b>the Kaiju Depths</b>, a cavern of giant monsters where nothing is common, and its monsters fight back hard. Find the way down and it shows up in the Tackle Shop (200 billion coins). Buy it and new Kaiju gear shows up there too. Deeper zones have fish worth much more. Press <b>Stop here</b> on the way down to fish a shallower zone.</p><p>Big creatures are life size! They're too heavy to hold up, so you get a picture of them lying on the beach next to you.</p>
   <h3>Controls</h3>
   <p><b>Keyboard:</b> WASD or arrow keys to walk, Q and E (or drag with the mouse) to turn the camera, Space to cast, stop and reel (hold), Esc for the menu.</p>
   <p><b>Mouse or touch:</b> tap the ground to walk there, drag to turn the camera, tap the yellow button to cast, hold anywhere to reel.</p>
@@ -361,6 +361,8 @@ const HOOKS = [
   { name: 'Doom Anchor', depth: 20000, cost: 600000000, col: '#ff5a3a', zone: 8 },
   // palace things show up in the shop only after the Underwater Palace opens
   { name: 'Crown Anchor', depth: 26000, cost: 2000000000, col: '#b8a8ff', palace: true, fast: 2.5, zone: 9 },
+  // Kaiju Depths things show up in the shop only after you buy the Kaiju Depths
+  { name: 'Monster Claw Anchor', depth: 40000, cost: 400000000000, col: '#5aff7a', palace: true, kaiju: true, fast: 4, zone: 10, desc: 'A giant claw with glowing green crystals. Sinks 4× as fast, all the way to the Kaiju Depths' },
 ];
 const REELS = [
   { name: 'Old Reel', speed: 1, cost: 0 },
@@ -369,6 +371,7 @@ const REELS = [
   { name: 'Mega Reel', speed: 2.6, cost: 2000000 },
   { name: 'Rocket Reel', speed: 3.4, cost: 100000000 },
   { name: 'Royal Reel', speed: 4.6, cost: 5000000000, palace: true },
+  { name: 'Colossal Reel', speed: 6.5, cost: 1000000000000, palace: true, kaiju: true, desc: 'Reels in 6.5× as fast. Strong enough to drag a kaiju up from the deep' },
 ];
 const BAITS = [
   { name: 'Worm', rare: 1, myth: 1, cost: 0, col: '#ff8aa0' },
@@ -376,6 +379,7 @@ const BAITS = [
   { name: 'Glow Lure', rare: 2, myth: 3.5, cost: 150000, col: '#7fffd0' },
   { name: 'Mythic Bait', rare: 2.5, myth: 6, cost: 20000000, col: '#ff7ad9' },
   { name: 'Starlight Bait', rare: 3, myth: 10, cost: 1000000000, col: '#9fd8ff', palace: true },
+  { name: 'Kaiju Bait', rare: 4, myth: 16, cost: 600000000000, col: '#ff7a1a', palace: true, kaiju: true, desc: 'A glowing chunk of monster snack. Rare fish ×4, mythical fish ×16' },
 ];
 // new places to fish (save.kaiju: 0 = not yet, 1 = bought the Kaiju Depths)
 // TEMPORARY (set to false to go back to normal): the Kaiju Depths costs 100 coins, the Colossaurus bites every time and reels in fast
@@ -467,8 +471,8 @@ const SPECIES = [
   { name: 'Thunderjaw', z: 9, r: 'm', kind: 'shark', len: 25, o: { c1: '#16245a', c2: '#7aa0e0', jaws: true, lava: '#ffe83a', eyeC: '#fff04a', glow: '#ffe85a' }, fact: 'A deep blue shark crackling with lightning. When it zaps, the whole palace lights up.' },
   { name: 'Celestial Leviathan', z: 9, r: 'm', secret: true, kind: 'eel', len: 70, o: { c1: '#6a2ae8', c2: '#c8b8ff', grad: ['#9a3aff', '#2a7aff'], thick: 0.075, jaws: true, bigHorns: '#f0e8ff', mane: ['#e8e0ff', '#b07aff', '#7ad8ff', '#ffffff'], limbs: '#4a3ac8', longTail: true, tailGlow: '#7ff0ff', stars: '#ffffff', eyeC: '#7ff0ff', glow: '#b8d0ff' }, fact: 'A 100-meter dragon made of starlight, with a mane of horns, six legs and a long glowing tail. Almost nobody has ever seen one.' },
   // the Kaiju Depths: no commons at all. 2 rares, 4 mythicals, a legendary, and the secret Colossaurus (1 bite in 100)
-  { name: 'Boulderback Turtle', z: 10, r: 'r', kind: 'turtle', len: 14, o: { c1: '#4a5a48', c2: '#a8b098', shell: '#34383a', lava: '#7aff5a', eyeC: '#9aff6a' }, fact: 'Its shell is a pile of mossy boulders. Little monsters sometimes climb on it, thinking it is a hill.' },
-  { name: 'Titan Isopod', z: 10, r: 'r', kind: 'bug', len: 6, o: { c1: '#8a9aa8', c2: '#5a6a78' }, fact: 'Real giant isopods grow up to about half a meter long. This one is longer than a car.' },
+  { name: 'Boulderback Turtle', z: 10, r: 'r', kind: 'turtle', len: 14, o: { c1: '#4a5a48', c2: '#a8b098', shell: '#34383a', lava: '#7aff5a', eyeC: '#9aff6a', boulders: true }, fact: 'Its shell is a pile of mossy boulders. Little monsters sometimes climb on it, thinking it is a hill.' },
+  { name: 'Titan Isopod', z: 10, r: 'r', kind: 'bug', len: 2.5, o: { c1: '#8a9aa8', c2: '#5a6a78' }, fact: 'Real giant isopods grow up to about half a meter long. This one is five times bigger, longer than a bathtub.' },
   { name: 'Thunder Squid', z: 10, r: 'm', kind: 'squid', len: 30, o: { c1: '#3a2a8a', c2: '#8a7aff', big: true, glow: '#fff07a' }, fact: 'A squid longer than two school buses. Its tentacles crackle with lightning.' },
   { name: 'Razorwing Ray', z: 10, r: 'm', kind: 'ray', len: 22, o: { c1: '#1a1a24', c2: '#5a1a2a', spots: '#ff3a3a', horns: true, eyeC: '#ff4a2a', glow: '#ff6a4a' }, fact: 'Its huge black wings have edges as sharp as swords.' },
   { name: 'Magmaw', z: 10, r: 'm', kind: 'fish', len: 26, o: { c1: '#2a1a14', c2: '#4a2a1a', h: 0.38, w: 0.24, fin: '#ff5a1a', teeth: true, lava: '#ff8a2a', horns: '#3a2a20', eyeC: '#ffb03a', dorsal: 1.5, glow: '#ff7a2a' }, fact: 'Its mouth is big enough to swallow a whale, and its belly glows like a furnace.' },
@@ -1477,25 +1481,78 @@ function buildKelpie(g, o) {
   flat(g, [-0.46, 0.06, 0], [-0.56, 0.05, 0], [-0.6, -0.09, 0], c2);
 }
 function buildTurtle(g, o) {
-  const c1 = H(o.c1), c2 = H(o.c2), sh = H(o.shell), rng = mulberry32(17);
-  const shellCol = (nx, ny, nz, x, y, z) => (Math.sin(x * 24 + 0.5) * Math.sin(z * 24) > 0.45 ? shade(sh, 0.72) : sh);
-  ell(g, -0.02, 0.02, 0, 0.36, 0.17, 0.28, shellCol, -1, 2, -0.01);
-  ell(g, -0.02, -0.01, 0, 0.35, 0.05, 0.27, c2, -1, 1);
-  tube(g, [0.26, 0, 0], [0.4, 0.03, 0], 0.075, 0.06, 8, c1, false);
-  ell(g, 0.44, 0.04, 0, 0.095, 0.068, 0.075, c1, -1, 1);
-  ell(g, 0.53, 0.02, 0, 0.02, 0.012, 0.04, shade(c1, 0.6), -1, 0);
+  const fract = v => v - Math.floor(v);
+  const c1 = H(o.c1), c2 = H(o.c2), sh = H(o.shell), rng = mulberry32(17), dk = shade(sh, 0.55), seam = shade(sh, 0.42);
+  // the top shell: a dark base with raised plates (scutes) on it. A row of plates down the middle, four down each side,
+  // and small ones around the edge. Each plate bulges a little, follows the curve of the shell and has growth rings.
+  const CX = -0.02, CY = 0.025, RX = 0.36, RY = 0.17, RZ = 0.28;
+  // (lava turtles glow between their plates)
+  ell(g, CX, CY, 0, RX, RY, RZ, o.lava ? H(o.lava) : seam, o.lava ? 1 : -1, 2, -0.005);
+  const NP = LOD_LOW ? 3 : 9;
+  const plateAt = (F, id) => {
+    const tone = 0.88 + 0.2 * hash3(id, 7, 3), P = [];
+    for (let i = 0; i <= NP; i++) { const row = []; for (let j = 0; j <= NP; j++) {
+      const a = i / NP, b = j / NP, [px, pz] = F(a, b), r2 = Math.min(1, px * px + pz * pz);
+      const e = Math.min(a, 1 - a, b, 1 - b), k = 1.012 + 0.05 * smooth(clamp(e * 3, 0, 1));
+      const q = [CX + px * RX * k, CY + RY * Math.sqrt(1 - r2) * k, pz * RZ * k];
+      const ring = e > 0.32 ? 1.22 : e > 0.24 && e < 0.3 ? 0.82 : e > 0.14 && e < 0.18 ? 0.86 : 1;
+      row.push([q, shade(sh, tone * ring)]);
+    } P.push(row); }
+    for (let i = 0; i < NP; i++) for (let j = 0; j < NP; j++) {
+      const A = P[i][j], B = P[i + 1][j], C = P[i + 1][j + 1], D = P[i][j + 1];
+      for (const [u, v, w] of [[A, B, C], [A, C, D]]) { let n = faceN(u[0], v[0], w[0]); if (n[0] * (u[0][0] - CX) + n[1] * (u[0][1] - CY + 0.1) + n[2] * u[0][2] < 0) n = [-n[0], -n[1], -n[2]]; tri(g, u[0], v[0], w[0], n, -1, u[1], v[1], w[1], 0, 0, 0); }
+    }
+  };
+  const G = 0.025;   // the gap between plates, where the dark shell shows through
+  for (let i = 0; i < 5; i++) { const x0 = -0.86 + i * 0.344 + G, x1 = x0 + 0.344 - 2 * G; plateAt((a, b) => [lerp(x0, x1, a), lerp(-0.27 + G, 0.27 - G, b)], i); }
+  for (const s of [-1, 1]) for (let i = 0; i < 4; i++) {
+    const x0 = -0.82 + i * 0.41 + G, x1 = x0 + 0.41 - 2 * G;
+    plateAt((a, b) => { const px = lerp(x0, x1, a), ed = 0.84 * Math.sqrt(Math.max(0, 1 - px * px)); return [px, s * lerp(0.27 + G, Math.max(0.3, ed - G), b)]; }, 10 + i + (s > 0 ? 4 : 0));
+  }
+  for (let i = 0; i < 22; i++) { const a0 = i / 22 * TAU + 0.015, a1 = (i + 1) / 22 * TAU - 0.015; plateAt((a, b) => { const an = lerp(a0, a1, a), r = lerp(0.885, 0.995, b); return [Math.cos(an) * r, Math.sin(an) * r]; }, 30 + i); }
+  // the rim of the shell, with a saw-tooth edge at the back
+  ell(g, -0.02, 0.0, 0, 0.375, 0.035, 0.295, (nx, ny, nz) => shade(sh, 0.78 + 0.1 * hash3(Math.round(Math.atan2(nz, nx) * 4), 0, 5)), -1, 2);
+  for (let k = -3; k <= 3; k++) { const a = Math.PI + k * 0.16, x = -0.02 + Math.cos(a) * 0.37, z = Math.sin(a) * 0.29; cone(g, [x + 0.02, 0.0, z], [x - 0.025, -0.004, z * 1.06], 0.022, 5, shade(sh, 0.75)); }
+  // the belly shell, pale with seams
+  ell(g, -0.02, -0.015, 0, 0.34, 0.055, 0.26, (nx, ny, nz, x) => (Math.abs(nz) < 0.04 || fract((nx + 1) * 3) < 0.06) && ny < 0 ? shade(c2, 0.78) : c2, -1, 2);
+  // neck and head with a hooked beak
+  chain(g, [[0.24, 0.0, 0], [0.32, 0.015, 0], [0.38, 0.03, 0]], 0.075, 0.062, 12, c1, -1, shade(c1, 0.95));
+  for (let k = 0; k < 3; k++) ell(g, 0.28 + k * 0.035, 0.0 + k * 0.007, 0, 0.012, 0.07 - k * 0.004, 0.072 - k * 0.004, shade(c1, 0.85), -1, 1);   // neck wrinkles
+  ell(g, 0.445, 0.045, 0, 0.1, 0.07, 0.072, (nx, ny) => ny < -0.35 ? mixc(c1, c2, 0.55) : c1, -1, 2);
+  // head scales: a few smooth darker patches on top and on the cheeks
+  for (const [x, y, z, r] of [[0.44, 0.105, 0, 0.03], [0.48, 0.1, 0.022, 0.02], [0.48, 0.1, -0.022, 0.02], [0.405, 0.1, 0.03, 0.022], [0.405, 0.1, -0.03, 0.022], [0.43, 0.05, 0.066, 0.024], [0.43, 0.05, -0.066, 0.024]]) ell(g, x, y, z, r, r * 0.22, r * 0.85, shade(c1, 0.84), -1, 1);
+  const beak = mixc(shade(c1, 0.7), H('#3a3020'), 0.4);
+  ell(g, 0.512, 0.032, 0, 0.04, 0.03, 0.042, beak, -1, 1);
+  cone(g, [0.53, 0.028, 0], [0.556, 0.006, 0], 0.018, 8, beak);
+  ell(g, 0.505, 0.01, 0, 0.034, 0.01, 0.036, shade(beak, 0.75), -1, 1);
   for (const s of [-1, 1]) {
-    eyeAt(g, 0.48, 0.07, s * 0.055, 0.02, s, o.eyeC ? H(o.eyeC) : BLACK, !!o.eyeC);
-    flat(g, [0.18, -0.01, s * 0.2], [0.06, -0.01, s * 0.22], [-0.02, -0.04, s * 0.56], c1);
-    flat(g, [0.18, -0.01, s * 0.2], [-0.02, -0.04, s * 0.56], [0.14, -0.03, s * 0.44], c1);
-    flat(g, [-0.2, -0.01, s * 0.18], [-0.3, -0.01, s * 0.14], [-0.38, -0.03, s * 0.3], c1);
+    flat(g, [0.475, 0.012, s * 0.058], [0.545, 0.018, s * 0.03], [0.475, 0.022, s * 0.062], shade(c1, 0.35), 1);   // mouth line
+    eyeAt(g, 0.47, 0.065, s * 0.055, 0.019, s, o.eyeC ? H(o.eyeC) : BLACK, !!o.eyeC);
+    ell(g, 0.468, 0.082, s * 0.055, 0.024, 0.008, 0.016, shade(c1, 0.8), -1, 1);       // eyelid
+    // big front flippers: long and curved, swept back, with a claw on the front edge
+    fin(g, [0.2, -0.005, s * 0.19], [0.09, -0.01, s * 0.21], [-0.06, -0.05, s * 0.62], 0.028, c1, 0.28);
+    for (let k = 0; k < 5; k++) { const t = 0.2 + k * 0.14, x = lerp(0.15, -0.04, t), z = s * lerp(0.21, 0.58, t); ell(g, x, -0.005 - t * 0.04 + 0.012, z, 0.022 - k * 0.003, 0.004, 0.016 - k * 0.002, shade(c1, 0.72), -1, 0); }
+    cone(g, [0.16, -0.008, s * 0.29], [0.18, -0.01, s * 0.32], 0.008, 5, H('#e8e0c8'));
+    // back flippers, short and rounded
+    fin(g, [-0.22, -0.01, s * 0.17], [-0.3, -0.01, s * 0.12], [-0.42, -0.03, s * 0.29], 0.02, c1, 0.35);
   }
-  cone(g, [-0.34, 0, 0], [-0.45, -0.01, 0], 0.035, 5, c1);
+  cone(g, [-0.33, -0.005, 0], [-0.46, -0.015, 0], 0.04, 8, c1);
+  if (o.boulders) {
+    // mossy boulders piled on its back
+    const top = (px, pz) => [CX + px * RX, CY + RY * Math.sqrt(Math.max(0, 1 - px * px - pz * pz)), pz * RZ];
+    for (const [px, pz, r] of [[-0.35, 0, 0.09], [0.2, 0.05, 0.11], [-0.1, 0.45, 0.07], [0.1, -0.5, 0.075], [-0.55, -0.35, 0.06], [0.5, 0.35, 0.06], [-0.6, 0.4, 0.05]]) {
+      const q = top(px, pz); blob(g, q[0], q[1] + r * 0.3, q[2], r, r * 0.7, r * 0.9, shade(H('#5a6058'), 0.8 + rng() * 0.3), rng, 0.35, -1);
+      ell(g, q[0], q[1] + r * 0.85, q[2], r * 0.7, r * 0.22, r * 0.65, H('#4a8a3a'), -1, 1);
+    }
+  }
   if (o.gems) {
-    const gc = [H('#ff3a6a'), H('#3ad0ff'), H('#4ee06a'), H('#ffffff')];
-    for (let i = 0; i < 14; i++) { const a = rng() * TAU, d = rng() * 0.8, x = -0.02 + Math.cos(a) * 0.3 * d, z = Math.sin(a) * 0.24 * d, y = 0.02 + 0.17 * Math.sqrt(Math.max(0, 1 - d * d)); ell(g, x, y, z, 0.022, 0.018, 0.022, gc[i % 4], 1, 0); }
+    // a gem in the middle of each plate, and smaller ones around the edge
+    const gc = [H('#ff3a6a'), H('#3ad0ff'), H('#4ee06a'), H('#ffffff'), H('#b86aff')], top = (px, pz, k) => [CX + px * RX * k, CY + RY * Math.sqrt(Math.max(0, 1 - px * px - pz * pz)) * k, pz * RZ * k];
+    const spots = []; for (let i = 0; i < 5; i++) spots.push([-0.688 + i * 0.344, 0, 0.026]);
+    for (const sd of [-1, 1]) for (let i = 0; i < 4; i++) { const px = -0.615 + i * 0.41; spots.push([px, sd * 0.55 * Math.sqrt(1 - px * px) + sd * 0.1, 0.022]); }
+    for (let i = 0; i < 11; i++) { const a = (i + 0.5) / 11 * TAU; spots.push([Math.cos(a) * 0.94, Math.sin(a) * 0.94, 0.013]); }
+    spots.forEach(([px, pz, r], i) => { const q = top(px, pz, 1.07); ell(g, q[0], q[1], q[2], r, r * 0.75, r, gc[i % 5], 1, 1); });
   }
-  if (o.lava) lavaCracks(g, -0.02, 0.36, 0.17, 0.28, H(o.lava), rng);
   if (o.island) {
     // a tiny island with a palm tree growing on its back
     ell(g, -0.04, 0.16, 0, 0.2, 0.06, 0.16, H('#e8d098'), -1, 1);
@@ -1586,6 +1643,18 @@ function loft(g, N, M, prof, col, bump, xf) {
   }
   const V = (i, j) => { const q = P[i][j], n = NN[i][j % M], c = C[i][j]; g.v(q[0], q[1], q[2], n[0], n[1], n[2], -1, c[0], c[1], c[2], 0); };
   for (let i = 0; i < N; i++) for (let j = 0; j < M; j++) { V(i, j); V(i + 1, j); V(i + 1, j + 1); V(i, j); V(i + 1, j + 1); V(i, j + 1); }
+  // close both ends (otherwise the tip of the snout is an open hole you can see into)
+  for (const i of [0, N]) {
+    const ring = P[i], cen = [0, 0, 0];
+    for (let j = 0; j < M; j++) for (let k = 0; k < 3; k++) cen[k] += ring[j][k] / M;
+    const n = [i === 0 ? -1 : 1, 0, 0];     // the body runs along x
+    for (let j = 0; j < M; j++) {
+      const a = ring[j], b = ring[(j + 1) % M], c = C[i][j];
+      g.v(cen[0], cen[1], cen[2], n[0], n[1], n[2], -1, c[0], c[1], c[2], 0);
+      g.v(a[0], a[1], a[2], n[0], n[1], n[2], -1, c[0], c[1], c[2], 0);
+      g.v(b[0], b[1], b[2], n[0], n[1], n[2], -1, c[0], c[1], c[2], 0);
+    }
+  }
 }
 // smooth in-between of a table of rows [x, ...values]
 function keyLerp(K, x) {
@@ -1978,6 +2047,8 @@ function buildHookMesh() {
   const big = 0.12 + save.hook * 0.025;
   ell(g, 0, -0.1 - big, 0, big * 0.8, big * 1.2, big * 0.8, hc, save.hook >= 4 ? 1 : -1, 1);
   if (save.hook >= DOOM_HOOK) for (const s of [-1, 1]) cone(g, [0, -0.1 - big * 2, 0], [s * 0.3, -0.1 - big * 2 + 0.25, 0], 0.06, 5, hc, 1);
+  // the Monster Claw Anchor: four bony claws around it, with glowing green crystals
+  if (HOOKS[save.hook].kaiju) for (let k = 0; k < 4; k++) { const an = k / 4 * TAU + 0.4, c = Math.cos(an), sn = Math.sin(an), y0 = -0.1 - big; chain(g, [[c * big * 0.6, y0, sn * big * 0.6], [c * big * 1.3, y0 - big * 0.4, sn * big * 1.3], [c * big * 1.25, y0 - big * 1.1, sn * big * 1.25], [c * big * 0.8, y0 - big * 1.5, sn * big * 0.8]], 0.045, 0.01, 6, H('#e8dcc0')); cone(g, [c * big * 0.7, y0 + big * 0.7, sn * big * 0.7], [c * big * 1.1, y0 + big * 1.5, sn * big * 1.1], 0.05, 5, H('#6aff4a'), 1); }
   const top = -0.12 - big * 2.3;
   const hp = [[0, top, 0], [0, top - 0.35, 0]];
   for (let i = 1; i <= 7; i++) { const a = Math.PI + i / 7 * Math.PI * 1.1; hp.push([0.12 + Math.cos(a) * 0.12, top - 0.35 + Math.sin(a) * 0.12, 0]); }
@@ -2128,6 +2199,28 @@ function buildPalace() {
     const c = (Math.round(x / 6) + Math.round(z / 6)) % 2 ? m1 : m2, hole = x >= -6 && x < 6 && z >= -10 && z < 2, gg = hole ? pg : g;
     tri(gg, [x, Y, z], [x, Y, z + 6], [x + 6, Y, z + 6], [0, 1, 0], -1, c, c, c, 0, 0, 0);
     tri(gg, [x, Y, z], [x + 6, Y, z + 6], [x + 6, Y, z], [0, 1, 0], -1, c, c, c, 0, 0, 0);
+  }
+  // the underside of the floor, seen from the Kaiju Depths below: big stone blocks, with glowing crystals and lanterns hanging down
+  const Yb = Y - 3, stone = H('#9a9ec4'), stone2 = H('#7c80a8');
+  for (let x = -150; x < 150; x += 12) for (let z = -130; z < 70; z += 12) {
+    const k = (Math.round(x / 12) + Math.round(z / 10)) % 2 ? stone : stone2, c = shade(k, 0.85 + rng() * 0.3);
+    for (let dx = 0; dx < 12; dx += 6) for (let dz = 0; dz < 12; dz += 6) {
+      const x0 = x + dx, z0 = z + dz, hole = x0 >= -6 && x0 < 6 && z0 >= -10 && z0 < 2, gg = hole ? pg : g;
+      tri(gg, [x0, Yb, z0], [x0 + 6, Yb, z0 + 6], [x0, Yb, z0 + 6], [0, -1, 0], -1, c, c, c, 0, 0, 0);
+      tri(gg, [x0, Yb, z0], [x0 + 6, Yb, z0], [x0 + 6, Yb, z0 + 6], [0, -1, 0], -1, c, c, c, 0, 0, 0);
+    }
+    // dark lines between the blocks
+    box(g, x + 6, Yb - 0.15, z, 12, 0.1, 0.35, H('#1a1c2a')); box(g, x, Yb - 0.15, z + 6, 0.35, 0.1, 12, H('#1a1c2a'));
+  }
+  // the hole in the underside is lined with gold, and a stone wall closes the gap between the floor and its underside
+  for (const [x, z, w, d] of [[0, -10.3, 12.6, 0.6], [0, 2.3, 12.6, 0.6], [-6.3, -4, 0.6, 12], [6.3, -4, 0.6, 12]]) box(g, x, Yb - 0.3, z, w, 3.3, d, gold);
+  for (const [x, z, w, d] of [[0, -130, 300, 1], [0, 70, 300, 1], [-150, -30, 1, 200], [150, -30, 1, 200]]) box(g, x, Yb, z, w, 3, d, stone2);
+  // glowing crystals hanging from the ceiling, and gold chains with lanterns
+  for (let i = 0; i < 70; i++) {
+    const x = (rng() - 0.5) * 280, z = -125 + rng() * 190;
+    if (Math.abs(x) < 10 && z > -14 && z < 6) continue;
+    if (rng() < 0.6) { const n = 2 + Math.floor(rng() * 3); for (let k = 0; k < n; k++) cone(g, [x + (rng() - 0.5) * 2, Yb, z + (rng() - 0.5) * 2], [x + (rng() - 0.5) * 3, Yb - 2 - rng() * 5, z + (rng() - 0.5) * 3], 0.5 + rng() * 0.5, 5, [H('#bfa8ff'), H('#9fe8ff'), H('#ffb8f0')][i % 3], 1); }
+    else { const L = 3 + rng() * 6; tube(g, [x, Yb, z], [x, Yb - L, z], 0.12, 0.12, 5, gold, false); ell(g, x, Yb - L - 0.9, z, 0.8, 1.1, 0.8, win, 1, 1); box(g, x, Yb - L - 0.2, z, 1.2, 0.3, 1.2, gold); }
   }
   palacePlugMesh = makeMesh(pg);
   // a gold rim around the hole
@@ -3532,9 +3625,9 @@ addEventListener('pointerup', () => { if (!ptr.down) pointerHeld = false; });
 
 /* ---------- the Tackle Shop ---------- */
 const SHOP_ROWS = [
-  { key: 'hook', title: 'Sinkers: go deeper', list: HOOKS, desc: (it, i) => it.fast ? `Sinks ${it.fast}× as fast, all the way down to the Underwater Palace` : i === DOOM_HOOK && palaceOpen() ? 'Reaches 20,000 m: The Fishpocalypse Rift, and the Underwater Palace under it' : `Reaches ${fmt(it.depth)} m: ${ZONES[it.zone].name}`, sw: it => it.col },
-  { key: 'reel', title: 'Reels: reel in faster', list: REELS, desc: it => it.speed === 1 ? 'The reel you started with' : `Reels in ${it.speed}× as fast`, sw: () => '#c8d0d8' },
-  { key: 'bait', title: 'Bait: rare and mythical fish bite more', list: BAITS, desc: it => it.rare === 1 ? 'A wiggly worm' : `Rare fish ×${it.rare}, mythical fish ×${it.myth}`, sw: it => it.col },
+  { key: 'hook', title: 'Sinkers: go deeper', list: HOOKS, desc: (it, i) => it.desc ? it.desc : it.fast ? `Sinks ${it.fast}× as fast, all the way down to the Underwater Palace` : i === DOOM_HOOK && palaceOpen() ? 'Reaches 20,000 m: The Fishpocalypse Rift, and the Underwater Palace under it' : `Reaches ${fmt(it.depth)} m: ${ZONES[it.zone].name}`, sw: it => it.col },
+  { key: 'reel', title: 'Reels: reel in faster', list: REELS, desc: it => it.desc ? it.desc : it.speed === 1 ? 'The reel you started with' : `Reels in ${it.speed}× as fast`, sw: () => '#c8d0d8' },
+  { key: 'bait', title: 'Bait: rare and mythical fish bite more', list: BAITS, desc: it => it.desc ? it.desc : it.rare === 1 ? 'A wiggly worm' : `Rare fish ×${it.rare}, mythical fish ×${it.myth}`, sw: it => it.col },
   { key: 'kaiju', title: 'New places to fish', list: PLACES, desc: () => 'A huge cavern of giant monsters under the Underwater Palace. Nothing there is common! Buy it and a hole opens in the palace floor, so your anchor sinks right into it.', sw: it => it.col },
 ];
 function renderShop(keepFocus) {
@@ -3545,6 +3638,7 @@ function renderShop(keepFocus) {
     h += `<h3>${row.title}</h3><div class="items">`;
     row.list.forEach((it, i) => {
       if (it.palace && !palaceOpen()) return;     // a secret until the palace opens
+      if (it.kaiju && !save.kaiju) return;        // Kaiju Depths gear shows up once you've bought the Kaiju Depths
       if (it.skip) return;
       let cls = 'item', pr;
       if (i <= owned) { cls += ' own'; pr = row.key === 'kaiju' ? 'Yours ✓' : i === owned ? 'Using it ✓' : 'Owned ✓'; }
@@ -3567,7 +3661,7 @@ function buy(key, i) {
   if (i > owned + 1) { sfx.no(); toast(`Buy the ${row.list[owned + 1].name} first`); return; }
   if (save.coins < it.cost) { sfx.no(); toast(`You need ${fmt(it.cost - save.coins)} more coins`); return; }
   save.coins -= it.cost; save[key] = i; saveGame(); sfx.buy();
-  toast(key === 'kaiju' ? 'You got the Kaiju Depths! The palace floor is open: your anchor sinks right through it.' : key === 'hook' && !it.fast ? `You got the ${it.name}! Now you can reach ${ZONES[it.zone].name}.` : `You got the ${it.name}!`, key === 'kaiju' ? 5 : 3);
+  toast(key === 'kaiju' ? 'You got the Kaiju Depths! The palace floor is open: your anchor sinks right through it. New Kaiju gear is in the shop!' : key === 'hook' && !it.fast ? `You got the ${it.name}! Now you can reach ${ZONES[it.zone].name}.` : `You got the ${it.name}!`, key === 'kaiju' ? 5 : 3);
   if (key === 'kaiju') sfx.roar();
   renderShop(true);
 }
