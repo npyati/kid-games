@@ -38,11 +38,11 @@ Every zone has **ten creatures**. Most zones have seven commons, two rares and o
 | Midnight Zone | 300–1,500 m | 125 | Anglerfish, Gulper Eel, Vampire Squid, Viperfish, Atolla Jellyfish, Shadow Ray, Fangtooth | Giant Squid, Sixgill Shark | Phantom Shark |
 | The Abyss | 1,500–5,000 m | 625 | Dumbo Octopus, Tripod Fish, Giant Isopod, Black Swallower, Goblin Shark, Ancient Turtle, Coffinfish | Frilled Shark, Greenland Shark | Sea Serpent |
 | The Trench | 5,000–11,000 m | 3,000 | Snailfish, Sea Pig, Supergiant Amphipod, Rattail, Big Red Jellyfish, Crystal Dragon, Cusk Eel | Megalodon, Ironclad Grouper | Kraken |
-| Shipwreck Graveyard | 11,000–13,000 m | 6,000 | Barnacle Bass, Anchor Eel, Rusty Puffer, Doubloon Jelly, Cannonball Turtle, Sail Ray, Bottle Jelly | Ghostlight Octopus, Pirate Pike | Wreck Serpent |
+| Shipwreck Graveyard | 11,000–13,000 m | 6,000 | Barnacle Bass, Anchor Eel, Rusty Puffer, Doubloon Jelly, Cannonball Turtle, Sail Ray, Bottle Jelly | Ghostlight Octopus, Buccaneer Barracuda | Wreck Serpent |
 | The Glow Caves | 13,000–15,000 m | 9,000 | Glowworm Eel, Lantern Puffer, Cave Ray, Neon Jelly, Crystal Bass, Cave Isopod | Shimmer Seahorse, Glowstone Octopus | Aurora Dragonfish, and **Glowtooth Titan** (legendary) |
 | The Fishpocalypse Rift | 15,000–20,000 m | 15,000 | Zombie Cod, Skeleton Fish, Lava Shark, Fire Jelly, Magma Turtle, Cinder Ray | Triclops Grouper, Bone Serpent | Doomfin, and **King Leviathan** (legendary) |
-| The Underwater Palace (secret) | 20,000–30,000 m | 75,000 | Pearl Angelfish, Golden Jelly, Gem Turtle, Sapphire Ray, Marble Eel, Crown Puffer | Armored Seahorse, Royal Guardfish | Thunderjaw (25 m lightning shark), and **Celestial Leviathan** (secret) |
-| The Kaiju Depths (bought) | 30,000–50,000 m | 375 million | (none) | Boulderback Turtle, Titan Isopod, Gorgon Puffer | Thunder Squid, Razorwing Ray, Crystal Kaiju Ray, Magmaw, Abyss Wyrm, **Mecha Megashark** (legendary), and **Colossaurus** (secret) |
+| The Underwater Palace (secret) | 20,000–30,000 m | 75,000 | Pearl Angelfish, Golden Jelly, Gem Turtle, Sapphire Ray, Marble Eel, Crown Puffer | Armored Seahorse, Golden Lancer | Thunderjaw (25 m lightning shark), and **Celestial Leviathan** (secret) |
+| The Kaiju Depths (bought) | 30,000–50,000 m | 375 million | (none) | Boulderback Turtle, Titan Isopod, Gorgon Puffer | Thunder Squid, Razorwing Ray, Oblivion (35 m octopus with green and blue stripes), Magmaw, Abyss Wyrm, **Mecha Megashark** (legendary), and **Colossaurus** (secret) |
 
 The newer creatures are at the end of `SPECIES`, so old saves (which store each fish by its number) still point at the right ones.
 

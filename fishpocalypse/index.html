@@ -212,7 +212,7 @@ body.kbnav .btn:focus,body.kbnav .item:focus,body.kbnav .hbtn:focus,body.kbnav #
     <a class="btn ghost" href="../">All games</a>
     <button class="btn ghost small" id="tReset">Start over</button>
   </div>
-  <p style="text-align:center;font-size:13px;opacity:.6;margin-top:12px">Version: Nov 27 · Blue Shark · Saltwater Crocodile</p>
+  <p style="text-align:center;font-size:13px;opacity:.6;margin-top:12px">Version: Nov 27 · Oblivion · Golden Lancer · Buccaneer Barracuda</p>
 </div></div>
 
 <!-- Pause -->
@@ -512,14 +512,14 @@ const SPECIES = [
   { name: 'Cusk Eel', z: 5, r: 'c', kind: 'eel', len: 0.6, o: { c1: '#e8d8c8', c2: '#f8ece0', thick: 0.06 }, fact: 'A cusk eel was once caught more than 8,000 meters down, deeper than almost any other fish.' },
   { name: 'Ironclad Grouper', z: 5, r: 'r', kind: 'fish', len: 3, o: { c1: '#5a6a7a', c2: '#a8b4c0', h: 0.38, w: 0.26, fin: '#3a4a5a', spots: '#c8d0d8', teeth: true }, fact: "Its scales are as hard as iron plates, so the crushing deep water doesn't bother it at all." },
   { name: 'Bottle Jelly', z: 6, r: 'c', kind: 'jelly', len: 0.5, o: { c1: '#7ac8a0', c2: '#a8e8c8', rings: '#fff0c0' }, fact: "A jellyfish shaped like an old glass bottle. Sometimes there's a message inside!" },
-  { name: 'Pirate Pike', z: 6, r: 'r', kind: 'fish', len: 2, o: { c1: '#2a2a2a', c2: '#a8a8a8', h: 0.24, w: 0.16, fin: '#c01818', teeth: true, stitches: true }, fact: 'It guards a sunken chest of gold coins and bites anyone who comes too close.' },
+  { name: 'Buccaneer Barracuda', z: 6, r: 'r', kind: 'fish', len: 2, o: { c1: '#2a2a2a', c2: '#a8a8a8', h: 0.24, w: 0.16, fin: '#c01818', teeth: true, stitches: true }, fact: 'It guards a sunken chest of gold coins and bites anyone who comes too close.' },
   { name: 'Glowstone Octopus', z: 7, r: 'r', kind: 'octo', len: 1.2, o: { c1: '#3a2a8a', c2: '#7ff0ff', eyeC: '#9ff8ff' }, fact: 'Its skin flashes with patterns of light, like a living disco ball.' },
   { name: 'Cinder Ray', z: 8, r: 'c', kind: 'ray', len: 3, o: { c1: '#2a1a14', c2: '#4a2a1a', spots: '#ff7a1a', eyeC: '#ffb03a' }, fact: 'Its wings are covered in glowing embers that never go out.' },
   { name: 'Bone Serpent', z: 8, r: 'r', kind: 'eel', len: 6, o: { c1: '#e8e4d8', c2: '#c8c4b8', thick: 0.05, spikes: '#ff4a2a', teeth: true, eyeC: '#ff4a2a' }, fact: 'A serpent made of old bones, held together by red-hot magic.' },
   { name: 'Crown Puffer', z: 9, r: 'c', kind: 'puffer', len: 0.5, o: { c1: '#ffd23f', c2: '#fff4c0', spots: '#ff3a6a' }, fact: 'A pufferfish covered in tiny rubies. When it puffs up, it sparkles like a crown.' },
-  { name: 'Royal Guardfish', z: 9, r: 'r', kind: 'fish', len: 1.4, o: { c1: '#3a4ab8', c2: '#d8e0ff', h: 0.3, w: 0.18, fin: '#ffd23f', horn: '#ffd23f' }, fact: 'It guards the palace gate with the golden spear on its nose.' },
+  { name: 'Golden Lancer', z: 9, r: 'r', kind: 'fish', len: 1.4, o: { c1: '#3a4ab8', c2: '#d8e0ff', h: 0.3, w: 0.18, fin: '#ffd23f', horn: '#ffd23f' }, fact: 'It guards the palace gate with the golden spear on its nose.' },
   { name: 'Gorgon Puffer', z: 10, r: 'r', kind: 'puffer', len: 8, o: { c1: '#3a5a2a', c2: '#9aff6a', spots: '#ff7a1a' }, fact: 'A pufferfish as big as a bus. When it puffs up, it fills half the cave.' },
-  { name: 'Crystal Kaiju Ray', z: 10, r: 'm', kind: 'ray', len: 30, o: { c1: '#1a3a2a', c2: '#7aff5a', spots: '#d8ffb0', horns: true, eyeC: '#9aff6a', glow: '#9aff6a' }, fact: 'A giant ray made of glowing green crystal. Its wings are wider than a basketball court.' },
+  { name: 'Oblivion', z: 10, r: 'm', kind: 'octo', len: 35, o: { c1: '#1a8a4a', c2: '#2a6ae8', stripes: ['#2ad86a', '#2a6ae8'], kraken: true, eyeC: '#9affd8', glow: '#7affc0' }, fact: 'A giant octopus with green and blue stripes all the way around it. When it wraps its arms around a cave, the whole cave goes dark.' },
 ];
 const RARITY = { c: 'Common', r: 'Rare', m: 'Mythical' };
 // Every zone has 10 creatures: most have 7 commons, 2 rares and 1 mythical (some swap a common for a legendary or secret one).
@@ -1359,10 +1359,12 @@ function buildOcto(g, o) {
   const pale = mixc(c2, [1, 0.92, 0.88], 0.45);
   // the mantle: a tall dome, wrinkled and spotted ([height, front-back radius, side radius])
   const MANT = [[-0.06, 0.12, 0.12], [0.0, 0.17, 0.165], [0.1, 0.2, 0.19], [0.22, 0.205, 0.19], [0.34, 0.18, 0.165], [0.42, 0.13, 0.12], [0.47, 0.06, 0.06], [0.485, 0.004, 0.004]];
-  const mskin = (i, j) => { const h = hash3(i >> 2, j >> 1, 11); return h > 0.86 ? c2 : shade(c1, 0.86 + hash3(i, j, 12) * 0.2); };
+  // o.stripes: two colors in rings all the way around the dome and down every arm
+  const ST = o.stripes ? o.stripes.map(H) : null;
+  const mskin = ST ? (i, j) => shade(ST[Math.floor(i / 6) % 2], 0.9 + hash3(i, j, 12) * 0.15) : (i, j) => { const h = hash3(i >> 2, j >> 1, 11); return h > 0.86 ? c2 : shade(c1, 0.86 + hash3(i, j, 12) * 0.2); };
   loft(g, 70, 36, t => { const hgt = lerp(-0.06, 0.485, t), [rx, rz] = keyLerp(MANT, hgt); return { x: hgt, y: 0, up: rx, dn: rx, w: rz }; }, mskin,
     (i, j) => 1 + 0.025 * Math.sin(i * 0.8) * Math.sin(j * 1.4) + 0.01 * (hash3(i, j, 13) - 0.5), q => [-0.03 + q[1], q[0], q[2]]);
-  ell(g, 0.04, 0.03, 0, 0.17, 0.12, 0.17, c1);
+  ell(g, 0.04, 0.03, 0, 0.17, 0.12, 0.17, ST ? ST[1] : c1);
   // a hard beak in the middle, under the arms
   cone(g, [0.03, -0.04, 0], [0.03, -0.1, 0], 0.035, 8, H('#2a1a14'));
   // the arms: smooth, tapering, curling at the tips, with two rows of suckers underneath
@@ -1376,7 +1378,7 @@ function buildOcto(g, o) {
       pts.push([0.03 + ca * r - sa * side, y, sa * r + ca * side]);
     }
     const rad = u => r0 * Math.pow(1 - u, 0.8) * (club && u > 0.8 && u < 0.97 ? 1 + 0.9 * Math.sin((u - 0.8) / 0.17 * Math.PI) : 1) + 0.003;
-    const fr = sweep(g, pts, rad, 14, (u, ang) => shade(mixc(c1, c2, u * 0.6), 0.9 + 0.1 * Math.cos(ang)));
+    const fr = sweep(g, pts, rad, 14, (u, ang) => shade(ST ? ST[Math.floor(u * 11) % 2] : mixc(c1, c2, u * 0.6), 0.9 + 0.1 * Math.cos(ang)));
     // suckers on the side that faces in and down (not on the far-away copy)
     if (!LOD_LOW) for (let k = 3; k < M - 2; k++) {
       const u = k / M, p = pts[k], R = rad(u);
