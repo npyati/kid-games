@@ -223,6 +223,7 @@ body.kbnav .btn:focus,body.kbnav .item:focus,body.kbnav .hbtn:focus,body.kbnav #
     <button class="btn" id="pHow">How to play</button>
     <button class="btn" id="pMusic">Music: on</button>
     <button class="btn" id="pSfx">Sounds: on</button>
+    <button class="btn" id="pPlayer">Switch player</button>
     <button class="btn" id="pTitle">Title screen</button>
     <a class="btn ghost" href="../">All games</a>
   </div>
@@ -3366,6 +3367,8 @@ $('rYes').onclick = () => {
   closeOv(); toast('Starting over with a fresh Tin Hook');
 };
 $('pResume').onclick = () => closeOv();
+// switching players from the pause menu: back to the title screen first, then the save list
+$('pPlayer').onclick = () => { $('pTitle').onclick(); renderSlots(); openOv('ovSlots'); };
 $('pDex').onclick = () => { renderDex(); openOv('ovDex'); };
 $('pTitle').onclick = () => {
   closeOv(); saveGame();
