@@ -1155,11 +1155,11 @@ function buildFish(g, o) {
     tube(g, [-0.44, -ry * 0.3, 0], [-0.58, -ry - 0.45, 0], 0.008, 0.004, 4, lc, true);
   }
 }
-function buildShark(g, o) {
+function buildShark(g, o, parts) {
   const c1 = H(o.c1), c2 = H(o.c2 || '#e8eef4'), fc = shade(c1, 0.85), rng = mulberry32(99);
   // one smooth body from the tail to the tip of the snout: [x, middle height, half-height above, below, half-width]
   const SH = [[-0.5, 0, 0.012, 0.012, 0.01], [-0.42, 0, 0.024, 0.022, 0.018], [-0.3, 0, 0.048, 0.044, 0.04], [-0.12, 0, 0.09, 0.08, 0.082], [0.06, 0, 0.11, 0.1, 0.1],
-    [0.2, 0, 0.1, 0.09, 0.095], [0.32, 0, 0.08, 0.072, 0.08], [0.42, 0.004, 0.055, 0.05, 0.056], [0.48, 0.01, 0.03, 0.026, 0.032], [0.505, 0.012, 0.004, 0.004, 0.004]];
+    [0.2, 0, 0.1, 0.085, 0.095], [0.29, 0, 0.085, 0.045, 0.082], [0.36, 0.002, 0.075, 0.042, 0.074], [0.42, 0.006, 0.055, 0.036, 0.056], [0.48, 0.01, 0.03, 0.022, 0.032], [0.505, 0.012, 0.004, 0.004, 0.004]];
   const at = x => { const [y, up, dn, w] = keyLerp(SH, x); return { x, y, up, dn, w }; };
   const surfZ = (x, y) => { const p = at(x), d = y - p.y, h = d > 0 ? p.up : p.dn; return p.w * Math.sqrt(Math.max(0, 1 - (d / h) ** 2)); };
   const bottom = x => { const p = at(x); return p.y - p.dn; };
@@ -1180,8 +1180,6 @@ function buildShark(g, o) {
     // five gill slits curving along the side
     for (let i = 0; i < 5; i++) { const x = 0.165 + i * 0.022, pts = []; for (let k = 0; k <= 4; k++) { const y = lerp(-0.045, 0.035, k / 4), xx = x - 0.006 * Math.sin(k / 4 * Math.PI); pts.push([xx, y, s * (surfZ(xx, y) + 0.002)]); } chain(g, pts, 0.0035, 0.0035, 5, shade(c1, 0.45)); }
   }
-  if (!o.jaws) ell(g, 0.36, bottom(0.36) + 0.006, 0, 0.07, 0.016, 0.055, [0.25, 0.08, 0.1], -1, 1);
-  if (o.teeth) { teethRow(g, 0.31, 0.42, -0.05, 0.05, 0, 5, true); teethRow(g, 0.31, 0.42, -0.07, -0.05, 0, 5, false); }
   if (o.lava) {
     // glowing cracks lying right on the skin
     const lc = H(o.lava);
@@ -1194,34 +1192,30 @@ function buildShark(g, o) {
     }
   }
   if (o.snout) { ell(g, 0.5, 0.02, 0, 0.17, 0.022, 0.055, c1, -1, 1); }
-  if (o.jaws) {
-    // a huge toothy grin along both sides of the head, with rows of sharp white teeth
-    const N = 12, X0 = 0.2, X1 = 0.445, mouthC = H('#5a0a18'), gumC = H('#b8303c');
-    const xs = [], yb = [], yt = [];
-    for (let i = 0; i <= N; i++) {
-      const t = i / N, x = lerp(X0, X1, t), b = bottom(x) + 0.012;
-      xs.push(x); yb.push(b); yt.push(b + 0.064 * Math.sin(Math.min(t * 1.5, 1) * Math.PI / 2));
-    }
-    for (const sd of [-1, 1]) {
-      const P = (x, y, lift) => [x, y, sd * (surfZ(x, y) + lift)];
-      for (let i = 0; i < N; i++) {
-        flat(g, P(xs[i], yb[i], 0.004), P(xs[i + 1], yb[i + 1], 0.004), P(xs[i + 1], yt[i + 1], 0.004), mouthC);
-        flat(g, P(xs[i], yb[i], 0.004), P(xs[i + 1], yt[i + 1], 0.004), P(xs[i], yt[i], 0.004), mouthC);
-        // a thin pink gum line along the top and bottom edges
-        flat(g, P(xs[i], yt[i] - 0.006, 0.005), P(xs[i + 1], yt[i + 1] - 0.006, 0.005), P(xs[i + 1], yt[i + 1], 0.005), gumC);
-        flat(g, P(xs[i], yt[i] - 0.006, 0.005), P(xs[i + 1], yt[i + 1], 0.005), P(xs[i], yt[i], 0.005), gumC);
-        flat(g, P(xs[i], yb[i], 0.005), P(xs[i + 1], yb[i + 1], 0.005), P(xs[i + 1], yb[i + 1] + 0.006, 0.005), gumC);
-        flat(g, P(xs[i], yb[i], 0.005), P(xs[i + 1], yb[i + 1] + 0.006, 0.005), P(xs[i], yb[i] + 0.006, 0.005), gumC);
-      }
-      // teeth: top ones point down, bottom ones point up, in between each other
-      for (let k = 0; k < 8; k++) {
-        const t = 0.16 + k / 7 * 0.8, x = lerp(X0, X1, t), i = Math.min(N - 1, Math.floor(t * N)), f = t * N - i;
-        const top = lerp(yt[i], yt[i + 1], f), bot = lerp(yb[i], yb[i + 1], f), gap = top - bot, w = 0.009 + gap * 0.1;
-        flat(g, P(x - w, top - 0.004, 0.007), P(x + w, top - 0.004, 0.007), P(x, top - 0.004 - gap * 0.5, 0.007), WHITE);
-        const x2 = x - 0.5 / 7 * 0.8 * (X1 - X0), i2 = Math.max(0, Math.min(N - 1, Math.floor(((x2 - X0) / (X1 - X0)) * N)));
-        if (x2 > X0 + 0.02) { const b2 = yb[i2] + 0.004, g2 = yt[i2] - yb[i2]; flat(g, P(x2 - w, b2, 0.007), P(x2 + w, b2, 0.007), P(x2, b2 + g2 * 0.45, 0.007), WHITE); }
-      }
-    }
+  // a real mouth: an open lower jaw on a hinge (a separate piece, so it can bite), rows of sharp teeth, gums, a tongue and a throat
+  const big = !!o.jaws, gape = big ? 0.5 : 0.3, tl = big ? 0.026 : 0.014, tw = big ? 0.0085 : 0.005;
+  const gum = H('#c0404c'), throat = H('#3a0610'), tongue = H('#c85a64'), tooth = H('#fbf7ec');
+  // the throat and the roof of the mouth
+  ell(g, 0.33, -0.05, 0, 0.075, 0.03, 0.058, throat, -1, 2);
+  // upper teeth along the edge of the snout: a big front row and a smaller row behind it
+  for (const row of [0, 1]) for (const sd of [-1, 1]) for (let k = 0; k < 9; k++) {
+    const x = lerp(0.305, 0.478, k / 8) - row * 0.012, p = at(x), y = p.y - p.dn * 0.92, z = sd * p.w * (0.84 - row * 0.12), L = tl * (row ? 0.7 : 1) * (0.75 + 0.25 * Math.sin(k / 8 * Math.PI));
+    cone(g, [x, y + 0.003, z], [x - 0.004, y - L, z * 0.98], tw * (row ? 0.75 : 1), 3, tooth);
+    if (!row && k < 8) { const x2 = lerp(0.305, 0.478, (k + 0.5) / 8), p2 = at(x2); ell(g, x2, p2.y - p2.dn * 0.9, sd * p2.w * 0.86, 0.012, 0.004, 0.004, gum, -1, 0); }
+  }
+  // the lower jaw, built closed and then swung open around the hinge
+  const JW = [[0.285, -0.046, 0.012, 0.03, 0.074], [0.34, -0.046, 0.011, 0.026, 0.066], [0.4, -0.043, 0.01, 0.02, 0.052], [0.44, -0.04, 0.009, 0.014, 0.038], [0.468, -0.038, 0.003, 0.005, 0.012]];
+  const jat = x => { const [y, up, dn, w] = keyLerp(JW, x); return { x, y, up, dn, w }; };
+  const HX = 0.285, HY = -0.042, cs = Math.cos(gape), sn = Math.sin(gape);
+  const rot = q => { const dx = q[0] - HX, dy = q[1] - HY; return [HX + dx * cs + dy * sn, HY - dx * sn + dy * cs, q[2]]; };
+  let jg = g;
+  if (parts) { jg = new Geo(16384); parts.push({ g: jg, pivot: [HX, HY, 0], kind: 'jaw', sd: 0, close: gape * 0.92 }); }
+  const jskin = (i, j, a) => { const ca = Math.cos(a); return shade(ca > 0.6 ? gum : ca > -0.2 ? mixc(c1, c2, 0.6) : c2, 0.92 + hash3(i, j, 21) * 0.12); };
+  loft(jg, 40, 24, t => jat(lerp(0.285, 0.468, t)), jskin, null, rot);
+  { const q = rot([0.38, -0.036, 0]); ell(jg, q[0], q[1], 0, 0.06, 0.008, 0.035, tongue, -1, 1); }
+  for (const row of [0, 1]) for (const sd of [-1, 1]) for (let k = 0; k < 8; k++) {
+    const x = lerp(0.3, 0.46, k / 7) - row * 0.012, p = jat(x), y = p.y + p.up * 0.9, z = sd * p.w * (0.8 - row * 0.12), L = tl * (row ? 0.65 : 0.9) * (0.75 + 0.25 * Math.sin(k / 7 * Math.PI));
+    cone(jg, rot([x, y - 0.003, z]), rot([x - 0.004, y + L, z * 0.98]), tw * (row ? 0.7 : 0.95), 3, tooth);
   }
 }
 function buildEel(g, o) {
@@ -1718,7 +1712,7 @@ function speciesGeo(sp, low) {
   const g = new Geo(4096), parts = [];
   // the Colossaurus is already built in high detail; everything else gets the high-detail shapes (or the simple ones, far away)
   HIRES = !low && sp.kind !== 'kaiju'; LOD_LOW = !!low;
-  try { BUILDERS[sp.kind](g, sp.o, parts); } finally { HIRES = false; LOD_LOW = false; }
+  try { BUILDERS[sp.kind](g, sp.o, low ? null : parts); } finally { HIRES = false; LOD_LOW = false; }
   if (!low && sp.kind !== 'kaiju') skinTexture(g);
   wiggle(sp, g, parts);
   return { g, parts };
@@ -1737,7 +1731,7 @@ function speciesMesh(i) {
   for (const gg of [g, ...parts.map(p => p.g)]) for (let k = 0; k < gg.n; k++) for (let a = 0; a < 3; a++) { const v = gg.f[k * 5 + a]; if (v < bb[a]) bb[a] = v; if (v > bb[a + 3]) bb[a + 3] = v; }
   sp.bb = bb;
   // moving pieces (the Colossaurus's legs and jaw)
-  if (parts.length) sp.parts = parts.map(p => ({ mesh: makeMesh(p.g), pivot: p.pivot, kind: p.kind, sd: p.sd }));
+  if (parts.length) sp.parts = parts.map(p => ({ mesh: makeMesh(p.g), pivot: p.pivot, kind: p.kind, sd: p.sd, close: p.close }));
   return (speciesMeshes[i] = makeMesh(g));
 }
 function wiggle(sp, g, parts) {
@@ -1750,7 +1744,7 @@ function wiggle(sp, g, parts) {
   else if (sp.kind === 'ray') g.wig(0, (x, y, z) => clamp((Math.abs(z) - 0.1) / 0.5, 0, 1));
   else if (sp.kind === 'jelly') g.wig(0, (x, y) => clamp((0.05 - y) / 0.6, 0, 1));
   else if (sp.kind === 'kaiju') { const f = x => Math.pow(clamp((0.1 - x) / 0.6, 0, 1), 1.3); g.wig(0, f); for (const p of parts) p.g.wig(0, f); }
-  else if (SWIM[sp.kind][0] > 0) g.wig(0, x => Math.pow(clamp((0.18 - x) / 0.7, 0, 1), 1.3));
+  else if (SWIM[sp.kind][0] > 0) { const f = x => Math.pow(clamp((0.18 - x) / 0.7, 0, 1), 1.3); g.wig(0, f); for (const p of parts) p.g.wig(0, f); }
 }
 
 /* ---------- sparkles around mythical fish, and a small glowing ball ---------- */
@@ -2835,7 +2829,7 @@ function drawParts(sp, M, opts, anim, seed) {
     let yw = 0, pt = 0;
     if (p.kind === 'leg') yw = 0.45 * Math.sin(t + (p.sd > 0 ? 0 : Math.PI)) * anim;
     else if (p.kind === 'arm') yw = 0.5 * Math.sin(t + (p.sd > 0 ? Math.PI : 0)) * anim;
-    else pt = 0.3 * smooth(bite) * anim;
+    else pt = (p.close || 0.3) * smooth(bite) * anim;
     mTRS(_pl, 0, 0, 0, yw, pt, 0, 1);
     const q = p.pivot, r = xform(_pl, q);
     _pl[12] = q[0] - r[0]; _pl[13] = q[1] - r[1]; _pl[14] = q[2] - r[2];
