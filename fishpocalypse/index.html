@@ -257,10 +257,11 @@ body.kbnav .btn:focus,body.kbnav .item:focus,body.kbnav .hbtn:focus,body.kbnav #
 <div class="ov" id="ovSlots"><div class="panel" style="max-width:480px;text-align:center">
   <h2>Who's playing?</h2>
   <p>Each save has its own coins, fish and gear.</p>
-  <div class="col" id="slotList"></div>
+  <div class="col" id="slotList" style="max-height:42vh;overflow-y:auto;padding:4px 8px"></div>
+  <div class="row2"><button class="btn small" id="slotNew">+ New save</button></div>
   <p style="margin-top:18px">Change this save's name:</p>
   <div class="row2"><input id="slotName" maxlength="16" autocomplete="off" style="font:inherit;font-size:20px;padding:8px 12px;border-radius:12px;border:3px solid var(--edge);background:var(--panel2);color:var(--cream);width:200px"><button class="btn small" id="slotRename">Save name</button></div>
-  <div class="row2"><button class="btn go" id="slotDone">Done</button></div>
+  <div class="row2"><button class="btn ghost small" id="slotDel">Delete this save</button><button class="btn go" id="slotDone">Done</button></div>
 </div></div>
 <!-- Start over -->
 <div class="ov" id="ovReset"><div class="panel" style="max-width:460px;text-align:center">
@@ -534,11 +535,11 @@ const fishValue = f => SPECIES[f[0]].fixed || SPECIES[f[0]].val * f[1];
 /* =====================================================================
    Saved game. Key: fishpocalypse.v1. Every value is checked when it loads.
    ===================================================================== */
-// three save slots, so different players each have their own game. Slot 1 uses the original key, so old saves land there.
-const SAVE_SLOTS = 3, SLOT_KEY = 'fishpocalypse.slot';
+// as many save slots as you want, so different players each have their own game. Slot 1 uses the original key, so old saves land there.
+const MAX_SLOT = 9999, SLOT_KEY = 'fishpocalypse.slot';
 const slotKey = n => n === 1 ? 'fishpocalypse.v1' : 'fishpocalypse.v1.slot' + n;
 let curSlot = 1;
-try { const v = Number(localStorage.getItem(SLOT_KEY)); if (Number.isInteger(v) && v >= 1 && v <= SAVE_SLOTS) curSlot = v; else localStorage.removeItem(SLOT_KEY); } catch (e) {}
+try { const v = Number(localStorage.getItem(SLOT_KEY)); if (Number.isInteger(v) && v >= 1 && v <= MAX_SLOT) curSlot = v; else localStorage.removeItem(SLOT_KEY); } catch (e) {}
 const cleanName = (v, n) => typeof v === 'string' && v.trim() ? v.trim().slice(0, 16) : 'Player ' + n;
 function defaultSave() { return { v: 1, zv: 2, name: 'Player ' + curSlot, coins: 0, hook: 0, reel: 0, bait: 0, kaiju: 0, fish: [], dex: {}, total: 0, music: true, sfx: true, t: Date.now() }; }
 function loadSave(slot = curSlot) {
@@ -3292,29 +3293,61 @@ function slotSummary(n) {
   if (!d || typeof d !== 'object' || Array.isArray(d)) return { name: 'Player ' + n, coins: 0, fish: 0, empty: true };
   return { name: cleanName(d.name, n), coins: typeof d.coins === 'number' && isFinite(d.coins) ? Math.max(0, d.coins) : 0, fish: Array.isArray(d.fish) ? d.fish.length : 0, empty: false };
 }
+// every save that exists (slot 1 always, plus the one you're on)
+function allSlots() {
+  const set = new Set([1, curSlot]);
+  try { for (let i = 0; i < localStorage.length; i++) { const m = /^fishpocalypse\.v1\.slot(\d+)$/.exec(localStorage.key(i) || ''); if (m && +m[1] >= 2 && +m[1] <= MAX_SLOT) set.add(+m[1]); } } catch (e) {}
+  return [...set].sort((a, b) => a - b);
+}
+function newSlot() {
+  const n = Math.max(...allSlots()) + 1;
+  if (n > MAX_SLOT) { toast('That is a lot of saves! Delete one first.', 3); return; }
+  switchSlot(n);
+}
+let delArm = 0;
+function deleteSlot() {
+  const list = allSlots();
+  if (list.length < 2) { toast('This is the only save, so it can\'t be deleted. Use Start over instead.', 3.5); return; }
+  if (performance.now() - delArm > 3000) { delArm = performance.now(); $('slotDel').textContent = `Press again to delete ${save.name}`; return; }
+  delArm = 0;
+  const gone = curSlot, name = save.name;
+  try { localStorage.removeItem(slotKey(gone)); } catch (e) {}
+  const next = list.find(n => n !== gone);
+  curSlot = next; save = null;
+  try { localStorage.setItem(SLOT_KEY, String(next)); } catch (e) {}
+  loadSlotNow();
+  renderSlots();
+  toast(`Deleted ${name}. Now playing as ${save.name}`, 3);
+}
 function renderSlots() {
+  delArm = 0;
   let h = '';
-  for (let n = 1; n <= SAVE_SLOTS; n++) {
+  for (const n of allSlots()) {
     const k = slotSummary(n);
     h += `<button class="btn${n === curSlot ? ' go' : ''}" data-slot="${n}"${n === curSlot ? ' data-first="1"' : ''}>${esc(k.name)}${n === curSlot ? ' ✓' : ''}<br><small style="font-family:var(--body);font-size:14px;font-weight:900">${k.empty ? 'New game' : `${fmt(k.coins)} coins · ${fmt(k.fish)} fish`}</small></button>`;
   }
   $('slotList').innerHTML = h;
   $('slotList').querySelectorAll('[data-slot]').forEach(b => b.onclick = () => switchSlot(+b.dataset.slot));
   $('slotName').value = save.name;
+  $('slotDel').textContent = 'Delete this save';
 }
 function switchSlot(n) {
   if (n === curSlot) { closeOv(); return; }
   saveGame();
   curSlot = n;
   try { localStorage.setItem(SLOT_KEY, String(n)); } catch (e) {}
+  loadSlotNow();
+  renderSlots();
+  toast(`Now playing as ${save.name}`, 2.5);
+}
+function loadSlotNow() {
+  const n = curSlot;
   save = loadSave(n);
   recalcRate(); addAwayCoins();
   domeFishN = -1; hookMeshKey = '';
   if (musicBus) musicBus.gain.setTargetAtTime(save.music ? 0.32 : 0, actx.currentTime, 0.1);
   if (sfxBus) sfxBus.gain.setTargetAtTime(save.sfx ? 1 : 0, actx.currentTime, 0.05);
   syncToggles(); saveGame();
-  renderSlots();
-  toast(`Now playing as ${save.name}`, 2.5);
 }
 function renameSlot() {
   const v = $('slotName').value.trim().slice(0, 16);
@@ -3323,6 +3356,8 @@ function renameSlot() {
 }
 $('tSlot').onclick = () => { renderSlots(); openOv('ovSlots'); };
 $('slotRename').onclick = renameSlot;
+$('slotNew').onclick = newSlot;
+$('slotDel').onclick = deleteSlot;
 $('slotDone').onclick = () => { closeOv(); syncToggles(); };
 $('rNo').onclick = () => closeOv();
 $('rYes').onclick = () => {
